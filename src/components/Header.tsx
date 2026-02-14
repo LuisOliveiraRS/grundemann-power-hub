@@ -1,19 +1,16 @@
 import { Search, User, ShoppingCart } from "lucide-react";
 import { useState } from "react";
+import logo from "@/assets/logo-grundemann.png";
 
 const Header = () => {
   const [cartCount] = useState(0);
 
   return (
     <header className="border-b border-border bg-background sticky top-0 z-40">
-      <div className="container flex items-center justify-between py-4 gap-8">
+      <div className="container flex items-center justify-between py-3 gap-8">
         {/* Logo */}
         <a href="/" className="flex-shrink-0">
-          <h1 className="font-heading text-2xl font-extrabold tracking-tight">
-            <span className="text-primary">GRUNDEMANN</span>
-            <br />
-            <span className="text-secondary text-sm font-semibold tracking-widest">GERADORES</span>
-          </h1>
+          <img src={logo} alt="Gründemann Geradores" className="h-16 md:h-20 w-auto" />
         </a>
 
         {/* Search */}

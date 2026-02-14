@@ -1,4 +1,5 @@
 import { Phone, MessageCircle, Mail, MapPin } from "lucide-react";
+import logo from "@/assets/logo-grundemann.png";
 
 const Footer = () => {
   return (
@@ -7,11 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <h3 className="font-heading text-xl font-extrabold text-background">
-              <span className="text-primary">GRUNDEMANN</span>
-              <br />
-              <span className="text-sm font-semibold tracking-widest text-background/60">GERADORES</span>
-            </h3>
+            <img src={logo} alt="Gründemann Geradores" className="h-14 w-auto brightness-0 invert" />
             <p className="mt-4 text-sm leading-relaxed">
               Especialistas em geradores diesel e gasolina. Venda de peças, manutenção preventiva e corretiva.
             </p>
@@ -46,19 +43,19 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>(00) 0000-0000</span>
+                <span>(51) 8182-5748</span>
               </li>
               <li className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-primary" />
-                <span>(00) 00000-0000</span>
+                <span>(51) 8182-5748</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>contato@grundemann.com.br</span>
+                <span>adair.grundemann@gmail.com</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-primary mt-0.5" />
-                <span>Rua Exemplo, 123 - Cidade/UF</span>
+                <span>Rua Luiz Bernardo da Silva, 190 - Pinheiro, São Leopoldo/RS - CEP 93042-110</span>
               </li>
             </ul>
           </div>
@@ -66,7 +63,7 @@ const Footer = () => {
       </div>
       <div className="border-t border-background/10">
         <div className="container py-4 text-center text-xs text-background/50">
-          © 2026 Grundemann Geradores. Todos os direitos reservados.
+          © 2026 Gründemann Geradores. Todos os direitos reservados.
         </div>
       </div>
     </footer>
