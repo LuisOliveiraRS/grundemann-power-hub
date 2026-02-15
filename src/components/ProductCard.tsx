@@ -11,18 +11,18 @@ interface ProductCardProps {
   price: number;
   oldPrice?: number;
   installments?: string;
+  sku?: string;
+  stockQuantity?: number;
 }
 
-const ProductCard = ({ id, name, image, price, oldPrice, installments }: ProductCardProps) => {
+const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stockQuantity }: ProductCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const addToCart = async () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+  const addToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
     if (!id) return;
 
     const { error } = await supabase.from("cart_items").upsert(
@@ -34,7 +34,7 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments }: Product
   };
 
   return (
-    <div className="group rounded-lg border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="group rounded-lg border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => id && navigate(`/produto/${id}`)}>
       <div className="relative aspect-square overflow-hidden bg-muted">
         <img src={image} alt={name} className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
         {oldPrice && (
@@ -43,9 +43,11 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments }: Product
       </div>
       <div className="p-4">
         <h3 className="font-heading text-sm font-semibold text-card-foreground line-clamp-2 min-h-[2.5rem]">{name}</h3>
+        {sku && <p className="text-[10px] text-muted-foreground mt-1">Cód: {sku}</p>}
         {oldPrice && <p className="mt-2 text-xs text-muted-foreground line-through">R$ {oldPrice.toFixed(2).replace(".", ",")}</p>}
         <p className="mt-1 font-heading text-xl font-extrabold text-price">R$ {price.toFixed(2).replace(".", ",")}</p>
         {installments && <p className="text-xs text-muted-foreground">{installments}</p>}
+        {stockQuantity !== undefined && <p className="text-[10px] text-muted-foreground mt-1">{stockQuantity > 0 ? `${stockQuantity} em estoque` : "Indisponível"}</p>}
         <button onClick={addToCart} className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity">
           <ShoppingCart className="h-4 w-4" /> Comprar
         </button>

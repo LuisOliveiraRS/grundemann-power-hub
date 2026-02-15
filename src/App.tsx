@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import ProductDetail from "./pages/ProductDetail";
+import CategoryPage from "./pages/CategoryPage";
+import AllProducts from "./pages/AllProducts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +26,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/produtos" element={<AllProducts />} />
+            <Route path="/produto/:id" element={<ProductDetail />} />
+            <Route path="/categoria/:slug" element={<CategoryPage />} />
             <Route path="/minha-conta" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
