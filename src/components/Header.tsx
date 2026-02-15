@@ -15,7 +15,7 @@ const Header = () => {
       <header className="border-b border-border bg-background sticky top-0 z-40">
         <div className="container flex items-center justify-between py-3 gap-8">
           <a href="/" className="flex-shrink-0">
-            <img src={logo} alt="Gründemann Geradores" className="h-16 md:h-20 w-auto" />
+            <img src={logo} alt="Gründemann Geradores" className="h-20 md:h-28 w-auto" />
           </a>
 
           <div className="flex-1 max-w-xl">
