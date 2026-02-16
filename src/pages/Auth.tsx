@@ -49,7 +49,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-muted">
       <div className="w-full max-w-md bg-background rounded-xl shadow-lg p-8">
         <div className="flex justify-center mb-6">
-          <img src={logo} alt="Gründemann" className="h-24" />
+          <img src={logo} alt="Gründemann" className="h-32" />
         </div>
         <h2 className="font-heading text-2xl font-bold text-center mb-6">
           {isLogin ? "Entrar" : "Criar Conta"}

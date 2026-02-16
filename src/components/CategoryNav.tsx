@@ -6,6 +6,7 @@ import { Fuel, Wrench, Settings, Zap, ShieldCheck, Cog } from "lucide-react";
 const iconMap: Record<string, any> = {
   "geradores-diesel": Fuel,
   "geradores-gasolina": Zap,
+  "pecas-componentes": Cog,
   "pecas-e-componentes": Cog,
   "manutencao": Wrench,
   "acessorios": Settings,

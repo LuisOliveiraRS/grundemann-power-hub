@@ -12,6 +12,11 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ProductDetail from "./pages/ProductDetail";
 import CategoryPage from "./pages/CategoryPage";
 import AllProducts from "./pages/AllProducts";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
+import Returns from "./pages/Returns";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +34,11 @@ const App = () => (
             <Route path="/produtos" element={<AllProducts />} />
             <Route path="/produto/:id" element={<ProductDetail />} />
             <Route path="/categoria/:slug" element={<CategoryPage />} />
+            <Route path="/quem-somos" element={<About />} />
+            <Route path="/contato" element={<Contact />} />
+            <Route path="/privacidade" element={<PrivacyPolicy />} />
+            <Route path="/termos" element={<Terms />} />
+            <Route path="/trocas-e-devolucoes" element={<Returns />} />
             <Route path="/minha-conta" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

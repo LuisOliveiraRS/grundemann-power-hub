@@ -104,22 +104,22 @@ const ClientDashboard = () => {
           <h1 className="font-heading text-3xl font-bold mb-6">Minha Conta</h1>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Sidebar */}
-            <div className="bg-card rounded-xl shadow-sm border border-border p-4 space-y-1 h-fit">
-              <div className="px-3 py-4 border-b border-border mb-3">
-                <p className="font-heading font-bold text-sm">{profile.full_name || "Minha Conta"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{profile.email}</p>
+            <div className="bg-sidebar-background rounded-xl shadow-sm p-4 space-y-1 h-fit">
+              <div className="px-3 py-4 border-b border-sidebar-border mb-3">
+                <p className="font-heading font-bold text-sm text-sidebar-foreground">{profile.full_name || "Minha Conta"}</p>
+                <p className="text-xs text-sidebar-foreground/60 mt-0.5">{profile.email}</p>
               </div>
-              <button onClick={() => setTab("profile")} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "profile" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+              <button onClick={() => setTab("profile")} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "profile" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}>
                 <User className="h-4 w-4" /> Meus Dados
               </button>
-              <button onClick={() => setTab("orders")} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "orders" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+              <button onClick={() => setTab("orders")} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "orders" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}>
                 <Package className="h-4 w-4" /> Meus Pedidos
                 {orders.length > 0 && <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0">{orders.length}</Badge>}
               </button>
-              <button onClick={() => navigate("/")} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted">
+              <button onClick={() => navigate("/")} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                 <ShoppingCart className="h-4 w-4" /> Continuar Comprando
               </button>
-              <button onClick={signOut} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10">
+              <button onClick={signOut} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:opacity-80">
                 <LogOut className="h-4 w-4" /> Sair
               </button>
             </div>

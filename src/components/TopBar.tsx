@@ -15,11 +15,11 @@ const TopBar = () => {
           </a>
         </div>
         <div className="flex items-center gap-6">
-          <a href="#" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <a href="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Package className="h-3.5 w-3.5" />
             <span>Rastrear Pedido</span>
           </a>
-          <a href="#" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <a href="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <ShoppingCart className="h-3.5 w-3.5" />
             <span>Meus Pedidos</span>
           </a>
