@@ -1,4 +1,5 @@
 import { Phone, MessageCircle, Mail, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 
 const Footer = () => {
@@ -8,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <img src={logo} alt="Gründemann Geradores" className="h-24 w-auto brightness-0 invert" />
+            <img src={logo} alt="Gründemann Geradores" className="h-28 w-auto brightness-0 invert" />
             <p className="mt-4 text-sm leading-relaxed">
               Especialistas em geradores diesel e gasolina. Venda de peças, manutenção preventiva e corretiva.
             </p>
@@ -18,10 +19,11 @@ const Footer = () => {
           <div>
             <h4 className="font-heading text-sm font-bold text-background uppercase tracking-wider mb-4">Institucional</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-primary transition-colors">Quem Somos</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Política de Privacidade</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Termos de Uso</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Trocas e Devoluções</a></li>
+              <li><Link to="/quem-somos" className="hover:text-primary transition-colors">Quem Somos</Link></li>
+              <li><Link to="/contato" className="hover:text-primary transition-colors">Fale Conosco</Link></li>
+              <li><Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link></li>
+              <li><Link to="/termos" className="hover:text-primary transition-colors">Termos de Uso</Link></li>
+              <li><Link to="/trocas-e-devolucoes" className="hover:text-primary transition-colors">Trocas e Devoluções</Link></li>
             </ul>
           </div>
 
@@ -29,11 +31,11 @@ const Footer = () => {
           <div>
             <h4 className="font-heading text-sm font-bold text-background uppercase tracking-wider mb-4">Categorias</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-primary transition-colors">Geradores Diesel</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Geradores Gasolina</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Peças e Componentes</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Manutenção</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Acessórios</a></li>
+              <li><Link to="/categoria/geradores-diesel" className="hover:text-primary transition-colors">Geradores Diesel</Link></li>
+              <li><Link to="/categoria/geradores-gasolina" className="hover:text-primary transition-colors">Geradores Gasolina</Link></li>
+              <li><Link to="/categoria/pecas-componentes" className="hover:text-primary transition-colors">Peças e Componentes</Link></li>
+              <li><Link to="/categoria/manutencao" className="hover:text-primary transition-colors">Manutenção</Link></li>
+              <li><Link to="/categoria/acessorios" className="hover:text-primary transition-colors">Acessórios</Link></li>
             </ul>
           </div>
 
@@ -43,11 +45,11 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>(51) 8182-5748</span>
+                <a href="tel:+555181825748" className="hover:text-primary transition-colors">(51) 8182-5748</a>
               </li>
               <li className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-primary" />
-                <span>(51) 8182-5748</span>
+                <a href="https://wa.me/555181825748" className="hover:text-primary transition-colors">(51) 8182-5748</a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
