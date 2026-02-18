@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -18,7 +18,7 @@ interface Product {
   id: string; name: string; description: string | null; sku: string | null;
   price: number; original_price: number | null; stock_quantity: number;
   is_active: boolean; is_featured: boolean; category_id: string | null;
-  image_url: string | null; created_at: string;
+  subcategory_id?: string | null; image_url: string | null; created_at: string;
 }
 
 interface OrderWithItems {
@@ -36,6 +36,10 @@ interface Category {
   id: string; name: string; slug: string; description: string | null; image_url: string | null;
 }
 
+interface Subcategory {
+  id: string; name: string; slug: string; category_id: string; description: string | null;
+}
+
 interface Profile {
   user_id: string; full_name: string; email: string; phone: string | null;
   city: string | null; state: string | null;
@@ -49,17 +53,37 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [clients, setClients] = useState<Profile[]>([]);
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, pendingOrders: 0, totalClients: 0 });
-  const [searchTerm, setSearchTerm] = useState("");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Product filters
+  const [productSearch, setProductSearch] = useState("");
+  const [productCatFilter, setProductCatFilter] = useState("");
+  const [productStatusFilter, setProductStatusFilter] = useState("");
+  const [productStockFilter, setProductStockFilter] = useState("");
+
+  // Order filters
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("");
+  const [orderDateFrom, setOrderDateFrom] = useState("");
+  const [orderDateTo, setOrderDateTo] = useState("");
+
+  // Client filters
+  const [clientSearch, setClientSearch] = useState("");
+
+  // Category management
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
+  const [editingSubcategory, setEditingSubcategory] = useState<Partial<Subcategory> | null>(null);
+  const [subForm, setSubForm] = useState({ name: "", slug: "", description: "", category_id: "" });
+
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
-    category_id: "", is_featured: false, is_active: true, image_url: ""
+    category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: ""
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -68,17 +92,19 @@ const AdminDashboard = () => {
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("subcategories").select("*").order("name"),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const ords = (ordRes.data || []) as OrderWithItems[];
     const cats = (catRes.data || []) as Category[];
     const cls = (clientRes.data || []) as Profile[];
-    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls);
+    const subs = (subRes.data || []) as Subcategory[];
+    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
@@ -104,11 +130,7 @@ const AdminDashboard = () => {
     const ext = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
     const { error } = await supabase.storage.from("product-images").upload(fileName, file);
-    if (error) {
-      toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
-      setUploading(false);
-      return;
-    }
+    if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); setUploading(false); return; }
     const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
     setProductForm(prev => ({ ...prev, image_url: urlData.publicUrl }));
     toast({ title: "Imagem enviada!" });
@@ -116,12 +138,13 @@ const AdminDashboard = () => {
   };
 
   const saveProduct = async () => {
-    const data = {
+    const data: any = {
       name: productForm.name, description: productForm.description || null,
       sku: productForm.sku || null, price: parseFloat(productForm.price) || 0,
       original_price: productForm.original_price ? parseFloat(productForm.original_price) : null,
       stock_quantity: parseInt(productForm.stock_quantity) || 0,
       category_id: productForm.category_id || null,
+      subcategory_id: productForm.subcategory_id || null,
       is_featured: productForm.is_featured, is_active: productForm.is_active,
       image_url: productForm.image_url || null,
     };
@@ -137,7 +160,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", is_featured: false, is_active: true, image_url: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -151,7 +174,8 @@ const AdminDashboard = () => {
       name: p.name, description: p.description || "", sku: p.sku || "",
       price: String(p.price), original_price: p.original_price ? String(p.original_price) : "",
       stock_quantity: String(p.stock_quantity), category_id: p.category_id || "",
-      is_featured: p.is_featured, is_active: p.is_active, image_url: p.image_url || "",
+      subcategory_id: (p as any).subcategory_id || "", is_featured: p.is_featured,
+      is_active: p.is_active, image_url: p.image_url || "",
     });
     setTab("products");
   };
@@ -167,14 +191,38 @@ const AdminDashboard = () => {
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Categoria criada!" });
     }
-    setEditingCategory(null);
-    setCategoryForm({ name: "", slug: "", description: "", image_url: "" });
-    loadAll();
+    setEditingCategory(null); setCategoryForm({ name: "", slug: "", description: "", image_url: "" }); loadAll();
   };
 
   const deleteCategory = async (id: string) => {
     if (!confirm("Excluir esta categoria?")) return;
     await supabase.from("categories").delete().eq("id", id); loadAll();
+  };
+
+  const saveSubcategory = async () => {
+    const data = {
+      name: subForm.name,
+      slug: subForm.slug || subForm.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      description: subForm.description || null,
+      category_id: subForm.category_id,
+    };
+    if (!data.category_id) { toast({ title: "Selecione uma categoria pai", variant: "destructive" }); return; }
+    if (editingSubcategory?.id) {
+      const { error } = await supabase.from("subcategories").update(data).eq("id", editingSubcategory.id);
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Subcategoria atualizada!" });
+    } else {
+      const { error } = await supabase.from("subcategories").insert(data);
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Subcategoria criada!" });
+    }
+    setEditingSubcategory(null); setSubForm({ name: "", slug: "", description: "", category_id: "" }); loadAll();
+  };
+
+  const deleteSubcategory = async (id: string) => {
+    if (!confirm("Excluir esta subcategoria?")) return;
+    await supabase.from("subcategories").delete().eq("id", id);
+    toast({ title: "Subcategoria excluída!" }); loadAll();
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
@@ -189,9 +237,9 @@ const AdminDashboard = () => {
   };
 
   const statusColor: Record<string, string> = {
-    pending: "bg-accent text-accent-foreground",
+    pending: "bg-accent/20 text-accent-foreground",
     confirmed: "bg-primary/20 text-primary",
-    processing: "bg-secondary/20 text-secondary-foreground",
+    processing: "bg-secondary/10 text-secondary-foreground",
     shipped: "bg-primary text-primary-foreground",
     delivered: "bg-primary text-primary-foreground",
     cancelled: "bg-destructive/20 text-destructive",
@@ -205,25 +253,50 @@ const AdminDashboard = () => {
     { key: "clients", label: "Clientes", icon: Users },
   ] as const;
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filtered data
+  const filteredProducts = products.filter(p => {
+    if (productSearch && !p.name.toLowerCase().includes(productSearch.toLowerCase()) && !(p.sku || "").toLowerCase().includes(productSearch.toLowerCase())) return false;
+    if (productCatFilter && p.category_id !== productCatFilter) return false;
+    if (productStatusFilter === "active" && !p.is_active) return false;
+    if (productStatusFilter === "inactive" && p.is_active) return false;
+    if (productStatusFilter === "featured" && !p.is_featured) return false;
+    if (productStockFilter === "out" && p.stock_quantity > 0) return false;
+    if (productStockFilter === "low" && (p.stock_quantity === 0 || p.stock_quantity > 5)) return false;
+    if (productStockFilter === "ok" && p.stock_quantity <= 5) return false;
+    return true;
+  });
+
+  const filteredOrders = orders.filter(o => {
+    if (orderSearch && !o.id.includes(orderSearch.toLowerCase())) return false;
+    if (orderStatusFilter && o.status !== orderStatusFilter) return false;
+    if (orderDateFrom && new Date(o.created_at) < new Date(orderDateFrom)) return false;
+    if (orderDateTo && new Date(o.created_at) > new Date(orderDateTo + "T23:59:59")) return false;
+    return true;
+  });
+
+  const filteredClients = clients.filter(c => {
+    if (!clientSearch) return true;
+    const s = clientSearch.toLowerCase();
+    return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s);
+  });
+
   const getCategoryName = (id: string | null) => categories.find(c => c.id === id)?.name || "—";
+  const getSubcatName = (id: string | null) => subcategories.find(s => s.id === id)?.name || null;
+  const getCatSubcats = (catId: string) => subcategories.filter(s => s.category_id === catId);
 
   return (
     <div className="min-h-screen flex bg-muted/50">
-      {/* Sidebar - FIXED: using bg-sidebar instead of bg-sidebar-background */}
+      {/* Sidebar */}
       <aside className="w-64 bg-sidebar text-sidebar-foreground min-h-screen flex flex-col shadow-xl">
         <div className="p-5 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Gründemann" className="h-12 w-auto brightness-200" />
-          </div>
+          <img src={logo} alt="Gründemann" className="h-12 w-auto brightness-200" />
           <p className="text-xs text-sidebar-foreground/50 mt-2">Painel Administrativo</p>
         </div>
-
         <nav className="flex-1 p-3 space-y-1">
           {sideItems.map((item) => (
             <button
               key={item.key}
-              onClick={() => { setTab(item.key); setSearchTerm(""); }}
+              onClick={() => setTab(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 tab === item.key
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -238,7 +311,6 @@ const AdminDashboard = () => {
             </button>
           ))}
         </nav>
-
         <div className="p-3 border-t border-sidebar-border space-y-1">
           <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
             <ShoppingCart className="h-5 w-5" /> Ver Loja
@@ -249,7 +321,6 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         {/* DASHBOARD TAB */}
         {tab === "dashboard" && (
@@ -258,20 +329,17 @@ const AdminDashboard = () => {
               <h1 className="font-heading text-3xl font-bold text-foreground">Dashboard</h1>
               <p className="text-muted-foreground mt-1">Visão geral do seu negócio</p>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
               {[
                 { label: "Produtos", value: stats.totalProducts, icon: Package, gradient: "from-primary/10 to-primary/5", iconColor: "text-primary", border: "border-primary/20" },
                 { label: "Pedidos", value: stats.totalOrders, icon: ShoppingCart, gradient: "from-secondary/10 to-secondary/5", iconColor: "text-secondary", border: "border-secondary/20" },
-                { label: "Receita Total", value: `R$ ${stats.revenue.toFixed(2).replace(".",",")}`, icon: DollarSign, gradient: "from-primary/10 to-primary/5", iconColor: "text-primary", border: "border-primary/20" },
+                { label: "Receita Total", value: `R$ ${stats.revenue.toFixed(2).replace(".", ",")}`, icon: DollarSign, gradient: "from-primary/10 to-primary/5", iconColor: "text-primary", border: "border-primary/20" },
                 { label: "Pendentes", value: stats.pendingOrders, icon: Clock, gradient: "from-accent/20 to-accent/10", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { label: "Clientes", value: stats.totalClients, icon: Users, gradient: "from-secondary/10 to-secondary/5", iconColor: "text-secondary", border: "border-secondary/20" },
               ].map((s) => (
                 <div key={s.label} className={`bg-card rounded-xl shadow-sm border ${s.border} p-5 bg-gradient-to-br ${s.gradient} hover:shadow-md transition-shadow`}>
                   <div className="flex items-center gap-3">
-                    <div className={`rounded-xl bg-background p-3 shadow-sm ${s.iconColor}`}>
-                      <s.icon className="h-6 w-6" />
-                    </div>
+                    <div className={`rounded-xl bg-background p-3 shadow-sm ${s.iconColor}`}><s.icon className="h-6 w-6" /></div>
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{s.label}</p>
                       <p className="text-xl font-heading font-bold mt-0.5">{s.value}</p>
@@ -280,7 +348,6 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-card rounded-xl shadow-sm border border-border">
                 <div className="p-5 border-b border-border flex items-center justify-between">
@@ -296,14 +363,13 @@ const AdminDashboard = () => {
                       </div>
                       <div className="text-right flex items-center gap-3">
                         <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold ${statusColor[o.status] || ""}`}>{statusLabel[o.status]}</span>
-                        <p className="font-bold text-sm text-price">R$ {Number(o.total_amount).toFixed(2).replace(".",",")}</p>
+                        <p className="font-bold text-sm text-price">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</p>
                       </div>
                     </div>
                   ))}
                   {orders.length === 0 && <p className="p-5 text-center text-muted-foreground text-sm">Nenhum pedido ainda.</p>}
                 </div>
               </div>
-
               <div className="bg-card rounded-xl shadow-sm border border-border">
                 <div className="p-5 border-b border-border">
                   <h2 className="font-heading text-lg font-bold flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" /> Estoque Baixo (≤ 5)</h2>
@@ -336,7 +402,7 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="font-heading text-3xl font-bold">Produtos</h1>
-                <p className="text-muted-foreground text-sm mt-1">{products.length} produtos cadastrados</p>
+                <p className="text-muted-foreground text-sm mt-1">{filteredProducts.length} de {products.length} produtos</p>
               </div>
               <Button onClick={() => { setEditingProduct({}); resetProductForm(); }} className="shadow-md">
                 <Plus className="h-4 w-4 mr-2" /> Novo Produto
@@ -349,9 +415,7 @@ const AdminDashboard = () => {
                   <h3 className="font-heading text-xl font-bold">{editingProduct.id ? "Editar" : "Novo"} Produto</h3>
                   <button onClick={() => setEditingProduct(null)} className="p-1 hover:bg-muted rounded-lg transition-colors"><X className="h-5 w-5 text-muted-foreground" /></button>
                 </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Image upload area */}
                   <div className="lg:row-span-2">
                     <Label className="mb-2 block">Imagem do Produto</Label>
                     <div
@@ -361,12 +425,7 @@ const AdminDashboard = () => {
                       {productForm.image_url ? (
                         <div className="relative w-full">
                           <img src={productForm.image_url} alt="Preview" className="w-full h-48 object-contain rounded-lg" />
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setProductForm(prev => ({ ...prev, image_url: "" })); }}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:opacity-80"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); setProductForm(prev => ({ ...prev, image_url: "" })); }} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:opacity-80"><X className="h-3 w-3" /></button>
                         </div>
                       ) : (
                         <>
@@ -378,51 +437,40 @@ const AdminDashboard = () => {
                         </>
                       )}
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }}
-                    />
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }} />
                     <div className="mt-2">
-                      <Input
-                        value={productForm.image_url}
-                        onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-                        placeholder="Ou cole a URL da imagem..."
-                        className="text-xs"
-                      />
+                      <Input value={productForm.image_url} onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })} placeholder="Ou cole a URL da imagem..." className="text-xs" />
                     </div>
                   </div>
-
-                  {/* Form fields */}
                   <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2"><Label>Nome do Produto *</Label><Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="Ex: Gerador Diesel 100kVA" /></div>
                     <div><Label>Código / SKU</Label><Input value={productForm.sku} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="Ex: GEN-DSL-100" /></div>
                     <div>
                       <Label>Categoria</Label>
-                      <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.category_id} onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}>
+                      <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.category_id} onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value, subcategory_id: "" })}>
                         <option value="">Sem categoria</option>
                         {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
+                    {productForm.category_id && getCatSubcats(productForm.category_id).length > 0 && (
+                      <div>
+                        <Label>Subcategoria</Label>
+                        <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.subcategory_id} onChange={(e) => setProductForm({ ...productForm, subcategory_id: e.target.value })}>
+                          <option value="">Sem subcategoria</option>
+                          {getCatSubcats(productForm.category_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+                    )}
                     <div><Label>Preço de Venda (R$) *</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} placeholder="0.00" /></div>
                     <div><Label>Preço Original (R$)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Sem desconto" /></div>
                     <div><Label>Quantidade em Estoque *</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} placeholder="0" /></div>
                     <div className="flex items-end gap-6 pb-1">
-                      <div className="flex items-center gap-2">
-                        <Switch checked={productForm.is_active} onCheckedChange={(v) => setProductForm({ ...productForm, is_active: v })} />
-                        <Label className="mb-0">Ativo</Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={productForm.is_featured} onCheckedChange={(v) => setProductForm({ ...productForm, is_featured: v })} />
-                        <Label className="mb-0">Destaque</Label>
-                      </div>
+                      <div className="flex items-center gap-2"><Switch checked={productForm.is_active} onCheckedChange={(v) => setProductForm({ ...productForm, is_active: v })} /><Label className="mb-0">Ativo</Label></div>
+                      <div className="flex items-center gap-2"><Switch checked={productForm.is_featured} onCheckedChange={(v) => setProductForm({ ...productForm, is_featured: v })} /><Label className="mb-0">Destaque</Label></div>
                     </div>
                     <div className="md:col-span-2"><Label>Descrição</Label><Textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Descrição detalhada do produto..." /></div>
                   </div>
                 </div>
-
                 <div className="flex gap-3 mt-6 pt-5 border-t border-border">
                   <Button onClick={saveProduct} className="shadow-md">{editingProduct.id ? "Atualizar" : "Cadastrar"} Produto</Button>
                   <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
@@ -430,9 +478,38 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            <div className="relative mb-4 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Buscar por nome ou SKU..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            {/* Filters */}
+            <div className="bg-card rounded-xl border border-border p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
+                <SlidersHorizontal className="h-4 w-4" /> Filtros
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input className="pl-9" placeholder="Buscar por nome ou SKU..." value={productSearch} onChange={(e) => setProductSearch(e.target.value)} />
+                </div>
+                <select className="h-10 border border-input rounded-md px-3 text-sm bg-background min-w-[160px]" value={productCatFilter} onChange={(e) => setProductCatFilter(e.target.value)}>
+                  <option value="">Todas as categorias</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <select className="h-10 border border-input rounded-md px-3 text-sm bg-background" value={productStatusFilter} onChange={(e) => setProductStatusFilter(e.target.value)}>
+                  <option value="">Todos os status</option>
+                  <option value="active">Ativos</option>
+                  <option value="inactive">Inativos</option>
+                  <option value="featured">Em Destaque</option>
+                </select>
+                <select className="h-10 border border-input rounded-md px-3 text-sm bg-background" value={productStockFilter} onChange={(e) => setProductStockFilter(e.target.value)}>
+                  <option value="">Qualquer estoque</option>
+                  <option value="out">Sem estoque</option>
+                  <option value="low">Estoque baixo (≤5)</option>
+                  <option value="ok">Estoque ok</option>
+                </select>
+                {(productSearch || productCatFilter || productStatusFilter || productStockFilter) && (
+                  <Button variant="ghost" size="sm" onClick={() => { setProductSearch(""); setProductCatFilter(""); setProductStatusFilter(""); setProductStockFilter(""); }}>
+                    <X className="h-4 w-4 mr-1" /> Limpar
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
@@ -458,14 +535,15 @@ const AdminDashboard = () => {
                             <div>
                               <span className="font-medium block">{p.name}</span>
                               {p.is_featured && <span className="text-[10px] text-primary font-semibold">⭐ Destaque</span>}
+                              {(p as any).subcategory_id && <span className="text-[10px] text-muted-foreground block">{getSubcatName((p as any).subcategory_id)}</span>}
                             </div>
                           </div>
                         </td>
                         <td className="p-3.5 text-muted-foreground font-mono text-xs">{p.sku || "—"}</td>
                         <td className="p-3.5"><Badge variant="outline" className="font-normal">{getCategoryName(p.category_id)}</Badge></td>
                         <td className="p-3.5 text-right">
-                          {p.original_price && <span className="text-muted-foreground line-through text-xs block">R$ {Number(p.original_price).toFixed(2).replace(".",",")}</span>}
-                          <span className="font-bold text-price">R$ {Number(p.price).toFixed(2).replace(".",",")}</span>
+                          {p.original_price && <span className="text-muted-foreground line-through text-xs block">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</span>}
+                          <span className="font-bold text-price">R$ {Number(p.price).toFixed(2).replace(".", ",")}</span>
                         </td>
                         <td className="p-3.5 text-center">
                           <Badge variant={p.stock_quantity === 0 ? "destructive" : p.stock_quantity <= 5 ? "secondary" : "outline"}>{p.stock_quantity}</Badge>
@@ -492,10 +570,41 @@ const AdminDashboard = () => {
           <div>
             <div className="mb-6">
               <h1 className="font-heading text-3xl font-bold">Pedidos</h1>
-              <p className="text-muted-foreground text-sm mt-1">{orders.length} pedidos recebidos</p>
+              <p className="text-muted-foreground text-sm mt-1">{filteredOrders.length} de {orders.length} pedidos</p>
             </div>
+
+            {/* Order Filters */}
+            <div className="bg-card rounded-xl border border-border p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
+                <Filter className="h-4 w-4" /> Filtros
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input className="pl-9" placeholder="Buscar por ID..." value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)} />
+                </div>
+                <select className="h-10 border border-input rounded-md px-3 text-sm bg-background" value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)}>
+                  <option value="">Todos os status</option>
+                  {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">De:</span>
+                  <Input type="date" className="h-10 w-auto" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Até:</span>
+                  <Input type="date" className="h-10 w-auto" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
+                </div>
+                {(orderSearch || orderStatusFilter || orderDateFrom || orderDateTo) && (
+                  <Button variant="ghost" size="sm" onClick={() => { setOrderSearch(""); setOrderStatusFilter(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
+                    <X className="h-4 w-4 mr-1" /> Limpar
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-3">
-              {orders.map((o) => (
+              {filteredOrders.map((o) => (
                 <div key={o.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                   <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => loadOrderItems(o.id)}>
                     <div className="flex items-center gap-4">
@@ -507,7 +616,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex items-center gap-4">
                       <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor[o.status] || ""}`}>{statusLabel[o.status] || o.status}</span>
-                      <p className="font-heading font-bold text-price">R$ {Number(o.total_amount).toFixed(2).replace(".",",")}</p>
+                      <p className="font-heading font-bold text-price">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</p>
                       <select value={o.status} onClick={(e) => e.stopPropagation()} onChange={(e) => updateOrderStatus(o.id, e.target.value)} className="border border-input rounded-md px-2 py-1.5 text-xs bg-background">
                         {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
@@ -534,15 +643,15 @@ const AdminDashboard = () => {
                             <tr key={item.id}>
                               <td className="py-2.5">{item.product_name}</td>
                               <td className="py-2.5 text-center">{item.quantity}</td>
-                              <td className="py-2.5 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".",",")}</td>
-                              <td className="py-2.5 text-right font-bold text-price">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".",",")}</td>
+                              <td className="py-2.5 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".", ",")}</td>
+                              <td className="py-2.5 text-right font-bold text-price">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".", ",")}</td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
                           <tr className="border-t-2 border-border">
                             <td colSpan={3} className="pt-3 text-right font-heading font-bold">Total:</td>
-                            <td className="pt-3 text-right font-heading font-bold text-price text-lg">R$ {Number(o.total_amount).toFixed(2).replace(".",",")}</td>
+                            <td className="pt-3 text-right font-heading font-bold text-price text-lg">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</td>
                           </tr>
                         </tfoot>
                       </table>
@@ -550,7 +659,7 @@ const AdminDashboard = () => {
                   )}
                 </div>
               ))}
-              {orders.length === 0 && <div className="bg-card rounded-xl border border-border p-12 text-center"><ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">Nenhum pedido recebido ainda.</p></div>}
+              {filteredOrders.length === 0 && <div className="bg-card rounded-xl border border-border p-12 text-center"><ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">Nenhum pedido encontrado.</p></div>}
             </div>
           </div>
         )}
@@ -560,12 +669,17 @@ const AdminDashboard = () => {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="font-heading text-3xl font-bold">Categorias</h1>
-                <p className="text-muted-foreground text-sm mt-1">{categories.length} categorias</p>
+                <h1 className="font-heading text-3xl font-bold">Categorias & Subcategorias</h1>
+                <p className="text-muted-foreground text-sm mt-1">{categories.length} categorias, {subcategories.length} subcategorias</p>
               </div>
-              <Button onClick={() => { setEditingCategory({}); setCategoryForm({ name: "", slug: "", description: "", image_url: "" }); }} className="shadow-md">
-                <Plus className="h-4 w-4 mr-2" /> Nova Categoria
-              </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => { setEditingSubcategory({}); setSubForm({ name: "", slug: "", description: "", category_id: "" }); }}>
+                  <FolderTree className="h-4 w-4 mr-2" /> Nova Subcategoria
+                </Button>
+                <Button onClick={() => { setEditingCategory({}); setCategoryForm({ name: "", slug: "", description: "", image_url: "" }); }} className="shadow-md">
+                  <Plus className="h-4 w-4 mr-2" /> Nova Categoria
+                </Button>
+              </div>
             </div>
 
             {editingCategory !== null && (
@@ -578,27 +692,90 @@ const AdminDashboard = () => {
                   <div><Label>Descrição</Label><Input value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} /></div>
                 </div>
                 <div className="flex gap-3 mt-5">
-                  <Button onClick={saveCategory}>Salvar</Button>
+                  <Button onClick={saveCategory}>Salvar Categoria</Button>
                   <Button variant="outline" onClick={() => setEditingCategory(null)}>Cancelar</Button>
+                </div>
+              </div>
+            )}
+
+            {editingSubcategory !== null && (
+              <div className="bg-card rounded-xl shadow-lg border border-primary/20 p-6 mb-6">
+                <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2"><FolderTree className="h-5 w-5 text-primary" />{editingSubcategory.id ? "Editar" : "Nova"} Subcategoria</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Categoria Pai *</Label>
+                    <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={subForm.category_id} onChange={(e) => setSubForm({ ...subForm, category_id: e.target.value })}>
+                      <option value="">Selecione a categoria</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div><Label>Nome *</Label><Input value={subForm.name} onChange={(e) => setSubForm({ ...subForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })} /></div>
+                  <div><Label>Slug</Label><Input value={subForm.slug} onChange={(e) => setSubForm({ ...subForm, slug: e.target.value })} /></div>
+                  <div><Label>Descrição</Label><Input value={subForm.description} onChange={(e) => setSubForm({ ...subForm, description: e.target.value })} /></div>
+                </div>
+                <div className="flex gap-3 mt-5">
+                  <Button onClick={saveSubcategory}>Salvar Subcategoria</Button>
+                  <Button variant="outline" onClick={() => setEditingSubcategory(null)}>Cancelar</Button>
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {categories.map(c => (
-                <div key={c.id} className="bg-card rounded-xl shadow-sm border border-border p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-heading font-bold text-lg">{c.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 font-mono">/{c.slug}</p>
-                      {c.description && <p className="text-sm text-muted-foreground mt-2">{c.description}</p>}
-                      <Badge variant="outline" className="mt-3">{products.filter(p => p.category_id === c.id).length} produtos</Badge>
+                <div key={c.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-heading font-bold text-lg">{c.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">/{c.slug}</p>
+                        {c.description && <p className="text-sm text-muted-foreground mt-2">{c.description}</p>}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCategory(c); setCategoryForm({ name: c.name, slug: c.slug, description: c.description || "", image_url: c.image_url || "" }); }}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCategory(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCategory(c); setCategoryForm({ name: c.name, slug: c.slug, description: c.description || "", image_url: c.image_url || "" }); }}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCategory(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline">{products.filter(p => p.category_id === c.id).length} produtos</Badge>
+                      <Badge variant="secondary">{getCatSubcats(c.id).length} subcategorias</Badge>
                     </div>
                   </div>
+
+                  {/* Subcategories */}
+                  {getCatSubcats(c.id).length > 0 && (
+                    <div className="border-t border-border bg-muted/30">
+                      <button
+                        className="w-full flex items-center justify-between px-5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setExpandedCat(expandedCat === c.id ? null : c.id)}
+                      >
+                        <span className="flex items-center gap-1.5"><FolderTree className="h-3.5 w-3.5" /> Subcategorias</span>
+                        {expandedCat === c.id ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                      {expandedCat === c.id && (
+                        <div className="px-4 pb-3 space-y-1.5">
+                          {getCatSubcats(c.id).map(sub => (
+                            <div key={sub.id} className="flex items-center justify-between bg-background rounded-lg px-3 py-2 border border-border">
+                              <div>
+                                <span className="text-sm font-medium">{sub.name}</span>
+                                <span className="text-xs text-muted-foreground ml-2">/{sub.slug}</span>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingSubcategory(sub); setSubForm({ name: sub.name, slug: sub.slug, description: sub.description || "", category_id: sub.category_id }); }}><Edit className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteSubcategory(sub.id)}><Trash2 className="h-3 w-3" /></Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {getCatSubcats(c.id).length === 0 && (
+                    <div className="border-t border-border px-5 py-2.5">
+                      <button className="text-xs text-primary hover:underline flex items-center gap-1" onClick={() => { setEditingSubcategory({}); setSubForm({ name: "", slug: "", description: "", category_id: c.id }); }}>
+                        <Plus className="h-3 w-3" /> Adicionar subcategoria
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
               {categories.length === 0 && <p className="text-muted-foreground col-span-3 text-center py-12">Nenhuma categoria cadastrada.</p>}
@@ -611,8 +788,27 @@ const AdminDashboard = () => {
           <div>
             <div className="mb-6">
               <h1 className="font-heading text-3xl font-bold">Clientes</h1>
-              <p className="text-muted-foreground text-sm mt-1">{clients.length} clientes cadastrados</p>
+              <p className="text-muted-foreground text-sm mt-1">{filteredClients.length} de {clients.length} clientes</p>
             </div>
+
+            {/* Client Filters */}
+            <div className="bg-card rounded-xl border border-border p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
+                <Search className="h-4 w-4" /> Busca
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[250px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input className="pl-9" placeholder="Buscar por nome, email ou telefone..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                </div>
+                {clientSearch && (
+                  <Button variant="ghost" size="sm" onClick={() => setClientSearch("")}>
+                    <X className="h-4 w-4 mr-1" /> Limpar
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -625,7 +821,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {clients.map(c => (
+                    {filteredClients.map(c => (
                       <tr key={c.user_id} className="hover:bg-muted/30 transition-colors">
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
@@ -640,7 +836,7 @@ const AdminDashboard = () => {
                         <td className="p-3.5 text-muted-foreground">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
                       </tr>
                     ))}
-                    {clients.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum cliente cadastrado.</td></tr>}
+                    {filteredClients.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
                   </tbody>
                 </table>
               </div>
