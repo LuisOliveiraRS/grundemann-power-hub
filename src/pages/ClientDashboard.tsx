@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Search, Filter, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -36,6 +36,12 @@ const ClientDashboard = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Order filters
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("");
+  const [orderDateFrom, setOrderDateFrom] = useState("");
+  const [orderDateTo, setOrderDateTo] = useState("");
 
   useEffect(() => {
     if (user) { loadProfile(); loadOrders(); }
@@ -88,6 +94,16 @@ const ClientDashboard = () => {
     cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   };
 
+  const filteredOrders = orders.filter(o => {
+    if (orderSearch && !o.id.toLowerCase().includes(orderSearch.toLowerCase())) return false;
+    if (orderStatusFilter && o.status !== orderStatusFilter) return false;
+    if (orderDateFrom && new Date(o.created_at) < new Date(orderDateFrom)) return false;
+    if (orderDateTo && new Date(o.created_at) > new Date(orderDateTo + "T23:59:59")) return false;
+    return true;
+  });
+
+  const hasFilters = orderSearch || orderStatusFilter || orderDateFrom || orderDateTo;
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopBar />
@@ -98,7 +114,7 @@ const ClientDashboard = () => {
           <p className="text-muted-foreground mb-6">Gerencie seus dados e acompanhe seus pedidos</p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Sidebar - FIXED: using bg-sidebar instead of bg-sidebar-background */}
+            {/* Sidebar */}
             <div className="bg-sidebar rounded-xl shadow-lg p-4 space-y-1 h-fit">
               <div className="px-3 py-4 border-b border-sidebar-border mb-3">
                 <div className="flex items-center gap-3">
@@ -149,7 +165,6 @@ const ClientDashboard = () => {
                     Dados Pessoais
                   </h2>
                   <p className="text-muted-foreground text-sm mb-6">Mantenha seus dados atualizados para facilitar suas compras</p>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-1.5">
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nome Completo</Label>
@@ -190,7 +205,38 @@ const ClientDashboard = () => {
                     <div className="bg-primary/10 rounded-lg p-2"><Package className="h-5 w-5 text-primary" /></div>
                     Meus Pedidos
                   </h2>
-                  <p className="text-muted-foreground text-sm mb-6">Acompanhe o status dos seus pedidos</p>
+                  <p className="text-muted-foreground text-sm mb-4">Acompanhe o status dos seus pedidos</p>
+
+                  {/* Order Filters */}
+                  {orders.length > 0 && (
+                    <div className="bg-card rounded-xl border border-border p-4 mb-4">
+                      <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
+                        <Filter className="h-4 w-4" /> Filtrar Pedidos
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <select className="h-9 border border-input rounded-md px-3 text-sm bg-background flex-1 min-w-[140px]" value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)}>
+                          <option value="">Todos os status</option>
+                          {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">De:</span>
+                          <Input type="date" className="h-9 w-auto text-sm" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Até:</span>
+                          <Input type="date" className="h-9 w-auto text-sm" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
+                        </div>
+                        {hasFilters && (
+                          <Button variant="ghost" size="sm" onClick={() => { setOrderSearch(""); setOrderStatusFilter(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
+                            <X className="h-4 w-4 mr-1" /> Limpar
+                          </Button>
+                        )}
+                      </div>
+                      {hasFilters && (
+                        <p className="text-xs text-muted-foreground mt-2">{filteredOrders.length} pedido(s) encontrado(s)</p>
+                      )}
+                    </div>
+                  )}
 
                   {orders.length === 0 ? (
                     <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
@@ -201,9 +247,14 @@ const ClientDashboard = () => {
                       <p className="text-muted-foreground mb-6">Você ainda não fez nenhum pedido. Explore nossos produtos!</p>
                       <Button onClick={() => navigate("/")} className="shadow-md">Explorar Produtos</Button>
                     </div>
+                  ) : filteredOrders.length === 0 ? (
+                    <div className="bg-card rounded-xl border border-border p-8 text-center">
+                      <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Nenhum pedido encontrado com os filtros selecionados.</p>
+                    </div>
                   ) : (
                     <div className="space-y-3">
-                      {orders.map((order) => {
+                      {filteredOrders.map((order) => {
                         const StatusIcon = statusIcon[order.status] || Clock;
                         return (
                           <div key={order.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow">
@@ -219,7 +270,7 @@ const ClientDashboard = () => {
                               </div>
                               <div className="flex items-center gap-4">
                                 <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${statusColor[order.status] || ""}`}>{statusLabel[order.status] || order.status}</span>
-                                <p className="font-heading font-bold text-lg text-price">R$ {Number(order.total_amount).toFixed(2).replace(".",",")}</p>
+                                <p className="font-heading font-bold text-lg text-price">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
                                 {expandedOrder === order.id ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                               </div>
                             </div>
@@ -239,15 +290,15 @@ const ClientDashboard = () => {
                                       <tr key={item.id}>
                                         <td className="py-3 font-medium">{item.product_name}</td>
                                         <td className="py-3 text-center"><Badge variant="outline">{item.quantity}</Badge></td>
-                                        <td className="py-3 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".",",")}</td>
-                                        <td className="py-3 text-right font-bold text-price">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".",",")}</td>
+                                        <td className="py-3 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".", ",")}</td>
+                                        <td className="py-3 text-right font-bold text-price">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".", ",")}</td>
                                       </tr>
                                     ))}
                                   </tbody>
                                   <tfoot>
                                     <tr className="border-t-2 border-border">
                                       <td colSpan={3} className="pt-4 text-right font-heading font-bold text-base">Total:</td>
-                                      <td className="pt-4 text-right font-heading font-bold text-price text-lg">R$ {Number(order.total_amount).toFixed(2).replace(".",",")}</td>
+                                      <td className="pt-4 text-right font-heading font-bold text-price text-lg">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</td>
                                     </tr>
                                   </tfoot>
                                 </table>

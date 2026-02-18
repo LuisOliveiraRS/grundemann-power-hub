@@ -1,14 +1,43 @@
 import { Search, User, ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import CartDrawer from "@/components/CartDrawer";
 import logo from "@/assets/logo-grundemann.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) { setCartCount(0); return; }
+    loadCartCount();
+
+    const channel = supabase
+      .channel(`cart-count-${user.id}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "cart_items",
+        filter: `user_id=eq.${user.id}`,
+      }, () => loadCartCount())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  const loadCartCount = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("cart_items")
+      .select("quantity")
+      .eq("user_id", user.id);
+    const total = (data || []).reduce((s, i) => s + (i.quantity || 1), 0);
+    setCartCount(total);
+  };
 
   return (
     <>
@@ -49,11 +78,16 @@ const Header = () => {
               className="relative flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center px-1 shadow-sm">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
       </header>
-      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
+      <CartDrawer open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) loadCartCount(); }} />
     </>
   );
 };
