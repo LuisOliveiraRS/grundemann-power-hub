@@ -22,18 +22,8 @@ const defaultCategories = [
   { id: "6", name: "Serviços Técnicos", slug: "servicos-tecnicos", icon: ShieldCheck },
 ];
 
-interface DBCategory {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
-  slug: string;
-  category_id: string;
-}
+interface DBCategory { id: string; name: string; slug: string; }
+interface Subcategory { id: string; name: string; slug: string; category_id: string; }
 
 const CategoryNav = () => {
   const [categories, setCategories] = useState<DBCategory[]>([]);
@@ -68,9 +58,9 @@ const CategoryNav = () => {
   const getSubcats = (catId: string) => subcategories.filter(s => s.category_id === catId);
 
   return (
-    <nav className="bg-nav relative z-30" ref={navRef}>
+    <nav className="bg-nav relative z-50" ref={navRef}>
       <div className="container">
-        <ul className="flex items-center justify-between overflow-x-auto">
+        <ul className="flex items-center justify-between">
           {items.map((cat) => {
             const subs = getSubcats(cat.id);
             const hasSubcats = subs.length > 0;
@@ -78,7 +68,12 @@ const CategoryNav = () => {
             const Icon = cat.icon;
 
             return (
-              <li key={cat.slug} className="relative">
+              <li
+                key={cat.slug}
+                className="relative group"
+                onMouseEnter={() => hasSubcats && setOpenCat(cat.id)}
+                onMouseLeave={() => hasSubcats && setOpenCat(null)}
+              >
                 {hasSubcats ? (
                   <button
                     onClick={() => setOpenCat(isOpen ? null : cat.id)}
@@ -87,7 +82,7 @@ const CategoryNav = () => {
                     <Icon className="h-5 w-5" />
                     <span className="flex items-center gap-1">
                       {cat.name}
-                      <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                     </span>
                   </button>
                 ) : (
@@ -100,26 +95,28 @@ const CategoryNav = () => {
                   </Link>
                 )}
 
-                {/* Dropdown subcategories */}
+                {/* Dropdown - overlays content below */}
                 {hasSubcats && isOpen && (
-                  <div className="absolute top-full left-0 min-w-[200px] bg-card border border-border rounded-b-lg shadow-xl overflow-hidden">
-                    <Link
-                      to={`/categoria/${cat.slug}`}
-                      onClick={() => setOpenCat(null)}
-                      className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors font-semibold border-b border-border"
-                    >
-                      Ver todos em {cat.name}
-                    </Link>
-                    {subs.map((sub) => (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[220px] bg-card border border-border rounded-lg shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="py-1">
                       <Link
-                        key={sub.id}
-                        to={`/categoria/${cat.slug}/${sub.slug}`}
+                        to={`/categoria/${cat.slug}`}
                         onClick={() => setOpenCat(null)}
-                        className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                        className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors font-semibold border-b border-border"
                       >
-                        {sub.name}
+                        Ver todos em {cat.name}
                       </Link>
-                    ))}
+                      {subs.map((sub) => (
+                        <Link
+                          key={sub.id}
+                          to={`/categoria/${cat.slug}/${sub.slug}`}
+                          onClick={() => setOpenCat(null)}
+                          className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                        >
+                          {sub.name}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 )}
               </li>

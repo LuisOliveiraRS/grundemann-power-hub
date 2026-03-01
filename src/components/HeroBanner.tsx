@@ -15,6 +15,9 @@ const staticSlides = [
     cta: "Confira",
     ctaLink: "/categoria/geradores-diesel",
     badge: null,
+    price: null as number | null,
+    originalPrice: null as number | null,
+    discount: 0,
   },
   {
     image: banner2,
@@ -23,6 +26,9 @@ const staticSlides = [
     cta: "Ver Peças",
     ctaLink: "/categoria/pecas-e-componentes",
     badge: null,
+    price: null as number | null,
+    originalPrice: null as number | null,
+    discount: 0,
   },
   {
     image: banner3,
@@ -31,16 +37,11 @@ const staticSlides = [
     cta: "Agendar Serviço",
     ctaLink: "/categoria/manutencao",
     badge: null,
+    price: null as number | null,
+    originalPrice: null as number | null,
+    discount: 0,
   },
 ];
-
-interface OfferProduct {
-  id: string;
-  name: string;
-  price: number;
-  original_price: number;
-  image_url: string | null;
-}
 
 interface Slide {
   image: string;
@@ -49,9 +50,15 @@ interface Slide {
   cta: string;
   ctaLink: string;
   badge: string | null;
-  discount?: number;
-  productId?: string;
+  price: number | null;
+  originalPrice: number | null;
+  discount: number;
 }
+
+const formatPrice = (value: number) => {
+  const [reais, cents] = value.toFixed(2).split(".");
+  return { reais, cents };
+};
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
@@ -78,19 +85,20 @@ const HeroBanner = () => {
 
       if (!data || data.length === 0) return;
 
-      const offerSlides: Slide[] = (data as OfferProduct[])
-        .filter((p) => p.original_price && p.original_price > p.price)
-        .map((p) => {
+      const offerSlides: Slide[] = data
+        .filter((p: any) => p.original_price && p.original_price > p.price)
+        .map((p: any) => {
           const discount = Math.round(((p.original_price - p.price) / p.original_price) * 100);
           return {
             image: p.image_url || banner1,
             title: p.name,
-            subtitle: `De R$ ${p.original_price.toFixed(2).replace(".", ",")} por R$ ${p.price.toFixed(2).replace(".", ",")}`,
+            subtitle: "",
             cta: "Ver Oferta",
             ctaLink: `/produto/${p.id}`,
             badge: `${discount}% OFF`,
+            price: p.price,
+            originalPrice: p.original_price,
             discount,
-            productId: p.id,
           };
         });
 
@@ -119,30 +127,69 @@ const HeroBanner = () => {
             alt={currentSlide.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent" />
           <div className="absolute inset-0 flex items-center">
             <div className="container">
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="max-w-lg"
+                className="max-w-xl"
               >
                 {currentSlide.badge && (
-                  <div className="inline-flex items-center gap-1.5 bg-accent text-accent-foreground rounded-full px-3 py-1 text-sm font-bold mb-3 shadow-lg">
-                    <Tag className="h-3.5 w-3.5" />
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="inline-flex items-center gap-1.5 bg-destructive text-destructive-foreground rounded-full px-4 py-1.5 text-sm font-extrabold mb-4 shadow-lg"
+                  >
+                    <Tag className="h-4 w-4" />
                     {currentSlide.badge}
-                  </div>
+                  </motion.div>
                 )}
-                <h2 className="font-heading text-4xl md:text-5xl font-extrabold text-background leading-tight whitespace-pre-line line-clamp-3">
+
+                <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-background leading-tight whitespace-pre-line line-clamp-3">
                   {currentSlide.title}
                 </h2>
-                <p className="mt-3 text-lg text-background/80">
-                  {currentSlide.subtitle}
-                </p>
+
+                {/* Price Display - rp3shop style */}
+                {currentSlide.price ? (
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-4"
+                  >
+                    {currentSlide.originalPrice && (
+                      <p className="text-background/60 line-through text-lg font-medium">
+                        De R$ {currentSlide.originalPrice.toFixed(2).replace(".", ",")}
+                      </p>
+                    )}
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-background/80 text-xl font-bold">Por</span>
+                      <span className="text-accent font-heading text-2xl font-extrabold">R$</span>
+                      <span className="text-accent font-heading text-7xl md:text-8xl font-black leading-none tracking-tight">
+                        {formatPrice(currentSlide.price).reais}
+                      </span>
+                      <span className="text-accent font-heading text-3xl md:text-4xl font-extrabold self-start mt-1">
+                        ,{formatPrice(currentSlide.price).cents}
+                      </span>
+                    </div>
+                    <p className="text-background/70 text-sm mt-1">
+                      ou 3x de R$ {(currentSlide.price / 3).toFixed(2).replace(".", ",")} <span className="text-accent font-bold">Sem juros</span>
+                    </p>
+                  </motion.div>
+                ) : (
+                  currentSlide.subtitle && (
+                    <p className="mt-3 text-lg text-background/80">
+                      {currentSlide.subtitle}
+                    </p>
+                  )
+                )}
+
                 <button
                   onClick={() => navigate(currentSlide.ctaLink)}
-                  className="mt-6 rounded-lg bg-primary px-8 py-3 font-heading font-bold text-primary-foreground text-lg hover:opacity-90 transition-opacity shadow-lg"
+                  className="mt-6 rounded-lg bg-primary px-10 py-3.5 font-heading font-extrabold text-primary-foreground text-lg uppercase tracking-wide hover:opacity-90 transition-opacity shadow-xl"
                 >
                   {currentSlide.cta}
                 </button>
@@ -153,10 +200,10 @@ const HeroBanner = () => {
       </AnimatePresence>
 
       {/* Controls */}
-      <button onClick={prev} className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/20 p-2 text-background hover:bg-background/40 transition-colors">
+      <button onClick={prev} className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/20 p-2 text-background hover:bg-background/40 transition-colors backdrop-blur-sm">
         <ChevronLeft className="h-6 w-6" />
       </button>
-      <button onClick={next} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/20 p-2 text-background hover:bg-background/40 transition-colors">
+      <button onClick={next} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/20 p-2 text-background hover:bg-background/40 transition-colors backdrop-blur-sm">
         <ChevronRight className="h-6 w-6" />
       </button>
 
@@ -167,7 +214,7 @@ const HeroBanner = () => {
             key={i}
             onClick={() => setCurrent(i)}
             className={`transition-all duration-300 rounded-full ${
-              i === current ? "bg-primary w-6 h-3" : "bg-background/50 w-3 h-3"
+              i === current ? "bg-primary w-8 h-3" : "bg-background/50 w-3 h-3"
             }`}
           />
         ))}

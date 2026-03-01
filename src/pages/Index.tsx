@@ -6,6 +6,7 @@ import BenefitsBar from "@/components/BenefitsBar";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoriesSection from "@/components/CategoriesSection";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const Index = () => {
   return (
@@ -17,6 +18,7 @@ const Index = () => {
       <BenefitsBar />
       <FeaturedProducts />
       <CategoriesSection />
+      <WhatsAppButton />
       <Footer />
     </div>
   );

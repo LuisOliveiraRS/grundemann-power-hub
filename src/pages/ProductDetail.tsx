@@ -6,22 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Minus, Plus, ArrowLeft, Package } from "lucide-react";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Package, MessageCircle } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  sku: string | null;
-  price: number;
-  original_price: number | null;
-  stock_quantity: number;
-  is_active: boolean;
-  image_url: string | null;
-  category_id: string | null;
+  id: string; name: string; description: string | null; sku: string | null;
+  price: number; original_price: number | null; stock_quantity: number;
+  is_active: boolean; image_url: string | null; category_id: string | null;
 }
 
 const ProductDetail = () => {
@@ -34,9 +28,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState("");
 
-  useEffect(() => {
-    if (id) loadProduct();
-  }, [id]);
+  useEffect(() => { if (id) loadProduct(); }, [id]);
 
   const loadProduct = async () => {
     const { data } = await supabase.from("products").select("*").eq("id", id).single();
@@ -53,10 +45,7 @@ const ProductDetail = () => {
   const addToCart = async () => {
     if (!user) { navigate("/auth"); return; }
     if (!product) return;
-
-    // Check existing cart item
     const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).single();
-    
     if (existing) {
       await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id);
     } else {
@@ -95,7 +84,6 @@ const ProductDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Voltar
           </button>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Image */}
             <div className="bg-card rounded-xl border border-border p-8 flex items-center justify-center aspect-square">
               {product.image_url ? (
                 <img src={product.image_url} alt={product.name} className="max-h-full max-w-full object-contain" />
@@ -104,7 +92,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Info */}
             <div>
               {categoryName && <p className="text-sm text-muted-foreground mb-2">{categoryName}</p>}
               <h1 className="font-heading text-2xl md:text-3xl font-bold mb-3">{product.name}</h1>
@@ -119,7 +106,6 @@ const ProductDetail = () => {
               <p className="font-heading text-4xl font-extrabold text-price mb-1">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
               <p className="text-sm text-muted-foreground mb-6">ou 3x de R$ {(product.price / 3).toFixed(2).replace(".",",")} sem juros</p>
 
-              {/* Stock */}
               <div className="mb-6">
                 {product.stock_quantity > 0 ? (
                   <Badge variant="outline" className="text-primary border-primary"><Package className="h-3 w-3 mr-1" /> {product.stock_quantity} em estoque</Badge>
@@ -128,7 +114,6 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* Quantity */}
               {product.stock_quantity > 0 && (
                 <>
                   <div className="flex items-center gap-3 mb-6">
@@ -139,13 +124,19 @@ const ProductDetail = () => {
                       <button onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))} className="p-2 hover:bg-muted rounded-r-lg"><Plus className="h-4 w-4" /></button>
                     </div>
                   </div>
-                  <Button size="lg" className="w-full md:w-auto text-base px-8" onClick={addToCart}>
-                    <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button size="lg" className="text-base px-8" onClick={addToCart}>
+                      <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
+                    </Button>
+                    <WhatsAppButton
+                      floating={false}
+                      message={`Olá! Tenho interesse no produto: ${product.name} (R$ ${product.price.toFixed(2).replace(".",",")})`}
+                      label="Comprar via WhatsApp"
+                    />
+                  </div>
                 </>
               )}
 
-              {/* Description */}
               {product.description && (
                 <div className="mt-8 border-t border-border pt-6">
                   <h3 className="font-heading font-bold text-lg mb-3">Descrição</h3>
@@ -156,6 +147,7 @@ const ProductDetail = () => {
           </div>
         </div>
       </div>
+      <WhatsAppButton message={`Olá! Estou vendo o produto: ${product.name}`} />
       <Footer />
     </div>
   );
