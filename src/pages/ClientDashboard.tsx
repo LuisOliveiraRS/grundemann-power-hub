@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Search, Filter, X } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 interface Profile {
   full_name: string; email: string; phone: string;
@@ -37,8 +38,6 @@ const ClientDashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Order filters
-  const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -75,6 +74,18 @@ const ClientDashboard = () => {
     setLoading(false);
   };
 
+  const cancelOrder = async (orderId: string) => {
+    if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
+    const { error } = await supabase.from("orders").update({ status: "cancelled" as any }).eq("id", orderId);
+    if (error) {
+      toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" });
+    } else {
+      await supabase.from("order_status_history").insert({ order_id: orderId, status: "cancelled" as any, notes: "Cancelado pelo cliente" });
+      toast({ title: "Pedido cancelado com sucesso!" });
+      loadOrders();
+    }
+  };
+
   const statusLabel: Record<string, string> = {
     pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
     shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
@@ -94,15 +105,16 @@ const ClientDashboard = () => {
     cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   };
 
+  const canCancel = (status: string) => ["pending", "confirmed"].includes(status);
+
   const filteredOrders = orders.filter(o => {
-    if (orderSearch && !o.id.toLowerCase().includes(orderSearch.toLowerCase())) return false;
     if (orderStatusFilter && o.status !== orderStatusFilter) return false;
     if (orderDateFrom && new Date(o.created_at) < new Date(orderDateFrom)) return false;
     if (orderDateTo && new Date(o.created_at) > new Date(orderDateTo + "T23:59:59")) return false;
     return true;
   });
 
-  const hasFilters = orderSearch || orderStatusFilter || orderDateFrom || orderDateTo;
+  const hasFilters = orderStatusFilter || orderDateFrom || orderDateTo;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -127,24 +139,10 @@ const ClientDashboard = () => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setTab("profile")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  tab === "profile"
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
-                }`}
-              >
+              <button onClick={() => setTab("profile")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "profile" ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
                 <User className="h-5 w-5" /> Meus Dados
               </button>
-              <button
-                onClick={() => setTab("orders")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  tab === "orders"
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
-                }`}
-              >
+              <button onClick={() => setTab("orders")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "orders" ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
                 <Package className="h-5 w-5" /> Meus Pedidos
                 {orders.length > 0 && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{orders.length}</Badge>}
               </button>
@@ -207,7 +205,6 @@ const ClientDashboard = () => {
                   </h2>
                   <p className="text-muted-foreground text-sm mb-4">Acompanhe o status dos seus pedidos</p>
 
-                  {/* Order Filters */}
                   {orders.length > 0 && (
                     <div className="bg-card rounded-xl border border-border p-4 mb-4">
                       <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
@@ -227,29 +224,25 @@ const ClientDashboard = () => {
                           <Input type="date" className="h-9 w-auto text-sm" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
                         </div>
                         {hasFilters && (
-                          <Button variant="ghost" size="sm" onClick={() => { setOrderSearch(""); setOrderStatusFilter(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
+                          <Button variant="ghost" size="sm" onClick={() => { setOrderStatusFilter(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
                             <X className="h-4 w-4 mr-1" /> Limpar
                           </Button>
                         )}
                       </div>
-                      {hasFilters && (
-                        <p className="text-xs text-muted-foreground mt-2">{filteredOrders.length} pedido(s) encontrado(s)</p>
-                      )}
+                      {hasFilters && <p className="text-xs text-muted-foreground mt-2">{filteredOrders.length} pedido(s) encontrado(s)</p>}
                     </div>
                   )}
 
                   {orders.length === 0 ? (
                     <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
-                      <div className="bg-muted rounded-full p-6 w-fit mx-auto mb-4">
-                        <ShoppingCart className="h-12 w-12 text-muted-foreground" />
-                      </div>
+                      <div className="bg-muted rounded-full p-6 w-fit mx-auto mb-4"><ShoppingCart className="h-12 w-12 text-muted-foreground" /></div>
                       <h3 className="font-heading font-bold text-lg mb-2">Nenhum pedido ainda</h3>
                       <p className="text-muted-foreground mb-6">Você ainda não fez nenhum pedido. Explore nossos produtos!</p>
                       <Button onClick={() => navigate("/")} className="shadow-md">Explorar Produtos</Button>
                     </div>
                   ) : filteredOrders.length === 0 ? (
                     <div className="bg-card rounded-xl border border-border p-8 text-center">
-                      <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                       <p className="text-muted-foreground">Nenhum pedido encontrado com os filtros selecionados.</p>
                     </div>
                   ) : (
@@ -258,19 +251,27 @@ const ClientDashboard = () => {
                         const StatusIcon = statusIcon[order.status] || Clock;
                         return (
                           <div key={order.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="p-5 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => loadOrderItems(order.id)}>
+                            <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors gap-3" onClick={() => loadOrderItems(order.id)}>
                               <div className="flex items-center gap-4">
-                                <div className="bg-muted rounded-lg p-2.5">
-                                  <StatusIcon className="h-5 w-5 text-muted-foreground" />
-                                </div>
+                                <div className="bg-muted rounded-lg p-2.5"><StatusIcon className="h-5 w-5 text-muted-foreground" /></div>
                                 <div>
                                   <p className="font-heading font-bold">Pedido #{order.id.slice(0, 8)}</p>
                                   <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-3 flex-wrap">
                                 <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${statusColor[order.status] || ""}`}>{statusLabel[order.status] || order.status}</span>
                                 <p className="font-heading font-bold text-lg text-price">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
+                                {canCancel(order.status) && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                    onClick={(e) => { e.stopPropagation(); cancelOrder(order.id); }}
+                                  >
+                                    <XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar
+                                  </Button>
+                                )}
                                 {expandedOrder === order.id ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                               </div>
                             </div>
@@ -315,6 +316,7 @@ const ClientDashboard = () => {
           </div>
         </div>
       </div>
+      <WhatsAppButton />
       <Footer />
     </div>
   );
