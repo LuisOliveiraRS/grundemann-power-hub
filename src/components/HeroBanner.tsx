@@ -6,8 +6,50 @@ import { useNavigate } from "react-router-dom";
 import banner1 from "@/assets/banner-1.jpg";
 import banner2 from "@/assets/banner-2.jpg";
 import banner3 from "@/assets/banner-3.jpg";
+import mlFiltro13hp from "@/assets/ml-filtro-ar-13hp.webp";
+import mlCarburador from "@/assets/ml-carburador.webp";
+import mlFiltro8hp from "@/assets/ml-filtro-ar-8hp.webp";
 
-const staticSlides = [
+const mlProductSlides: Slide[] = [
+  {
+    image: mlFiltro13hp,
+    title: "Filtro De Ar Motor\nGasolina 13hp 15hp",
+    subtitle: "Branco Buffalo Toyama",
+    cta: "Comprar no ML",
+    ctaLink: "https://www.mercadolivre.com.br/filtro-de-ar-motor-gasolina-13hp-15hp-branco-buffalo-toyama/p/MLB23326643",
+    badge: "⭐ 4.8 (26)",
+    price: 79,
+    originalPrice: null,
+    discount: 0,
+    isExternal: true,
+  },
+  {
+    image: mlCarburador,
+    title: "Carburador Para\nGeradores 2500w 3000w",
+    subtitle: "Com Motor 5,5hp 6,5hp",
+    cta: "Comprar no ML",
+    ctaLink: "https://www.mercadolivre.com.br/carburador-para-geradores-2500w-3000w-com-motor-55hp-65hp/p/MLB47832188",
+    badge: "Frete Grátis",
+    price: 128.79,
+    originalPrice: null,
+    discount: 0,
+    isExternal: true,
+  },
+  {
+    image: mlFiltro8hp,
+    title: "Elemento Filtro De Ar\nMotor 8hp E 9hp",
+    subtitle: "Branco Buffalo Toyama",
+    cta: "Comprar no ML",
+    ctaLink: "https://produto.mercadolivre.com.br/MLB-4497730003-elemento-filtro-de-ar-motor-8hp-e-9hp-branco-buffalo-toyama-_JM",
+    badge: "Frete Grátis",
+    price: 59,
+    originalPrice: null,
+    discount: 0,
+    isExternal: true,
+  },
+];
+
+const staticSlides: Slide[] = [
   {
     image: banner1,
     title: "Geradores Diesel\nde Alta Potência",
@@ -15,9 +57,10 @@ const staticSlides = [
     cta: "Confira",
     ctaLink: "/categoria/geradores-diesel",
     badge: null,
-    price: null as number | null,
-    originalPrice: null as number | null,
+    price: null,
+    originalPrice: null,
     discount: 0,
+    isExternal: false,
   },
   {
     image: banner2,
@@ -26,9 +69,10 @@ const staticSlides = [
     cta: "Ver Peças",
     ctaLink: "/categoria/pecas-e-componentes",
     badge: null,
-    price: null as number | null,
-    originalPrice: null as number | null,
+    price: null,
+    originalPrice: null,
     discount: 0,
+    isExternal: false,
   },
   {
     image: banner3,
@@ -37,9 +81,10 @@ const staticSlides = [
     cta: "Agendar Serviço",
     ctaLink: "/categoria/manutencao",
     badge: null,
-    price: null as number | null,
-    originalPrice: null as number | null,
+    price: null,
+    originalPrice: null,
     discount: 0,
+    isExternal: false,
   },
 ];
 
@@ -53,6 +98,7 @@ interface Slide {
   price: number | null;
   originalPrice: number | null;
   discount: number;
+  isExternal?: boolean;
 }
 
 const formatPrice = (value: number) => {
@@ -62,7 +108,7 @@ const formatPrice = (value: number) => {
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
-  const [slides, setSlides] = useState<Slide[]>(staticSlides);
+  const [slides, setSlides] = useState<Slide[]>([...mlProductSlides, ...staticSlides]);
   const navigate = useNavigate();
 
   const next = useCallback(() => setCurrent((c) => (c + 1) % slides.length), [slides.length]);
@@ -103,7 +149,7 @@ const HeroBanner = () => {
         });
 
       if (offerSlides.length > 0) {
-        setSlides([...offerSlides, ...staticSlides]);
+        setSlides([...mlProductSlides, ...offerSlides, ...staticSlides]);
       }
     };
     loadOffers();
@@ -125,9 +171,9 @@ const HeroBanner = () => {
           <img
             src={currentSlide.image}
             alt={currentSlide.title}
-            className="w-full h-full object-cover"
+            className={`w-full h-full ${currentSlide.isExternal ? 'object-contain bg-background/95' : 'object-cover'}`}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent" />
+          <div className={`absolute inset-0 ${currentSlide.isExternal ? 'bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40' : 'bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent'}`} />
           <div className="absolute inset-0 flex items-center">
             <div className="container">
               <motion.div
@@ -188,7 +234,13 @@ const HeroBanner = () => {
                 )}
 
                 <button
-                  onClick={() => navigate(currentSlide.ctaLink)}
+                  onClick={() => {
+                    if (currentSlide.isExternal) {
+                      window.open(currentSlide.ctaLink, '_blank');
+                    } else {
+                      navigate(currentSlide.ctaLink);
+                    }
+                  }}
                   className="mt-6 rounded-lg bg-primary px-10 py-3.5 font-heading font-extrabold text-primary-foreground text-lg uppercase tracking-wide hover:opacity-90 transition-opacity shadow-xl"
                 >
                   {currentSlide.cta}
