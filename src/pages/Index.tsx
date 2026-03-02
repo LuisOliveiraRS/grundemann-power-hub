@@ -5,6 +5,7 @@ import HeroBanner from "@/components/HeroBanner";
 import BenefitsBar from "@/components/BenefitsBar";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoriesSection from "@/components/CategoriesSection";
+import MercadoLivreSection from "@/components/MercadoLivreSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
@@ -16,6 +17,7 @@ const Index = () => {
       <CategoryNav />
       <HeroBanner />
       <BenefitsBar />
+      <MercadoLivreSection />
       <FeaturedProducts />
       <CategoriesSection />
       <WhatsAppButton />
