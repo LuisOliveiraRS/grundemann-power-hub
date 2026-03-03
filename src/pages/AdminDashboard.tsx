@@ -9,10 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
+import OrderPrintSheet from "@/components/OrderPrintSheet";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
@@ -25,7 +26,7 @@ interface OrderWithItems {
   id: string; user_id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
   items?: OrderItem[];
-  profile?: { full_name: string; email: string; phone: string | null } | null;
+  profile?: ProfileFull | null;
 }
 
 interface OrderItem {
@@ -40,9 +41,12 @@ interface Subcategory {
   id: string; name: string; slug: string; category_id: string; description: string | null;
 }
 
-interface Profile {
+interface ProfileFull {
   user_id: string; full_name: string; email: string; phone: string | null;
-  city: string | null; state: string | null;
+  city: string | null; state: string | null; address: string | null;
+  address_number: string | null; address_complement: string | null;
+  neighborhood: string | null; zip_code: string | null;
+  cpf_cnpj: string | null; company_name: string | null; notes: string | null;
 }
 
 const AdminDashboard = () => {
@@ -54,11 +58,13 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [clients, setClients] = useState<Profile[]>([]);
+  const [clients, setClients] = useState<ProfileFull[]>([]);
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, pendingOrders: 0, totalClients: 0 });
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+  const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
 
   // Product filters
   const [productSearch, setProductSearch] = useState("");
@@ -72,8 +78,14 @@ const AdminDashboard = () => {
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
 
-  // Client filters
+  // Client filters & editing
   const [clientSearch, setClientSearch] = useState("");
+  const [editingClient, setEditingClient] = useState<Partial<ProfileFull> | null>(null);
+  const [clientForm, setClientForm] = useState({
+    full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
+    address: "", address_number: "", address_complement: "", neighborhood: "",
+    city: "", state: "", zip_code: "", notes: ""
+  });
 
   // Category management
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
@@ -102,7 +114,7 @@ const AdminDashboard = () => {
     const prods = (prodRes.data || []) as Product[];
     const ords = (ordRes.data || []) as OrderWithItems[];
     const cats = (catRes.data || []) as Category[];
-    const cls = (clientRes.data || []) as Profile[];
+    const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
     setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs);
     setStats({
@@ -119,10 +131,34 @@ const AdminDashboard = () => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, items: (data || []) as OrderItem[] } : o));
     const order = orders.find(o => o.id === orderId);
     if (order) {
-      const { data: prof } = await supabase.from("profiles").select("full_name, email, phone").eq("user_id", order.user_id).single();
-      if (prof) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, profile: prof } : o));
+      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
+      if (prof) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, profile: prof as ProfileFull } : o));
     }
     setExpandedOrder(orderId);
+  };
+
+  const printOrder = async (order: OrderWithItems) => {
+    // Ensure items and profile are loaded
+    let orderToPrint = { ...order };
+    if (!orderToPrint.items) {
+      const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
+      orderToPrint.items = (data || []) as OrderItem[];
+    }
+    if (!orderToPrint.profile) {
+      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
+      if (prof) orderToPrint.profile = prof as ProfileFull;
+    }
+    setPrintingOrder(orderToPrint);
+    setTimeout(() => {
+      const printContent = printRef.current;
+      if (!printContent) return;
+      const win = window.open("", "_blank");
+      if (!win) { toast({ title: "Erro", description: "Permita pop-ups para imprimir.", variant: "destructive" }); return; }
+      win.document.write(`<!DOCTYPE html><html><head><title>Pedido #${order.id.slice(0, 8)}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); win.close(); }, 500);
+    }, 200);
   };
 
   const uploadImage = async (file: File) => {
@@ -231,6 +267,51 @@ const AdminDashboard = () => {
     toast({ title: `Status atualizado para ${statusLabel[status]}` }); loadAll();
   };
 
+  // Client CRUD
+  const resetClientForm = () => setClientForm({
+    full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
+    address: "", address_number: "", address_complement: "", neighborhood: "",
+    city: "", state: "", zip_code: "", notes: ""
+  });
+
+  const editClient = (c: ProfileFull) => {
+    setEditingClient(c);
+    setClientForm({
+      full_name: c.full_name || "", email: c.email || "", phone: c.phone || "",
+      cpf_cnpj: c.cpf_cnpj || "", company_name: c.company_name || "",
+      address: c.address || "", address_number: c.address_number || "",
+      address_complement: c.address_complement || "", neighborhood: c.neighborhood || "",
+      city: c.city || "", state: c.state || "", zip_code: c.zip_code || "",
+      notes: c.notes || ""
+    });
+    setTab("clients");
+  };
+
+  const saveClient = async () => {
+    const data: any = {
+      full_name: clientForm.full_name, email: clientForm.email, phone: clientForm.phone || null,
+      cpf_cnpj: clientForm.cpf_cnpj || null, company_name: clientForm.company_name || null,
+      address: clientForm.address || null, address_number: clientForm.address_number || null,
+      address_complement: clientForm.address_complement || null, neighborhood: clientForm.neighborhood || null,
+      city: clientForm.city || null, state: clientForm.state || null,
+      zip_code: clientForm.zip_code || null, notes: clientForm.notes || null,
+    };
+    if (editingClient?.user_id) {
+      const { error } = await supabase.from("profiles").update(data).eq("user_id", editingClient.user_id);
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Cliente atualizado!" });
+    } else {
+      toast({ title: "Info", description: "Novos clientes são criados pelo cadastro na loja." }); return;
+    }
+    setEditingClient(null); resetClientForm(); loadAll();
+  };
+
+  const deleteClient = async (userId: string) => {
+    if (!confirm("Excluir este cliente? Essa ação é irreversível.")) return;
+    await supabase.from("profiles").delete().eq("user_id", userId);
+    toast({ title: "Cliente excluído!" }); loadAll();
+  };
+
   const statusLabel: Record<string, string> = {
     pending: "Pendente", confirmed: "Confirmado", processing: "Processando",
     shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
@@ -277,7 +358,7 @@ const AdminDashboard = () => {
   const filteredClients = clients.filter(c => {
     if (!clientSearch) return true;
     const s = clientSearch.toLowerCase();
-    return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s);
+    return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s) || (c.cpf_cnpj || "").toLowerCase().includes(s);
   });
 
   const getCategoryName = (id: string | null) => categories.find(c => c.id === id)?.name || "—";
@@ -286,6 +367,19 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen flex bg-muted/50">
+      {/* Hidden print area */}
+      <div className="hidden">
+        <div ref={printRef}>
+          {printingOrder && (
+            <OrderPrintSheet order={{
+              ...printingOrder,
+              items: printingOrder.items || [],
+              profile: printingOrder.profile || null,
+            }} />
+          )}
+        </div>
+      </div>
+
       {/* Sidebar */}
       <aside className="w-64 bg-sidebar text-sidebar-foreground min-h-screen flex flex-col shadow-xl">
         <div className="p-5 border-b border-sidebar-border">
@@ -615,6 +709,9 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
+                      <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printOrder(o); }}>
+                        <Printer className="h-3.5 w-3.5" /> Imprimir
+                      </Button>
                       <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor[o.status] || ""}`}>{statusLabel[o.status] || o.status}</span>
                       <p className="font-heading font-bold text-price">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</p>
                       <select value={o.status} onClick={(e) => e.stopPropagation()} onChange={(e) => updateOrderStatus(o.id, e.target.value)} className="border border-input rounded-md px-2 py-1.5 text-xs bg-background">
@@ -632,6 +729,9 @@ const AdminDashboard = () => {
                             <div><span className="text-muted-foreground">Nome:</span> <strong>{o.profile.full_name || "—"}</strong></div>
                             <div><span className="text-muted-foreground">Email:</span> {o.profile.email}</div>
                             <div><span className="text-muted-foreground">Telefone:</span> {o.profile.phone || "—"}</div>
+                            <div><span className="text-muted-foreground">CPF/CNPJ:</span> {o.profile.cpf_cnpj || "—"}</div>
+                            <div><span className="text-muted-foreground">Empresa:</span> {o.profile.company_name || "—"}</div>
+                            <div><span className="text-muted-foreground">Cidade/UF:</span> {[o.profile.city, o.profile.state].filter(Boolean).join("/") || "—"}</div>
                           </div>
                         </div>
                       )}
@@ -741,7 +841,6 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Subcategories */}
                   {getCatSubcats(c.id).length > 0 && (
                     <div className="border-t border-border bg-muted/30">
                       <button
@@ -786,10 +885,49 @@ const AdminDashboard = () => {
         {/* CLIENTS TAB */}
         {tab === "clients" && (
           <div>
-            <div className="mb-6">
-              <h1 className="font-heading text-3xl font-bold">Clientes</h1>
-              <p className="text-muted-foreground text-sm mt-1">{filteredClients.length} de {clients.length} clientes</p>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="font-heading text-3xl font-bold">Clientes</h1>
+                <p className="text-muted-foreground text-sm mt-1">{filteredClients.length} de {clients.length} clientes</p>
+              </div>
             </div>
+
+            {/* Client Edit Form */}
+            {editingClient !== null && (
+              <div className="bg-card rounded-xl shadow-lg border border-border p-6 mb-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-heading text-xl font-bold">Editar Cliente</h3>
+                  <button onClick={() => setEditingClient(null)} className="p-1 hover:bg-muted rounded-lg transition-colors"><X className="h-5 w-5 text-muted-foreground" /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div><Label>Nome Completo *</Label><Input value={clientForm.full_name} onChange={(e) => setClientForm({ ...clientForm, full_name: e.target.value })} /></div>
+                  <div><Label>E-mail *</Label><Input type="email" value={clientForm.email} onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })} /></div>
+                  <div><Label>Telefone</Label><Input value={clientForm.phone} onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
+                  <div><Label>CPF / CNPJ</Label><Input value={clientForm.cpf_cnpj} onChange={(e) => setClientForm({ ...clientForm, cpf_cnpj: e.target.value })} placeholder="000.000.000-00" /></div>
+                  <div><Label>Razão Social / Empresa</Label><Input value={clientForm.company_name} onChange={(e) => setClientForm({ ...clientForm, company_name: e.target.value })} /></div>
+                  <div><Label>CEP</Label><Input value={clientForm.zip_code} onChange={(e) => setClientForm({ ...clientForm, zip_code: e.target.value })} placeholder="00000-000" /></div>
+                  <div className="md:col-span-2"><Label>Endereço (Rua)</Label><Input value={clientForm.address} onChange={(e) => setClientForm({ ...clientForm, address: e.target.value })} /></div>
+                  <div><Label>Número</Label><Input value={clientForm.address_number} onChange={(e) => setClientForm({ ...clientForm, address_number: e.target.value })} /></div>
+                  <div><Label>Complemento</Label><Input value={clientForm.address_complement} onChange={(e) => setClientForm({ ...clientForm, address_complement: e.target.value })} /></div>
+                  <div><Label>Bairro</Label><Input value={clientForm.neighborhood} onChange={(e) => setClientForm({ ...clientForm, neighborhood: e.target.value })} /></div>
+                  <div><Label>Cidade</Label><Input value={clientForm.city} onChange={(e) => setClientForm({ ...clientForm, city: e.target.value })} /></div>
+                  <div>
+                    <Label>Estado</Label>
+                    <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={clientForm.state} onChange={(e) => setClientForm({ ...clientForm, state: e.target.value })}>
+                      <option value="">Selecione</option>
+                      {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
+                        <option key={uf} value={uf}>{uf}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={clientForm.notes} onChange={(e) => setClientForm({ ...clientForm, notes: e.target.value })} /></div>
+                </div>
+                <div className="flex gap-3 mt-6 pt-5 border-t border-border">
+                  <Button onClick={saveClient} className="shadow-md">Atualizar Cliente</Button>
+                  <Button variant="outline" onClick={() => setEditingClient(null)}>Cancelar</Button>
+                </div>
+              </div>
+            )}
 
             {/* Client Filters */}
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
@@ -799,7 +937,7 @@ const AdminDashboard = () => {
               <div className="flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[250px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-9" placeholder="Buscar por nome, email ou telefone..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                  <Input className="pl-9" placeholder="Buscar por nome, email, telefone ou CPF/CNPJ..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
                 </div>
                 {clientSearch && (
                   <Button variant="ghost" size="sm" onClick={() => setClientSearch("")}>
@@ -817,7 +955,9 @@ const AdminDashboard = () => {
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nome</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Email</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telefone</th>
+                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">CPF/CNPJ</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Cidade/UF</th>
+                      <th className="text-right p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -828,15 +968,25 @@ const AdminDashboard = () => {
                             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
                               <Users className="h-4 w-4 text-primary" />
                             </div>
-                            <span className="font-medium">{c.full_name || "—"}</span>
+                            <div>
+                              <span className="font-medium block">{c.full_name || "—"}</span>
+                              {c.company_name && <span className="text-[10px] text-muted-foreground">{c.company_name}</span>}
+                            </div>
                           </div>
                         </td>
                         <td className="p-3.5 text-muted-foreground">{c.email}</td>
                         <td className="p-3.5 text-muted-foreground">{c.phone || "—"}</td>
+                        <td className="p-3.5 text-muted-foreground font-mono text-xs">{c.cpf_cnpj || "—"}</td>
                         <td className="p-3.5 text-muted-foreground">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
+                        <td className="p-3.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editClient(c)}><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteClient(c.user_id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
-                    {filteredClients.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
+                    {filteredClients.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
                   </tbody>
                 </table>
               </div>

@@ -25,10 +25,20 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
     if (!user) { navigate("/auth"); return; }
     if (!id) return;
 
-    const { error } = await supabase.from("cart_items").upsert(
-      { user_id: user.id, product_id: id, quantity: 1 },
-      { onConflict: "user_id,product_id" }
-    );
+    // Check if item already exists in cart
+    const { data: existing } = await supabase
+      .from("cart_items")
+      .select("id, quantity")
+      .eq("user_id", user.id)
+      .eq("product_id", id)
+      .maybeSingle();
+
+    let error;
+    if (existing) {
+      ({ error } = await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id));
+    } else {
+      ({ error } = await supabase.from("cart_items").insert({ user_id: user.id, product_id: id, quantity: 1 }));
+    }
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else toast({ title: "Adicionado ao carrinho!" });
   };
