@@ -252,11 +252,17 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          address_complement: string | null
+          address_number: string | null
           city: string | null
+          company_name: string | null
+          cpf_cnpj: string | null
           created_at: string
           email: string
           full_name: string
           id: string
+          neighborhood: string | null
+          notes: string | null
           phone: string | null
           state: string | null
           updated_at: string
@@ -265,11 +271,17 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
           city?: string | null
+          company_name?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          neighborhood?: string | null
+          notes?: string | null
           phone?: string | null
           state?: string | null
           updated_at?: string
@@ -278,11 +290,17 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
           city?: string | null
+          company_name?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
+          neighborhood?: string | null
+          notes?: string | null
           phone?: string | null
           state?: string | null
           updated_at?: string
