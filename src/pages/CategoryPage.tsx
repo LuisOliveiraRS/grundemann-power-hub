@@ -6,6 +6,7 @@ import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { ArrowLeft } from "lucide-react";
 
 interface Product {
@@ -24,32 +25,78 @@ interface Category {
   description: string | null;
 }
 
+interface Subcategory {
+  id: string;
+  name: string;
+  description: string | null;
+  category_id: string;
+}
+
 const CategoryPage = () => {
-  const { slug } = useParams();
+  const { slug, subSlug } = useParams();
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
+  const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (slug) loadCategory(); }, [slug]);
+  useEffect(() => {
+    if (slug) loadData();
+  }, [slug, subSlug]);
 
-  const loadCategory = async () => {
+  const loadData = async () => {
+    setLoading(true);
     const { data: cat } = await supabase.from("categories").select("*").eq("slug", slug).single();
-    if (cat) {
-      setCategory(cat as Category);
-      const { data: prods } = await supabase.from("products").select("*").eq("category_id", cat.id).eq("is_active", true).order("name");
+    if (!cat) { setLoading(false); return; }
+
+    setCategory(cat as Category);
+
+    if (subSlug) {
+      // Load subcategory and filter products by subcategory_id
+      const { data: sub } = await supabase
+        .from("subcategories")
+        .select("*")
+        .eq("slug", subSlug)
+        .eq("category_id", cat.id)
+        .single();
+
+      if (sub) {
+        setSubcategory(sub as Subcategory);
+        const { data: prods } = await supabase
+          .from("products")
+          .select("*")
+          .eq("subcategory_id", sub.id)
+          .eq("is_active", true)
+          .order("name");
+        setProducts((prods || []) as Product[]);
+      } else {
+        setSubcategory(null);
+        setProducts([]);
+      }
+    } else {
+      // Show all products in category
+      setSubcategory(null);
+      const { data: prods } = await supabase
+        .from("products")
+        .select("*")
+        .eq("category_id", cat.id)
+        .eq("is_active", true)
+        .order("name");
       setProducts((prods || []) as Product[]);
     }
     setLoading(false);
   };
+
+  const title = subcategory ? subcategory.name : category?.name;
+  const description = subcategory ? subcategory.description : category?.description;
 
   return (
     <div className="min-h-screen flex flex-col">
       <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-8">
-          <button onClick={() => navigate("/")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-            <ArrowLeft className="h-4 w-4" /> Voltar
+          <button onClick={() => navigate(subcategory ? `/categoria/${slug}` : "/")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="h-4 w-4" /> {subcategory ? `Voltar para ${category?.name}` : "Voltar"}
           </button>
           {loading ? (
             <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
@@ -57,10 +104,13 @@ const CategoryPage = () => {
             <p className="text-center text-muted-foreground py-12">Categoria não encontrada.</p>
           ) : (
             <>
-              <h1 className="font-heading text-3xl font-bold mb-2">{category.name}</h1>
-              {category.description && <p className="text-muted-foreground mb-6">{category.description}</p>}
+              <h1 className="font-heading text-3xl font-bold mb-2">{title}</h1>
+              {subcategory && category && (
+                <p className="text-sm text-muted-foreground mb-1">{category.name} &gt; {subcategory.name}</p>
+              )}
+              {description && <p className="text-muted-foreground mb-6">{description}</p>}
               {products.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">Nenhum produto nesta categoria ainda.</p>
+                <p className="text-center text-muted-foreground py-12">Nenhum produto nesta {subcategory ? "subcategoria" : "categoria"} ainda.</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {products.map(p => (
@@ -81,6 +131,7 @@ const CategoryPage = () => {
           )}
         </div>
       </div>
+      <WhatsAppButton />
       <Footer />
     </div>
   );
