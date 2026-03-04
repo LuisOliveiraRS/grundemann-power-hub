@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -15,7 +15,9 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 
 interface Profile {
   full_name: string; email: string; phone: string;
-  address: string; city: string; state: string; zip_code: string;
+  address: string; address_number: string; address_complement: string;
+  neighborhood: string; city: string; state: string; zip_code: string;
+  cpf_cnpj: string; company_name: string; notes: string;
 }
 
 interface OrderItem {
@@ -31,7 +33,11 @@ interface Order {
 const ClientDashboard = () => {
   const { user, signOut } = useAuth();
   const [tab, setTab] = useState<"profile" | "orders">("profile");
-  const [profile, setProfile] = useState<Profile>({ full_name: "", email: "", phone: "", address: "", city: "", state: "", zip_code: "" });
+  const [profile, setProfile] = useState<Profile>({
+    full_name: "", email: "", phone: "", address: "", address_number: "",
+    address_complement: "", neighborhood: "", city: "", state: "", zip_code: "",
+    cpf_cnpj: "", company_name: "", notes: ""
+  });
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -48,7 +54,13 @@ const ClientDashboard = () => {
 
   const loadProfile = async () => {
     const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
-    if (data) setProfile(data as Profile);
+    if (data) setProfile({
+      full_name: data.full_name || "", email: data.email || "", phone: data.phone || "",
+      address: data.address || "", address_number: data.address_number || "",
+      address_complement: data.address_complement || "", neighborhood: data.neighborhood || "",
+      city: data.city || "", state: data.state || "", zip_code: data.zip_code || "",
+      cpf_cnpj: data.cpf_cnpj || "", company_name: data.company_name || "", notes: data.notes || "",
+    });
   };
 
   const loadOrders = async () => {
@@ -66,8 +78,13 @@ const ClientDashboard = () => {
   const saveProfile = async () => {
     setLoading(true);
     const { error } = await supabase.from("profiles").update({
-      full_name: profile.full_name, phone: profile.phone, address: profile.address,
-      city: profile.city, state: profile.state, zip_code: profile.zip_code,
+      full_name: profile.full_name, phone: profile.phone || null,
+      address: profile.address || null, address_number: profile.address_number || null,
+      address_complement: profile.address_complement || null,
+      neighborhood: profile.neighborhood || null,
+      city: profile.city || null, state: profile.state || null,
+      zip_code: profile.zip_code || null,
+      cpf_cnpj: profile.cpf_cnpj || null, company_name: profile.company_name || null,
     }).eq("user_id", user!.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else toast({ title: "Perfil atualizado com sucesso!" });
@@ -177,12 +194,34 @@ const ClientDashboard = () => {
                       <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="(00) 00000-0000" />
                     </div>
                     <div className="space-y-1.5">
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">CPF / CNPJ</Label>
+                      <Input value={profile.cpf_cnpj} onChange={(e) => setProfile({ ...profile, cpf_cnpj: e.target.value })} placeholder="000.000.000-00 ou 00.000.000/0000-00" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" />Razão Social / Empresa</Label>
+                      <Input value={profile.company_name} onChange={(e) => setProfile({ ...profile, company_name: e.target.value })} placeholder="Nome da empresa (opcional)" />
+                    </div>
+                    <div className="space-y-1.5">
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">CEP</Label>
                       <Input value={profile.zip_code} onChange={(e) => setProfile({ ...profile, zip_code: e.target.value })} placeholder="00000-000" />
                     </div>
-                    <div className="md:col-span-2 space-y-1.5">
+                    <div className="space-y-1.5">
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />Endereço</Label>
-                      <Input value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} placeholder="Rua, número, complemento" />
+                      <Input value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} placeholder="Rua, Avenida..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Número</Label>
+                        <Input value={profile.address_number} onChange={(e) => setProfile({ ...profile, address_number: e.target.value })} placeholder="Nº" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Complemento</Label>
+                        <Input value={profile.address_complement} onChange={(e) => setProfile({ ...profile, address_complement: e.target.value })} placeholder="Apto, Sala..." />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bairro</Label>
+                      <Input value={profile.neighborhood} onChange={(e) => setProfile({ ...profile, neighborhood: e.target.value })} placeholder="Bairro" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs uppercase tracking-wider text-muted-foreground">Cidade</Label>
@@ -290,19 +329,18 @@ const ClientDashboard = () => {
                                     {(order.items || []).map(item => (
                                       <tr key={item.id}>
                                         <td className="py-3 font-medium">{item.product_name}</td>
-                                        <td className="py-3 text-center"><Badge variant="outline">{item.quantity}</Badge></td>
+                                        <td className="py-3 text-center">{item.quantity}</td>
                                         <td className="py-3 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".", ",")}</td>
-                                        <td className="py-3 text-right font-bold text-price">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".", ",")}</td>
+                                        <td className="py-3 text-right font-semibold">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".", ",")}</td>
                                       </tr>
                                     ))}
                                   </tbody>
-                                  <tfoot>
-                                    <tr className="border-t-2 border-border">
-                                      <td colSpan={3} className="pt-4 text-right font-heading font-bold text-base">Total:</td>
-                                      <td className="pt-4 text-right font-heading font-bold text-price text-lg">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</td>
-                                    </tr>
-                                  </tfoot>
                                 </table>
+                                {order.shipping_address && (
+                                  <div className="mt-4 pt-3 border-t border-border">
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {order.shipping_address}</p>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
