@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -65,6 +65,7 @@ const AdminDashboard = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   // Product filters
   const [productSearch, setProductSearch] = useState("");
@@ -312,6 +313,31 @@ const AdminDashboard = () => {
     toast({ title: "Cliente excluído!" }); loadAll();
   };
 
+  const syncMercadoLivre = async () => {
+    setSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast({ title: "Erro", description: "Sessão expirada", variant: "destructive" }); return; }
+      
+      const { data, error } = await supabase.functions.invoke('sync-mercadolivre', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({ title: "Sincronização concluída!", description: data.message });
+        loadAll();
+      } else {
+        toast({ title: "Aviso", description: data?.message || "Nenhum produto encontrado", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro na sincronização", description: err.message || "Erro desconhecido", variant: "destructive" });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const statusLabel: Record<string, string> = {
     pending: "Pendente", confirmed: "Confirmado", processing: "Processando",
     shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
@@ -498,9 +524,15 @@ const AdminDashboard = () => {
                 <h1 className="font-heading text-3xl font-bold">Produtos</h1>
                 <p className="text-muted-foreground text-sm mt-1">{filteredProducts.length} de {products.length} produtos</p>
               </div>
-              <Button onClick={() => { setEditingProduct({}); resetProductForm(); }} className="shadow-md">
-                <Plus className="h-4 w-4 mr-2" /> Novo Produto
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={syncMercadoLivre} variant="outline" disabled={syncing} className="shadow-md border-accent text-accent-foreground hover:bg-accent/10">
+                  <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? "Sincronizando..." : "Sincronizar Mercado Livre"}
+                </Button>
+                <Button onClick={() => { setEditingProduct({}); resetProductForm(); }} className="shadow-md">
+                  <Plus className="h-4 w-4 mr-2" /> Novo Produto
+                </Button>
+              </div>
             </div>
 
             {editingProduct !== null && (
