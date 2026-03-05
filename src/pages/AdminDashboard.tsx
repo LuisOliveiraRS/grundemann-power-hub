@@ -302,7 +302,11 @@ const AdminDashboard = () => {
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Cliente atualizado!" });
     } else {
-      toast({ title: "Info", description: "Novos clientes são criados pelo cadastro na loja." }); return;
+      // Create new client profile (admin manual creation)
+      const newData = { ...data, user_id: crypto.randomUUID() };
+      const { error } = await supabase.from("profiles").insert(newData);
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Cliente cadastrado!" });
     }
     setEditingClient(null); resetClientForm(); loadAll();
   };
@@ -398,8 +402,8 @@ const AdminDashboard = () => {
         <div ref={printRef}>
           {printingOrder && (
             <OrderPrintSheet order={{
-              ...printingOrder,
-              items: printingOrder.items || [],
+              id: printingOrder.id,
+              created_at: printingOrder.created_at,
               profile: printingOrder.profile || null,
             }} />
           )}
@@ -922,13 +926,16 @@ const AdminDashboard = () => {
                 <h1 className="font-heading text-3xl font-bold">Clientes</h1>
                 <p className="text-muted-foreground text-sm mt-1">{filteredClients.length} de {clients.length} clientes</p>
               </div>
+              <Button onClick={() => { setEditingClient({}); resetClientForm(); }} className="shadow-md">
+                <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+              </Button>
             </div>
 
             {/* Client Edit Form */}
             {editingClient !== null && (
               <div className="bg-card rounded-xl shadow-lg border border-border p-6 mb-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-heading text-xl font-bold">Editar Cliente</h3>
+                  <h3 className="font-heading text-xl font-bold">{editingClient?.user_id ? "Editar" : "Novo"} Cliente</h3>
                   <button onClick={() => setEditingClient(null)} className="p-1 hover:bg-muted rounded-lg transition-colors"><X className="h-5 w-5 text-muted-foreground" /></button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -955,7 +962,7 @@ const AdminDashboard = () => {
                   <div className="md:col-span-3"><Label>Observações</Label><Textarea rows={2} value={clientForm.notes} onChange={(e) => setClientForm({ ...clientForm, notes: e.target.value })} /></div>
                 </div>
                 <div className="flex gap-3 mt-6 pt-5 border-t border-border">
-                  <Button onClick={saveClient} className="shadow-md">Atualizar Cliente</Button>
+                  <Button onClick={saveClient} className="shadow-md">{editingClient?.user_id ? "Atualizar" : "Cadastrar"} Cliente</Button>
                   <Button variant="outline" onClick={() => setEditingClient(null)}>Cancelar</Button>
                 </div>
               </div>

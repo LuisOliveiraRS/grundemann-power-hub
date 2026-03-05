@@ -10,6 +10,24 @@ import mlFiltro13hp from "@/assets/ml-filtro-ar-13hp.webp";
 import mlCarburador from "@/assets/ml-carburador.webp";
 import mlFiltro8hp from "@/assets/ml-filtro-ar-8hp.webp";
 
+interface Slide {
+  image: string;
+  title: string;
+  subtitle: string;
+  cta: string;
+  ctaLink: string;
+  badge: string | null;
+  price: number | null;
+  originalPrice: number | null;
+  discount: number;
+  isExternal?: boolean;
+}
+
+const formatPrice = (value: number) => {
+  const [reais, cents] = value.toFixed(2).split(".");
+  return { reais, cents };
+};
+
 const mlProductSlides: Slide[] = [
   {
     image: mlFiltro13hp,
@@ -53,7 +71,7 @@ const staticSlides: Slide[] = [
   {
     image: banner1,
     title: "Geradores Diesel\nde Alta Potência",
-    subtitle: "Soluções completas para sua empresa",
+    subtitle: "Soluções completas para sua empresa com equipamentos robustos e confiáveis",
     cta: "Confira",
     ctaLink: "/categoria/geradores-diesel",
     badge: null,
@@ -65,7 +83,7 @@ const staticSlides: Slide[] = [
   {
     image: banner2,
     title: "Peças e\nComponentes",
-    subtitle: "Originais e de alta qualidade",
+    subtitle: "Filtros, carburadores, pistões e mais — originais e de alta qualidade",
     cta: "Ver Peças",
     ctaLink: "/categoria/pecas-e-componentes",
     badge: null,
@@ -77,7 +95,7 @@ const staticSlides: Slide[] = [
   {
     image: banner3,
     title: "Manutenção\nPreventiva",
-    subtitle: "Equipe técnica especializada",
+    subtitle: "Equipe técnica especializada para manter seu gerador em pleno funcionamento",
     cta: "Agendar Serviço",
     ctaLink: "/categoria/manutencao",
     badge: null,
@@ -87,24 +105,6 @@ const staticSlides: Slide[] = [
     isExternal: false,
   },
 ];
-
-interface Slide {
-  image: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  ctaLink: string;
-  badge: string | null;
-  price: number | null;
-  originalPrice: number | null;
-  discount: number;
-  isExternal?: boolean;
-}
-
-const formatPrice = (value: number) => {
-  const [reais, cents] = value.toFixed(2).split(".");
-  return { reais, cents };
-};
 
 const HeroBanner = () => {
   const [current, setCurrent] = useState(0);
@@ -156,6 +156,8 @@ const HeroBanner = () => {
   }, []);
 
   const currentSlide = slides[current] || staticSlides[0];
+  const hasPrice = !!currentSlide.price;
+  const isProduct = currentSlide.isExternal || hasPrice;
 
   return (
     <section className="relative w-full h-[500px] overflow-hidden bg-foreground">
@@ -168,12 +170,31 @@ const HeroBanner = () => {
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
-          <img
-            src={currentSlide.image}
-            alt={currentSlide.title}
-            className={`w-full h-full ${currentSlide.isExternal ? 'object-contain bg-background/95' : 'object-cover'}`}
-          />
-          <div className={`absolute inset-0 ${currentSlide.isExternal ? 'bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40' : 'bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent'}`} />
+          {/* Background image - positioned right for product slides, full cover for static */}
+          {isProduct ? (
+            <>
+              <div className="absolute inset-0 bg-foreground" />
+              <div className="absolute right-0 top-0 h-full w-1/2 md:w-[55%]">
+                <img
+                  src={currentSlide.image}
+                  alt={currentSlide.title}
+                  className="w-full h-full object-contain"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/60 to-transparent" />
+              </div>
+            </>
+          ) : (
+            <>
+              <img
+                src={currentSlide.image}
+                alt={currentSlide.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent" />
+            </>
+          )}
+
+          {/* Content - always on the left */}
           <div className="absolute inset-0 flex items-center">
             <div className="container">
               <motion.div
@@ -198,8 +219,7 @@ const HeroBanner = () => {
                   {currentSlide.title}
                 </h2>
 
-                {/* Price Display - rp3shop style */}
-                {currentSlide.price ? (
+                {hasPrice ? (
                   <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -215,19 +235,19 @@ const HeroBanner = () => {
                       <span className="text-background/80 text-xl font-bold">Por</span>
                       <span className="text-accent font-heading text-2xl font-extrabold">R$</span>
                       <span className="text-accent font-heading text-7xl md:text-8xl font-black leading-none tracking-tight">
-                        {formatPrice(currentSlide.price).reais}
+                        {formatPrice(currentSlide.price!).reais}
                       </span>
                       <span className="text-accent font-heading text-3xl md:text-4xl font-extrabold self-start mt-1">
-                        ,{formatPrice(currentSlide.price).cents}
+                        ,{formatPrice(currentSlide.price!).cents}
                       </span>
                     </div>
                     <p className="text-background/70 text-sm mt-1">
-                      ou 3x de R$ {(currentSlide.price / 3).toFixed(2).replace(".", ",")} <span className="text-accent font-bold">Sem juros</span>
+                      ou 3x de R$ {(currentSlide.price! / 3).toFixed(2).replace(".", ",")} <span className="text-accent font-bold">Sem juros</span>
                     </p>
                   </motion.div>
                 ) : (
                   currentSlide.subtitle && (
-                    <p className="mt-3 text-lg text-background/80">
+                    <p className="mt-3 text-lg text-background/80 max-w-md">
                       {currentSlide.subtitle}
                     </p>
                   )
