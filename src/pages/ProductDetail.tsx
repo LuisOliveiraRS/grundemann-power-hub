@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Minus, Plus, ArrowLeft, Package, MessageCircle } from "lucide-react";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,6 +16,7 @@ interface Product {
   id: string; name: string; description: string | null; sku: string | null;
   price: number; original_price: number | null; stock_quantity: number;
   is_active: boolean; image_url: string | null; category_id: string | null;
+  additional_images: string[] | null; video_url: string | null;
 }
 
 const ProductDetail = () => {
@@ -27,13 +28,17 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => { if (id) loadProduct(); }, [id]);
 
   const loadProduct = async () => {
     const { data } = await supabase.from("products").select("*").eq("id", id).single();
     if (data) {
-      setProduct(data as Product);
+      const p = data as Product;
+      setProduct(p);
+      setSelectedImage(p.image_url);
       if (data.category_id) {
         const { data: cat } = await supabase.from("categories").select("name").eq("id", data.category_id).single();
         if (cat) setCategoryName(cat.name);
@@ -52,6 +57,13 @@ const ProductDetail = () => {
       await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
     }
     toast({ title: `${quantity}x ${product.name} adicionado ao carrinho!` });
+  };
+
+  const allImages = product ? [product.image_url, ...(product.additional_images || [])].filter(Boolean) as string[] : [];
+
+  const getYouTubeEmbedUrl = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
   if (loading) return (
@@ -84,11 +96,45 @@ const ProductDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Voltar
           </button>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-card rounded-xl border border-border p-8 flex items-center justify-center aspect-square">
-              {product.image_url ? (
-                <img src={product.image_url} alt={product.name} className="max-h-full max-w-full object-contain" />
-              ) : (
-                <Package className="h-24 w-24 text-muted-foreground" />
+            {/* Image gallery */}
+            <div>
+              <div className="bg-card rounded-xl border border-border p-8 flex items-center justify-center aspect-square mb-3">
+                {showVideo && product.video_url ? (
+                  (() => {
+                    const embedUrl = getYouTubeEmbedUrl(product.video_url);
+                    return embedUrl ? (
+                      <iframe src={embedUrl} className="w-full h-full rounded-lg" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                    ) : (
+                      <video src={product.video_url} controls className="max-h-full max-w-full rounded-lg" />
+                    );
+                  })()
+                ) : selectedImage ? (
+                  <img src={selectedImage} alt={product.name} className="max-h-full max-w-full object-contain" />
+                ) : (
+                  <Package className="h-24 w-24 text-muted-foreground" />
+                )}
+              </div>
+              {/* Thumbnails */}
+              {(allImages.length > 1 || product.video_url) && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => { setSelectedImage(img); setShowVideo(false); }}
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all ${selectedImage === img && !showVideo ? 'border-primary shadow-md' : 'border-border hover:border-primary/50'}`}
+                    >
+                      <img src={img} alt={`${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                  {product.video_url && (
+                    <button
+                      onClick={() => setShowVideo(true)}
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 flex items-center justify-center bg-muted transition-all ${showVideo ? 'border-primary shadow-md' : 'border-border hover:border-primary/50'}`}
+                    >
+                      <Play className="h-6 w-6 text-primary" />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 

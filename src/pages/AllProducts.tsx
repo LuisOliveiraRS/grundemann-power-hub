@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
 import TopBar from "@/components/TopBar";
@@ -24,13 +25,15 @@ interface Category {
 }
 
 const AllProducts = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("busca") || "");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, []);
+  useEffect(() => { setSearch(searchParams.get("busca") || ""); }, [searchParams]);
 
   const loadData = async () => {
     const [p, c] = await Promise.all([

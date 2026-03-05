@@ -6,12 +6,16 @@ import { useNavigate } from "react-router-dom";
 import banner1 from "@/assets/banner-1.jpg";
 import banner2 from "@/assets/banner-2.jpg";
 import banner3 from "@/assets/banner-3.jpg";
+import bannerBg1 from "@/assets/banner-bg-1.jpg";
+import bannerBg2 from "@/assets/banner-bg-2.jpg";
+import bannerBg3 from "@/assets/banner-bg-3.jpg";
 import mlFiltro13hp from "@/assets/ml-filtro-ar-13hp.webp";
 import mlCarburador from "@/assets/ml-carburador.webp";
 import mlFiltro8hp from "@/assets/ml-filtro-ar-8hp.webp";
 
 interface Slide {
   image: string;
+  bgImage?: string;
   title: string;
   subtitle: string;
   cta: string;
@@ -31,6 +35,7 @@ const formatPrice = (value: number) => {
 const mlProductSlides: Slide[] = [
   {
     image: mlFiltro13hp,
+    bgImage: bannerBg1,
     title: "Filtro De Ar Motor\nGasolina 13hp 15hp",
     subtitle: "Branco Buffalo Toyama",
     cta: "Comprar no ML",
@@ -43,6 +48,7 @@ const mlProductSlides: Slide[] = [
   },
   {
     image: mlCarburador,
+    bgImage: bannerBg2,
     title: "Carburador Para\nGeradores 2500w 3000w",
     subtitle: "Com Motor 5,5hp 6,5hp",
     cta: "Comprar no ML",
@@ -55,6 +61,7 @@ const mlProductSlides: Slide[] = [
   },
   {
     image: mlFiltro8hp,
+    bgImage: bannerBg2,
     title: "Elemento Filtro De Ar\nMotor 8hp E 9hp",
     subtitle: "Branco Buffalo Toyama",
     cta: "Comprar no ML",
@@ -70,6 +77,7 @@ const mlProductSlides: Slide[] = [
 const staticSlides: Slide[] = [
   {
     image: banner1,
+    bgImage: bannerBg1,
     title: "Geradores Diesel\nde Alta Potência",
     subtitle: "Soluções completas para sua empresa com equipamentos robustos e confiáveis",
     cta: "Confira",
@@ -82,6 +90,7 @@ const staticSlides: Slide[] = [
   },
   {
     image: banner2,
+    bgImage: bannerBg2,
     title: "Peças e\nComponentes",
     subtitle: "Filtros, carburadores, pistões e mais — originais e de alta qualidade",
     cta: "Ver Peças",
@@ -94,6 +103,7 @@ const staticSlides: Slide[] = [
   },
   {
     image: banner3,
+    bgImage: bannerBg3,
     title: "Manutenção\nPreventiva",
     subtitle: "Equipe técnica especializada para manter seu gerador em pleno funcionamento",
     cta: "Agendar Serviço",
@@ -137,6 +147,7 @@ const HeroBanner = () => {
           const discount = Math.round(((p.original_price - p.price) / p.original_price) * 100);
           return {
             image: p.image_url || banner1,
+            bgImage: bannerBg1,
             title: p.name,
             subtitle: "",
             cta: "Ver Oferta",
@@ -170,31 +181,30 @@ const HeroBanner = () => {
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
-          {/* Background image - positioned right for product slides, full cover for static */}
-          {isProduct ? (
-            <>
-              <div className="absolute inset-0 bg-foreground" />
-              <div className="absolute right-0 top-0 h-full w-1/2 md:w-[55%]">
-                <img
-                  src={currentSlide.image}
-                  alt={currentSlide.title}
-                  className="w-full h-full object-contain"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-foreground via-foreground/60 to-transparent" />
-              </div>
-            </>
-          ) : (
+          {/* Background image layer - always present */}
+          {currentSlide.bgImage && (
             <>
               <img
-                src={currentSlide.image}
-                alt={currentSlide.title}
-                className="w-full h-full object-cover"
+                src={currentSlide.bgImage}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent" />
+              <div className="absolute inset-0 bg-foreground/75" />
             </>
           )}
+          {!currentSlide.bgImage && <div className="absolute inset-0 bg-foreground" />}
 
-          {/* Content - always on the left */}
+          {/* Product image on the right side */}
+          <div className="absolute right-0 top-0 h-full w-1/2 md:w-[50%] flex items-center justify-center">
+            <img
+              src={currentSlide.image}
+              alt={currentSlide.title}
+              className={`max-h-[85%] max-w-[85%] ${isProduct ? 'object-contain drop-shadow-2xl' : 'object-cover rounded-lg shadow-2xl'}`}
+            />
+          </div>
+          <div className="absolute right-0 top-0 h-full w-1/2 md:w-[50%] bg-gradient-to-r from-foreground/80 via-transparent to-transparent" />
+
+          {/* Content on the left */}
           <div className="absolute inset-0 flex items-center">
             <div className="container">
               <motion.div
