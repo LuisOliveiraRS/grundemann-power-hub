@@ -185,6 +185,7 @@ export type Database = {
       }
       products: {
         Row: {
+          additional_images: string[] | null
           category_id: string | null
           created_at: string
           description: string | null
@@ -199,8 +200,10 @@ export type Database = {
           stock_quantity: number
           subcategory_id: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
+          additional_images?: string[] | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -215,8 +218,10 @@ export type Database = {
           stock_quantity?: number
           subcategory_id?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
+          additional_images?: string[] | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -231,6 +236,7 @@ export type Database = {
           stock_quantity?: number
           subcategory_id?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {

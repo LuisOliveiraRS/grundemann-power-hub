@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -20,6 +20,7 @@ interface Product {
   price: number; original_price: number | null; stock_quantity: number;
   is_active: boolean; is_featured: boolean; category_id: string | null;
   subcategory_id?: string | null; image_url: string | null; created_at: string;
+  additional_images?: string[] | null; video_url?: string | null;
 }
 
 interface OrderWithItems {
@@ -96,7 +97,8 @@ const AdminDashboard = () => {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
-    category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: ""
+    category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "",
+    additional_images: [] as string[], video_url: ""
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -184,6 +186,8 @@ const AdminDashboard = () => {
       subcategory_id: productForm.subcategory_id || null,
       is_featured: productForm.is_featured, is_active: productForm.is_active,
       image_url: productForm.image_url || null,
+      additional_images: productForm.additional_images.filter(Boolean),
+      video_url: productForm.video_url || null,
     };
     if (editingProduct?.id) {
       const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
@@ -197,7 +201,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -213,6 +217,8 @@ const AdminDashboard = () => {
       stock_quantity: String(p.stock_quantity), category_id: p.category_id || "",
       subcategory_id: (p as any).subcategory_id || "", is_featured: p.is_featured,
       is_active: p.is_active, image_url: p.image_url || "",
+      additional_images: (p.additional_images || []) as string[],
+      video_url: (p.video_url || "") as string,
     });
     setTab("products");
   };
@@ -599,6 +605,73 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-2"><Switch checked={productForm.is_featured} onCheckedChange={(v) => setProductForm({ ...productForm, is_featured: v })} /><Label className="mb-0">Destaque</Label></div>
                     </div>
                     <div className="md:col-span-2"><Label>Descrição</Label><Textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Descrição detalhada do produto..." /></div>
+                    
+                    {/* Additional Images */}
+                    <div className="md:col-span-2">
+                      <Label className="mb-2 block">Imagens Adicionais (até 5)</Label>
+                      <div className="flex flex-wrap gap-3">
+                        {productForm.additional_images.map((img, idx) => (
+                          <div key={idx} className="relative w-20 h-20 rounded-lg border border-border overflow-hidden">
+                            <img src={img} alt={`Extra ${idx+1}`} className="w-full h-full object-cover" />
+                            <button onClick={() => setProductForm(prev => ({ ...prev, additional_images: prev.additional_images.filter((_, i) => i !== idx) }))} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5"><X className="h-3 w-3" /></button>
+                          </div>
+                        ))}
+                        {productForm.additional_images.length < 5 && (
+                          <button
+                            type="button"
+                            className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file'; input.accept = 'image/*';
+                              input.onchange = async (e: any) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const ext = file.name.split('.').pop();
+                                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+                                const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                                if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); return; }
+                                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                                setProductForm(prev => ({ ...prev, additional_images: [...prev.additional_images, urlData.publicUrl] }));
+                                toast({ title: "Imagem adicionada!" });
+                              };
+                              input.click();
+                            }}
+                          >
+                            <Plus className="h-5 w-5" />
+                            <span className="text-[10px] mt-0.5">Foto</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Video URL */}
+                    <div className="md:col-span-2">
+                      <Label className="flex items-center gap-2"><Video className="h-4 w-4" /> URL do Vídeo (YouTube ou upload)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input value={productForm.video_url} onChange={(e) => setProductForm({ ...productForm, video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=... ou URL do vídeo" className="flex-1" />
+                        <Button variant="outline" type="button" onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file'; input.accept = 'video/*';
+                          input.onchange = async (e: any) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 50 * 1024 * 1024) { toast({ title: "Arquivo muito grande", description: "Máximo 50MB", variant: "destructive" }); return; }
+                            setUploading(true);
+                            const ext = file.name.split('.').pop();
+                            const fileName = `video-${Date.now()}.${ext}`;
+                            const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                            if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); setUploading(false); return; }
+                            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                            setProductForm(prev => ({ ...prev, video_url: urlData.publicUrl }));
+                            toast({ title: "Vídeo enviado!" });
+                            setUploading(false);
+                          };
+                          input.click();
+                        }}>
+                          <Upload className="h-4 w-4 mr-1" /> Upload
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6 pt-5 border-t border-border">
