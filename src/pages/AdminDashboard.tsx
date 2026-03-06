@@ -285,6 +285,45 @@ const AdminDashboard = () => {
     toast({ title: `Status atualizado para ${statusLabel[status]}` }); loadAll();
   };
 
+  const updateTrackingCode = async (id: string, code: string) => {
+    await supabase.from("orders").update({ tracking_code: code } as any).eq("id", id);
+    toast({ title: "Código de rastreio atualizado!" });
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, tracking_code: code } : o));
+  };
+
+  // Testimonial CRUD
+  const saveTestimonial = async () => {
+    const data = {
+      customer_name: testimonialForm.customer_name,
+      customer_city: testimonialForm.customer_city,
+      rating: parseInt(testimonialForm.rating) || 5,
+      comment: testimonialForm.comment,
+      is_approved: true,
+    };
+    if (editingTestimonial?.id) {
+      await supabase.from("testimonials").update(data).eq("id", editingTestimonial.id);
+      toast({ title: "Depoimento atualizado!" });
+    } else {
+      await supabase.from("testimonials").insert(data);
+      toast({ title: "Depoimento criado!" });
+    }
+    setEditingTestimonial(null);
+    setTestimonialForm({ customer_name: "", customer_city: "", rating: "5", comment: "" });
+    loadAll();
+  };
+
+  const toggleTestimonialApproval = async (id: string, current: boolean) => {
+    await supabase.from("testimonials").update({ is_approved: !current }).eq("id", id);
+    toast({ title: !current ? "Depoimento aprovado!" : "Depoimento ocultado!" });
+    loadAll();
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    if (!confirm("Excluir este depoimento?")) return;
+    await supabase.from("testimonials").delete().eq("id", id);
+    toast({ title: "Depoimento excluído!" }); loadAll();
+  };
+
   // Client CRUD
   const resetClientForm = () => setClientForm({
     full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
