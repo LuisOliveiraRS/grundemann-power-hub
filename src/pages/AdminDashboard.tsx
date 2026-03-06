@@ -9,8 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -26,8 +27,14 @@ interface Product {
 interface OrderWithItems {
   id: string; user_id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
+  tracking_code?: string | null;
   items?: OrderItem[];
   profile?: ProfileFull | null;
+}
+
+interface Testimonial {
+  id: string; customer_name: string; customer_city: string;
+  rating: number; comment: string; is_approved: boolean; created_at: string;
 }
 
 interface OrderItem {
@@ -54,7 +61,10 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials">("dashboard");
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
+  const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
