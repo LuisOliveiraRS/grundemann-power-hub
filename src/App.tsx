@@ -12,6 +12,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ProductDetail from "./pages/ProductDetail";
 import CategoryPage from "./pages/CategoryPage";
 import AllProducts from "./pages/AllProducts";
+import Checkout from "./pages/Checkout";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/produtos" element={<AllProducts />} />
+            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/produto/:id" element={<ProductDetail />} />
             <Route path="/categoria/:slug" element={<CategoryPage />} />
             <Route path="/categoria/:slug/:subSlug" element={<CategoryPage />} />
