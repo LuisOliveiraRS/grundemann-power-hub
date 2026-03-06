@@ -418,6 +418,7 @@ const AdminDashboard = () => {
     { key: "orders", label: "Pedidos", icon: ShoppingCart },
     { key: "categories", label: "Categorias", icon: Tag },
     { key: "clients", label: "Clientes", icon: Users },
+    { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
   ] as const;
 
   // Filtered data
