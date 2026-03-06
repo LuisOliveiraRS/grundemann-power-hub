@@ -27,6 +27,7 @@ interface OrderItem {
 interface Order {
   id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
+  tracking_code?: string | null;
   items?: OrderItem[];
 }
 
