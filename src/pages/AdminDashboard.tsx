@@ -116,19 +116,21 @@ const AdminDashboard = () => {
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("subcategories").select("*").order("name"),
+      supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const ords = (ordRes.data || []) as OrderWithItems[];
     const cats = (catRes.data || []) as Category[];
     const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
-    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs);
+    const tests = (testRes.data || []) as Testimonial[];
+    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
