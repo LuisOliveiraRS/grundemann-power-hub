@@ -896,6 +896,22 @@ const AdminDashboard = () => {
                         </div>
                       )}
                       {o.shipping_address && <p className="text-sm mb-3"><span className="text-muted-foreground">Endereço:</span> {o.shipping_address}</p>}
+                      {/* Tracking Code */}
+                      <div className="mb-4 p-3 bg-background rounded-lg border border-border flex items-center gap-3">
+                        <Truck className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Rastreio:</span>
+                        <Input
+                          className="h-8 text-sm flex-1"
+                          placeholder="Código de rastreamento..."
+                          defaultValue={o.tracking_code || ""}
+                          onBlur={(e) => {
+                            if (e.target.value !== (o.tracking_code || "")) updateTrackingCode(o.id, e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                        />
+                      </div>
                       <table className="w-full text-sm">
                         <thead><tr className="text-muted-foreground text-xs uppercase tracking-wider"><th className="text-left pb-2">Item</th><th className="text-center pb-2">Qtd</th><th className="text-right pb-2">Preço Unit.</th><th className="text-right pb-2">Subtotal</th></tr></thead>
                         <tbody className="divide-y divide-border">
