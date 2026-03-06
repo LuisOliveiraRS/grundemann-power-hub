@@ -3,9 +3,9 @@ import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
 import HeroBanner from "@/components/HeroBanner";
 import BenefitsBar from "@/components/BenefitsBar";
-import FeaturedProducts from "@/components/FeaturedProducts";
+import TabbedProducts from "@/components/TabbedProducts";
 import CategoriesSection from "@/components/CategoriesSection";
-import MercadoLivreSection from "@/components/MercadoLivreSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
@@ -17,9 +17,9 @@ const Index = () => {
       <CategoryNav />
       <HeroBanner />
       <BenefitsBar />
-      <MercadoLivreSection />
-      <FeaturedProducts />
+      <TabbedProducts />
       <CategoriesSection />
+      <TestimonialsSection />
       <WhatsAppButton />
       <Footer />
     </div>

@@ -53,37 +53,9 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
 
   const total = items.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
 
-  const checkout = async () => {
-    if (items.length === 0) return;
-    setLoading(true);
-
-    const { data: order, error } = await supabase.from("orders").insert({
-      user_id: user!.id,
-      total_amount: total,
-      status: "pending",
-    }).select().single();
-
-    if (error || !order) {
-      toast({ title: "Erro ao criar pedido", variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
-    const orderItems = items.map((i) => ({
-      order_id: order.id,
-      product_id: i.product_id,
-      product_name: i.product?.name || "",
-      quantity: i.quantity,
-      price_at_purchase: i.product?.price || 0,
-    }));
-
-    await supabase.from("order_items").insert(orderItems);
-    await supabase.from("cart_items").delete().eq("user_id", user!.id);
-
-    toast({ title: "Pedido realizado com sucesso!" });
-    setLoading(false);
+  const goToCheckout = () => {
     onOpenChange(false);
-    navigate("/minha-conta");
+    navigate("/checkout");
   };
 
   return (
@@ -127,8 +99,8 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
                 <span>Total</span>
                 <span className="text-price">R$ {total.toFixed(2)}</span>
               </div>
-              <Button className="w-full" onClick={checkout} disabled={loading}>
-                {loading ? "Processando..." : "Finalizar Pedido"}
+              <Button className="w-full" onClick={goToCheckout}>
+                Finalizar Pedido
               </Button>
             </div>
           </>

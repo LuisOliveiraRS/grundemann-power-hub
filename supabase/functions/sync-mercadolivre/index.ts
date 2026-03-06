@@ -11,7 +11,7 @@ interface ScrapedProduct {
   image_url: string;
   ml_link: string;
   free_shipping: boolean;
-  category?: string;
+  subcategory?: string;
 }
 
 function parseProducts(html: string): ScrapedProduct[] {
@@ -28,8 +28,8 @@ function parseProducts(html: string): ScrapedProduct[] {
     const price = parseFloat(priceStr) || 0;
 
     if (title && price > 0 && !products.some(p => p.title === title)) {
-      const category = inferCategory(title);
-      products.push({ title, price, image_url: image, ml_link: link.split('#')[0].split('?')[0], free_shipping: true, category });
+      const subcategory = inferSubcategory(title);
+      products.push({ title, price, image_url: image, ml_link: link.split('#')[0].split('?')[0], free_shipping: true, subcategory });
     }
   }
 
@@ -54,8 +54,8 @@ function parseProducts(html: string): ScrapedProduct[] {
 
     for (let i = 0; i < titles.length && i < prices.length; i++) {
       if (!products.some(p => p.title === titles[i].title)) {
-        const category = inferCategory(titles[i].title);
-        products.push({ title: titles[i].title, price: prices[i], image_url: images[i] || '', ml_link: titles[i].link, free_shipping: true, category });
+        const subcategory = inferSubcategory(titles[i].title);
+        products.push({ title: titles[i].title, price: prices[i], image_url: images[i] || '', ml_link: titles[i].link, free_shipping: true, subcategory });
       }
     }
   }
@@ -63,18 +63,18 @@ function parseProducts(html: string): ScrapedProduct[] {
   return products;
 }
 
-function inferCategory(title: string): string {
+function inferSubcategory(title: string): string {
   const t = title.toLowerCase();
   if (t.includes('filtro')) return 'Filtros';
   if (t.includes('carburador')) return 'Carburadores';
   if (t.includes('pistão') || t.includes('pistao')) return 'Pistões';
-  if (t.includes('gerador')) return 'Geradores';
-  if (t.includes('motor')) return 'Motores';
   if (t.includes('bobina') || t.includes('ignição') || t.includes('ignicao')) return 'Ignição';
   if (t.includes('válvula') || t.includes('valvula')) return 'Válvulas';
   if (t.includes('junta') || t.includes('vedação') || t.includes('vedacao')) return 'Juntas e Vedações';
   if (t.includes('rotor') || t.includes('estator') || t.includes('avr')) return 'Componentes Elétricos';
-  return 'Peças e Componentes';
+  if (t.includes('gerador')) return 'Geradores';
+  if (t.includes('motor')) return 'Motores';
+  return 'Peças Gerais';
 }
 
 Deno.serve(async (req) => {
@@ -131,21 +131,38 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Get existing categories
-    const { data: existingCats } = await supabaseAdmin.from('categories').select('id, name, slug');
-    const catMap = new Map<string, string>();
-    for (const c of (existingCats || [])) catMap.set(c.name.toLowerCase(), c.id);
+    // Get or create a parent category for ML products - "Peças e Componentes"
+    const parentCategoryName = 'Peças e Componentes';
+    const parentSlug = 'pecas-e-componentes';
+    let parentCategoryId: string;
 
-    // Create missing categories from scraped products
-    const uniqueCategories = [...new Set(scrapedProducts.map(p => p.category).filter(Boolean))] as string[];
-    let catsCreated = 0;
-    for (const catName of uniqueCategories) {
-      if (!catMap.has(catName.toLowerCase())) {
-        const slug = catName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const { data: newCat } = await supabaseAdmin.from('categories').insert({ name: catName, slug }).select('id').single();
-        if (newCat) {
-          catMap.set(catName.toLowerCase(), newCat.id);
-          catsCreated++;
+    const { data: existingParent } = await supabaseAdmin.from('categories').select('id').eq('slug', parentSlug).maybeSingle();
+    if (existingParent) {
+      parentCategoryId = existingParent.id;
+    } else {
+      const { data: newParent } = await supabaseAdmin.from('categories').insert({ name: parentCategoryName, slug: parentSlug, description: 'Peças e componentes importados do Mercado Livre' }).select('id').single();
+      if (!newParent) throw new Error('Failed to create parent category');
+      parentCategoryId = newParent.id;
+    }
+
+    // Get existing subcategories for this parent
+    const { data: existingSubs } = await supabaseAdmin.from('subcategories').select('id, name, slug').eq('category_id', parentCategoryId);
+    const subMap = new Map<string, string>();
+    for (const s of (existingSubs || [])) subMap.set(s.name.toLowerCase(), s.id);
+
+    // Create missing subcategories
+    const uniqueSubcats = [...new Set(scrapedProducts.map(p => p.subcategory).filter(Boolean))] as string[];
+    let subsCreated = 0;
+    for (const subName of uniqueSubcats) {
+      if (!subMap.has(subName.toLowerCase())) {
+        const slug = subName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const { data: newSub } = await supabaseAdmin.from('subcategories').insert({
+          name: subName, slug, category_id: parentCategoryId,
+          description: `Subcategoria importada do Mercado Livre`,
+        }).select('id').single();
+        if (newSub) {
+          subMap.set(subName.toLowerCase(), newSub.id);
+          subsCreated++;
         }
       }
     }
@@ -153,12 +170,12 @@ Deno.serve(async (req) => {
     let synced = 0, created = 0, updated = 0;
 
     for (const sp of scrapedProducts) {
-      const categoryId = sp.category ? (catMap.get(sp.category.toLowerCase()) || null) : null;
+      const subcategoryId = sp.subcategory ? (subMap.get(sp.subcategory.toLowerCase()) || null) : null;
 
       const { data: existing } = await supabaseAdmin.from('products').select('id, name, price').ilike('name', `%${sp.title.substring(0, 30)}%`).limit(1).maybeSingle();
 
       if (existing) {
-        const updateData: any = { category_id: categoryId };
+        const updateData: any = { category_id: parentCategoryId, subcategory_id: subcategoryId };
         if (Math.abs(existing.price - sp.price) > 0.01) updateData.price = sp.price;
         if (sp.image_url) updateData.image_url = sp.image_url;
         await supabaseAdmin.from('products').update(updateData).eq('id', existing.id);
@@ -167,7 +184,9 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from('products').insert({
           name: sp.title, price: sp.price, image_url: sp.image_url,
           description: `Produto importado do Mercado Livre. Link: ${sp.ml_link}`,
-          is_active: true, stock_quantity: 10, category_id: categoryId,
+          is_active: true, stock_quantity: 10,
+          category_id: parentCategoryId,
+          subcategory_id: subcategoryId,
         });
         created++;
       }
@@ -176,7 +195,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true, products: scrapedProducts, synced, created, updated,
-      message: `Sincronização concluída: ${created} novos, ${updated} atualizados, ${catsCreated} categorias criadas de ${scrapedProducts.length} produtos encontrados.`,
+      message: `Sincronização concluída: ${created} novos, ${updated} atualizados, ${subsCreated} subcategorias criadas de ${scrapedProducts.length} produtos encontrados.`,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error) {

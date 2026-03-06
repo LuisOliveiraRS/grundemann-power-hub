@@ -27,6 +27,7 @@ interface OrderItem {
 interface Order {
   id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
+  tracking_code?: string | null;
   items?: OrderItem[];
 }
 
@@ -336,8 +337,19 @@ const ClientDashboard = () => {
                                     ))}
                                   </tbody>
                                 </table>
-                                {order.shipping_address && (
+                                {order.tracking_code && (
                                   <div className="mt-4 pt-3 border-t border-border">
+                                    <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+                                      <Truck className="h-4 w-4 text-primary flex-shrink-0" />
+                                      <div>
+                                        <p className="text-xs font-semibold text-primary">Código de Rastreamento</p>
+                                        <p className="text-sm font-mono font-bold text-card-foreground">{order.tracking_code}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                {order.shipping_address && (
+                                  <div className="mt-3 pt-3 border-t border-border">
                                     <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {order.shipping_address}</p>
                                   </div>
                                 )}

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -26,8 +26,14 @@ interface Product {
 interface OrderWithItems {
   id: string; user_id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
+  tracking_code?: string | null;
   items?: OrderItem[];
   profile?: ProfileFull | null;
+}
+
+interface Testimonial {
+  id: string; customer_name: string; customer_city: string;
+  rating: number; comment: string; is_approved: boolean; created_at: string;
 }
 
 interface OrderItem {
@@ -54,7 +60,10 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials">("dashboard");
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
+  const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -107,19 +116,21 @@ const AdminDashboard = () => {
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("subcategories").select("*").order("name"),
+      supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const ords = (ordRes.data || []) as OrderWithItems[];
     const cats = (catRes.data || []) as Category[];
     const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
-    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs);
+    const tests = (testRes.data || []) as Testimonial[];
+    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
@@ -274,6 +285,45 @@ const AdminDashboard = () => {
     toast({ title: `Status atualizado para ${statusLabel[status]}` }); loadAll();
   };
 
+  const updateTrackingCode = async (id: string, code: string) => {
+    await supabase.from("orders").update({ tracking_code: code } as any).eq("id", id);
+    toast({ title: "Código de rastreio atualizado!" });
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, tracking_code: code } : o));
+  };
+
+  // Testimonial CRUD
+  const saveTestimonial = async () => {
+    const data = {
+      customer_name: testimonialForm.customer_name,
+      customer_city: testimonialForm.customer_city,
+      rating: parseInt(testimonialForm.rating) || 5,
+      comment: testimonialForm.comment,
+      is_approved: true,
+    };
+    if (editingTestimonial?.id) {
+      await supabase.from("testimonials").update(data).eq("id", editingTestimonial.id);
+      toast({ title: "Depoimento atualizado!" });
+    } else {
+      await supabase.from("testimonials").insert(data);
+      toast({ title: "Depoimento criado!" });
+    }
+    setEditingTestimonial(null);
+    setTestimonialForm({ customer_name: "", customer_city: "", rating: "5", comment: "" });
+    loadAll();
+  };
+
+  const toggleTestimonialApproval = async (id: string, current: boolean) => {
+    await supabase.from("testimonials").update({ is_approved: !current }).eq("id", id);
+    toast({ title: !current ? "Depoimento aprovado!" : "Depoimento ocultado!" });
+    loadAll();
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    if (!confirm("Excluir este depoimento?")) return;
+    await supabase.from("testimonials").delete().eq("id", id);
+    toast({ title: "Depoimento excluído!" }); loadAll();
+  };
+
   // Client CRUD
   const resetClientForm = () => setClientForm({
     full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
@@ -368,6 +418,7 @@ const AdminDashboard = () => {
     { key: "orders", label: "Pedidos", icon: ShoppingCart },
     { key: "categories", label: "Categorias", icon: Tag },
     { key: "clients", label: "Clientes", icon: Users },
+    { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
   ] as const;
 
   // Filtered data
@@ -845,6 +896,22 @@ const AdminDashboard = () => {
                         </div>
                       )}
                       {o.shipping_address && <p className="text-sm mb-3"><span className="text-muted-foreground">Endereço:</span> {o.shipping_address}</p>}
+                      {/* Tracking Code */}
+                      <div className="mb-4 p-3 bg-background rounded-lg border border-border flex items-center gap-3">
+                        <Truck className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Rastreio:</span>
+                        <Input
+                          className="h-8 text-sm flex-1"
+                          placeholder="Código de rastreamento..."
+                          defaultValue={o.tracking_code || ""}
+                          onBlur={(e) => {
+                            if (e.target.value !== (o.tracking_code || "")) updateTrackingCode(o.id, e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                        />
+                      </div>
                       <table className="w-full text-sm">
                         <thead><tr className="text-muted-foreground text-xs uppercase tracking-wider"><th className="text-left pb-2">Item</th><th className="text-center pb-2">Qtd</th><th className="text-right pb-2">Preço Unit.</th><th className="text-right pb-2">Subtotal</th></tr></thead>
                         <tbody className="divide-y divide-border">
@@ -1102,6 +1169,76 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* TESTIMONIALS TAB */}
+        {tab === "testimonials" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="font-heading text-3xl font-bold">Depoimentos</h1>
+                <p className="text-muted-foreground text-sm mt-1">{testimonials.length} depoimentos</p>
+              </div>
+              <Button onClick={() => { setEditingTestimonial({}); setTestimonialForm({ customer_name: "", customer_city: "", rating: "5", comment: "" }); }} className="shadow-md">
+                <Plus className="h-4 w-4 mr-2" /> Novo Depoimento
+              </Button>
+            </div>
+
+            {editingTestimonial !== null && (
+              <div className="bg-card rounded-xl shadow-lg border border-border p-6 mb-6">
+                <h3 className="font-heading text-lg font-bold mb-4">{editingTestimonial.id ? "Editar" : "Novo"} Depoimento</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div><Label>Nome do Cliente *</Label><Input value={testimonialForm.customer_name} onChange={(e) => setTestimonialForm({ ...testimonialForm, customer_name: e.target.value })} /></div>
+                  <div><Label>Cidade / Estado</Label><Input value={testimonialForm.customer_city} onChange={(e) => setTestimonialForm({ ...testimonialForm, customer_city: e.target.value })} placeholder="Ex: São Paulo/SP" /></div>
+                  <div>
+                    <Label>Avaliação</Label>
+                    <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={testimonialForm.rating} onChange={(e) => setTestimonialForm({ ...testimonialForm, rating: e.target.value })}>
+                      {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} estrela{n > 1 ? "s" : ""}</option>)}
+                    </select>
+                  </div>
+                  <div className="md:col-span-3"><Label>Comentário *</Label><Textarea rows={3} value={testimonialForm.comment} onChange={(e) => setTestimonialForm({ ...testimonialForm, comment: e.target.value })} placeholder="O que o cliente disse..." /></div>
+                </div>
+                <div className="flex gap-3 mt-5">
+                  <Button onClick={saveTestimonial}>Salvar Depoimento</Button>
+                  <Button variant="outline" onClick={() => setEditingTestimonial(null)}>Cancelar</Button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {testimonials.map(t => (
+                <div key={t.id} className={`bg-card rounded-xl border shadow-sm p-5 ${t.is_approved ? "border-border" : "border-accent/30 bg-accent/5"}`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-heading font-bold text-sm">{t.customer_name}</p>
+                      {t.customer_city && <p className="text-xs text-muted-foreground">{t.customer_city}</p>}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleTestimonialApproval(t.id, t.is_approved)}>
+                        {t.is_approved ? <Eye className="h-3.5 w-3.5 text-primary" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                        setEditingTestimonial(t);
+                        setTestimonialForm({ customer_name: t.customer_name, customer_city: t.customer_city, rating: String(t.rating), comment: t.comment });
+                      }}><Edit className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteTestimonial(t.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  </div>
+                  <div className="flex gap-0.5 mb-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`h-3.5 w-3.5 ${i < t.rating ? "fill-accent text-accent" : "text-muted-foreground/30"}`} />
+                    ))}
+                  </div>
+                  <p className="text-sm text-card-foreground leading-relaxed">"{t.comment}"</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Badge variant={t.is_approved ? "default" : "secondary"}>{t.is_approved ? "Aprovado" : "Pendente"}</Badge>
+                    <span className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </div>
+              ))}
+              {testimonials.length === 0 && <p className="col-span-3 text-center text-muted-foreground py-12">Nenhum depoimento cadastrado.</p>}
             </div>
           </div>
         )}
