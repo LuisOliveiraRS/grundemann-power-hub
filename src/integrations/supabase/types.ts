@@ -158,6 +158,7 @@ export type Database = {
           shipping_address: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_amount: number
+          tracking_code: string | null
           updated_at: string
           user_id: string
         }
@@ -168,6 +169,7 @@ export type Database = {
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_amount?: number
+          tracking_code?: string | null
           updated_at?: string
           user_id: string
         }
@@ -178,6 +180,7 @@ export type Database = {
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_amount?: number
+          tracking_code?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -352,6 +355,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      testimonials: {
+        Row: {
+          comment: string
+          created_at: string
+          customer_city: string | null
+          customer_name: string
+          id: string
+          is_approved: boolean
+          rating: number
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          customer_city?: string | null
+          customer_name: string
+          id?: string
+          is_approved?: boolean
+          rating?: number
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          customer_city?: string | null
+          customer_name?: string
+          id?: string
+          is_approved?: boolean
+          rating?: number
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
