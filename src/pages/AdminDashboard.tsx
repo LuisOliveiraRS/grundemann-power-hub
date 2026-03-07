@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -1544,28 +1544,56 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-card rounded-xl border border-border p-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Receita Total</p>
-                <p className="text-2xl font-heading font-bold text-primary">R$ {stats.revenue.toFixed(2).replace(".", ",")}</p>
+            {/* Report filters */}
+            <div className="bg-card rounded-xl border border-border p-4 mb-6">
+              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
+                <Filter className="h-4 w-4" /> Filtros de Relatório
               </div>
-              <div className="bg-card rounded-xl border border-border p-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Preço Médio</p>
-                <p className="text-2xl font-heading font-bold">R$ {avgPrice.toFixed(2).replace(".", ",")}</p>
-              </div>
-              <div className="bg-card rounded-xl border border-border p-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Sem Imagem</p>
-                <p className="text-2xl font-heading font-bold text-destructive">{productsWithoutImage}</p>
-              </div>
-              <div className="bg-card rounded-xl border border-border p-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Sem Estoque</p>
-                <p className="text-2xl font-heading font-bold text-destructive">{productsOutOfStock}</p>
+              <div className="flex flex-wrap gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Período De</label>
+                  <Input type="date" value={orderDateFrom} onChange={e => setOrderDateFrom(e.target.value)} className="h-9 text-sm w-40" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Período Até</label>
+                  <Input type="date" value={orderDateTo} onChange={e => setOrderDateTo(e.target.value)} className="h-9 text-sm w-40" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Status do Pedido</label>
+                  <select className="border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)}>
+                    <option value="">Todos</option>
+                    {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
+                  <select className="border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={productCatFilter} onChange={e => setProductCatFilter(e.target.value)}>
+                    <option value="">Todas</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Orders by status */}
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+              {[
+                { label: "Receita Total", value: `R$ ${stats.revenue.toFixed(2).replace(".", ",")}`, color: "text-primary" },
+                { label: "Pedidos", value: filteredOrders.length, color: "text-foreground" },
+                { label: "Ticket Médio", value: `R$ ${(filteredOrders.length > 0 ? filteredOrders.reduce((s,o) => s + Number(o.total_amount), 0) / filteredOrders.length : 0).toFixed(2).replace(".", ",")}`, color: "text-primary" },
+                { label: "Produtos sem Imagem", value: productsWithoutImage, color: "text-destructive" },
+                { label: "Sem Estoque", value: productsOutOfStock, color: "text-destructive" },
+              ].map(s => (
+                <div key={s.label} className="bg-card rounded-xl border border-border p-4">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{s.label}</p>
+                  <p className={`text-xl font-heading font-bold ${s.color}`}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Charts grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Orders by status */}
               <div className="bg-card rounded-xl border border-border">
                 <div className="p-5 border-b border-border">
                   <h2 className="font-heading text-lg font-bold flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" /> Pedidos por Status</h2>
@@ -1576,8 +1604,8 @@ const AdminDashboard = () => {
                       <div key={s.status} className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1">
                           <span className="text-sm font-medium w-28">{s.status}</span>
-                          <div className="flex-1 bg-muted rounded-full h-2.5">
-                            <div className="bg-primary rounded-full h-2.5 transition-all" style={{ width: `${orders.length > 0 ? (s.count / orders.length) * 100 : 0}%` }} />
+                          <div className="flex-1 bg-muted rounded-full h-3">
+                            <div className="bg-primary rounded-full h-3 transition-all" style={{ width: `${orders.length > 0 ? (s.count / orders.length) * 100 : 0}%` }} />
                           </div>
                         </div>
                         <div className="text-right ml-4">
@@ -1590,6 +1618,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Products by category */}
               <div className="bg-card rounded-xl border border-border">
                 <div className="p-5 border-b border-border">
                   <h2 className="font-heading text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Produtos por Categoria</h2>
@@ -1600,8 +1629,8 @@ const AdminDashboard = () => {
                       <div key={c.category} className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1">
                           <span className="text-sm font-medium w-36 truncate">{c.category}</span>
-                          <div className="flex-1 bg-muted rounded-full h-2.5">
-                            <div className="bg-secondary rounded-full h-2.5 transition-all" style={{ width: `${products.length > 0 ? (c.count / products.length) * 100 : 0}%` }} />
+                          <div className="flex-1 bg-muted rounded-full h-3">
+                            <div className="bg-secondary rounded-full h-3 transition-all" style={{ width: `${products.length > 0 ? (c.count / products.length) * 100 : 0}%` }} />
                           </div>
                         </div>
                         <div className="text-right ml-4">
@@ -1610,32 +1639,60 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     ))}
-                    {products.filter(p => !p.category_id).length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Sem categoria</span>
-                        <span className="text-sm font-bold">{products.filter(p => !p.category_id).length}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Top products */}
-            <div className="bg-card rounded-xl border border-border">
-              <div className="p-5 border-b border-border">
-                <h2 className="font-heading text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Produtos Mais Caros</h2>
+              {/* Revenue by month */}
+              <div className="bg-card rounded-xl border border-border">
+                <div className="p-5 border-b border-border">
+                  <h2 className="font-heading text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Receita Mensal</h2>
+                </div>
+                <div className="p-5">
+                  {(() => {
+                    const months: Record<string, number> = {};
+                    orders.filter(o => o.status !== "cancelled").forEach(o => {
+                      const d = new Date(o.created_at);
+                      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                      months[key] = (months[key] || 0) + Number(o.total_amount);
+                    });
+                    const sorted = Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+                    const max = Math.max(...sorted.map(([, v]) => v), 1);
+                    return sorted.length > 0 ? (
+                      <div className="flex items-end gap-2 h-40">
+                        {sorted.map(([month, value]) => (
+                          <div key={month} className="flex-1 flex flex-col items-center gap-1">
+                            <span className="text-[10px] font-bold text-primary">R$ {value.toFixed(0)}</span>
+                            <div className="w-full bg-primary/20 rounded-t-lg relative" style={{ height: `${(value / max) * 100}%`, minHeight: "4px" }}>
+                              <div className="absolute inset-0 bg-primary rounded-t-lg" />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">{month.slice(5)}/{month.slice(2,4)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground text-sm py-8">Sem dados de receita.</p>
+                    );
+                  })()}
+                </div>
               </div>
-              <div className="divide-y divide-border">
-                {products.sort((a, b) => b.price - a.price).slice(0, 10).map(p => (
-                  <div key={p.id} className="px-5 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {p.image_url ? <img src={p.image_url} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>}
-                      <span className="text-sm font-medium">{p.name}</span>
+
+              {/* Top sellers */}
+              <div className="bg-card rounded-xl border border-border">
+                <div className="p-5 border-b border-border">
+                  <h2 className="font-heading text-lg font-bold flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Top 10 Produtos (Preço)</h2>
+                </div>
+                <div className="divide-y divide-border max-h-[280px] overflow-y-auto">
+                  {[...products].sort((a, b) => b.price - a.price).slice(0, 10).map(p => (
+                    <div key={p.id} className="px-5 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {p.image_url ? <img src={p.image_url} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>}
+                        <span className="text-sm font-medium truncate">{p.name}</span>
+                      </div>
+                      <span className="font-bold text-price">R$ {Number(p.price).toFixed(2).replace(".", ",")}</span>
                     </div>
-                    <span className="font-bold text-price">R$ {Number(p.price).toFixed(2).replace(".", ",")}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
