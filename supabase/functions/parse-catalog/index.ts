@@ -41,6 +41,7 @@ Para cada produto, extraia:
 - category: Categoria sugerida (ex: Filtros, Peças para Motores, Motores Estacionários, Geradores, Peças de Reposição, Carburadores, Bombas, Acessórios)
 - price: Preço se disponível (apenas número, sem R$)
 - brand: Marca se identificável
+- image_url: URL da imagem do produto se disponível no documento (links http/https para imagens)
 
 IMPORTANTE:
 - Extraia TODOS os produtos, mesmo que sejam dezenas ou centenas
@@ -108,6 +109,7 @@ IMPORTANTE:
                         category: { type: "string", description: "Categoria sugerida" },
                         price: { type: "number", description: "Preço" },
                         brand: { type: "string", description: "Marca" },
+                        image_url: { type: "string", description: "URL da imagem do produto" },
                       },
                       required: ["name"],
                     },

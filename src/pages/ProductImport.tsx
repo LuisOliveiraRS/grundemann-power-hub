@@ -22,6 +22,7 @@ interface ImportProduct {
   category: string;
   price: number | null;
   brand: string;
+  image_url: string;
   status: "ready" | "error" | "editing";
   errorMsg?: string;
 }
@@ -146,6 +147,7 @@ const ProductImport = () => {
         category: p.category || "Sem categoria",
         price: p.price ? Number(p.price) : null,
         brand: p.brand || "",
+        image_url: p.image_url || "",
         status: p.name ? "ready" as const : "error" as const,
         errorMsg: p.name ? undefined : "Nome do produto não identificado",
       }));
@@ -188,6 +190,38 @@ const ProductImport = () => {
     return data.id;
   };
 
+  const uploadImageFromUrl = async (imageUrl: string, productName: string): Promise<string | null> => {
+    try {
+      if (!imageUrl || !imageUrl.startsWith("http")) return null;
+
+      const response = await fetch(imageUrl);
+      if (!response.ok) return null;
+
+      const blob = await response.blob();
+      const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const filePath = `imports/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, blob, { contentType: blob.type });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        return null;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      return urlData?.publicUrl || null;
+    } catch (err) {
+      console.error("Image download error for", productName, err);
+      return null;
+    }
+  };
+
   const confirmImport = async () => {
     const validProducts = products.filter(p => p.status !== "error" && p.name);
     if (validProducts.length === 0) {
@@ -204,12 +238,19 @@ const ProductImport = () => {
       try {
         const categoryId = await getOrCreateCategory(p.category);
 
+        // Try to download and upload image if URL is provided
+        let finalImageUrl: string | null = null;
+        if (p.image_url) {
+          finalImageUrl = await uploadImageFromUrl(p.image_url, p.name);
+        }
+
         const productData: any = {
           name: p.name,
           sku: p.sku || null,
           description: p.description || null,
           price: p.price || 0,
           category_id: categoryId,
+          image_url: finalImageUrl,
           stock_quantity: 0,
           is_active: true,
           is_featured: false,
@@ -367,6 +408,7 @@ const ProductImport = () => {
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produto</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Código</th>
+                      <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Imagem</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categoria</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preço</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
@@ -376,6 +418,17 @@ const ProductImport = () => {
                   <tbody className="divide-y divide-border">
                     {products.map((p) => (
                       <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="p-3">
+                          {editingId === p.id ? (
+                            <Input value={p.image_url} onChange={(e) => updateProduct(p.id, "image_url", e.target.value)} className="text-sm h-8 w-40" placeholder="URL da imagem" />
+                          ) : (
+                            p.image_url ? (
+                              <img src={p.image_url} alt={p.name} className="h-10 w-10 rounded object-cover border border-border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )
+                          )}
+                        </td>
                         <td className="p-3">
                           {editingId === p.id ? (
                             <div className="space-y-1">
