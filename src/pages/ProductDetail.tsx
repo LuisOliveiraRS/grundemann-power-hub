@@ -181,10 +181,23 @@ const ProductDetail = () => {
                     <Button size="lg" className="text-base px-8" onClick={addToCart}>
                       <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                     </Button>
+                    <Button size="lg" variant="outline" className="text-base" onClick={() => {
+                      const saved = JSON.parse(localStorage.getItem("quote_items") || "[]");
+                      const existing = saved.find((i: any) => i.product_id === product.id);
+                      if (existing) {
+                        existing.quantity += quantity;
+                      } else {
+                        saved.push({ product_id: product.id, product_name: product.name, product_sku: product.sku || "", quantity, unit_price: product.price, image_url: product.image_url });
+                      }
+                      localStorage.setItem("quote_items", JSON.stringify(saved));
+                      toast({ title: "Produto adicionado ao orçamento!" });
+                    }}>
+                      <FileText className="h-5 w-5 mr-2" /> Solicitar Orçamento
+                    </Button>
                     <WhatsAppButton
                       floating={false}
-                      message={`Olá! Tenho interesse no produto: ${product.name} (R$ ${product.price.toFixed(2).replace(".",",")})`}
-                      label="Comprar via WhatsApp"
+                      message={`Olá! Tenho interesse no produto: ${product.name}${product.sku ? ` (Código: ${product.sku})` : ""} - R$ ${product.price.toFixed(2).replace(".",",")}\n${window.location.href}`}
+                      label="WhatsApp"
                     />
                   </div>
                 </>
