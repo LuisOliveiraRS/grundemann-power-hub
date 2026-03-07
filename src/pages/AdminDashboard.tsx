@@ -1034,6 +1034,11 @@ const AdminDashboard = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline">{products.filter(p => p.category_id === c.id).length} produtos</Badge>
                       <Badge variant="secondary">{getCatSubcats(c.id).length} subcategorias</Badge>
+                      {c.is_visible === false && (
+                        <Badge variant="outline" className="text-muted-foreground border-muted">
+                          <EyeOff className="h-3 w-3 mr-1" /> Oculta
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
