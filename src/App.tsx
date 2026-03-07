@@ -19,6 +19,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Returns from "./pages/Returns";
 import NotFound from "./pages/NotFound";
+import ProductImport from "./pages/ProductImport";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/trocas-e-devolucoes" element={<Returns />} />
             <Route path="/minha-conta" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/importar" element={<ProtectedRoute adminOnly><ProductImport /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

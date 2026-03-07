@@ -2,3 +2,6 @@ project_id = "hodtsmyjqtkjlkburoea"
 
 [functions.sync-mercadolivre]
 verify_jwt = false
+
+[functions.parse-catalog]
+verify_jwt = false
