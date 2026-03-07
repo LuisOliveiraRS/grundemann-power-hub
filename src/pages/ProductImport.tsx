@@ -478,38 +478,7 @@ const ProductImport = () => {
       setProgressMessage(`Processados ${i + 1} de ${total} produtos...`);
     }
 
-          const slug = generateSlug(p.name);
-          const productData = {
-            name: p.name,
-            sku: p.sku || null,
-            description: p.description || null,
-            price: p.price || 0,
-            category_id: categoryId,
-            image_url: finalImageUrl,
-            stock_quantity: 0,
-            is_active: true,
-            is_featured: false,
-          };
 
-          if (p.status === "duplicate" && p.updateExisting && p.existingProductId) {
-            const { error } = await supabase.from("products").update(productData).eq("id", p.existingProductId);
-            if (error) throw error;
-            updated++;
-          } else {
-            const { error } = await supabase.from("products").insert(productData);
-            if (error) throw error;
-            created++;
-          }
-        } catch (err: any) {
-          failed++;
-          errors.push(`${p.name}: ${err.message}`);
-        }
-      });
-
-      await Promise.all(batchPromises);
-      setImportProgress(Math.round(((i + batch.length) / total) * 100));
-      setProgressMessage(`Processados ${Math.min(i + batch.length, total)} de ${total} produtos...`);
-    }
 
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("import_logs").insert({
