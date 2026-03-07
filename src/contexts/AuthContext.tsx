@@ -6,6 +6,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  isSeller: boolean;
   isLoading: boolean;
   signOut: () => Promise<void>;
 }
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   isAdmin: false,
+  isSeller: false,
   isLoading: true,
   signOut: async () => {},
 });
@@ -24,16 +26,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkAdmin = async (userId: string) => {
+  const checkRoles = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    setIsAdmin(!!data);
+      .eq("user_id", userId);
+    const roles = (data || []).map((r: any) => r.role);
+    setIsAdmin(roles.includes("admin"));
+    setIsSeller(roles.includes("seller"));
   };
 
   useEffect(() => {
@@ -42,9 +45,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => checkAdmin(session.user.id), 0);
+          setTimeout(() => checkRoles(session.user.id), 0);
         } else {
           setIsAdmin(false);
+          setIsSeller(false);
         }
         setIsLoading(false);
       }
@@ -54,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkAdmin(session.user.id);
+        checkRoles(session.user.id);
       }
       setIsLoading(false);
     });
@@ -67,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isLoading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
