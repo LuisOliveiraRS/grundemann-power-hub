@@ -109,7 +109,7 @@ const AdminDashboard = () => {
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "",
-    additional_images: [] as string[], video_url: ""
+    additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: ""
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -209,6 +209,9 @@ const AdminDashboard = () => {
       image_url: productForm.image_url || null,
       additional_images: productForm.additional_images.filter(Boolean),
       video_url: productForm.video_url || null,
+      brand: productForm.brand || null,
+      hp: productForm.hp || null,
+      engine_model: productForm.engine_model || null,
     };
     if (editingProduct?.id) {
       const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
@@ -222,7 +225,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
