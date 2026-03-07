@@ -586,7 +586,7 @@ const AdminDashboard = () => {
                 <p className="text-muted-foreground text-sm mt-1">{filteredProducts.length} de {products.length} produtos</p>
               </div>
               <div className="flex gap-3">
-                <Button onClick={() => navigate("/admin/importar")} variant="outline" className="shadow-md border-secondary text-secondary-foreground hover:bg-secondary/10">
+                <Button onClick={() => navigate("/admin/importar")} variant="outline" className="shadow-md border-secondary text-secondary hover:bg-secondary/10">
                   <FileUp className="h-4 w-4 mr-2" /> Importar Produtos
                 </Button>
                 <Button onClick={syncMercadoLivre} variant="outline" disabled={syncing} className="shadow-md border-accent text-accent-foreground hover:bg-accent/10">
