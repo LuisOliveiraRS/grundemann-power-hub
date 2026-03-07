@@ -22,7 +22,7 @@ const defaultCategories = [
   { id: "6", name: "Serviços Técnicos", slug: "servicos-tecnicos", icon: ShieldCheck },
 ];
 
-interface DBCategory { id: string; name: string; slug: string; }
+interface DBCategory { id: string; name: string; slug: string; is_visible?: boolean; }
 interface Subcategory { id: string; name: string; slug: string; category_id: string; }
 
 const CategoryNav = () => {
@@ -33,7 +33,7 @@ const CategoryNav = () => {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("categories").select("id, name, slug").order("name"),
+      supabase.from("categories").select("id, name, slug, is_visible").order("name"),
       supabase.from("subcategories").select("id, name, slug, category_id").order("name"),
     ]).then(([catRes, subRes]) => {
       if (catRes.data && catRes.data.length > 0) setCategories(catRes.data);
@@ -51,8 +51,9 @@ const CategoryNav = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const items = categories.length > 0
-    ? categories.map(c => ({ ...c, icon: iconMap[c.slug] || Cog }))
+  const visibleCategories = categories.filter(c => c.is_visible !== false);
+  const items = visibleCategories.length > 0
+    ? visibleCategories.map(c => ({ ...c, icon: iconMap[c.slug] || Cog }))
     : defaultCategories;
 
   const getSubcats = (catId: string) => subcategories.filter(s => s.category_id === catId);
