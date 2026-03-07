@@ -52,6 +52,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          is_visible: boolean
           name: string
           slug: string
         }
@@ -60,6 +61,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_visible?: boolean
           name: string
           slug: string
         }
@@ -68,6 +70,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_visible?: boolean
           name?: string
           slug?: string
         }

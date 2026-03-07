@@ -426,65 +426,59 @@ const ProductImport = () => {
     const errors: string[] = [];
     const total = validProducts.length;
 
-    // Process in batches
-    for (let i = 0; i < validProducts.length; i += BATCH_SIZE) {
-      const batch = validProducts.slice(i, i + BATCH_SIZE);
-      const batchPromises = batch.map(async (p) => {
-        try {
-          const categoryId = await getOrCreateCategory(p.category);
-          let finalImageUrl: string | null = null;
+    // Process sequentially when AI image gen is enabled to avoid rate limits
+    for (let i = 0; i < validProducts.length; i++) {
+      const p = validProducts[i];
+      try {
+        const categoryId = await getOrCreateCategory(p.category);
+        let finalImageUrl: string | null = null;
 
-          if (p.image_file) {
-            finalImageUrl = await uploadImageFile(p.image_file, p.sku || p.name);
-            if (finalImageUrl) imagesImported++;
-          } else if (p.image_url && p.image_source === "ai") {
-            // Already uploaded by AI generation
-            finalImageUrl = p.image_url;
+        if (p.image_file) {
+          finalImageUrl = await uploadImageFile(p.image_file, p.sku || p.name);
+          if (finalImageUrl) imagesImported++;
+        } else if (p.image_url && p.image_source === "ai") {
+          finalImageUrl = p.image_url;
+          imagesImported++;
+        } else if (autoGenerateImages && !p.image_url) {
+          setProgressMessage(`Gerando imagem IA para "${p.name}" (${i + 1}/${total})...`);
+          const aiUrl = await generateAIImage(p);
+          if (aiUrl) {
+            finalImageUrl = aiUrl;
             imagesImported++;
-          } else if (autoGenerateImages && !p.image_url) {
-            // Auto-generate with AI during import
-            setProgressMessage(`Gerando imagem IA para "${p.name}"...`);
-            const aiUrl = await generateAIImage(p);
-            if (aiUrl) {
-              finalImageUrl = aiUrl;
-              imagesImported++;
-            }
-            // Delay to avoid rate limiting
-            await new Promise(r => setTimeout(r, 1500));
           }
-
-          const slug = generateSlug(p.name);
-          const productData = {
-            name: p.name,
-            sku: p.sku || null,
-            description: p.description || null,
-            price: p.price || 0,
-            category_id: categoryId,
-            image_url: finalImageUrl,
-            stock_quantity: 0,
-            is_active: true,
-            is_featured: false,
-          };
-
-          if (p.status === "duplicate" && p.updateExisting && p.existingProductId) {
-            const { error } = await supabase.from("products").update(productData).eq("id", p.existingProductId);
-            if (error) throw error;
-            updated++;
-          } else {
-            const { error } = await supabase.from("products").insert(productData);
-            if (error) throw error;
-            created++;
-          }
-        } catch (err: any) {
-          failed++;
-          errors.push(`${p.name}: ${err.message}`);
+          await new Promise(r => setTimeout(r, 2000));
         }
-      });
 
-      await Promise.all(batchPromises);
-      setImportProgress(Math.round(((i + batch.length) / total) * 100));
-      setProgressMessage(`Processados ${Math.min(i + batch.length, total)} de ${total} produtos...`);
+        const productData = {
+          name: p.name,
+          sku: p.sku || null,
+          description: p.description || null,
+          price: p.price || 0,
+          category_id: categoryId,
+          image_url: finalImageUrl,
+          stock_quantity: 0,
+          is_active: true,
+          is_featured: false,
+        };
+
+        if (p.status === "duplicate" && p.updateExisting && p.existingProductId) {
+          const { error } = await supabase.from("products").update(productData).eq("id", p.existingProductId);
+          if (error) throw error;
+          updated++;
+        } else {
+          const { error } = await supabase.from("products").insert(productData);
+          if (error) throw error;
+          created++;
+        }
+      } catch (err: any) {
+        failed++;
+        errors.push(`${p.name}: ${err.message}`);
+      }
+      setImportProgress(Math.round(((i + 1) / total) * 100));
+      setProgressMessage(`Processados ${i + 1} de ${total} produtos...`);
     }
+
+
 
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("import_logs").insert({
@@ -830,6 +824,28 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title="Gerar imagem com IA"
+                              disabled={p.generatingImage}
+                              onClick={async () => {
+                                setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: true } : pr));
+                                const url = await generateAIImage(p);
+                                if (url) {
+                                  setProducts(prev => prev.map(pr =>
+                                    pr.id === p.id ? { ...pr, image_url: url, image_source: "ai" as const, generatingImage: false } : pr
+                                  ));
+                                  toast({ title: "Imagem gerada!", description: p.name });
+                                } else {
+                                  setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: false } : pr));
+                                  toast({ title: "Erro ao gerar imagem", variant: "destructive" });
+                                }
+                              }}
+                            >
+                              {p.generatingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-primary" />}
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(editingId === p.id ? null : p.id)}>
                               {editingId === p.id ? <Check className="h-3.5 w-3.5 text-primary" /> : <Edit className="h-3.5 w-3.5" />}
                             </Button>
