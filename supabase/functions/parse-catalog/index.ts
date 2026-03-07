@@ -25,8 +25,8 @@ serve(async (req) => {
     const { data: isAdmin } = await supabase.rpc("is_admin");
     if (!isAdmin) throw new Error("Acesso negado: apenas administradores");
 
-    const { content, fileType, fileName } = await req.json();
-    if (!content) throw new Error("Conteúdo do arquivo não fornecido");
+    const { content, fileType, fileName, pdfBase64 } = await req.json();
+    if (!content && !pdfBase64) throw new Error("Conteúdo do arquivo não fornecido");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
@@ -50,13 +50,34 @@ IMPORTANTE:
 - Sempre tente inferir a categoria mais adequada
 - Se não encontrar preço, deixe como null`;
 
-    const userPrompt = `Tipo do arquivo: ${fileType}
-Nome do arquivo: ${fileName}
+    // Build messages based on file type
+    const messages: any[] = [
+      { role: "system", content: systemPrompt },
+    ];
 
-Conteúdo do documento:
-${content.substring(0, 60000)}
-
-Extraia todos os produtos encontrados neste documento.`;
+    if (pdfBase64 && fileType === "pdf") {
+      // Use multimodal: send PDF as inline_data for Gemini
+      messages.push({
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Este é um catálogo PDF chamado "${fileName}". Extraia todos os produtos encontrados neste documento.`,
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:application/pdf;base64,${pdfBase64}`,
+            },
+          },
+        ],
+      });
+    } else {
+      messages.push({
+        role: "user",
+        content: `Tipo do arquivo: ${fileType}\nNome do arquivo: ${fileName}\n\nConteúdo do documento:\n${(content || "").substring(0, 60000)}\n\nExtraia todos os produtos encontrados neste documento.`,
+      });
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -65,11 +86,8 @@ Extraia todos os produtos encontrados neste documento.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        model: "google/gemini-2.5-flash",
+        messages,
         tools: [
           {
             type: "function",
