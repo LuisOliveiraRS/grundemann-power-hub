@@ -41,7 +41,9 @@ Para cada produto, extraia:
 - category: Categoria sugerida (ex: Filtros, Peças para Motores, Motores Estacionários, Geradores, Peças de Reposição, Carburadores, Bombas, Acessórios)
 - price: Preço se disponível (apenas número, sem R$)
 - brand: Marca se identificável
-- image_url: URL da imagem do produto se disponível no documento (links http/https para imagens)
+- weight: Peso do produto se disponível (ex: "2.5 kg")
+- dimensions: Dimensões se disponíveis (ex: "30x20x15 cm")
+- image_description: Descreva brevemente a imagem do produto se visível no documento (ex: "filtro de ar cilíndrico branco", "carburador metálico"). Isso ajudará a associar imagens.
 
 IMPORTANTE:
 - Extraia TODOS os produtos, mesmo que sejam dezenas ou centenas
@@ -49,21 +51,20 @@ IMPORTANTE:
 - Se houver listas descritivas, identifique cada item como produto
 - Para catálogos sem tabela, interprete descrições de texto para encontrar produtos
 - Sempre tente inferir a categoria mais adequada
-- Se não encontrar preço, deixe como null`;
+- Se não encontrar preço, deixe como null
+- Identifique a posição relativa do produto no documento (primeiro, segundo, etc.) para ajudar na associação de imagens`;
 
-    // Build messages based on file type
     const messages: any[] = [
       { role: "system", content: systemPrompt },
     ];
 
     if (pdfBase64 && fileType === "pdf") {
-      // Use multimodal: send PDF as inline_data for Gemini
       messages.push({
         role: "user",
         content: [
           {
             type: "text",
-            text: `Este é um catálogo PDF chamado "${fileName}". Extraia todos os produtos encontrados neste documento.`,
+            text: `Este é um catálogo PDF chamado "${fileName}". Extraia todos os produtos encontrados neste documento. Para cada produto, descreva a imagem associada se visível.`,
           },
           {
             type: "image_url",
@@ -105,11 +106,14 @@ IMPORTANTE:
                       properties: {
                         name: { type: "string", description: "Nome do produto" },
                         sku: { type: "string", description: "Código/SKU" },
-                        description: { type: "string", description: "Descrição completa" },
+                        description: { type: "string", description: "Descrição completa com especificações" },
                         category: { type: "string", description: "Categoria sugerida" },
                         price: { type: "number", description: "Preço" },
                         brand: { type: "string", description: "Marca" },
-                        image_url: { type: "string", description: "URL da imagem do produto" },
+                        weight: { type: "string", description: "Peso do produto" },
+                        dimensions: { type: "string", description: "Dimensões do produto" },
+                        image_description: { type: "string", description: "Descrição da imagem do produto no documento" },
+                        page_number: { type: "number", description: "Número da página onde o produto foi encontrado" },
                       },
                       required: ["name"],
                     },
