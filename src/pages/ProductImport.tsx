@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import {
   Upload, FileText, FileSpreadsheet, Loader2, Check, X, Trash2, Edit,
   ArrowLeft, AlertTriangle, CheckCircle, Download, Eye, ImageIcon,
-  FolderArchive, RefreshCw, Search, Package
+  FolderArchive, RefreshCw, Search, Package, Wand2, Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -29,8 +29,10 @@ interface ImportProduct {
   dimensions: string;
   image_url: string;
   image_file?: File;
-  image_source?: "spreadsheet" | "zip" | "pdf" | "manual" | "placeholder";
+  image_source?: "spreadsheet" | "zip" | "pdf" | "manual" | "ai" | "placeholder";
+  image_description?: string;
   status: "ready" | "error" | "duplicate" | "editing";
+  generatingImage?: boolean;
   errorMsg?: string;
   existingProductId?: string;
   updateExisting?: boolean;
@@ -65,6 +67,8 @@ const ProductImport = () => {
   const [progressMessage, setProgressMessage] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
   const [updateDuplicates, setUpdateDuplicates] = useState(false);
+  const [autoGenerateImages, setAutoGenerateImages] = useState(true);
+  const [generatingImages, setGeneratingImages] = useState(false);
 
   const genId = () => crypto.randomUUID();
   const generateSlug = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -259,6 +263,7 @@ const ProductImport = () => {
           dimensions: p.dimensions || "",
           image_url: "",
           image_source: undefined,
+          image_description: p.image_description || "",
           status: p.name ? "ready" as const : "error" as const,
           errorMsg: p.name ? undefined : "Nome do produto não identificado",
         };
@@ -326,6 +331,50 @@ const ProductImport = () => {
     ));
   };
 
+  const generateAIImage = async (product: ImportProduct): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-product-image", {
+        body: {
+          productName: product.name,
+          imageDescription: product.image_description || product.description,
+          sku: product.sku,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.imageUrl || null;
+    } catch (err: any) {
+      console.error("AI image gen error:", err);
+      return null;
+    }
+  };
+
+  const generateAllAIImages = async () => {
+    const productsWithoutImage = products.filter(p => !p.image_file && !p.image_url && p.status !== "error");
+    if (productsWithoutImage.length === 0) {
+      toast({ title: "Todos os produtos já possuem imagem" });
+      return;
+    }
+    setGeneratingImages(true);
+    let generated = 0;
+    for (const p of productsWithoutImage) {
+      setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: true } : pr));
+      const imageUrl = await generateAIImage(p);
+      if (imageUrl) {
+        generated++;
+        setProducts(prev => prev.map(pr =>
+          pr.id === p.id ? { ...pr, image_url: imageUrl, image_source: "ai" as const, generatingImage: false } : pr
+        ));
+      } else {
+        setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: false } : pr));
+      }
+      // Small delay to avoid rate limiting
+      await new Promise(r => setTimeout(r, 1500));
+    }
+    setGeneratingImages(false);
+    toast({ title: `${generated} imagens geradas por IA`, description: `De ${productsWithoutImage.length} produtos sem imagem.` });
+  };
+
   const uploadImageFile = async (file: File, sku: string): Promise<string | null> => {
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -388,6 +437,20 @@ const ProductImport = () => {
           if (p.image_file) {
             finalImageUrl = await uploadImageFile(p.image_file, p.sku || p.name);
             if (finalImageUrl) imagesImported++;
+          } else if (p.image_url && p.image_source === "ai") {
+            // Already uploaded by AI generation
+            finalImageUrl = p.image_url;
+            imagesImported++;
+          } else if (autoGenerateImages && !p.image_url) {
+            // Auto-generate with AI during import
+            setProgressMessage(`Gerando imagem IA para "${p.name}"...`);
+            const aiUrl = await generateAIImage(p);
+            if (aiUrl) {
+              finalImageUrl = aiUrl;
+              imagesImported++;
+            }
+            // Delay to avoid rate limiting
+            await new Promise(r => setTimeout(r, 1500));
           }
 
           const slug = generateSlug(p.name);
@@ -556,9 +619,18 @@ const ProductImport = () => {
             {/* Options */}
             <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
               <h3 className="font-heading text-lg font-bold mb-4">Opções de Importação</h3>
-              <div className="flex items-center gap-3">
-                <Switch checked={updateDuplicates} onCheckedChange={setUpdateDuplicates} id="update-dupes" />
-                <Label htmlFor="update-dupes" className="text-sm">Atualizar produtos existentes com mesmo SKU</Label>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Switch checked={updateDuplicates} onCheckedChange={setUpdateDuplicates} id="update-dupes" />
+                  <Label htmlFor="update-dupes" className="text-sm">Atualizar produtos existentes com mesmo SKU</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch checked={autoGenerateImages} onCheckedChange={setAutoGenerateImages} id="auto-gen-images" />
+                  <Label htmlFor="auto-gen-images" className="text-sm flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Gerar imagens automaticamente com IA para produtos sem imagem
+                  </Label>
+                </div>
               </div>
             </div>
           </div>
@@ -598,11 +670,19 @@ const ProductImport = () => {
                   <ImageIcon className="h-3 w-3 mr-1" /> {withImageCount} com imagem
                 </Badge>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button variant="outline" onClick={() => { setStep("upload"); setProducts([]); }}>
                   <X className="h-4 w-4 mr-2" /> Cancelar
                 </Button>
-                <Button onClick={confirmImport} disabled={totalImportable === 0}>
+                <Button
+                  variant="secondary"
+                  onClick={generateAllAIImages}
+                  disabled={generatingImages || products.filter(p => !p.image_file && !p.image_url && p.status !== "error").length === 0}
+                >
+                  {generatingImages ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                  {generatingImages ? "Gerando..." : `Gerar Imagens IA (${products.filter(p => !p.image_file && !p.image_url && p.status !== "error").length})`}
+                </Button>
+                <Button onClick={confirmImport} disabled={totalImportable === 0 || generatingImages}>
                   <Check className="h-4 w-4 mr-2" /> Confirmar Importação ({totalImportable})
                 </Button>
               </div>
@@ -639,7 +719,12 @@ const ProductImport = () => {
                         {/* Image column */}
                         <td className="p-3">
                           <div className="relative group">
-                            {p.image_url ? (
+                            {p.generatingImage ? (
+                              <div className="flex flex-col items-center justify-center h-14 w-14 rounded-lg border border-primary/30 bg-primary/5">
+                                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                                <span className="text-[7px] text-primary mt-0.5">IA...</span>
+                              </div>
+                            ) : p.image_url ? (
                               <div className="relative">
                                 <img
                                   src={p.image_url}
@@ -649,7 +734,7 @@ const ProductImport = () => {
                                 />
                                 {p.image_source && (
                                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[8px] px-1 rounded">
-                                    {p.image_source === "zip" ? "ZIP" : p.image_source === "manual" ? "UP" : ""}
+                                    {p.image_source === "zip" ? "ZIP" : p.image_source === "manual" ? "UP" : p.image_source === "ai" ? "IA" : ""}
                                   </span>
                                 )}
                                 <label className="absolute inset-0 flex items-center justify-center bg-foreground/50 rounded-lg opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">

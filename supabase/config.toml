@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.parse-catalog]
 verify_jwt = false
+
+[functions.generate-product-image]
+verify_jwt = false
