@@ -17,6 +17,8 @@ interface Product {
   price: number; original_price: number | null; stock_quantity: number;
   is_active: boolean; image_url: string | null; category_id: string | null;
   additional_images: string[] | null; video_url: string | null;
+  brand: string | null; hp: string | null; engine_model: string | null;
+  specifications: any; documents: string[] | null;
 }
 
 const ProductDetail = () => {
@@ -141,7 +143,12 @@ const ProductDetail = () => {
             <div>
               {categoryName && <p className="text-sm text-muted-foreground mb-2">{categoryName}</p>}
               <h1 className="font-heading text-2xl md:text-3xl font-bold mb-3">{product.name}</h1>
-              {product.sku && <p className="text-sm text-muted-foreground mb-4">Código: {product.sku}</p>}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {product.sku && <Badge variant="outline" className="text-xs">Código: {product.sku}</Badge>}
+                {product.brand && <Badge variant="secondary" className="text-xs">Marca: {product.brand}</Badge>}
+                {product.hp && <Badge variant="secondary" className="text-xs">{product.hp} HP</Badge>}
+                {product.engine_model && <Badge variant="secondary" className="text-xs">Motor: {product.engine_model}</Badge>}
+              </div>
               
               {product.original_price && (
                 <div className="flex items-center gap-3 mb-1">

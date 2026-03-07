@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown
 } from "lucide-react";
+import SellerManagement from "@/components/SellerManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -61,7 +62,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -108,7 +109,7 @@ const AdminDashboard = () => {
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "",
-    additional_images: [] as string[], video_url: ""
+    additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: ""
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -208,6 +209,9 @@ const AdminDashboard = () => {
       image_url: productForm.image_url || null,
       additional_images: productForm.additional_images.filter(Boolean),
       video_url: productForm.video_url || null,
+      brand: productForm.brand || null,
+      hp: productForm.hp || null,
+      engine_model: productForm.engine_model || null,
     };
     if (editingProduct?.id) {
       const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
@@ -221,7 +225,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -310,6 +314,7 @@ const AdminDashboard = () => {
       is_active: p.is_active, image_url: p.image_url || "",
       additional_images: (p.additional_images || []) as string[],
       video_url: (p.video_url || "") as string,
+      brand: (p as any).brand || "", hp: (p as any).hp || "", engine_model: (p as any).engine_model || "",
     });
     setTab("products");
   };
@@ -537,6 +542,7 @@ const AdminDashboard = () => {
     { key: "categories", label: "Categorias", icon: Tag },
     { key: "clients", label: "Clientes", icon: Users },
     { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
+    { key: "sellers", label: "Vendedores", icon: Users },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
@@ -893,6 +899,22 @@ const AdminDashboard = () => {
                         }}>
                           <Upload className="h-4 w-4 mr-1" /> Upload
                         </Button>
+                      </div>
+                    </div>
+
+                    {/* Brand, HP, Engine Model */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label>Marca</Label>
+                        <Input value={productForm.brand} onChange={e => setProductForm({ ...productForm, brand: e.target.value })} placeholder="Ex: Honda, Branco..." className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Potência (HP)</Label>
+                        <Input value={productForm.hp} onChange={e => setProductForm({ ...productForm, hp: e.target.value })} placeholder="Ex: 5.5, 7, 13..." className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Modelo do Motor</Label>
+                        <Input value={productForm.engine_model} onChange={e => setProductForm({ ...productForm, engine_model: e.target.value })} placeholder="Ex: GX160, GX200..." className="mt-1" />
                       </div>
                     </div>
                   </div>
@@ -1616,6 +1638,9 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* SELLERS TAB */}
+        {tab === "sellers" && <SellerManagement />}
       </main>
     </div>
   );

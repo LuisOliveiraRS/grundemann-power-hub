@@ -194,6 +194,7 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          seller_id: string | null
           shipping_address: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_amount: number
@@ -205,6 +206,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          seller_id?: string | null
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_amount?: number
@@ -216,6 +218,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          seller_id?: string | null
           shipping_address?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_amount?: number
@@ -223,22 +226,37 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
           additional_images: string[] | null
+          brand: string | null
           category_id: string | null
           created_at: string
           description: string | null
+          documents: string[] | null
+          engine_model: string | null
+          hp: string | null
           id: string
           image_url: string | null
           is_active: boolean
           is_featured: boolean
+          meta_description: string | null
+          meta_title: string | null
           name: string
           original_price: number | null
           price: number
           sku: string | null
+          specifications: Json | null
           stock_quantity: number
           subcategory_id: string | null
           updated_at: string
@@ -246,17 +264,24 @@ export type Database = {
         }
         Insert: {
           additional_images?: string[] | null
+          brand?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
+          documents?: string[] | null
+          engine_model?: string | null
+          hp?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           original_price?: number | null
           price?: number
           sku?: string | null
+          specifications?: Json | null
           stock_quantity?: number
           subcategory_id?: string | null
           updated_at?: string
@@ -264,17 +289,24 @@ export type Database = {
         }
         Update: {
           additional_images?: string[] | null
+          brand?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
+          documents?: string[] | null
+          engine_model?: string | null
+          hp?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           original_price?: number | null
           price?: number
           sku?: string | null
+          specifications?: Json | null
           stock_quantity?: number
           subcategory_id?: string | null
           updated_at?: string
@@ -354,6 +386,87 @@ export type Database = {
           updated_at?: string
           user_id?: string
           zip_code?: string | null
+        }
+        Relationships: []
+      }
+      sale_commissions: {
+        Row: {
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          order_id: string
+          order_total: number
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          order_id: string
+          order_total?: number
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          order_total?: number
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_commissions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_commissions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sellers: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          id: string
+          is_active: boolean
+          total_commission: number
+          total_sales: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          total_commission?: number
+          total_sales?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          total_commission?: number
+          total_sales?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -458,7 +571,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "seller"
       order_status:
         | "pending"
         | "confirmed"
@@ -593,7 +706,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "seller"],
       order_status: [
         "pending",
         "confirmed",
