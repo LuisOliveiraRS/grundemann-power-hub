@@ -426,32 +426,57 @@ const ProductImport = () => {
     const errors: string[] = [];
     const total = validProducts.length;
 
-    // Process in batches
-    for (let i = 0; i < validProducts.length; i += BATCH_SIZE) {
-      const batch = validProducts.slice(i, i + BATCH_SIZE);
-      const batchPromises = batch.map(async (p) => {
-        try {
-          const categoryId = await getOrCreateCategory(p.category);
-          let finalImageUrl: string | null = null;
+    // Process sequentially when AI image gen is enabled to avoid rate limits
+    for (let i = 0; i < validProducts.length; i++) {
+      const p = validProducts[i];
+      try {
+        const categoryId = await getOrCreateCategory(p.category);
+        let finalImageUrl: string | null = null;
 
-          if (p.image_file) {
-            finalImageUrl = await uploadImageFile(p.image_file, p.sku || p.name);
-            if (finalImageUrl) imagesImported++;
-          } else if (p.image_url && p.image_source === "ai") {
-            // Already uploaded by AI generation
-            finalImageUrl = p.image_url;
+        if (p.image_file) {
+          finalImageUrl = await uploadImageFile(p.image_file, p.sku || p.name);
+          if (finalImageUrl) imagesImported++;
+        } else if (p.image_url && p.image_source === "ai") {
+          finalImageUrl = p.image_url;
+          imagesImported++;
+        } else if (autoGenerateImages && !p.image_url) {
+          setProgressMessage(`Gerando imagem IA para "${p.name}" (${i + 1}/${total})...`);
+          const aiUrl = await generateAIImage(p);
+          if (aiUrl) {
+            finalImageUrl = aiUrl;
             imagesImported++;
-          } else if (autoGenerateImages && !p.image_url) {
-            // Auto-generate with AI during import
-            setProgressMessage(`Gerando imagem IA para "${p.name}"...`);
-            const aiUrl = await generateAIImage(p);
-            if (aiUrl) {
-              finalImageUrl = aiUrl;
-              imagesImported++;
-            }
-            // Delay to avoid rate limiting
-            await new Promise(r => setTimeout(r, 1500));
           }
+          await new Promise(r => setTimeout(r, 2000));
+        }
+
+        const productData = {
+          name: p.name,
+          sku: p.sku || null,
+          description: p.description || null,
+          price: p.price || 0,
+          category_id: categoryId,
+          image_url: finalImageUrl,
+          stock_quantity: 0,
+          is_active: true,
+          is_featured: false,
+        };
+
+        if (p.status === "duplicate" && p.updateExisting && p.existingProductId) {
+          const { error } = await supabase.from("products").update(productData).eq("id", p.existingProductId);
+          if (error) throw error;
+          updated++;
+        } else {
+          const { error } = await supabase.from("products").insert(productData);
+          if (error) throw error;
+          created++;
+        }
+      } catch (err: any) {
+        failed++;
+        errors.push(`${p.name}: ${err.message}`);
+      }
+      setImportProgress(Math.round(((i + 1) / total) * 100));
+      setProgressMessage(`Processados ${i + 1} de ${total} produtos...`);
+    }
 
           const slug = generateSlug(p.name);
           const productData = {
