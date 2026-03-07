@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -60,7 +61,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -113,6 +114,15 @@ const AdminDashboard = () => {
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [categoryForm, setCategoryForm] = useState({ name: "", slug: "", description: "", image_url: "" });
 
+  // Bulk selection
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+
+  // AI image generation for existing products
+  const [generatingAIImages, setGeneratingAIImages] = useState(false);
+  const [aiImageProgress, setAiImageProgress] = useState(0);
+  const [aiImageTotal, setAiImageTotal] = useState(0);
+
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
@@ -152,7 +162,6 @@ const AdminDashboard = () => {
   };
 
   const printOrder = async (order: OrderWithItems) => {
-    // Ensure items and profile are loaded
     let orderToPrint = { ...order };
     if (!orderToPrint.items) {
       const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
@@ -218,6 +227,77 @@ const AdminDashboard = () => {
     if (!confirm("Excluir este produto?")) return;
     await supabase.from("products").delete().eq("id", id);
     toast({ title: "Produto excluído!" }); loadAll();
+  };
+
+  // Bulk delete products
+  const bulkDeleteProducts = async () => {
+    if (selectedProducts.size === 0) return;
+    if (!confirm(`Excluir ${selectedProducts.size} produtos selecionados? Essa ação é irreversível.`)) return;
+    const ids = Array.from(selectedProducts);
+    const { error } = await supabase.from("products").delete().in("id", ids);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `${ids.length} produtos excluídos!` });
+    setSelectedProducts(new Set());
+    loadAll();
+  };
+
+  // Bulk delete orders
+  const deleteOrder = async (id: string) => {
+    if (!confirm("Excluir este pedido e todos os seus itens? Essa ação é irreversível.")) return;
+    await supabase.from("order_status_history").delete().eq("order_id", id);
+    await supabase.from("order_items").delete().eq("order_id", id);
+    await supabase.from("orders").delete().eq("id", id);
+    toast({ title: "Pedido excluído!" }); loadAll();
+  };
+
+  const bulkDeleteOrders = async () => {
+    if (selectedOrders.size === 0) return;
+    if (!confirm(`Excluir ${selectedOrders.size} pedidos selecionados e seus itens? Essa ação é irreversível.`)) return;
+    const ids = Array.from(selectedOrders);
+    for (const id of ids) {
+      await supabase.from("order_status_history").delete().eq("order_id", id);
+      await supabase.from("order_items").delete().eq("order_id", id);
+      await supabase.from("orders").delete().eq("id", id);
+    }
+    toast({ title: `${ids.length} pedidos excluídos!` });
+    setSelectedOrders(new Set());
+    loadAll();
+  };
+
+  // AI image generation for existing products without images
+  const generateAIImagesForProducts = async () => {
+    const productsWithoutImage = products.filter(p => !p.image_url && p.is_active);
+    if (productsWithoutImage.length === 0) {
+      toast({ title: "Todos os produtos ativos já possuem imagem" });
+      return;
+    }
+    if (!confirm(`Gerar imagens com IA para ${productsWithoutImage.length} produtos sem imagem? Isso pode levar alguns minutos.`)) return;
+    
+    setGeneratingAIImages(true);
+    setAiImageTotal(productsWithoutImage.length);
+    setAiImageProgress(0);
+    let generated = 0;
+
+    for (let i = 0; i < productsWithoutImage.length; i++) {
+      const p = productsWithoutImage[i];
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-product-image", {
+          body: { productName: p.name, imageDescription: p.description, sku: p.sku },
+        });
+        if (!error && data?.imageUrl) {
+          await supabase.from("products").update({ image_url: data.imageUrl }).eq("id", p.id);
+          generated++;
+        }
+      } catch (err) {
+        console.error("AI image error for", p.name, err);
+      }
+      setAiImageProgress(i + 1);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    setGeneratingAIImages(false);
+    toast({ title: `${generated} imagens geradas por IA!`, description: `De ${productsWithoutImage.length} produtos sem imagem.` });
+    loadAll();
   };
 
   const editProduct = (p: Product) => {
@@ -358,7 +438,6 @@ const AdminDashboard = () => {
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Cliente atualizado!" });
     } else {
-      // Create new client profile (admin manual creation)
       const newData = { ...data, user_id: crypto.randomUUID() };
       const { error } = await supabase.from("profiles").insert(newData);
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
@@ -378,13 +457,10 @@ const AdminDashboard = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast({ title: "Erro", description: "Sessão expirada", variant: "destructive" }); return; }
-      
       const { data, error } = await supabase.functions.invoke('sync-mercadolivre', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      
       if (error) throw error;
-      
       if (data?.success) {
         toast({ title: "Sincronização concluída!", description: data.message });
         loadAll();
@@ -396,6 +472,48 @@ const AdminDashboard = () => {
     } finally {
       setSyncing(false);
     }
+  };
+
+  // Export report as CSV
+  const exportCSV = (data: Record<string, any>[], filename: string) => {
+    if (data.length === 0) { toast({ title: "Nenhum dado para exportar" }); return; }
+    const headers = Object.keys(data[0]);
+    const csv = [headers.join(","), ...data.map(row => headers.map(h => {
+      const val = row[h];
+      const str = val == null ? "" : String(val);
+      return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+    }).join(","))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${filename}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Relatório exportado!" });
+  };
+
+  const exportProductsReport = () => {
+    exportCSV(products.map(p => ({
+      Nome: p.name, SKU: p.sku || "", Categoria: getCategoryName(p.category_id),
+      Preço: p.price, "Preço Original": p.original_price || "", Estoque: p.stock_quantity,
+      Ativo: p.is_active ? "Sim" : "Não", Destaque: p.is_featured ? "Sim" : "Não",
+      "Com Imagem": p.image_url ? "Sim" : "Não", "Criado em": new Date(p.created_at).toLocaleDateString("pt-BR"),
+    })), "relatorio-produtos");
+  };
+
+  const exportOrdersReport = () => {
+    exportCSV(orders.map(o => ({
+      ID: o.id.slice(0, 8), Status: statusLabel[o.status] || o.status,
+      "Valor Total": Number(o.total_amount).toFixed(2), "Data": new Date(o.created_at).toLocaleDateString("pt-BR"),
+      Rastreio: o.tracking_code || "",
+    })), "relatorio-pedidos");
+  };
+
+  const exportClientsReport = () => {
+    exportCSV(clients.map(c => ({
+      Nome: c.full_name, Email: c.email, Telefone: c.phone || "",
+      "CPF/CNPJ": c.cpf_cnpj || "", Empresa: c.company_name || "",
+      Cidade: c.city || "", Estado: c.state || "",
+    })), "relatorio-clientes");
   };
 
   const statusLabel: Record<string, string> = {
@@ -419,6 +537,7 @@ const AdminDashboard = () => {
     { key: "categories", label: "Categorias", icon: Tag },
     { key: "clients", label: "Clientes", icon: Users },
     { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
+    { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
   // Filtered data
@@ -428,6 +547,7 @@ const AdminDashboard = () => {
     if (productStatusFilter === "active" && !p.is_active) return false;
     if (productStatusFilter === "inactive" && p.is_active) return false;
     if (productStatusFilter === "featured" && !p.is_featured) return false;
+    if (productStatusFilter === "no-image" && p.image_url) return false;
     if (productStockFilter === "out" && p.stock_quantity > 0) return false;
     if (productStockFilter === "low" && (p.stock_quantity === 0 || p.stock_quantity > 5)) return false;
     if (productStockFilter === "ok" && p.stock_quantity <= 5) return false;
@@ -435,7 +555,7 @@ const AdminDashboard = () => {
   });
 
   const filteredOrders = orders.filter(o => {
-    if (orderSearch && !o.id.includes(orderSearch.toLowerCase())) return false;
+    if (orderSearch && !o.id.toLowerCase().includes(orderSearch.toLowerCase())) return false;
     if (orderStatusFilter && o.status !== orderStatusFilter) return false;
     if (orderDateFrom && new Date(o.created_at) < new Date(orderDateFrom)) return false;
     if (orderDateTo && new Date(o.created_at) > new Date(orderDateTo + "T23:59:59")) return false;
@@ -451,6 +571,56 @@ const AdminDashboard = () => {
   const getCategoryName = (id: string | null) => categories.find(c => c.id === id)?.name || "—";
   const getSubcatName = (id: string | null) => subcategories.find(s => s.id === id)?.name || null;
   const getCatSubcats = (catId: string) => subcategories.filter(s => s.category_id === catId);
+
+  // Selection helpers
+  const toggleProductSelect = (id: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllProducts = () => {
+    if (selectedProducts.size === filteredProducts.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const toggleOrderSelect = (id: string) => {
+    setSelectedOrders(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllOrders = () => {
+    if (selectedOrders.size === filteredOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
+    }
+  };
+
+  // Report computations
+  const ordersByStatus = Object.entries(statusLabel).map(([key, label]) => ({
+    status: label,
+    count: orders.filter(o => o.status === key).length,
+    total: orders.filter(o => o.status === key).reduce((s, o) => s + Number(o.total_amount), 0),
+  }));
+
+  const productsByCategory = categories.map(c => ({
+    category: c.name,
+    count: products.filter(p => p.category_id === c.id).length,
+    active: products.filter(p => p.category_id === c.id && p.is_active).length,
+  }));
+
+  const productsWithoutImage = products.filter(p => !p.image_url).length;
+  const productsOutOfStock = products.filter(p => p.stock_quantity === 0).length;
+  const avgPrice = products.length > 0 ? products.reduce((s, p) => s + p.price, 0) / products.length : 0;
 
   return (
     <div className="min-h-screen flex bg-muted/50">
@@ -654,71 +824,67 @@ const AdminDashboard = () => {
                         </select>
                       </div>
                     )}
-                    <div><Label>Preço de Venda (R$) *</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} placeholder="0.00" /></div>
-                    <div><Label>Preço Original (R$)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Sem desconto" /></div>
-                    <div><Label>Quantidade em Estoque *</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} placeholder="0" /></div>
-                    <div className="flex items-end gap-6 pb-1">
-                      <div className="flex items-center gap-2"><Switch checked={productForm.is_active} onCheckedChange={(v) => setProductForm({ ...productForm, is_active: v })} /><Label className="mb-0">Ativo</Label></div>
-                      <div className="flex items-center gap-2"><Switch checked={productForm.is_featured} onCheckedChange={(v) => setProductForm({ ...productForm, is_featured: v })} /><Label className="mb-0">Destaque</Label></div>
+                    <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
+                    <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>
+                    <div><Label>Estoque</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} /></div>
+                    <div className="md:col-span-2"><Label>Descrição</Label><Textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} /></div>
+                    <div className="flex items-center gap-6 md:col-span-2">
+                      <div className="flex items-center gap-2"><Switch checked={productForm.is_featured} onCheckedChange={(v) => setProductForm({ ...productForm, is_featured: v })} /><Label>Destaque</Label></div>
+                      <div className="flex items-center gap-2"><Switch checked={productForm.is_active} onCheckedChange={(v) => setProductForm({ ...productForm, is_active: v })} /><Label>Ativo</Label></div>
                     </div>
-                    <div className="md:col-span-2"><Label>Descrição</Label><Textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Descrição detalhada do produto..." /></div>
-                    
-                    {/* Additional Images */}
+                    {/* Additional images */}
                     <div className="md:col-span-2">
-                      <Label className="mb-2 block">Imagens Adicionais (até 5)</Label>
-                      <div className="flex flex-wrap gap-3">
-                        {productForm.additional_images.map((img, idx) => (
-                          <div key={idx} className="relative w-20 h-20 rounded-lg border border-border overflow-hidden">
-                            <img src={img} alt={`Extra ${idx+1}`} className="w-full h-full object-cover" />
-                            <button onClick={() => setProductForm(prev => ({ ...prev, additional_images: prev.additional_images.filter((_, i) => i !== idx) }))} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5"><X className="h-3 w-3" /></button>
+                      <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Imagens adicionais (até 5)</Label>
+                      <div className="grid grid-cols-5 gap-2 mt-2">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                          <div key={idx}>
+                            {productForm.additional_images[idx] ? (
+                              <div className="relative group">
+                                <img src={productForm.additional_images[idx]} alt="" className="h-20 w-full object-cover rounded-lg border border-border" />
+                                <button className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { const imgs = [...productForm.additional_images]; imgs.splice(idx, 1); setProductForm({ ...productForm, additional_images: imgs }); }}><X className="h-3 w-3" /></button>
+                              </div>
+                            ) : (
+                              <div
+                                className="h-20 w-full rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex items-center justify-center cursor-pointer"
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file'; input.accept = 'image/*';
+                                  input.onchange = async (ev: any) => {
+                                    const file = ev.target.files?.[0]; if (!file) return;
+                                    const ext = file.name.split('.').pop();
+                                    const fName = `${Date.now()}-extra-${idx}.${ext}`;
+                                    const { error } = await supabase.storage.from("product-images").upload(fName, file);
+                                    if (!error) {
+                                      const { data } = supabase.storage.from("product-images").getPublicUrl(fName);
+                                      const imgs = [...productForm.additional_images]; imgs[idx] = data.publicUrl;
+                                      setProductForm(prev => ({ ...prev, additional_images: imgs }));
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                              ><Plus className="h-4 w-4 text-muted-foreground" /></div>
+                            )}
                           </div>
                         ))}
-                        {productForm.additional_images.length < 5 && (
-                          <button
-                            type="button"
-                            className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
-                            onClick={() => {
-                              const input = document.createElement('input');
-                              input.type = 'file'; input.accept = 'image/*';
-                              input.onchange = async (e: any) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                const ext = file.name.split('.').pop();
-                                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-                                const { error } = await supabase.storage.from("product-images").upload(fileName, file);
-                                if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); return; }
-                                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
-                                setProductForm(prev => ({ ...prev, additional_images: [...prev.additional_images, urlData.publicUrl] }));
-                                toast({ title: "Imagem adicionada!" });
-                              };
-                              input.click();
-                            }}
-                          >
-                            <Plus className="h-5 w-5" />
-                            <span className="text-[10px] mt-0.5">Foto</span>
-                          </button>
-                        )}
                       </div>
                     </div>
-
                     {/* Video URL */}
                     <div className="md:col-span-2">
-                      <Label className="flex items-center gap-2"><Video className="h-4 w-4" /> URL do Vídeo (YouTube ou upload)</Label>
+                      <Label className="flex items-center gap-2"><Video className="h-4 w-4" /> URL do Vídeo</Label>
                       <div className="flex gap-2 mt-1">
-                        <Input value={productForm.video_url} onChange={(e) => setProductForm({ ...productForm, video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=... ou URL do vídeo" className="flex-1" />
+                        <Input value={productForm.video_url} onChange={(e) => setProductForm({ ...productForm, video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." className="flex-1" />
                         <Button variant="outline" type="button" onClick={() => {
                           const input = document.createElement('input');
                           input.type = 'file'; input.accept = 'video/*';
                           input.onchange = async (e: any) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
+                            const file = e.target.files?.[0]; if (!file) return;
                             if (file.size > 50 * 1024 * 1024) { toast({ title: "Arquivo muito grande", description: "Máximo 50MB", variant: "destructive" }); return; }
                             setUploading(true);
                             const ext = file.name.split('.').pop();
-                            const fileName = `video-${Date.now()}.${ext}`;
-                            const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                            const fName = `video-${Date.now()}.${ext}`;
+                            const { error } = await supabase.storage.from("product-images").upload(fName, file);
                             if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); setUploading(false); return; }
-                            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fName);
                             setProductForm(prev => ({ ...prev, video_url: urlData.publicUrl }));
                             toast({ title: "Vídeo enviado!" });
                             setUploading(false);
@@ -757,6 +923,7 @@ const AdminDashboard = () => {
                   <option value="active">Ativos</option>
                   <option value="inactive">Inativos</option>
                   <option value="featured">Em Destaque</option>
+                  <option value="no-image">Sem Imagem</option>
                 </select>
                 <select className="h-10 border border-input rounded-md px-3 text-sm bg-background" value={productStockFilter} onChange={(e) => setProductStockFilter(e.target.value)}>
                   <option value="">Qualquer estoque</option>
@@ -772,11 +939,56 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Bulk actions */}
+            {(selectedProducts.size > 0 || generatingAIImages) && (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-primary/10 text-primary border-primary/20">{selectedProducts.size} selecionados</Badge>
+                  {generatingAIImages && (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground">Gerando imagem {aiImageProgress}/{aiImageTotal}...</span>
+                      <Progress value={(aiImageProgress / aiImageTotal) * 100} className="w-32 h-2" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="secondary" size="sm" onClick={generateAIImagesForProducts} disabled={generatingAIImages}>
+                    <Wand2 className="h-4 w-4 mr-1" /> Gerar Imagens IA ({products.filter(p => !p.image_url && p.is_active).length})
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={bulkDeleteProducts}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Excluir Selecionados
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedProducts(new Set())}>
+                    <X className="h-4 w-4 mr-1" /> Desselecionar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* AI Images button when no selection */}
+            {selectedProducts.size === 0 && !generatingAIImages && products.filter(p => !p.image_url && p.is_active).length > 0 && (
+              <div className="bg-card border border-border rounded-xl p-3 mb-4 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  <ImageIcon className="h-4 w-4 inline mr-1" />
+                  {products.filter(p => !p.image_url && p.is_active).length} produtos sem imagem
+                </span>
+                <Button variant="outline" size="sm" onClick={generateAIImagesForProducts} disabled={generatingAIImages}>
+                  <Wand2 className="h-4 w-4 mr-1" /> Gerar Imagens com IA
+                </Button>
+              </div>
+            )}
+
             <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
+                      <th className="p-3.5 w-10">
+                        <button onClick={toggleAllProducts} className="text-muted-foreground hover:text-foreground">
+                          {selectedProducts.size === filteredProducts.length && filteredProducts.length > 0 ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                        </button>
+                      </th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Produto</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">SKU</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Categoria</th>
@@ -788,7 +1000,12 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredProducts.map((p) => (
-                      <tr key={p.id} className="hover:bg-muted/30 transition-colors">
+                      <tr key={p.id} className={`hover:bg-muted/30 transition-colors ${selectedProducts.has(p.id) ? "bg-primary/5" : ""}`}>
+                        <td className="p-3.5">
+                          <button onClick={() => toggleProductSelect(p.id)}>
+                            {selectedProducts.has(p.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                          </button>
+                        </td>
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
                             {p.image_url ? <img src={p.image_url} alt="" className="h-10 w-10 rounded-lg object-cover border border-border" /> : <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center"><ImageIcon className="h-5 w-5 text-muted-foreground" /></div>}
@@ -817,7 +1034,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {filteredProducts.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>}
+                    {filteredProducts.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Nenhum produto encontrado.</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -828,9 +1045,24 @@ const AdminDashboard = () => {
         {/* ORDERS TAB */}
         {tab === "orders" && (
           <div>
-            <div className="mb-6">
-              <h1 className="font-heading text-3xl font-bold">Pedidos</h1>
-              <p className="text-muted-foreground text-sm mt-1">{filteredOrders.length} de {orders.length} pedidos</p>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="font-heading text-3xl font-bold">Pedidos</h1>
+                <p className="text-muted-foreground text-sm mt-1">{filteredOrders.length} de {orders.length} pedidos</p>
+              </div>
+              <div className="flex gap-2">
+                {selectedOrders.size > 0 && (
+                  <>
+                    <Badge className="bg-primary/10 text-primary border-primary/20 self-center">{selectedOrders.size} selecionados</Badge>
+                    <Button variant="destructive" size="sm" onClick={bulkDeleteOrders}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Excluir Selecionados
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedOrders(new Set())}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Order Filters */}
@@ -863,11 +1095,22 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Select all orders */}
+            <div className="flex items-center gap-3 mb-3">
+              <button onClick={toggleAllOrders} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                {selectedOrders.size === filteredOrders.length && filteredOrders.length > 0 ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                Selecionar todos
+              </button>
+            </div>
+
             <div className="space-y-3">
               {filteredOrders.map((o) => (
-                <div key={o.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+                <div key={o.id} className={`bg-card rounded-xl shadow-sm border overflow-hidden ${selectedOrders.has(o.id) ? "border-primary" : "border-border"}`}>
                   <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => loadOrderItems(o.id)}>
                     <div className="flex items-center gap-4">
+                      <button onClick={(e) => { e.stopPropagation(); toggleOrderSelect(o.id); }}>
+                        {selectedOrders.has(o.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                      </button>
                       <div className="bg-muted rounded-lg p-2.5"><ShoppingCart className="h-5 w-5 text-muted-foreground" /></div>
                       <div>
                         <p className="font-heading font-bold">Pedido #{o.id.slice(0, 8)}</p>
@@ -883,6 +1126,9 @@ const AdminDashboard = () => {
                       <select value={o.status} onClick={(e) => e.stopPropagation()} onChange={(e) => updateOrderStatus(o.id, e.target.value)} className="border border-input rounded-md px-2 py-1.5 text-xs bg-background">
                         {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteOrder(o.id); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                       {expandedOrder === o.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </div>
                   </div>
@@ -902,7 +1148,6 @@ const AdminDashboard = () => {
                         </div>
                       )}
                       {o.shipping_address && <p className="text-sm mb-3"><span className="text-muted-foreground">Endereço:</span> {o.shipping_address}</p>}
-                      {/* Tracking Code */}
                       <div className="mb-4 p-3 bg-background rounded-lg border border-border flex items-center gap-3">
                         <Truck className="h-4 w-4 text-primary flex-shrink-0" />
                         <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">Rastreio:</span>
@@ -910,12 +1155,8 @@ const AdminDashboard = () => {
                           className="h-8 text-sm flex-1"
                           placeholder="Código de rastreamento..."
                           defaultValue={o.tracking_code || ""}
-                          onBlur={(e) => {
-                            if (e.target.value !== (o.tracking_code || "")) updateTrackingCode(o.id, e.target.value);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          }}
+                          onBlur={(e) => { if (e.target.value !== (o.tracking_code || "")) updateTrackingCode(o.id, e.target.value); }}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                         />
                       </div>
                       <table className="w-full text-sm">
@@ -1014,9 +1255,7 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
+                          variant="ghost" size="icon" className="h-8 w-8"
                           title={c.is_visible !== false ? "Ocultar do menu" : "Mostrar no menu"}
                           onClick={async () => {
                             const newVal = c.is_visible === false ? true : false;
@@ -1096,7 +1335,6 @@ const AdminDashboard = () => {
               </Button>
             </div>
 
-            {/* Client Edit Form */}
             {editingClient !== null && (
               <div className="bg-card rounded-xl shadow-lg border border-border p-6 mb-6">
                 <div className="flex items-center justify-between mb-5">
@@ -1133,7 +1371,6 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Client Filters */}
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
               <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
                 <Search className="h-4 w-4" /> Busca
@@ -1264,6 +1501,118 @@ const AdminDashboard = () => {
                 </div>
               ))}
               {testimonials.length === 0 && <p className="col-span-3 text-center text-muted-foreground py-12">Nenhum depoimento cadastrado.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* REPORTS TAB */}
+        {tab === "reports" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="font-heading text-3xl font-bold">Relatórios</h1>
+                <p className="text-muted-foreground text-sm mt-1">Visão analítica completa do negócio</p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" size="sm" onClick={exportProductsReport}><FileDown className="h-4 w-4 mr-1" /> Produtos CSV</Button>
+                <Button variant="outline" size="sm" onClick={exportOrdersReport}><FileDown className="h-4 w-4 mr-1" /> Pedidos CSV</Button>
+                <Button variant="outline" size="sm" onClick={exportClientsReport}><FileDown className="h-4 w-4 mr-1" /> Clientes CSV</Button>
+              </div>
+            </div>
+
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-card rounded-xl border border-border p-5">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Receita Total</p>
+                <p className="text-2xl font-heading font-bold text-primary">R$ {stats.revenue.toFixed(2).replace(".", ",")}</p>
+              </div>
+              <div className="bg-card rounded-xl border border-border p-5">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Preço Médio</p>
+                <p className="text-2xl font-heading font-bold">R$ {avgPrice.toFixed(2).replace(".", ",")}</p>
+              </div>
+              <div className="bg-card rounded-xl border border-border p-5">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Sem Imagem</p>
+                <p className="text-2xl font-heading font-bold text-destructive">{productsWithoutImage}</p>
+              </div>
+              <div className="bg-card rounded-xl border border-border p-5">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Sem Estoque</p>
+                <p className="text-2xl font-heading font-bold text-destructive">{productsOutOfStock}</p>
+              </div>
+            </div>
+
+            {/* Orders by status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-card rounded-xl border border-border">
+                <div className="p-5 border-b border-border">
+                  <h2 className="font-heading text-lg font-bold flex items-center gap-2"><ShoppingCart className="h-5 w-5 text-primary" /> Pedidos por Status</h2>
+                </div>
+                <div className="p-5">
+                  <div className="space-y-3">
+                    {ordersByStatus.map(s => (
+                      <div key={s.status} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-sm font-medium w-28">{s.status}</span>
+                          <div className="flex-1 bg-muted rounded-full h-2.5">
+                            <div className="bg-primary rounded-full h-2.5 transition-all" style={{ width: `${orders.length > 0 ? (s.count / orders.length) * 100 : 0}%` }} />
+                          </div>
+                        </div>
+                        <div className="text-right ml-4">
+                          <span className="text-sm font-bold">{s.count}</span>
+                          <span className="text-xs text-muted-foreground ml-2">R$ {s.total.toFixed(2).replace(".", ",")}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-xl border border-border">
+                <div className="p-5 border-b border-border">
+                  <h2 className="font-heading text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Produtos por Categoria</h2>
+                </div>
+                <div className="p-5">
+                  <div className="space-y-3">
+                    {productsByCategory.filter(c => c.count > 0).map(c => (
+                      <div key={c.category} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-sm font-medium w-36 truncate">{c.category}</span>
+                          <div className="flex-1 bg-muted rounded-full h-2.5">
+                            <div className="bg-secondary rounded-full h-2.5 transition-all" style={{ width: `${products.length > 0 ? (c.count / products.length) * 100 : 0}%` }} />
+                          </div>
+                        </div>
+                        <div className="text-right ml-4">
+                          <span className="text-sm font-bold">{c.count}</span>
+                          <span className="text-xs text-muted-foreground ml-1">({c.active} ativos)</span>
+                        </div>
+                      </div>
+                    ))}
+                    {products.filter(p => !p.category_id).length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Sem categoria</span>
+                        <span className="text-sm font-bold">{products.filter(p => !p.category_id).length}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Top products */}
+            <div className="bg-card rounded-xl border border-border">
+              <div className="p-5 border-b border-border">
+                <h2 className="font-heading text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Produtos Mais Caros</h2>
+              </div>
+              <div className="divide-y divide-border">
+                {products.sort((a, b) => b.price - a.price).slice(0, 10).map(p => (
+                  <div key={p.id} className="px-5 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {p.image_url ? <img src={p.image_url} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>}
+                      <span className="text-sm font-medium">{p.name}</span>
+                    </div>
+                    <span className="font-bold text-price">R$ {Number(p.price).toFixed(2).replace(".", ",")}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

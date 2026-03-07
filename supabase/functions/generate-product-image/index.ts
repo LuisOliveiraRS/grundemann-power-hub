@@ -44,6 +44,7 @@ Show only the product, centered, well-lit, with no text or watermarks.`;
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-image",
+        // Fallback: "google/gemini-3-pro-image-preview" for higher quality
         messages: [{ role: "user", content: prompt }],
         modalities: ["image", "text"],
       }),
