@@ -719,7 +719,12 @@ const ProductImport = () => {
                         {/* Image column */}
                         <td className="p-3">
                           <div className="relative group">
-                            {p.image_url ? (
+                            {p.generatingImage ? (
+                              <div className="flex flex-col items-center justify-center h-14 w-14 rounded-lg border border-primary/30 bg-primary/5">
+                                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                                <span className="text-[7px] text-primary mt-0.5">IA...</span>
+                              </div>
+                            ) : p.image_url ? (
                               <div className="relative">
                                 <img
                                   src={p.image_url}
@@ -729,7 +734,7 @@ const ProductImport = () => {
                                 />
                                 {p.image_source && (
                                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[8px] px-1 rounded">
-                                    {p.image_source === "zip" ? "ZIP" : p.image_source === "manual" ? "UP" : ""}
+                                    {p.image_source === "zip" ? "ZIP" : p.image_source === "manual" ? "UP" : p.image_source === "ai" ? "IA" : ""}
                                   </span>
                                 )}
                                 <label className="absolute inset-0 flex items-center justify-center bg-foreground/50 rounded-lg opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
