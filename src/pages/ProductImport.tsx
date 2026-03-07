@@ -670,11 +670,19 @@ const ProductImport = () => {
                   <ImageIcon className="h-3 w-3 mr-1" /> {withImageCount} com imagem
                 </Badge>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button variant="outline" onClick={() => { setStep("upload"); setProducts([]); }}>
                   <X className="h-4 w-4 mr-2" /> Cancelar
                 </Button>
-                <Button onClick={confirmImport} disabled={totalImportable === 0}>
+                <Button
+                  variant="secondary"
+                  onClick={generateAllAIImages}
+                  disabled={generatingImages || products.filter(p => !p.image_file && !p.image_url && p.status !== "error").length === 0}
+                >
+                  {generatingImages ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                  {generatingImages ? "Gerando..." : `Gerar Imagens IA (${products.filter(p => !p.image_file && !p.image_url && p.status !== "error").length})`}
+                </Button>
+                <Button onClick={confirmImport} disabled={totalImportable === 0 || generatingImages}>
                   <Check className="h-4 w-4 mr-2" /> Confirmar Importação ({totalImportable})
                 </Button>
               </div>
