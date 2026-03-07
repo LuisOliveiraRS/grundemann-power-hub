@@ -330,6 +330,50 @@ const ProductImport = () => {
     ));
   };
 
+  const generateAIImage = async (product: ImportProduct): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-product-image", {
+        body: {
+          productName: product.name,
+          imageDescription: product.image_description || product.description,
+          sku: product.sku,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.imageUrl || null;
+    } catch (err: any) {
+      console.error("AI image gen error:", err);
+      return null;
+    }
+  };
+
+  const generateAllAIImages = async () => {
+    const productsWithoutImage = products.filter(p => !p.image_file && !p.image_url && p.status !== "error");
+    if (productsWithoutImage.length === 0) {
+      toast({ title: "Todos os produtos já possuem imagem" });
+      return;
+    }
+    setGeneratingImages(true);
+    let generated = 0;
+    for (const p of productsWithoutImage) {
+      setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: true } : pr));
+      const imageUrl = await generateAIImage(p);
+      if (imageUrl) {
+        generated++;
+        setProducts(prev => prev.map(pr =>
+          pr.id === p.id ? { ...pr, image_url: imageUrl, image_source: "ai" as const, generatingImage: false } : pr
+        ));
+      } else {
+        setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: false } : pr));
+      }
+      // Small delay to avoid rate limiting
+      await new Promise(r => setTimeout(r, 1500));
+    }
+    setGeneratingImages(false);
+    toast({ title: `${generated} imagens geradas por IA`, description: `De ${productsWithoutImage.length} produtos sem imagem.` });
+  };
+
   const uploadImageFile = async (file: File, sku: string): Promise<string | null> => {
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
