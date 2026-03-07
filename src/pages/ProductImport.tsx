@@ -190,6 +190,38 @@ const ProductImport = () => {
     return data.id;
   };
 
+  const uploadImageFromUrl = async (imageUrl: string, productName: string): Promise<string | null> => {
+    try {
+      if (!imageUrl || !imageUrl.startsWith("http")) return null;
+
+      const response = await fetch(imageUrl);
+      if (!response.ok) return null;
+
+      const blob = await response.blob();
+      const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const filePath = `imports/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(filePath, blob, { contentType: blob.type });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        return null;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(filePath);
+
+      return urlData?.publicUrl || null;
+    } catch (err) {
+      console.error("Image download error for", productName, err);
+      return null;
+    }
+  };
+
   const confirmImport = async () => {
     const validProducts = products.filter(p => p.status !== "error" && p.name);
     if (validProducts.length === 0) {
@@ -206,12 +238,19 @@ const ProductImport = () => {
       try {
         const categoryId = await getOrCreateCategory(p.category);
 
+        // Try to download and upload image if URL is provided
+        let finalImageUrl: string | null = null;
+        if (p.image_url) {
+          finalImageUrl = await uploadImageFromUrl(p.image_url, p.name);
+        }
+
         const productData: any = {
           name: p.name,
           sku: p.sku || null,
           description: p.description || null,
           price: p.price || 0,
           category_id: categoryId,
+          image_url: finalImageUrl,
           stock_quantity: 0,
           is_active: true,
           is_featured: false,
