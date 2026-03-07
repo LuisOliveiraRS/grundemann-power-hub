@@ -408,6 +408,7 @@ const ProductImport = () => {
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produto</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Código</th>
+                      <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Imagem</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categoria</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preço</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
@@ -417,6 +418,17 @@ const ProductImport = () => {
                   <tbody className="divide-y divide-border">
                     {products.map((p) => (
                       <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="p-3">
+                          {editingId === p.id ? (
+                            <Input value={p.image_url} onChange={(e) => updateProduct(p.id, "image_url", e.target.value)} className="text-sm h-8 w-40" placeholder="URL da imagem" />
+                          ) : (
+                            p.image_url ? (
+                              <img src={p.image_url} alt={p.name} className="h-10 w-10 rounded object-cover border border-border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )
+                          )}
+                        </td>
                         <td className="p-3">
                           {editingId === p.id ? (
                             <div className="space-y-1">
