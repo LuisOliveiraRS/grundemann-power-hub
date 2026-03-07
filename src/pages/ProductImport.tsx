@@ -437,6 +437,20 @@ const ProductImport = () => {
           if (p.image_file) {
             finalImageUrl = await uploadImageFile(p.image_file, p.sku || p.name);
             if (finalImageUrl) imagesImported++;
+          } else if (p.image_url && p.image_source === "ai") {
+            // Already uploaded by AI generation
+            finalImageUrl = p.image_url;
+            imagesImported++;
+          } else if (autoGenerateImages && !p.image_url) {
+            // Auto-generate with AI during import
+            setProgressMessage(`Gerando imagem IA para "${p.name}"...`);
+            const aiUrl = await generateAIImage(p);
+            if (aiUrl) {
+              finalImageUrl = aiUrl;
+              imagesImported++;
+            }
+            // Delay to avoid rate limiting
+            await new Promise(r => setTimeout(r, 1500));
           }
 
           const slug = generateSlug(p.name);
