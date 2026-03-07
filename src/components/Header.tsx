@@ -10,7 +10,7 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSeller } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,6 +74,11 @@ const Header = () => {
             {isAdmin && (
               <button onClick={() => navigate("/admin")} className="text-xs font-bold text-primary hover:underline">
                 Admin
+              </button>
+            )}
+            {isSeller && !isAdmin && (
+              <button onClick={() => navigate("/vendedor")} className="text-xs font-bold text-primary hover:underline">
+                Vendedor
               </button>
             )}
             <button
