@@ -619,9 +619,18 @@ const ProductImport = () => {
             {/* Options */}
             <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
               <h3 className="font-heading text-lg font-bold mb-4">Opções de Importação</h3>
-              <div className="flex items-center gap-3">
-                <Switch checked={updateDuplicates} onCheckedChange={setUpdateDuplicates} id="update-dupes" />
-                <Label htmlFor="update-dupes" className="text-sm">Atualizar produtos existentes com mesmo SKU</Label>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Switch checked={updateDuplicates} onCheckedChange={setUpdateDuplicates} id="update-dupes" />
+                  <Label htmlFor="update-dupes" className="text-sm">Atualizar produtos existentes com mesmo SKU</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch checked={autoGenerateImages} onCheckedChange={setAutoGenerateImages} id="auto-gen-images" />
+                  <Label htmlFor="auto-gen-images" className="text-sm flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Gerar imagens automaticamente com IA para produtos sem imagem
+                  </Label>
+                </div>
               </div>
             </div>
           </div>
