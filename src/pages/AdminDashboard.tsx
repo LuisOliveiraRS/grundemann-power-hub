@@ -314,6 +314,7 @@ const AdminDashboard = () => {
       is_active: p.is_active, image_url: p.image_url || "",
       additional_images: (p.additional_images || []) as string[],
       video_url: (p.video_url || "") as string,
+      brand: (p as any).brand || "", hp: (p as any).hp || "", engine_model: (p as any).engine_model || "",
     });
     setTab("products");
   };
