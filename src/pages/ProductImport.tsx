@@ -22,6 +22,7 @@ interface ImportProduct {
   category: string;
   price: number | null;
   brand: string;
+  image_url: string;
   status: "ready" | "error" | "editing";
   errorMsg?: string;
 }
@@ -146,6 +147,7 @@ const ProductImport = () => {
         category: p.category || "Sem categoria",
         price: p.price ? Number(p.price) : null,
         brand: p.brand || "",
+        image_url: p.image_url || "",
         status: p.name ? "ready" as const : "error" as const,
         errorMsg: p.name ? undefined : "Nome do produto não identificado",
       }));
