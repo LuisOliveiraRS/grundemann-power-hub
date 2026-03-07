@@ -901,6 +901,22 @@ const AdminDashboard = () => {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Brand, HP, Engine Model */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label>Marca</Label>
+                        <Input value={productForm.brand} onChange={e => setProductForm({ ...productForm, brand: e.target.value })} placeholder="Ex: Honda, Branco..." className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Potência (HP)</Label>
+                        <Input value={productForm.hp} onChange={e => setProductForm({ ...productForm, hp: e.target.value })} placeholder="Ex: 5.5, 7, 13..." className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Modelo do Motor</Label>
+                        <Input value={productForm.engine_model} onChange={e => setProductForm({ ...productForm, engine_model: e.target.value })} placeholder="Ex: GX160, GX200..." className="mt-1" />
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6 pt-5 border-t border-border">
