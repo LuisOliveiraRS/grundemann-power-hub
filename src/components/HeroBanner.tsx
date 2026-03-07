@@ -171,7 +171,7 @@ const HeroBanner = () => {
   const isProduct = currentSlide.isExternal || hasPrice;
 
   return (
-    <section className="relative w-full h-[500px] overflow-hidden bg-foreground">
+    <section className="relative w-full h-[520px] overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -181,7 +181,7 @@ const HeroBanner = () => {
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
-          {/* Background image layer - always present */}
+          {/* Background image layer */}
           {currentSlide.bgImage && (
             <>
               <img
@@ -189,20 +189,19 @@ const HeroBanner = () => {
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-foreground/75" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/50 to-foreground/20" />
             </>
           )}
-          {!currentSlide.bgImage && <div className="absolute inset-0 bg-foreground" />}
+          {!currentSlide.bgImage && <div className="absolute inset-0 bg-foreground/90" />}
 
           {/* Product image on the right side */}
           <div className="absolute right-0 top-0 h-full w-1/2 md:w-[50%] flex items-center justify-center">
             <img
               src={currentSlide.image}
               alt={currentSlide.title}
-              className={`max-h-[85%] max-w-[85%] ${isProduct ? 'object-contain drop-shadow-2xl' : 'object-cover rounded-lg shadow-2xl'}`}
+              className={`max-h-[80%] max-w-[80%] ${isProduct ? 'object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.4)]' : 'object-cover rounded-lg shadow-2xl'}`}
             />
           </div>
-          <div className="absolute right-0 top-0 h-full w-1/2 md:w-[50%] bg-gradient-to-r from-foreground/80 via-transparent to-transparent" />
 
           {/* Content on the left */}
           <div className="absolute inset-0 flex items-center">
