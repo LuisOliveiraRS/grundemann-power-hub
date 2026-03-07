@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -586,9 +586,12 @@ const AdminDashboard = () => {
                 <p className="text-muted-foreground text-sm mt-1">{filteredProducts.length} de {products.length} produtos</p>
               </div>
               <div className="flex gap-3">
+                <Button onClick={() => navigate("/admin/importar")} variant="outline" className="shadow-md border-secondary text-secondary-foreground hover:bg-secondary/10">
+                  <FileUp className="h-4 w-4 mr-2" /> Importar Produtos
+                </Button>
                 <Button onClick={syncMercadoLivre} variant="outline" disabled={syncing} className="shadow-md border-accent text-accent-foreground hover:bg-accent/10">
                   <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? "Sincronizando..." : "Sincronizar Mercado Livre"}
+                  {syncing ? "Sincronizando..." : "Sincronizar ML"}
                 </Button>
                 <Button onClick={() => { setEditingProduct({}); resetProductForm(); }} className="shadow-md">
                   <Plus className="h-4 w-4 mr-2" /> Novo Produto

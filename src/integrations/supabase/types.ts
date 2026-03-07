@@ -73,6 +73,42 @@ export type Database = {
         }
         Relationships: []
       }
+      import_logs: {
+        Row: {
+          created_at: string
+          error_details: Json | null
+          file_name: string
+          file_type: string
+          id: string
+          products_created: number
+          products_failed: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_details?: Json | null
+          file_name: string
+          file_type: string
+          id?: string
+          products_created?: number
+          products_failed?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_details?: Json | null
+          file_name?: string
+          file_type?: string
+          id?: string
+          products_created?: number
+          products_failed?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
