@@ -41,7 +41,7 @@ interface OrderItem {
 }
 
 interface Category {
-  id: string; name: string; slug: string; description: string | null; image_url: string | null;
+  id: string; name: string; slug: string; description: string | null; image_url: string | null; is_visible?: boolean;
 }
 
 interface Subcategory {
@@ -1012,7 +1012,21 @@ const AdminDashboard = () => {
                         <p className="text-xs text-muted-foreground mt-1 font-mono">/{c.slug}</p>
                         {c.description && <p className="text-sm text-muted-foreground mt-2">{c.description}</p>}
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title={c.is_visible !== false ? "Ocultar do menu" : "Mostrar no menu"}
+                          onClick={async () => {
+                            const newVal = c.is_visible === false ? true : false;
+                            await supabase.from("categories").update({ is_visible: newVal } as any).eq("id", c.id);
+                            setCategories(prev => prev.map(cat => cat.id === c.id ? { ...cat, is_visible: newVal } : cat));
+                            toast({ title: newVal ? "Categoria visível no menu" : "Categoria oculta do menu" });
+                          }}
+                        >
+                          {c.is_visible !== false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCategory(c); setCategoryForm({ name: c.name, slug: c.slug, description: c.description || "", image_url: c.image_url || "" }); }}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCategory(c.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
