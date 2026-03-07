@@ -87,12 +87,14 @@ const ProductImport = () => {
     return content;
   };
 
-  const parsePDF = async (file: File): Promise<string> => {
-    // For PDF, read as base64 text and send to AI for interpretation
-    const text = await readFileAsText(file);
-    // PDF text extraction is limited on client; we send raw text content
-    // The AI will interpret whatever text is extractable
-    return `Conteúdo extraído do PDF "${file.name}":\n${text.substring(0, 80000)}`;
+  const parsePDFAsBase64 = async (file: File): Promise<string> => {
+    const buffer = await readFileAsArrayBuffer(file);
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,16 +120,19 @@ const ProductImport = () => {
         content = await parseCSV(file);
       } else if (ext === "xlsx" || ext === "xls") {
         content = await parseExcel(file);
-      } else if (ext === "pdf") {
-        content = await parsePDF(file);
       }
 
       // Send to AI for smart parsing
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Sessão expirada");
 
+      let pdfBase64: string | undefined;
+      if (ext === "pdf") {
+        pdfBase64 = await parsePDFAsBase64(file);
+      }
+
       const { data, error } = await supabase.functions.invoke("parse-catalog", {
-        body: { content, fileType: ext, fileName: file.name },
+        body: { content: ext === "pdf" ? undefined : content, fileType: ext, fileName: file.name, pdfBase64 },
       });
 
       if (error) throw error;
