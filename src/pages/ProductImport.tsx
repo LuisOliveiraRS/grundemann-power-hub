@@ -1,6 +1,5 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, FileText, FileSpreadsheet, Loader2, Check, X, Trash2, Edit,
-  ArrowLeft, AlertTriangle, CheckCircle, Download, Eye
+  ArrowLeft, AlertTriangle, CheckCircle, Download, Eye, ImageIcon
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -23,6 +22,7 @@ interface ImportProduct {
   price: number | null;
   brand: string;
   image_url: string;
+  image_file?: File;
   status: "ready" | "error" | "editing";
   errorMsg?: string;
 }
@@ -47,32 +47,17 @@ const ProductImport = () => {
     setCategories(data || []);
   };
 
-  const readFileAsText = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  };
+  const readFileAsText = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result as string); r.onerror = reject; r.readAsText(file); });
 
-  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
-  };
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> =>
+    new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result as ArrayBuffer); r.onerror = reject; r.readAsArrayBuffer(file); });
 
   const parseCSV = async (file: File): Promise<string> => {
     const text = await readFileAsText(file);
     const result = Papa.parse(text, { header: true });
-    // Format as readable text for AI
     const rows = result.data as Record<string, string>[];
-    const lines = rows.map((row, i) => {
-      return Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(" | ");
-    });
+    const lines = rows.map((row) => Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(" | "));
     return `Tabela CSV com ${rows.length} linhas:\n${Object.keys(rows[0] || {}).join(" | ")}\n${lines.join("\n")}`;
   };
 
@@ -82,8 +67,7 @@ const ProductImport = () => {
     let content = "";
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_csv(sheet);
-      content += `Planilha "${sheetName}":\n${data}\n\n`;
+      content += `Planilha "${sheetName}":\n${XLSX.utils.sheet_to_csv(sheet)}\n\n`;
     }
     return content;
   };
@@ -92,23 +76,18 @@ const ProductImport = () => {
     const buffer = await readFileAsArrayBuffer(file);
     const bytes = new Uint8Array(buffer);
     let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
     return btoa(binary);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const ext = file.name.split(".").pop()?.toLowerCase();
-    const validTypes = ["csv", "xlsx", "xls", "pdf"];
-    if (!ext || !validTypes.includes(ext)) {
+    if (!ext || !["csv", "xlsx", "xls", "pdf"].includes(ext)) {
       toast({ title: "Formato inválido", description: "Aceitos: PDF, Excel (.xlsx) ou CSV", variant: "destructive" });
       return;
     }
-
     setFileName(file.name);
     setFileType(ext);
     setStep("processing");
@@ -116,26 +95,18 @@ const ProductImport = () => {
 
     try {
       let content = "";
+      if (ext === "csv") content = await parseCSV(file);
+      else if (ext === "xlsx" || ext === "xls") content = await parseExcel(file);
 
-      if (ext === "csv") {
-        content = await parseCSV(file);
-      } else if (ext === "xlsx" || ext === "xls") {
-        content = await parseExcel(file);
-      }
-
-      // Send to AI for smart parsing
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Sessão expirada");
 
       let pdfBase64: string | undefined;
-      if (ext === "pdf") {
-        pdfBase64 = await parsePDFAsBase64(file);
-      }
+      if (ext === "pdf") pdfBase64 = await parsePDFAsBase64(file);
 
       const { data, error } = await supabase.functions.invoke("parse-catalog", {
         body: { content: ext === "pdf" ? undefined : content, fileType: ext, fileName: file.name, pdfBase64 },
       });
-
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
@@ -147,7 +118,7 @@ const ProductImport = () => {
         category: p.category || "Sem categoria",
         price: p.price ? Number(p.price) : null,
         brand: p.brand || "",
-        image_url: p.image_url || "",
+        image_url: "",
         status: p.name ? "ready" as const : "error" as const,
         errorMsg: p.name ? undefined : "Nome do produto não identificado",
       }));
@@ -157,10 +128,9 @@ const ProductImport = () => {
         setStep("upload");
         return;
       }
-
       setProducts(parsed);
       setStep("preview");
-      toast({ title: `${parsed.length} produtos encontrados!`, description: "Revise os dados antes de importar." });
+      toast({ title: `${parsed.length} produtos encontrados!`, description: "Revise os dados e adicione imagens antes de importar." });
     } catch (err: any) {
       console.error("Import error:", err);
       toast({ title: "Erro ao processar arquivo", description: err.message || "Erro desconhecido", variant: "destructive" });
@@ -176,50 +146,36 @@ const ProductImport = () => {
     setProducts(prev => prev.filter(p => p.id !== id));
   };
 
+  const handleImageUpload = (productId: string, file: File) => {
+    const previewUrl = URL.createObjectURL(file);
+    setProducts(prev => prev.map(p =>
+      p.id === productId ? { ...p, image_file: file, image_url: previewUrl } : p
+    ));
+  };
+
+  const uploadImageFile = async (file: File): Promise<string | null> => {
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `imports/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, file, { contentType: file.type });
+      if (error) { console.error("Upload error:", error); return null; }
+      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+      return data?.publicUrl || null;
+    } catch (err) {
+      console.error("Image upload error:", err);
+      return null;
+    }
+  };
+
   const getOrCreateCategory = async (categoryName: string): Promise<string | null> => {
     if (!categoryName || categoryName === "Sem categoria") return null;
-
     const slug = categoryName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const existing = categories.find(c => c.slug === slug || c.name.toLowerCase() === categoryName.toLowerCase());
     if (existing) return existing.id;
-
     const { data, error } = await supabase.from("categories").insert({ name: categoryName, slug }).select("id").single();
     if (error || !data) return null;
-
     setCategories(prev => [...prev, { id: data.id, name: categoryName, slug }]);
     return data.id;
-  };
-
-  const uploadImageFromUrl = async (imageUrl: string, productName: string): Promise<string | null> => {
-    try {
-      if (!imageUrl || !imageUrl.startsWith("http")) return null;
-
-      const response = await fetch(imageUrl);
-      if (!response.ok) return null;
-
-      const blob = await response.blob();
-      const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
-      const fileName = `${crypto.randomUUID()}.${ext}`;
-      const filePath = `imports/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(filePath, blob, { contentType: blob.type });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        return null;
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(filePath);
-
-      return urlData?.publicUrl || null;
-    } catch (err) {
-      console.error("Image download error for", productName, err);
-      return null;
-    }
   };
 
   const confirmImport = async () => {
@@ -228,35 +184,22 @@ const ProductImport = () => {
       toast({ title: "Nenhum produto válido para importar", variant: "destructive" });
       return;
     }
-
     setStep("importing");
-    let created = 0;
-    let failed = 0;
+    let created = 0, failed = 0;
     const errors: string[] = [];
 
     for (const p of validProducts) {
       try {
         const categoryId = await getOrCreateCategory(p.category);
-
-        // Try to download and upload image if URL is provided
         let finalImageUrl: string | null = null;
-        if (p.image_url) {
-          finalImageUrl = await uploadImageFromUrl(p.image_url, p.name);
+        if (p.image_file) {
+          finalImageUrl = await uploadImageFile(p.image_file);
         }
-
-        const productData: any = {
-          name: p.name,
-          sku: p.sku || null,
-          description: p.description || null,
-          price: p.price || 0,
-          category_id: categoryId,
-          image_url: finalImageUrl,
-          stock_quantity: 0,
-          is_active: true,
-          is_featured: false,
-        };
-
-        const { error } = await supabase.from("products").insert(productData);
+        const { error } = await supabase.from("products").insert({
+          name: p.name, sku: p.sku || null, description: p.description || null,
+          price: p.price || 0, category_id: categoryId, image_url: finalImageUrl,
+          stock_quantity: 0, is_active: true, is_featured: false,
+        });
         if (error) throw error;
         created++;
       } catch (err: any) {
@@ -265,25 +208,16 @@ const ProductImport = () => {
       }
     }
 
-    // Log the import
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("import_logs").insert({
-      user_id: user?.id || "",
-      file_name: fileName,
-      file_type: fileType,
-      products_created: created,
-      products_failed: failed,
-      status: failed > 0 ? "partial" : "completed",
-      error_details: errors,
+      user_id: user?.id || "", file_name: fileName, file_type: fileType,
+      products_created: created, products_failed: failed,
+      status: failed > 0 ? "partial" : "completed", error_details: errors,
     } as any);
 
     setImportResult({ created, failed, errors });
     setStep("done");
-
-    toast({
-      title: "Importação concluída!",
-      description: `${created} produtos criados${failed > 0 ? `, ${failed} com erro` : ""}.`,
-    });
+    toast({ title: "Importação concluída!", description: `${created} produtos criados${failed > 0 ? `, ${failed} com erro` : ""}.` });
   };
 
   const readyCount = products.filter(p => p.status !== "error").length;
@@ -349,16 +283,10 @@ const ProductImport = () => {
                 <Badge variant="outline">CSV</Badge>
               </p>
               <p className="text-xs text-muted-foreground">
-                O sistema usa IA para identificar produtos automaticamente, mesmo em catálogos sem tabelas estruturadas.
+                O sistema usa IA para identificar produtos automaticamente. Você poderá adicionar imagens na etapa de revisão.
               </p>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.csv,.xlsx,.xls"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
+            <input ref={fileInputRef} type="file" accept=".pdf,.csv,.xlsx,.xls" className="hidden" onChange={handleFileUpload} />
           </div>
         )}
 
@@ -367,9 +295,7 @@ const ProductImport = () => {
           <div className="bg-card rounded-2xl shadow-lg border border-border p-16 text-center">
             <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto mb-6" />
             <h3 className="font-heading text-xl font-bold mb-2">Processando "{fileName}"</h3>
-            <p className="text-muted-foreground text-sm">
-              A IA está analisando o documento e identificando produtos...
-            </p>
+            <p className="text-muted-foreground text-sm">A IA está analisando o documento e identificando produtos...</p>
             <p className="text-xs text-muted-foreground mt-4">Isso pode levar alguns segundos</p>
           </div>
         )}
@@ -386,9 +312,7 @@ const ProductImport = () => {
                   {readyCount} prontos
                 </Badge>
                 {errorCount > 0 && (
-                  <Badge variant="destructive" className="text-sm px-3 py-1">
-                    {errorCount} com erro
-                  </Badge>
+                  <Badge variant="destructive" className="text-sm px-3 py-1">{errorCount} com erro</Badge>
                 )}
               </div>
               <div className="flex gap-3">
@@ -406,9 +330,9 @@ const ProductImport = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">Imagem</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produto</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Código</th>
-                      <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Imagem</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categoria</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preço</th>
                       <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
@@ -418,43 +342,59 @@ const ProductImport = () => {
                   <tbody className="divide-y divide-border">
                     {products.map((p) => (
                       <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                        {/* Image column with upload */}
                         <td className="p-3">
-                          {editingId === p.id ? (
-                            <Input value={p.image_url} onChange={(e) => updateProduct(p.id, "image_url", e.target.value)} className="text-sm h-8 w-40" placeholder="URL da imagem" />
-                          ) : (
-                            p.image_url ? (
-                              <img src={p.image_url} alt={p.name} className="h-10 w-10 rounded object-cover border border-border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          <div className="relative group">
+                            {p.image_url ? (
+                              <div className="relative">
+                                <img
+                                  src={p.image_url}
+                                  alt={p.name}
+                                  className="h-14 w-14 rounded-lg object-cover border border-border"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                                <label className="absolute inset-0 flex items-center justify-center bg-foreground/50 rounded-lg opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                  <Edit className="h-4 w-4 text-background" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleImageUpload(p.id, f);
+                                    }}
+                                  />
+                                </label>
+                              </div>
                             ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )
-                          )}
+                              <label className="flex flex-col items-center justify-center h-14 w-14 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all">
+                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                <span className="text-[8px] text-muted-foreground mt-0.5">Upload</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleImageUpload(p.id, f);
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
                         </td>
+                        {/* Product info */}
                         <td className="p-3">
                           {editingId === p.id ? (
                             <div className="space-y-1">
-                              <Input
-                                value={p.name}
-                                onChange={(e) => updateProduct(p.id, "name", e.target.value)}
-                                className="text-sm h-8"
-                                placeholder="Nome do produto"
-                              />
-                              <Textarea
-                                value={p.description}
-                                onChange={(e) => updateProduct(p.id, "description", e.target.value)}
-                                className="text-xs"
-                                rows={2}
-                                placeholder="Descrição"
-                              />
+                              <Input value={p.name} onChange={(e) => updateProduct(p.id, "name", e.target.value)} className="text-sm h-8" placeholder="Nome do produto" />
+                              <Textarea value={p.description} onChange={(e) => updateProduct(p.id, "description", e.target.value)} className="text-xs" rows={2} placeholder="Descrição" />
                             </div>
                           ) : (
                             <div>
                               <p className="font-medium text-sm">{p.name}</p>
-                              {p.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{p.description}</p>
-                              )}
-                              {p.brand && (
-                                <Badge variant="outline" className="text-[10px] mt-1">{p.brand}</Badge>
-                              )}
+                              {p.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{p.description}</p>}
+                              {p.brand && <Badge variant="outline" className="text-[10px] mt-1">{p.brand}</Badge>}
                             </div>
                           )}
                         </td>
@@ -474,13 +414,7 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3">
                           {editingId === p.id ? (
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={p.price ?? ""}
-                              onChange={(e) => updateProduct(p.id, "price", e.target.value ? Number(e.target.value) : null)}
-                              className="text-sm h-8 w-24"
-                            />
+                            <Input type="number" step="0.01" value={p.price ?? ""} onChange={(e) => updateProduct(p.id, "price", e.target.value ? Number(e.target.value) : null)} className="text-sm h-8 w-24" />
                           ) : (
                             <span className="text-sm font-medium">
                               {p.price != null ? `R$ ${p.price.toFixed(2).replace(".", ",")}` : "—"}
@@ -501,20 +435,10 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => setEditingId(editingId === p.id ? null : p.id)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(editingId === p.id ? null : p.id)}>
                               {editingId === p.id ? <Check className="h-3.5 w-3.5 text-primary" /> : <Edit className="h-3.5 w-3.5" />}
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive"
-                              onClick={() => removeProduct(p.id)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeProduct(p.id)}>
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
@@ -534,7 +458,7 @@ const ProductImport = () => {
             <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto mb-6" />
             <h3 className="font-heading text-xl font-bold mb-2">Importando produtos...</h3>
             <p className="text-muted-foreground text-sm">
-              Cadastrando {readyCount} produtos no catálogo e criando categorias automaticamente.
+              Cadastrando {readyCount} produtos no catálogo, enviando imagens e criando categorias.
             </p>
           </div>
         )}
@@ -545,11 +469,8 @@ const ProductImport = () => {
             <div className="text-center mb-8">
               <CheckCircle className="h-20 w-20 text-primary mx-auto mb-4" />
               <h3 className="font-heading text-2xl font-bold mb-2">Importação Concluída!</h3>
-              <p className="text-muted-foreground">
-                Arquivo: <span className="font-medium">{fileName}</span>
-              </p>
+              <p className="text-muted-foreground">Arquivo: <span className="font-medium">{fileName}</span></p>
             </div>
-
             <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8">
               <div className="bg-primary/10 rounded-xl p-5 text-center border border-primary/20">
                 <p className="text-3xl font-bold text-primary">{importResult.created}</p>
@@ -560,23 +481,17 @@ const ProductImport = () => {
                 <p className="text-xs text-muted-foreground mt-1">Com erro</p>
               </div>
             </div>
-
             {importResult.errors.length > 0 && (
               <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 mb-6 max-w-lg mx-auto">
                 <h4 className="font-semibold text-sm text-destructive mb-2 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" /> Erros encontrados:
                 </h4>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  {importResult.errors.slice(0, 10).map((e, i) => (
-                    <li key={i}>• {e}</li>
-                  ))}
-                  {importResult.errors.length > 10 && (
-                    <li className="text-muted-foreground">... e mais {importResult.errors.length - 10} erros</li>
-                  )}
+                  {importResult.errors.slice(0, 10).map((e, i) => <li key={i}>• {e}</li>)}
+                  {importResult.errors.length > 10 && <li>... e mais {importResult.errors.length - 10} erros</li>}
                 </ul>
               </div>
             )}
-
             <div className="flex justify-center gap-4">
               <Button variant="outline" onClick={() => { setStep("upload"); setProducts([]); }}>
                 <Upload className="h-4 w-4 mr-2" /> Nova Importação
