@@ -1618,6 +1618,9 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* SELLERS TAB */}
+        {tab === "sellers" && <SellerManagement />}
       </main>
     </div>
   );
