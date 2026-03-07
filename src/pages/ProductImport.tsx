@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import {
   Upload, FileText, FileSpreadsheet, Loader2, Check, X, Trash2, Edit,
   ArrowLeft, AlertTriangle, CheckCircle, Download, Eye, ImageIcon,
-  FolderArchive, RefreshCw, Search, Package
+  FolderArchive, RefreshCw, Search, Package, Wand2, Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -29,8 +29,10 @@ interface ImportProduct {
   dimensions: string;
   image_url: string;
   image_file?: File;
-  image_source?: "spreadsheet" | "zip" | "pdf" | "manual" | "placeholder";
+  image_source?: "spreadsheet" | "zip" | "pdf" | "manual" | "ai" | "placeholder";
+  image_description?: string;
   status: "ready" | "error" | "duplicate" | "editing";
+  generatingImage?: boolean;
   errorMsg?: string;
   existingProductId?: string;
   updateExisting?: boolean;
@@ -65,6 +67,8 @@ const ProductImport = () => {
   const [progressMessage, setProgressMessage] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
   const [updateDuplicates, setUpdateDuplicates] = useState(false);
+  const [autoGenerateImages, setAutoGenerateImages] = useState(true);
+  const [generatingImages, setGeneratingImages] = useState(false);
 
   const genId = () => crypto.randomUUID();
   const generateSlug = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
