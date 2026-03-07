@@ -824,6 +824,28 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              title="Gerar imagem com IA"
+                              disabled={p.generatingImage}
+                              onClick={async () => {
+                                setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: true } : pr));
+                                const url = await generateAIImage(p);
+                                if (url) {
+                                  setProducts(prev => prev.map(pr =>
+                                    pr.id === p.id ? { ...pr, image_url: url, image_source: "ai" as const, generatingImage: false } : pr
+                                  ));
+                                  toast({ title: "Imagem gerada!", description: p.name });
+                                } else {
+                                  setProducts(prev => prev.map(pr => pr.id === p.id ? { ...pr, generatingImage: false } : pr));
+                                  toast({ title: "Erro ao gerar imagem", variant: "destructive" });
+                                }
+                              }}
+                            >
+                              {p.generatingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 text-primary" />}
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(editingId === p.id ? null : p.id)}>
                               {editingId === p.id ? <Check className="h-3.5 w-3.5 text-primary" /> : <Edit className="h-3.5 w-3.5" />}
                             </Button>
