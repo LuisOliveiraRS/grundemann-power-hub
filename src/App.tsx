@@ -20,6 +20,7 @@ import Terms from "./pages/Terms";
 import Returns from "./pages/Returns";
 import NotFound from "./pages/NotFound";
 import ProductImport from "./pages/ProductImport";
+import MLExport from "./pages/MLExport";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/minha-conta" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/importar" element={<ProtectedRoute adminOnly><ProductImport /></ProtectedRoute>} />
+            <Route path="/admin/exportar-ml" element={<ProtectedRoute adminOnly><MLExport /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
