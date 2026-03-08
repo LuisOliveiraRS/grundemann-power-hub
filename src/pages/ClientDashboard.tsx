@@ -148,6 +148,7 @@ const ClientDashboard = () => {
     { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
     { id: "quotes" as const, label: "Orçamentos", icon: FileText, count: quotes.length },
     { id: "favorites" as const, label: "Favoritos", icon: Heart, count: favoriteIds.size },
+    { id: "loyalty" as const, label: "Fidelidade", icon: Gift },
   ];
 
   return (
