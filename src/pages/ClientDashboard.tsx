@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users, CreditCard, AlertCircle, RefreshCw, Banknote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -31,6 +31,12 @@ interface Order {
 }
 interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; }
 interface FavProduct { id: string; name: string; price: number; image_url: string | null; sku: string | null; }
+interface Payment {
+  id: string; order_id: string; amount: number; status: string;
+  payment_method: string | null; mp_payment_id: string | null;
+  mp_status_detail: string | null; paid_at: string | null;
+  created_at: string; updated_at: string;
+}
 
 const statusLabel: Record<string, string> = {
   pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
@@ -52,10 +58,43 @@ const quoteStatusLabel: Record<string, string> = {
   pending: "Pendente", reviewing: "Em Análise", quoted: "Orçado", accepted: "Aceito", rejected: "Rejeitado",
 };
 
+const paymentStatusLabel: Record<string, string> = {
+  pending: "Pendente", approved: "Aprovado", rejected: "Rejeitado",
+  cancelled: "Cancelado", refunded: "Reembolsado",
+};
+const paymentStatusColor: Record<string, string> = {
+  pending: "bg-accent/20 text-accent-foreground border-accent/30",
+  approved: "bg-primary text-primary-foreground border-primary",
+  rejected: "bg-destructive/10 text-destructive border-destructive/20",
+  cancelled: "bg-muted text-muted-foreground border-border",
+  refunded: "bg-secondary/10 text-secondary-foreground border-secondary/20",
+};
+const paymentStatusIcon: Record<string, any> = {
+  pending: Clock, approved: CheckCircle, rejected: XCircle,
+  cancelled: XCircle, refunded: RefreshCw,
+};
+const paymentMethodLabel: Record<string, string> = {
+  credit_card: "Cartão de Crédito", debit_card: "Cartão de Débito",
+  pix: "PIX", bolbradesco: "Boleto", ticket: "Boleto",
+  bank_transfer: "Transferência",
+};
+const mpStatusDetailLabel: Record<string, string> = {
+  accredited: "Pagamento aprovado",
+  pending_contingency: "Processando pagamento",
+  pending_review_manual: "Em análise manual",
+  cc_rejected_other_reason: "Cartão recusado",
+  cc_rejected_call_for_authorize: "Cartão requer autorização",
+  cc_rejected_insufficient_amount: "Saldo insuficiente",
+  cc_rejected_bad_filled_security_code: "Código de segurança inválido",
+  cc_rejected_bad_filled_date: "Data de validade inválida",
+  cc_rejected_bad_filled_other: "Dados incorretos",
+  pending_waiting_payment: "Aguardando pagamento",
+  pending_waiting_transfer: "Aguardando transferência",
+};
 const ClientDashboard = () => {
   const { user, signOut } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const [tab, setTab] = useState<"profile" | "orders" | "quotes" | "favorites" | "loyalty" | "referral">("profile");
+  const [tab, setTab] = useState<"profile" | "orders" | "payments" | "quotes" | "favorites" | "loyalty" | "referral">("profile");
   const [profile, setProfile] = useState<Profile>({
     full_name: "", email: "", phone: "", address: "", address_number: "",
     address_complement: "", neighborhood: "", city: "", state: "", zip_code: "",
@@ -64,6 +103,7 @@ const ClientDashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [favProducts, setFavProducts] = useState<FavProduct[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
@@ -72,7 +112,18 @@ const ClientDashboard = () => {
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
 
-  useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); } }, [user]);
+  useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); loadPayments(); } }, [user]);
+
+  // Realtime payments subscription
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('user-payments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
+        () => { loadPayments(); }
+      ).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
   useEffect(() => { if (user && favoriteIds.size > 0) loadFavoriteProducts(); }, [favoriteIds]);
 
   const loadProfile = async () => {
@@ -94,6 +145,11 @@ const ClientDashboard = () => {
   const loadQuotes = async () => {
     const { data } = await supabase.from("quotes").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
     if (data) setQuotes(data as Quote[]);
+  };
+
+  const loadPayments = async () => {
+    const { data } = await supabase.from("payments").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+    if (data) setPayments(data as Payment[]);
   };
 
   const loadFavoriteProducts = async () => {
@@ -147,6 +203,7 @@ const ClientDashboard = () => {
   const tabs = [
     { id: "profile" as const, label: "Meus Dados", icon: User },
     { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
+    { id: "payments" as const, label: "Pagamentos", icon: CreditCard, count: payments.length },
     { id: "quotes" as const, label: "Orçamentos", icon: FileText, count: quotes.length },
     { id: "favorites" as const, label: "Favoritos", icon: Heart, count: favoriteIds.size },
     { id: "loyalty" as const, label: "Fidelidade", icon: Gift },
@@ -334,6 +391,80 @@ const ClientDashboard = () => {
                           <p className="font-heading font-bold text-price mt-2">R$ {Number(q.total_estimated).toFixed(2).replace(".", ",")}</p>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PAYMENTS TAB */}
+              {tab === "payments" && (
+                <div>
+                  <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-primary/10 rounded-lg p-2"><CreditCard className="h-5 w-5 text-primary" /></div>
+                    Meus Pagamentos
+                  </h2>
+                  {payments.length === 0 ? (
+                    <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
+                      <Banknote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-heading font-bold text-lg mb-2">Nenhum pagamento</h3>
+                      <p className="text-muted-foreground mb-4">Seus pagamentos aparecerão aqui após finalizar uma compra.</p>
+                      <Button onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {payments.map(payment => {
+                        const PIcon = paymentStatusIcon[payment.status] || Clock;
+                        return (
+                          <div key={payment.id} className="bg-card rounded-xl shadow-sm border border-border p-5 hover:shadow-md transition-shadow">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-4">
+                                <div className={`rounded-lg p-2.5 ${payment.status === "approved" ? "bg-primary/10" : payment.status === "rejected" ? "bg-destructive/10" : "bg-muted"}`}>
+                                  <PIcon className={`h-5 w-5 ${payment.status === "approved" ? "text-primary" : payment.status === "rejected" ? "text-destructive" : "text-muted-foreground"}`} />
+                                </div>
+                                <div>
+                                  <p className="font-heading font-bold">Pedido #{payment.order_id.slice(0, 8)}</p>
+                                  <p className="text-xs text-muted-foreground">{new Date(payment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${paymentStatusColor[payment.status] || "bg-muted text-muted-foreground border-border"}`}>
+                                  {paymentStatusLabel[payment.status] || payment.status}
+                                </span>
+                                <p className="font-heading font-bold text-lg text-price">R$ {Number(payment.amount).toFixed(2).replace(".", ",")}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-4 text-xs text-muted-foreground">
+                              {payment.payment_method && (
+                                <span className="flex items-center gap-1">
+                                  <CreditCard className="h-3 w-3" />
+                                  {paymentMethodLabel[payment.payment_method] || payment.payment_method}
+                                </span>
+                              )}
+                              {payment.mp_payment_id && (
+                                <span className="flex items-center gap-1">ID MP: {payment.mp_payment_id}</span>
+                              )}
+                              {payment.paid_at && (
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3 text-primary" />
+                                  Pago em {new Date(payment.paid_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
+                            </div>
+                            {payment.mp_status_detail && (
+                              <div className={`mt-2 flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${payment.status === "rejected" ? "bg-destructive/5 text-destructive" : payment.status === "pending" ? "bg-accent/10 text-accent-foreground" : "bg-primary/5 text-primary"}`}>
+                                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                                {mpStatusDetailLabel[payment.mp_status_detail] || payment.mp_status_detail}
+                              </div>
+                            )}
+                            {payment.status === "pending" && (
+                              <div className="mt-2 flex items-center gap-2 text-xs bg-accent/10 text-accent-foreground rounded-lg px-3 py-2">
+                                <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                                Aguardando confirmação do pagamento — atualiza automaticamente
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
