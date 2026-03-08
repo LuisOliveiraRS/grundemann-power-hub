@@ -1087,6 +1087,20 @@ const MarketingCenter = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      // Generate composite image for the auto-generated ad
+      let creativeImageUrl = product.image_url || null;
+      try {
+        const compositeBlob = await generateCompositeImage(
+          product.image_url, data, "post_instagram", "creative",
+          getProductUrl(product.id), product.price, product.original_price, product.name, "medium",
+        );
+        const filename = `creative-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+        const uploadedUrl = await uploadCompositeToStorage(compositeBlob, filename);
+        if (uploadedUrl) creativeImageUrl = uploadedUrl;
+      } catch (compErr) {
+        console.error("Auto composite error:", compErr);
+      }
+
       await supabase.from("marketing_creatives").insert({
         title: data.headline || `Anúncio - ${product.name}`,
         format: "post_instagram",
@@ -1095,7 +1109,7 @@ const MarketingCenter = () => {
         body_text: data.body_text || null,
         hashtags: data.hashtags || null,
         cta: data.cta || null,
-        image_url: product.image_url || null,
+        image_url: creativeImageUrl,
         status: "draft",
       });
 
