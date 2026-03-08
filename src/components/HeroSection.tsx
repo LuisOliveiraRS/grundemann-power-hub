@@ -118,7 +118,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="hidden lg:flex items-center justify-center relative"
+            className="flex items-center justify-center relative mt-6 lg:mt-0"
           >
             {/* Glow effect */}
             <div className="absolute w-80 h-80 rounded-full bg-primary/10 blur-3xl" />
