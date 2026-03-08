@@ -1,10 +1,45 @@
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MessageCircle, ArrowRight } from "lucide-react";
-import logo from "@/assets/logo-grundemann.png";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageCircle, ArrowRight, Tag } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FeaturedProduct {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  image_url: string | null;
+}
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const [products, setProducts] = useState<FeaturedProduct[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("id, name, price, original_price, image_url")
+      .eq("is_active", true)
+      .eq("is_featured", true)
+      .not("image_url", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (data && data.length > 0) setProducts(data as FeaturedProduct[]);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (products.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % products.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [products.length]);
+
+  const current = products[currentIndex];
 
   return (
     <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[520px] flex items-center">
