@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus } from "lucide-react";
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket } from "lucide-react";
 
 interface CartItem {
   id: string;
@@ -25,6 +26,15 @@ interface ShippingInfo {
   neighborhood: string; city: string; state: string; notes: string;
 }
 
+interface Coupon {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  is_used: boolean;
+  expires_at: string | null;
+}
+
 const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -37,10 +47,17 @@ const Checkout = () => {
     address_complement: "", neighborhood: "", city: "", state: "", notes: "",
   });
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
     loadCart();
     loadProfile();
+    loadCoupons();
   }, [user]);
 
   const loadCart = async () => {
@@ -64,6 +81,20 @@ const Checkout = () => {
     }
   };
 
+  const loadCoupons = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("discount_coupons")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_used", false)
+      .order("created_at", { ascending: false });
+    if (data) {
+      const valid = (data as Coupon[]).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+      setAvailableCoupons(valid);
+    }
+  };
+
   const updateQty = async (id: string, quantity: number) => {
     if (quantity < 1) return removeItem(id);
     await supabase.from("cart_items").update({ quantity }).eq("id", id);
@@ -76,6 +107,72 @@ const Checkout = () => {
   };
 
   const subtotal = items.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+
+  const calculateDiscount = (): number => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.discount_type === "percentage") {
+      return subtotal * (appliedCoupon.discount_value / 100);
+    }
+    if (appliedCoupon.discount_type === "fixed") {
+      return Math.min(appliedCoupon.discount_value, subtotal);
+    }
+    return 0;
+  };
+
+  const discount = calculateDiscount();
+  const total = Math.max(0, subtotal - discount);
+
+  const applyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    setApplyingCoupon(true);
+
+    // Check in available coupons first
+    const found = availableCoupons.find(c => c.code.toUpperCase() === code);
+    if (found) {
+      setAppliedCoupon(found);
+      setCouponCode("");
+      toast({ title: "Cupom aplicado! 🎉", description: `Desconto de ${found.discount_type === "percentage" ? `${found.discount_value}%` : `R$ ${Number(found.discount_value).toFixed(2).replace(".", ",")}`}` });
+      setApplyingCoupon(false);
+      return;
+    }
+
+    // Check email subscriber coupons
+    const { data: subCoupon } = await supabase
+      .from("email_subscribers")
+      .select("*")
+      .eq("discount_code", code)
+      .eq("is_used", false)
+      .single();
+
+    if (subCoupon) {
+      setAppliedCoupon({
+        id: subCoupon.id,
+        code: subCoupon.discount_code,
+        discount_type: "percentage",
+        discount_value: 10,
+        is_used: false,
+        expires_at: null,
+      });
+      setCouponCode("");
+      toast({ title: "Cupom aplicado! 🎉", description: "Desconto de 10% aplicado!" });
+      setApplyingCoupon(false);
+      return;
+    }
+
+    toast({ title: "Cupom inválido", description: "Verifique o código e tente novamente.", variant: "destructive" });
+    setApplyingCoupon(false);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    toast({ title: "Cupom removido" });
+  };
+
+  const selectCoupon = (coupon: Coupon) => {
+    setAppliedCoupon(coupon);
+    toast({ title: "Cupom aplicado! 🎉" });
+  };
 
   const placeOrder = async () => {
     if (items.length === 0) return;
@@ -90,7 +187,6 @@ const Checkout = () => {
       shipping.zip_code && `CEP: ${shipping.zip_code}`,
     ].filter(Boolean).join(", ");
 
-    // Update profile with shipping info
     await supabase.from("profiles").update({
       full_name: shipping.full_name || undefined,
       phone: shipping.phone || null,
@@ -103,12 +199,17 @@ const Checkout = () => {
       state: shipping.state || null,
     }).eq("user_id", user!.id);
 
+    const orderNotes = [
+      shipping.notes,
+      appliedCoupon ? `Cupom: ${appliedCoupon.code} (desconto: R$ ${discount.toFixed(2)})` : null,
+    ].filter(Boolean).join(" | ");
+
     const { data: order, error } = await supabase.from("orders").insert({
       user_id: user!.id,
-      total_amount: subtotal,
+      total_amount: total,
       status: "pending" as any,
       shipping_address: fullAddress,
-      notes: shipping.notes || null,
+      notes: orderNotes || null,
     }).select().single();
 
     if (error || !order) {
@@ -131,6 +232,19 @@ const Checkout = () => {
       status: "pending" as any,
       notes: "Pedido criado pelo cliente",
     });
+
+    // Mark coupon as used
+    if (appliedCoupon) {
+      // Check if it's from discount_coupons table
+      const isRewardCoupon = availableCoupons.some(c => c.id === appliedCoupon.id);
+      if (isRewardCoupon) {
+        await supabase.from("discount_coupons").update({ is_used: true, order_id: order.id }).eq("id", appliedCoupon.id);
+      } else {
+        // Email subscriber coupon
+        await supabase.from("email_subscribers").update({ is_used: true }).eq("id", appliedCoupon.id);
+      }
+    }
+
     await supabase.from("cart_items").delete().eq("user_id", user!.id);
 
     setLoading(false);
@@ -169,60 +283,138 @@ const Checkout = () => {
 
           {/* Step 1: Cart Review */}
           {step === 1 && (
-            <div className="bg-card rounded-xl border border-border shadow-sm">
-              <div className="p-6 border-b border-border">
-                <h2 className="font-heading text-xl font-bold">Revise seu Carrinho</h2>
-              </div>
-              {items.length === 0 ? (
-                <div className="p-12 text-center">
-                  <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Seu carrinho está vazio</p>
-                  <Button className="mt-4" onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+            <div className="space-y-4">
+              <div className="bg-card rounded-xl border border-border shadow-sm">
+                <div className="p-6 border-b border-border">
+                  <h2 className="font-heading text-xl font-bold">Revise seu Carrinho</h2>
                 </div>
-              ) : (
-                <>
-                  <div className="divide-y divide-border">
-                    {items.map((item) => (
-                      <div key={item.id} className="p-4 flex items-center gap-4">
-                        <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                          {item.product?.image_url && (
-                            <img src={item.product.image_url} alt="" className="h-full w-full object-contain p-1" />
+                {items.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">Seu carrinho está vazio</p>
+                    <Button className="mt-4" onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="divide-y divide-border">
+                      {items.map((item) => (
+                        <div key={item.id} className="p-4 flex items-center gap-4">
+                          <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                            {item.product?.image_url && (
+                              <img src={item.product.image_url} alt="" className="h-full w-full object-contain p-1" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{item.product?.name}</p>
+                            <p className="text-price font-bold">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
+                          </div>
+                          <div className="flex items-center gap-1 border border-border rounded-lg">
+                            <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-2 hover:bg-muted transition-colors">
+                              <Minus className="h-3 w-3" />
+                            </button>
+                            <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
+                            <button onClick={() => updateQty(item.id, item.quantity + 1)} className="p-2 hover:bg-muted transition-colors">
+                              <Plus className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <p className="font-bold text-price w-24 text-right">
+                            R$ {((item.product?.price || 0) * item.quantity).toFixed(2).replace(".", ",")}
+                          </p>
+                          <button onClick={() => removeItem(item.id)} className="text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Coupon Section */}
+                    <div className="p-6 border-t border-border">
+                      <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-primary" /> Cupom de Desconto
+                      </h3>
+
+                      {appliedCoupon ? (
+                        <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+                          <Ticket className="h-5 w-5 text-primary flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="font-heading font-bold text-sm text-primary">{appliedCoupon.code}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {appliedCoupon.discount_type === "percentage"
+                                ? `${appliedCoupon.discount_value}% de desconto`
+                                : appliedCoupon.discount_type === "freeShipping"
+                                  ? "Frete Grátis"
+                                  : `R$ ${Number(appliedCoupon.discount_value).toFixed(2).replace(".", ",")} de desconto`}
+                            </p>
+                          </div>
+                          <button onClick={removeCoupon} className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors text-destructive">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex gap-2">
+                            <Input
+                              value={couponCode}
+                              onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                              placeholder="Digite o código do cupom"
+                              className="flex-1 uppercase"
+                              onKeyDown={e => e.key === "Enter" && applyCoupon()}
+                            />
+                            <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon || !couponCode.trim()}>
+                              {applyingCoupon ? "Validando..." : "Aplicar"}
+                            </Button>
+                          </div>
+
+                          {availableCoupons.length > 0 && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-2">Seus cupons disponíveis:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {availableCoupons.map(c => (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => selectCoupon(c)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-primary/5 hover:border-primary/30 transition-all text-sm group"
+                                  >
+                                    <Ticket className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+                                    <span className="font-mono font-bold text-xs">{c.code}</span>
+                                    <Badge variant="secondary" className="text-[10px] px-1.5">
+                                      {c.discount_type === "percentage" ? `${c.discount_value}%` : c.discount_type === "freeShipping" ? "Frete" : `R$${c.discount_value}`}
+                                    </Badge>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{item.product?.name}</p>
-                          <p className="text-price font-bold">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
+                      )}
+                    </div>
+
+                    {/* Totals */}
+                    <div className="p-6 border-t border-border">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} itens)</span>
+                          <span>R$ {subtotal.toFixed(2).replace(".", ",")}</span>
                         </div>
-                        <div className="flex items-center gap-1 border border-border rounded-lg">
-                          <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-2 hover:bg-muted transition-colors">
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                          <button onClick={() => updateQty(item.id, item.quantity + 1)} className="p-2 hover:bg-muted transition-colors">
-                            <Plus className="h-3 w-3" />
-                          </button>
+                        {appliedCoupon && discount > 0 && (
+                          <div className="flex justify-between text-sm text-primary">
+                            <span>Desconto ({appliedCoupon.code})</span>
+                            <span>- R$ {discount.toFixed(2).replace(".", ",")}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between pt-2 border-t border-border">
+                          <span className="font-heading font-bold text-lg">Total</span>
+                          <span className="font-heading text-2xl font-bold text-price">R$ {total.toFixed(2).replace(".", ",")}</span>
                         </div>
-                        <p className="font-bold text-price w-24 text-right">
-                          R$ {((item.product?.price || 0) * item.quantity).toFixed(2).replace(".", ",")}
-                        </p>
-                        <button onClick={() => removeItem(item.id)} className="text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
                       </div>
-                    ))}
-                  </div>
-                  <div className="p-6 border-t border-border flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} itens)</p>
-                      <p className="font-heading text-2xl font-bold text-price">R$ {subtotal.toFixed(2).replace(".", ",")}</p>
+                      <div className="flex gap-3 mt-4 justify-end">
+                        <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
+                        <Button onClick={() => setStep(2)}>Próximo: Endereço</Button>
+                      </div>
                     </div>
-                    <div className="flex gap-3">
-                      <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
-                      <Button onClick={() => setStep(2)}>Próximo: Endereço</Button>
-                    </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           )}
 
@@ -301,13 +493,26 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* Totals */}
                 <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                  <div className="flex justify-between items-center">
-                    <span className="font-heading text-lg font-bold">Total do Pedido</span>
-                    <span className="font-heading text-2xl font-bold text-price">R$ {subtotal.toFixed(2).replace(".", ",")}</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span>R$ {subtotal.toFixed(2).replace(".", ",")}</span>
+                    </div>
+                    {appliedCoupon && discount > 0 && (
+                      <div className="flex justify-between text-sm text-primary font-semibold">
+                        <span className="flex items-center gap-1"><Ticket className="h-3.5 w-3.5" /> Cupom {appliedCoupon.code}</span>
+                        <span>- R$ {discount.toFixed(2).replace(".", ",")}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-2 border-t border-primary/20">
+                      <span className="font-heading text-lg font-bold">Total do Pedido</span>
+                      <span className="font-heading text-2xl font-bold text-price">R$ {total.toFixed(2).replace(".", ",")}</span>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    ou até 3x de R$ {(subtotal / 3).toFixed(2).replace(".", ",")} sem juros
+                    ou até 3x de R$ {(total / 3).toFixed(2).replace(".", ",")} sem juros
                   </p>
                 </div>
               </div>
