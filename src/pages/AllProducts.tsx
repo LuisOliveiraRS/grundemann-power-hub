@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useFavorites } from "@/hooks/useFavorites";
 import ProductCard from "@/components/ProductCard";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -24,6 +25,7 @@ const ITEMS_PER_PAGE = 24;
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +191,7 @@ const AllProducts = () => {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {paginated.map(p => (
-                  <ProductCard key={p.id} id={p.id} name={p.name} image={p.image_url || "/placeholder.svg"} price={p.price} oldPrice={p.original_price || undefined} sku={p.sku || undefined} stockQuantity={p.stock_quantity} />
+                  <ProductCard key={p.id} id={p.id} name={p.name} image={p.image_url || "/placeholder.svg"} price={p.price} oldPrice={p.original_price || undefined} sku={p.sku || undefined} stockQuantity={p.stock_quantity} isFavorite={isFavorite(p.id)} onToggleFavorite={toggleFavorite} />
                 ))}
               </div>
 
