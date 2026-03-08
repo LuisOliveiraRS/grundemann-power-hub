@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import SellerManagement from "@/components/SellerManagement";
 import QuoteManagement from "@/components/QuoteManagement";
+import UserRoleManagement from "@/components/UserRoleManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -63,7 +64,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -110,7 +111,8 @@ const AdminDashboard = () => {
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "",
-    additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: ""
+    additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
+    specifications: "" as string, documents: [] as string[]
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -213,6 +215,8 @@ const AdminDashboard = () => {
       brand: productForm.brand || null,
       hp: productForm.hp || null,
       engine_model: productForm.engine_model || null,
+      specifications: productForm.specifications ? (() => { try { return JSON.parse(productForm.specifications); } catch { return null; } })() : null,
+      documents: productForm.documents.filter(Boolean),
     };
     if (editingProduct?.id) {
       const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
@@ -226,7 +230,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [] });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -316,6 +320,8 @@ const AdminDashboard = () => {
       additional_images: (p.additional_images || []) as string[],
       video_url: (p.video_url || "") as string,
       brand: (p as any).brand || "", hp: (p as any).hp || "", engine_model: (p as any).engine_model || "",
+      specifications: (p as any).specifications ? JSON.stringify((p as any).specifications, null, 2) : "",
+      documents: ((p as any).documents || []) as string[],
     });
     setTab("products");
   };
@@ -545,6 +551,7 @@ const AdminDashboard = () => {
     { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
     { key: "sellers", label: "Vendedores", icon: Users },
     { key: "quotes", label: "Orçamentos", icon: FileUp },
+    { key: "roles", label: "Permissões", icon: Users },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
@@ -1703,6 +1710,9 @@ const AdminDashboard = () => {
 
         {/* QUOTES TAB */}
         {tab === "quotes" && <QuoteManagement />}
+
+        {/* ROLES TAB */}
+        {tab === "roles" && <UserRoleManagement />}
       </main>
     </div>
   );
