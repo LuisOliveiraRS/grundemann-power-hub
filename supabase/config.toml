@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.generate-creative-image]
 verify_jwt = false
+
+[functions.identify-part]
+verify_jwt = false
