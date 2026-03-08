@@ -94,6 +94,10 @@ const WIZARD_STEPS = [
 
 import logoGrundemann from "@/assets/logo-grundemann.png";
 
+const getProductUrl = (productId: string) => {
+  const base = window.location.origin;
+  return `${base}/produto/${productId}`;
+};
 
 
 // ─── Calendar helpers ───
