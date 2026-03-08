@@ -355,30 +355,29 @@ const generateCompositeImage = async (
     ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
   }
 
-  // ── Logo Grundemann Banner (configurable size, always prominent) ──
+  // ── Logo Grundemann (TOP-LEFT, BIG & PROMINENT) ──
   try {
     const logo = await loadImage(logoGrundemann);
-    const sizeMap = { small: isStory ? 90 : 80, medium: isStory ? 130 : 110, large: isStory ? 180 : 150 };
+    const sizeMap = { small: isStory ? 140 : 120, medium: isStory ? 200 : 170, large: isStory ? 280 : 240 };
     const logoH = sizeMap[logoSize];
     const logoW = (logo.width / logo.height) * logoH;
-    const logoX = (W - logoW) / 2; // Centered
-    const logoY = isStory ? 30 : 20;
-    // Prominent white backing card with shadow
+    const logoX = 40;
+    const logoY = isStory ? 30 : 16;
+    // White backing card with strong shadow
     ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
-    ctx.shadowColor = "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = 25;
-    ctx.shadowOffsetY = 6;
-    roundRect(ctx, logoX - 20, logoY - 14, logoW + 40, logoH + 28, 16);
+    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.shadowColor = "rgba(0,0,0,0.55)";
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 8;
+    roundRect(ctx, logoX - 16, logoY - 12, logoW + 32, logoH + 24, 14);
     ctx.fill();
-    // Green + blue double border
     ctx.strokeStyle = BRAND_GREEN;
     ctx.lineWidth = 4;
-    roundRect(ctx, logoX - 20, logoY - 14, logoW + 40, logoH + 28, 16);
+    roundRect(ctx, logoX - 16, logoY - 12, logoW + 32, logoH + 24, 14);
     ctx.stroke();
     ctx.strokeStyle = BRAND_BLUE;
     ctx.lineWidth = 2;
-    roundRect(ctx, logoX - 24, logoY - 18, logoW + 48, logoH + 36, 18);
+    roundRect(ctx, logoX - 20, logoY - 16, logoW + 40, logoH + 32, 16);
     ctx.stroke();
     ctx.restore();
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
@@ -388,22 +387,32 @@ const generateCompositeImage = async (
     const fallbackW = logoSize === "large" ? 500 : logoSize === "medium" ? 400 : 300;
     const fallbackH = logoSize === "large" ? 100 : logoSize === "medium" ? 80 : 60;
     const fallbackFont = logoSize === "large" ? 46 : logoSize === "medium" ? 36 : 28;
-    const fX = (W - fallbackW) / 2;
     ctx.shadowColor = "rgba(0,0,0,0.4)";
     ctx.shadowBlur = 20;
-    roundRect(ctx, fX, 10, fallbackW, fallbackH, 14);
+    roundRect(ctx, 40, 10, fallbackW, fallbackH, 14);
     ctx.fill();
     ctx.strokeStyle = BRAND_GREEN;
     ctx.lineWidth = 4;
-    roundRect(ctx, fX, 10, fallbackW, fallbackH, 14);
+    roundRect(ctx, 40, 10, fallbackW, fallbackH, 14);
     ctx.stroke();
     ctx.fillStyle = BRAND_GREEN;
     ctx.font = `bold ${fallbackFont}px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText("GRÜNDEMANN", W / 2, 10 + fallbackH * 0.65);
     ctx.textAlign = "left";
+    ctx.fillText("GRÜNDEMANN", 60, 10 + fallbackH * 0.65);
     ctx.restore();
   }
+
+  // ── Contact info bar (bottom, above accent bars) ──
+  const contactBarY = H - 55;
+  ctx.save();
+  ctx.fillStyle = bgStyle === "white" ? "rgba(0,39,118,0.08)" : "rgba(0,0,0,0.5)";
+  ctx.fillRect(0, contactBarY, W, 45);
+  ctx.fillStyle = bgStyle === "white" ? BRAND_BLUE : "#ffffff";
+  ctx.font = `bold 20px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("📞 (51) 98182-5748   |   ✉ adair.grundemann@gmail.com", W / 2, contactBarY + 29);
+  ctx.textAlign = "left";
+  ctx.restore();
 
   // ── Bottom accent bars: green + blue ──
   ctx.fillStyle = BRAND_BLUE;
