@@ -964,11 +964,34 @@ const MarketingCenter = () => {
   };
 
   // Save creative + optionally publish
+  const uploadCompositeToStorage = async (blob: Blob, filename: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .upload(`marketing/${filename}`, blob, { contentType: "image/png", upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data.path);
+      return urlData.publicUrl;
+    } catch (err) {
+      console.error("Upload error:", err);
+      return null;
+    }
+  };
+
   const finalizeWizard = async () => {
     if (!generatedText) return;
     setLoading(true);
     try {
       const product = selectedProducts[0];
+
+      // Upload composite image to storage
+      let creativeImageUrl = product?.image_url || null;
+      if (compositeBlob) {
+        const filename = `creative-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+        const uploadedUrl = await uploadCompositeToStorage(compositeBlob, filename);
+        if (uploadedUrl) creativeImageUrl = uploadedUrl;
+      }
+
       const creativeData: any = {
         title: generatedText.headline || `Criativo - ${product?.name || "Geral"}`,
         format: genFormat,
@@ -977,7 +1000,7 @@ const MarketingCenter = () => {
         body_text: generatedText.body_text || null,
         hashtags: generatedText.hashtags || null,
         cta: generatedText.cta || null,
-        image_url: product?.image_url || null,
+        image_url: creativeImageUrl,
         status: publishMode === "save" ? "draft" : "published",
       };
 
