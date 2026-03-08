@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import CartDrawer from "@/components/CartDrawer";
 import SmartSearch from "@/components/SmartSearch";
+import NotificationBell from "@/components/NotificationBell";
 import logo from "@/assets/logo-grundemann.png";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,6 +52,7 @@ const Header = () => {
           <SmartSearch />
 
           <div className="flex items-center gap-6">
+            <NotificationBell />
             {isAdmin && (
               <button onClick={() => navigate("/admin")} className="text-xs font-bold text-primary hover:underline">
                 Admin

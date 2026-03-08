@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import LoyaltyProgram from "@/components/LoyaltyProgram";
 
 interface Profile {
   full_name: string; email: string; phone: string;
@@ -53,7 +54,7 @@ const quoteStatusLabel: Record<string, string> = {
 const ClientDashboard = () => {
   const { user, signOut } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const [tab, setTab] = useState<"profile" | "orders" | "quotes" | "favorites">("profile");
+  const [tab, setTab] = useState<"profile" | "orders" | "quotes" | "favorites" | "loyalty">("profile");
   const [profile, setProfile] = useState<Profile>({
     full_name: "", email: "", phone: "", address: "", address_number: "",
     address_complement: "", neighborhood: "", city: "", state: "", zip_code: "",
@@ -147,6 +148,7 @@ const ClientDashboard = () => {
     { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
     { id: "quotes" as const, label: "Orçamentos", icon: FileText, count: quotes.length },
     { id: "favorites" as const, label: "Favoritos", icon: Heart, count: favoriteIds.size },
+    { id: "loyalty" as const, label: "Fidelidade", icon: Gift },
   ];
 
   return (
@@ -334,6 +336,9 @@ const ClientDashboard = () => {
                   )}
                 </div>
               )}
+
+              {/* LOYALTY TAB */}
+              {tab === "loyalty" && <LoyaltyProgram />}
 
               {/* FAVORITES TAB */}
               {tab === "favorites" && (
