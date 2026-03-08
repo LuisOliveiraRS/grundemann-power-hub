@@ -99,7 +99,7 @@ const WIZARD_STEPS = [
   { key: "publish", label: "Publicar", icon: Send },
 ];
 
-import logoGrundemann from "@/assets/logo-grundemann.png";
+import logoGrundemann from "@/assets/logo-grundemann-banner.png";
 
 const getProductUrl = (productId: string) => {
   const base = window.location.origin;
