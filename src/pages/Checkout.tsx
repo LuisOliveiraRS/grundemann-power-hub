@@ -143,8 +143,10 @@ const Checkout = () => {
     return 0;
   };
 
+  const isFreeShipping = appliedCoupon?.discount_type === "freeShipping";
+  const shippingCost = isFreeShipping ? 0 : (selectedShipping?.price || 0);
   const discount = calculateDiscount();
-  const total = Math.max(0, subtotal - discount);
+  const total = Math.max(0, subtotal - discount + shippingCost);
 
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
