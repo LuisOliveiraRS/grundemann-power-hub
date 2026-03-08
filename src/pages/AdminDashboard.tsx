@@ -590,6 +590,7 @@ const AdminDashboard = () => {
     { key: "mechanics", label: "Mecânicos", icon: Wrench },
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
+    { key: "stock", label: "Estoque & ML", icon: Boxes },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
