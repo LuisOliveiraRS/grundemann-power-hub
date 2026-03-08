@@ -57,8 +57,9 @@ const LoyaltyProgram = () => {
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [redeeming, setRedeeming] = useState<string | null>(null);
-  const [tab, setTab] = useState<"rewards" | "history" | "redemptions">("rewards");
+  const [tab, setTab] = useState<"rewards" | "history" | "redemptions" | "coupons">("rewards");
 
   useEffect(() => {
     if (user) {
