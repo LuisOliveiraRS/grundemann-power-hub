@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift
 } from "lucide-react";
 import { BarChart3 as BarChart3Icon, Boxes } from "lucide-react";
 import MarketingCenter from "@/components/MarketingCenter";
@@ -20,6 +20,7 @@ import UserRoleManagement from "@/components/UserRoleManagement";
 import MechanicManagement from "@/components/MechanicManagement";
 import StockManagement from "@/components/StockManagement";
 import EmailSubscriberManagement from "@/components/EmailSubscriberManagement";
+import RewardsManagement from "@/components/RewardsManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -69,7 +70,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -593,6 +594,7 @@ const AdminDashboard = () => {
     { key: "marketing", label: "Marketing", icon: Megaphone },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
     { key: "subscribers", label: "Leads & Cupons", icon: Mail },
+    { key: "rewards", label: "Fidelidade", icon: Gift },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
@@ -1855,6 +1857,19 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Gerencie emails capturados, cupons e métricas de conversão do pop-up de desconto</p>
             </div>
             <EmailSubscriberManagement />
+          </div>
+        )}
+
+        {/* REWARDS TAB */}
+        {tab === "rewards" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Gift className="h-8 w-8 text-primary" /> Programa de Fidelidade
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie recompensas, aprove resgates e credite pontos manualmente. Pontos são creditados automaticamente na entrega.</p>
+            </div>
+            <RewardsManagement />
           </div>
         )}
       </main>
