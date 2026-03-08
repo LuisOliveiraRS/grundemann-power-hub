@@ -617,7 +617,8 @@ const MarketingCenter = () => {
     if (text.headline) parts.push(text.headline);
     if (text.short_description) parts.push(text.short_description);
     if (text.body_text) parts.push("", text.body_text);
-    if (text.cta) parts.push("", `👉 ${text.cta}`);
+    const ctaText = customCta || text.cta;
+    if (ctaText) parts.push("", `👉 ${ctaText}`);
     const p = product || selectedProducts[0];
     if (p) {
       const url = getProductUrl(p.id);
