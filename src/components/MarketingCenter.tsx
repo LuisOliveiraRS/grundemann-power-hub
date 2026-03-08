@@ -47,6 +47,7 @@ interface MarketingPost {
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
 type BackgroundStyle = "white" | "creative";
+type LogoSize = "small" | "medium" | "large";
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
