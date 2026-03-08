@@ -1662,6 +1662,40 @@ const MarketingCenter = () => {
                       </div>
                     </div>
 
+                    {/* Layout Mode */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-primary" /> Layout do Criativo
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button onClick={() => setLayoutMode("single")}
+                          className={`p-4 rounded-lg border-2 text-center transition-all ${layoutMode === "single" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          <div className="flex justify-center mb-2">
+                            <div className="w-12 h-12 bg-muted rounded border flex items-center justify-center">
+                              <Package className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          </div>
+                          <p className={`text-sm font-semibold ${layoutMode === "single" ? "text-primary" : ""}`}>Produto Único</p>
+                          <p className="text-xs text-muted-foreground mt-1">1 produto em destaque</p>
+                        </button>
+                        <button onClick={() => setLayoutMode("grid2x2")}
+                          className={`p-4 rounded-lg border-2 text-center transition-all ${layoutMode === "grid2x2" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          <div className="flex justify-center mb-2">
+                            <div className="grid grid-cols-2 gap-0.5 w-12 h-12">
+                              {[0,1,2,3].map(i => (
+                                <div key={i} className={`rounded-sm ${["bg-primary", "bg-secondary", "bg-accent", "bg-destructive"][i]} opacity-70`} />
+                              ))}
+                            </div>
+                          </div>
+                          <p className={`text-sm font-semibold ${layoutMode === "grid2x2" ? "text-primary" : ""}`}>Grid 2×2</p>
+                          <p className="text-xs text-muted-foreground mt-1">4 produtos em cards coloridos</p>
+                        </button>
+                      </div>
+                      {layoutMode === "grid2x2" && selectedProductIds.size < 2 && (
+                        <p className="text-xs text-destructive">⚠ Selecione pelo menos 2 produtos (máx 4) para o layout grid.</p>
+                      )}
+                    </div>
+
                     {/* Background Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
@@ -1669,7 +1703,11 @@ const MarketingCenter = () => {
                       </Label>
                       <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
                         <p className="text-sm font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
-                        <p className="text-xs text-muted-foreground mt-1">Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca.</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {layoutMode === "grid2x2"
+                            ? "Grid com 4 cards coloridos (verde, azul, dourado, vermelho), cada um com foto, preço e botão COMPRAR."
+                            : "Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca."}
+                        </p>
                       </div>
                     </div>
 
