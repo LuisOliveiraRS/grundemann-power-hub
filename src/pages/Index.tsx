@@ -8,7 +8,7 @@ import CategoriesSection from "@/components/CategoriesSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-
+import AIAssistant from "@/components/AIAssistant";
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">

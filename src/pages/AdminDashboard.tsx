@@ -926,7 +926,48 @@ const AdminDashboard = () => {
                         <Input value={productForm.engine_model} onChange={e => setProductForm({ ...productForm, engine_model: e.target.value })} placeholder="Ex: GX160, GX200..." className="mt-1" />
                       </div>
                     </div>
+
+                    {/* Specifications JSON */}
+                    <div className="md:col-span-2">
+                      <Label className="flex items-center gap-2"><Package className="h-4 w-4" /> Especificações Técnicas (JSON)</Label>
+                      <Textarea
+                        rows={4}
+                        value={productForm.specifications}
+                        onChange={e => setProductForm({ ...productForm, specifications: e.target.value })}
+                        placeholder={'{\n  "Cilindrada": "196cc",\n  "Potência": "6.5 HP",\n  "Combustível": "Gasolina"\n}'}
+                        className="mt-1 font-mono text-xs"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Formato JSON: {"{"}"Chave": "Valor", ...{"}"}</p>
+                    </div>
+
+                    {/* Documents URLs */}
+                    <div className="md:col-span-2">
+                      <Label className="flex items-center gap-2"><Download className="h-4 w-4" /> Documentos Técnicos (URLs)</Label>
+                      <div className="space-y-2 mt-1">
+                        {Array.from({ length: Math.max(1, productForm.documents.length + 1) }).map((_, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <Input
+                              value={productForm.documents[idx] || ""}
+                              onChange={e => {
+                                const docs = [...productForm.documents];
+                                docs[idx] = e.target.value;
+                                setProductForm({ ...productForm, documents: docs.filter((d, i) => d || i === idx) });
+                              }}
+                              placeholder={`URL do documento ${idx + 1} (PDF, manual, etc.)...`}
+                              className="text-xs"
+                            />
+                            {productForm.documents[idx] && (
+                              <Button variant="ghost" size="icon" onClick={() => {
+                                const docs = productForm.documents.filter((_, i) => i !== idx);
+                                setProductForm({ ...productForm, documents: docs });
+                              }}><X className="h-4 w-4 text-destructive" /></Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+                </div>
                 </div>
                 <div className="flex gap-3 mt-6 pt-5 border-t border-border">
                   <Button onClick={saveProduct} className="shadow-md">{editingProduct.id ? "Atualizar" : "Cadastrar"} Produto</Button>
