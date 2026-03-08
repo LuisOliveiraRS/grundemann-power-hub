@@ -351,7 +351,7 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, generatedImageUrl, wizardStep]);
+  }, [generatedText, generatedImageUrl, wizardStep, backgroundStyle]);
 
   const buildComposite = async () => {
     if (!generatedText) return;
