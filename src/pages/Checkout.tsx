@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket, QrCode, Banknote, Loader2, AlertCircle } from "lucide-react";
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket, QrCode, Banknote, Loader2, AlertCircle, Truck } from "lucide-react";
+import { calculateShipping, formatCep, type ShippingOption } from "@/lib/shippingCalculator";
 
 interface CartItem {
   id: string;
@@ -55,6 +56,11 @@ const Checkout = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+
+  // Shipping state
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[] | null>(null);
+  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
+  const [shippingCepInput, setShippingCepInput] = useState("");
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
@@ -137,8 +143,10 @@ const Checkout = () => {
     return 0;
   };
 
+  const isFreeShipping = appliedCoupon?.discount_type === "freeShipping";
+  const shippingCost = isFreeShipping ? 0 : (selectedShipping?.price || 0);
   const discount = calculateDiscount();
-  const total = Math.max(0, subtotal - discount);
+  const total = Math.max(0, subtotal - discount + shippingCost);
 
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -220,6 +228,7 @@ const Checkout = () => {
     const orderNotes = [
       shipping.notes,
       appliedCoupon ? `Cupom: ${appliedCoupon.code} (desconto: R$ ${discount.toFixed(2)})` : null,
+      selectedShipping ? `Frete: ${selectedShipping.service} - R$ ${isFreeShipping ? "0,00 (grátis)" : selectedShipping.price.toFixed(2)} (${selectedShipping.days} dias)` : null,
     ].filter(Boolean).join(" | ");
 
     const { data: order, error } = await supabase.from("orders").insert({
@@ -442,6 +451,61 @@ const Checkout = () => {
                       )}
                     </div>
 
+                    {/* Shipping Calculator in Cart */}
+                    <div className="p-6 border-t border-border">
+                      <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-primary" /> Calcular Frete
+                      </h3>
+                      <div className="flex gap-2 mb-3">
+                        <Input
+                          value={shippingCepInput}
+                          onChange={e => {
+                            const formatted = formatCep(e.target.value);
+                            setShippingCepInput(formatted);
+                            const clean = formatted.replace(/\D/g, "");
+                            if (clean.length === 8) {
+                              const options = calculateShipping(clean);
+                              setShippingOptions(options);
+                              if (options && options.length > 0 && !selectedShipping) {
+                                setSelectedShipping(options[0]);
+                              }
+                            } else {
+                              setShippingOptions(null);
+                            }
+                          }}
+                          placeholder="00000-000"
+                          className="flex-1 max-w-[180px]"
+                          maxLength={9}
+                        />
+                        {shippingOptions === null && shippingCepInput.replace(/\D/g, "").length === 8 && (
+                          <p className="text-xs text-destructive self-center">CEP não encontrado</p>
+                        )}
+                      </div>
+                      {shippingOptions && (
+                        <div className="space-y-2">
+                          {shippingOptions.map(opt => (
+                            <button
+                              key={opt.service}
+                              onClick={() => setSelectedShipping(opt)}
+                              className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                                selectedShipping?.service === opt.service
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                  : "border-border hover:border-primary/40"
+                              }`}
+                            >
+                              <div>
+                                <p className="text-sm font-semibold">{opt.label}</p>
+                                <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                              </div>
+                              <p className="font-bold text-sm text-price">
+                                {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Totals */}
                     <div className="p-6 border-t border-border">
                       <div className="space-y-2">
@@ -455,6 +519,12 @@ const Checkout = () => {
                             <span>- R$ {discount.toFixed(2).replace(".", ",")}</span>
                           </div>
                         )}
+                        {selectedShipping && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Frete ({selectedShipping.service})</span>
+                            <span>{isFreeShipping ? <span className="text-primary font-semibold">Grátis</span> : `R$ ${selectedShipping.price.toFixed(2).replace(".", ",")}`}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between pt-2 border-t border-border">
                           <span className="font-heading font-bold text-lg">Total</span>
                           <span className="font-heading text-2xl font-bold text-price">R$ {total.toFixed(2).replace(".", ",")}</span>
@@ -462,7 +532,7 @@ const Checkout = () => {
                       </div>
                       <div className="flex gap-3 mt-4 justify-end">
                         <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
-                        <Button onClick={() => setStep(2)}>Próximo: Endereço</Button>
+                        <Button onClick={() => setStep(2)} disabled={items.length === 0}>Próximo: Endereço</Button>
                       </div>
                     </div>
                   </>
@@ -480,7 +550,27 @@ const Checkout = () => {
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2"><Label>Nome Completo *</Label><Input value={shipping.full_name} onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })} /></div>
                 <div><Label>Telefone *</Label><Input value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
-                <div><Label>CEP *</Label><Input value={shipping.zip_code} onChange={(e) => setShipping({ ...shipping, zip_code: e.target.value })} placeholder="00000-000" /></div>
+                <div>
+                  <Label>CEP *</Label>
+                  <Input
+                    value={shipping.zip_code}
+                    onChange={(e) => {
+                      const formatted = formatCep(e.target.value);
+                      setShipping({ ...shipping, zip_code: formatted });
+                      setShippingCepInput(formatted);
+                      const clean = formatted.replace(/\D/g, "");
+                      if (clean.length === 8) {
+                        const options = calculateShipping(clean);
+                        setShippingOptions(options);
+                        if (options && options.length > 0 && !selectedShipping) {
+                          setSelectedShipping(options[0]);
+                        }
+                      }
+                    }}
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                </div>
                 <div className="md:col-span-2"><Label>Endereço (Rua) *</Label><Input value={shipping.address} onChange={(e) => setShipping({ ...shipping, address: e.target.value })} /></div>
                 <div><Label>Número *</Label><Input value={shipping.address_number} onChange={(e) => setShipping({ ...shipping, address_number: e.target.value })} /></div>
                 <div><Label>Complemento</Label><Input value={shipping.address_complement} onChange={(e) => setShipping({ ...shipping, address_complement: e.target.value })} /></div>
@@ -496,12 +586,48 @@ const Checkout = () => {
                   </select>
                 </div>
                 <div className="md:col-span-2"><Label>Observações do Pedido</Label><Textarea rows={2} value={shipping.notes} onChange={(e) => setShipping({ ...shipping, notes: e.target.value })} placeholder="Instruções especiais para entrega..." /></div>
+
+                {/* Shipping Options in Address Step */}
+                {shippingOptions && shippingOptions.length > 0 && (
+                  <div className="md:col-span-2">
+                    <Label className="mb-2 block">Escolha o Frete *</Label>
+                    <div className="space-y-2">
+                      {shippingOptions.map(opt => (
+                        <button
+                          key={opt.service}
+                          type="button"
+                          onClick={() => setSelectedShipping(opt)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                            selectedShipping?.service === opt.service
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Truck className="h-5 w-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-semibold">{opt.label}</p>
+                              <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                            </div>
+                          </div>
+                          <p className="font-bold text-sm text-price">
+                            {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-6 border-t border-border flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
                 <Button onClick={() => {
                   if (!shipping.full_name || !shipping.address || !shipping.city || !shipping.state) {
                     toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+                    return;
+                  }
+                  if (!selectedShipping) {
+                    toast({ title: "Selecione uma opção de frete", description: "Informe seu CEP para calcular o frete.", variant: "destructive" });
                     return;
                   }
                   setStep(3);
@@ -528,6 +654,13 @@ const Checkout = () => {
                     {shipping.neighborhood} - {shipping.city}/{shipping.state} - CEP: {shipping.zip_code}
                   </p>
                   {shipping.phone && <p className="text-sm text-muted-foreground">Tel: {shipping.phone}</p>}
+                  {selectedShipping && (
+                    <p className="text-sm text-primary font-semibold mt-1 flex items-center gap-1">
+                      <Truck className="h-3.5 w-3.5" />
+                      {selectedShipping.label} — {selectedShipping.days} dias úteis
+                      {isFreeShipping ? " (Frete Grátis)" : ` (R$ ${selectedShipping.price.toFixed(2).replace(".", ",")})`}
+                    </p>
+                  )}
                 </div>
 
                 {/* Items summary */}
@@ -585,6 +718,12 @@ const Checkout = () => {
                       <div className="flex justify-between text-sm text-primary font-semibold">
                         <span className="flex items-center gap-1"><Ticket className="h-3.5 w-3.5" /> Cupom {appliedCoupon.code}</span>
                         <span>- R$ {discount.toFixed(2).replace(".", ",")}</span>
+                      </div>
+                    )}
+                    {selectedShipping && (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" /> Frete ({selectedShipping.service})</span>
+                        <span>{isFreeShipping ? <span className="text-primary font-semibold">Grátis</span> : `R$ ${selectedShipping.price.toFixed(2).replace(".", ",")}`}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center pt-2 border-t border-primary/20">
