@@ -1952,7 +1952,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Estilo: Grundemann Profissional</p>
+                  <p className="text-sm">🎨 Estilo: Grundemann Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
