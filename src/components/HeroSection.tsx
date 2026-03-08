@@ -121,7 +121,7 @@ const HeroSection = () => {
             className="flex items-center justify-center relative mt-6 lg:mt-0"
           >
             {/* Glow effect */}
-            <div className="absolute w-80 h-80 rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute w-60 h-60 lg:w-80 lg:h-80 rounded-full bg-primary/10 blur-3xl" />
 
             {current ? (
               <div
