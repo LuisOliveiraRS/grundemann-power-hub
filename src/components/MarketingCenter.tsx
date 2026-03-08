@@ -454,6 +454,8 @@ const MarketingCenter = () => {
   const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
+  const [customCta, setCustomCta] = useState("");
+  const [logoSize, setLogoSize] = useState<LogoSize>("medium");
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
