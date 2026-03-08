@@ -978,15 +978,24 @@ const MarketingCenter = () => {
     if (backgroundStyle === "ai" && !aiBgUrl) return;
     setGeneratingComposite(true);
     try {
-      const product = selectedProducts[0];
-      const imgSrc = product?.image_url || null;
-      const productUrl = product ? getProductUrl(product.id) : undefined;
-      const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
-      const blob = await generateCompositeImage(
-        imgSrc, textWithCta, genFormat, backgroundStyle,
-        productUrl, product?.price, product?.original_price, product?.name, logoSize,
-        customSlogan, aiBgUrl,
-      );
+      let blob: Blob;
+      if (layoutMode === "grid2x2" && selectedProducts.length >= 2) {
+        const prods = selectedProducts.slice(0, 4).map(p => ({
+          name: p.name, price: p.price, originalPrice: p.original_price,
+          imageUrl: p.image_url, id: p.id,
+        }));
+        blob = await generateMultiProductComposite(prods, generatedText, genFormat, logoSize, customSlogan);
+      } else {
+        const product = selectedProducts[0];
+        const imgSrc = product?.image_url || null;
+        const productUrl = product ? getProductUrl(product.id) : undefined;
+        const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
+        blob = await generateCompositeImage(
+          imgSrc, textWithCta, genFormat, backgroundStyle,
+          productUrl, product?.price, product?.original_price, product?.name, logoSize,
+          customSlogan, aiBgUrl,
+        );
+      }
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
       setCompositeUrl(URL.createObjectURL(blob));
