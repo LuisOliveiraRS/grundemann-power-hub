@@ -954,6 +954,48 @@ const MarketingCenter = () => {
                       </div>
                     </div>
 
+                    {/* Custom Colors */}
+                    {creativeStyle === "custom" && (
+                      <div className="space-y-3 p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                        <Label className="font-semibold flex items-center gap-2">
+                          <Palette className="h-4 w-4 text-primary" /> Cores Personalizadas
+                        </Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {[
+                            { key: "background" as const, label: "Fundo" },
+                            { key: "accent" as const, label: "Destaque / Bordas" },
+                            { key: "priceColor" as const, label: "Preço" },
+                            { key: "textColor" as const, label: "Texto" },
+                            { key: "cardBg" as const, label: "Fundo dos Cards" },
+                          ].map(({ key, label }) => (
+                            <div key={key} className="space-y-1.5">
+                              <Label className="text-xs text-muted-foreground">{label}</Label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={customColors[key]}
+                                  onChange={e => setCustomColors(prev => ({ ...prev, [key]: e.target.value }))}
+                                  className="w-10 h-10 rounded-lg border border-border cursor-pointer p-0.5"
+                                />
+                                <Input
+                                  value={customColors[key]}
+                                  onChange={e => setCustomColors(prev => ({ ...prev, [key]: e.target.value }))}
+                                  className="h-8 text-xs font-mono uppercase"
+                                  maxLength={7}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 p-3 rounded-lg flex items-center gap-3" style={{ background: customColors.background }}>
+                          <div className="w-8 h-8 rounded" style={{ background: customColors.cardBg, border: `2px solid ${customColors.accent}` }} />
+                          <span className="text-sm font-bold" style={{ color: customColors.priceColor }}>R$ 199,90</span>
+                          <span className="text-xs" style={{ color: customColors.textColor }}>Produto Exemplo</span>
+                          <span className="text-xs px-2 py-0.5 rounded" style={{ background: customColors.accent, color: customColors.textColor }}>CTA</span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Custom Slogan */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
