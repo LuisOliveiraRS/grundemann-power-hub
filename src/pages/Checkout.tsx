@@ -61,6 +61,21 @@ const Checkout = () => {
     loadCart();
     loadProfile();
     loadCoupons();
+
+    // Handle payment return from Mercado Pago
+    const paymentStatus = searchParams.get("payment");
+    const returnOrderId = searchParams.get("order_id");
+    if (paymentStatus && returnOrderId) {
+      setCreatedOrderId(returnOrderId);
+      if (paymentStatus === "success") {
+        setStep(4);
+      } else if (paymentStatus === "pending") {
+        setStep(5); // pending payment step
+      } else {
+        toast({ title: "Pagamento não aprovado", description: "Tente novamente ou escolha outra forma de pagamento.", variant: "destructive" });
+        setStep(3);
+      }
+    }
   }, [user]);
 
   const loadCart = async () => {
