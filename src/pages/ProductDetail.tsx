@@ -125,12 +125,10 @@ const ProductDetail = () => {
       <div className="flex-1">
         <div className="container py-8">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <button onClick={() => navigate("/")} className="hover:text-foreground">Início</button>
-            <span>/</span>
-            {categoryName && <><button onClick={() => navigate("/produtos")} className="hover:text-foreground">{categoryName}</button><span>/</span></>}
-            <span className="text-foreground font-medium truncate">{product.name}</span>
-          </nav>
+          <SEOBreadcrumb items={[
+            ...(categoryName ? [{ label: categoryName, href: "/produtos" }] : []),
+            { label: product.name },
+          ]} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Image gallery */}
