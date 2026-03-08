@@ -161,65 +161,46 @@ const MarketingCenter = () => {
 
   const selectedProducts = products.filter(p => selectedProductIds.has(p.id));
 
-  // Generate composite whenever text changes
+  // Generate AI creative when entering preview step
   useEffect(() => {
-    if (generatedText && wizardStep >= 3) {
+    if (generatedText && wizardStep >= 3 && !compositeUrl && !generatingComposite) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta, customSlogan, aiBgUrl, layoutMode]);
+  }, [generatedText, wizardStep]);
 
-  const generateAiBackground = async () => {
-    setGeneratingAiBg(true);
+  const buildComposite = async () => {
+    if (!generatedText) return;
+    setGeneratingComposite(true);
+    setCompositeBlob(null);
+    if (compositeUrl) URL.revokeObjectURL(compositeUrl);
+    setCompositeUrl(null);
     try {
-      const product = selectedProducts[0];
-      const { data, error } = await supabase.functions.invoke("generate-ai-background", {
+      const prods = selectedProducts.map(p => ({
+        name: p.name, price: p.price, originalPrice: p.original_price,
+        imageUrl: p.image_url, description: p.description, id: p.id,
+      }));
+      const { data, error } = await supabase.functions.invoke("generate-creative-image", {
         body: {
-          productName: product?.name || "peças industriais",
-          category: product?.category_id ? getCategoryName(product.category_id) : "motores",
+          products: prods,
           format: genFormat,
+          campaignType: genCampaignType,
+          customSlogan,
+          customCta: customCta || generatedText?.cta || "CONFIRA JÁ",
+          layoutMode,
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.image_url) {
-        setAiBgUrl(data.image_url);
-        toast({ title: "🎨 Fundo IA gerado!", description: "O fundo personalizado foi criado com sucesso." });
+        const resp = await fetch(data.image_url);
+        const blob = await resp.blob();
+        setCompositeBlob(blob);
+        setCompositeUrl(URL.createObjectURL(blob));
+        toast({ title: "🎨 Arte criativa gerada com IA!", description: "Design profissional criado com sucesso." });
       }
     } catch (err: any) {
-      toast({ title: "Erro ao gerar fundo IA", description: err.message, variant: "destructive" });
-    } finally {
-      setGeneratingAiBg(false);
-    }
-  };
-
-  const buildComposite = async () => {
-    if (!generatedText) return;
-    if (backgroundStyle === "ai" && !aiBgUrl) return;
-    setGeneratingComposite(true);
-    try {
-      let blob: Blob;
-      if (layoutMode === "grid2x2" && selectedProducts.length >= 2) {
-        const prods = selectedProducts.slice(0, 4).map(p => ({
-          name: p.name, price: p.price, originalPrice: p.original_price,
-          imageUrl: p.image_url, id: p.id,
-        }));
-        blob = await generateMultiProductComposite(prods, generatedText, genFormat, logoSize, customSlogan);
-      } else {
-        const product = selectedProducts[0];
-        const imgSrc = product?.image_url || null;
-        const productUrl = product ? getProductUrl(product.id) : undefined;
-        const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
-        blob = await generateCompositeImage(
-          imgSrc, textWithCta, genFormat, backgroundStyle,
-          productUrl, product?.price, product?.original_price, product?.name, logoSize,
-          customSlogan, aiBgUrl,
-        );
-      }
-      setCompositeBlob(blob);
-      if (compositeUrl) URL.revokeObjectURL(compositeUrl);
-      setCompositeUrl(URL.createObjectURL(blob));
-    } catch (err) {
-      console.error("Composite error:", err);
+      console.error("AI Creative error:", err);
+      toast({ title: "Erro ao gerar arte", description: err.message, variant: "destructive" });
     } finally {
       setGeneratingComposite(false);
     }
