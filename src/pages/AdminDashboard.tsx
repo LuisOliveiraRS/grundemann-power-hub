@@ -371,6 +371,38 @@ const AdminDashboard = () => {
     toast({ title: "Subcategoria excluída!" }); loadAll();
   };
 
+  // Convert category to subcategory
+  const convertCategoryToSubcategory = async (catId: string, parentCatId: string) => {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    // Create subcategory under parent
+    const { error: subErr } = await supabase.from("subcategories").insert({
+      name: cat.name, slug: cat.slug, description: cat.description || null, category_id: parentCatId,
+    });
+    if (subErr) { toast({ title: "Erro", description: subErr.message, variant: "destructive" }); return; }
+    // Move products from old category to parent
+    await supabase.from("products").update({ category_id: parentCatId } as any).eq("category_id", catId);
+    // Delete old category
+    await supabase.from("categories").delete().eq("id", catId);
+    toast({ title: `"${cat.name}" convertida para subcategoria!` }); loadAll();
+  };
+
+  // Convert subcategory to category
+  const convertSubcategoryToCategory = async (subId: string) => {
+    const sub = subcategories.find(s => s.id === subId);
+    if (!sub) return;
+    // Create new category
+    const { data: newCat, error: catErr } = await supabase.from("categories").insert({
+      name: sub.name, slug: sub.slug, description: sub.description || null,
+    }).select("id").single();
+    if (catErr || !newCat) { toast({ title: "Erro", description: catErr?.message, variant: "destructive" }); return; }
+    // Move products that had this subcategory to the new category
+    await supabase.from("products").update({ category_id: newCat.id, subcategory_id: null } as any).eq("subcategory_id", subId);
+    // Delete old subcategory
+    await supabase.from("subcategories").delete().eq("id", subId);
+    toast({ title: `"${sub.name}" promovida para categoria!` }); loadAll();
+  };
+
   const updateOrderStatus = async (id: string, status: string) => {
     await supabase.from("orders").update({ status: status as any }).eq("id", id);
     await supabase.from("order_status_history").insert({ order_id: id, status: status as any });
@@ -1325,6 +1357,24 @@ const AdminDashboard = () => {
                         {c.description && <p className="text-sm text-muted-foreground mt-2">{c.description}</p>}
                       </div>
                       <div className="flex items-center gap-1">
+                        <select
+                          className="h-8 text-[10px] border border-input rounded-md px-1.5 bg-background text-muted-foreground w-auto"
+                          defaultValue=""
+                          onChange={async (e) => {
+                            if (e.target.value) {
+                              if (confirm(`Converter "${c.name}" em subcategoria de "${categories.find(cat => cat.id === e.target.value)?.name}"?`)) {
+                                await convertCategoryToSubcategory(c.id, e.target.value);
+                              }
+                              e.target.value = "";
+                            }
+                          }}
+                          title="Converter para subcategoria"
+                        >
+                          <option value="">→ Subcat.</option>
+                          {categories.filter(cat => cat.id !== c.id).map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
                         <Button
                           variant="ghost" size="icon" className="h-8 w-8"
                           title={c.is_visible !== false ? "Ocultar do menu" : "Mostrar no menu"}
@@ -1370,6 +1420,9 @@ const AdminDashboard = () => {
                                 <span className="text-xs text-muted-foreground ml-2">/{sub.slug}</span>
                               </div>
                               <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" title="Promover para categoria" onClick={() => { if (confirm(`Promover "${sub.name}" para categoria principal?`)) convertSubcategoryToCategory(sub.id); }}>
+                                  <TrendingUp className="h-3 w-3 text-primary" />
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingSubcategory(sub); setSubForm({ name: sub.name, slug: sub.slug, description: sub.description || "", category_id: sub.category_id }); }}><Edit className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteSubcategory(sub.id)}><Trash2 className="h-3 w-3" /></Button>
                               </div>
