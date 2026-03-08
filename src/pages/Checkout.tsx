@@ -719,6 +719,12 @@ const Checkout = () => {
                         <span>- R$ {discount.toFixed(2).replace(".", ",")}</span>
                       </div>
                     )}
+                    {selectedShipping && (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" /> Frete ({selectedShipping.service})</span>
+                        <span>{isFreeShipping ? <span className="text-primary font-semibold">Grátis</span> : `R$ ${selectedShipping.price.toFixed(2).replace(".", ",")}`}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center pt-2 border-t border-primary/20">
                       <span className="font-heading text-lg font-bold">Total do Pedido</span>
                       <span className="font-heading text-2xl font-bold text-price">R$ {total.toFixed(2).replace(".", ",")}</span>
