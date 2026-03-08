@@ -1710,7 +1710,16 @@ const MarketingCenter = () => {
                             {info.emoji} {info.label}
                           </Button>
                         ))}
+                        <Button size="sm" variant={backgroundStyle === "ai" ? "default" : "outline"} onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }} className="gap-1 text-xs h-8" disabled={generatingAiBg}>
+                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Fundo IA
+                        </Button>
                       </div>
+                      {backgroundStyle === "ai" && (
+                        <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs mt-1">
+                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                          {generatingAiBg ? "Gerando..." : "Novo Fundo IA"}
+                        </Button>
+                      )}
                     </div>
 
                     {/* Logo size in preview */}
@@ -1723,6 +1732,12 @@ const MarketingCenter = () => {
                           </Button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Custom Slogan in preview */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Slogan / Mensagem</Label>
+                      <Input size={1} value={customSlogan} onChange={e => setCustomSlogan(e.target.value)} placeholder="Ex: Qualidade que move o Brasil!" className="h-8 text-xs" />
                     </div>
 
                     {/* Custom CTA in preview */}
