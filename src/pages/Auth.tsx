@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Gift } from "lucide-react";
 import logo from "@/assets/logo-grundemann.png";
 
 const Auth = () => {
@@ -13,8 +14,14 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get("ref");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (refCode) setIsLogin(false);
+  }, [refCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +35,7 @@ const Auth = () => {
         navigate("/");
       }
     } else {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -39,6 +46,13 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
       } else {
+        // Process referral if code exists
+        if (refCode && data.user) {
+          await supabase.rpc("process_referral", {
+            p_referred_id: data.user.id,
+            p_referral_code: refCode,
+          });
+        }
         toast({ title: "Cadastro realizado!", description: "Verifique seu email para confirmar a conta." });
       }
     }
@@ -51,6 +65,12 @@ const Auth = () => {
         <div className="flex justify-center mb-6">
           <img src={logo} alt="Gründemann" className="h-32" />
         </div>
+        {refCode && !isLogin && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4 flex items-center gap-2 text-sm">
+            <Gift className="h-4 w-4 text-primary shrink-0" />
+            <span>Você foi indicado! Ganhe <strong>50 pontos</strong> de bônus ao se cadastrar.</span>
+          </div>
+        )}
         <h2 className="font-heading text-2xl font-bold text-center mb-6">
           {isLogin ? "Entrar" : "Criar Conta"}
         </h2>

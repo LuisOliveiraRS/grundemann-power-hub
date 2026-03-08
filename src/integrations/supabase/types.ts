@@ -785,6 +785,7 @@ export type Database = {
           neighborhood: string | null
           notes: string | null
           phone: string | null
+          referral_code: string | null
           state: string | null
           updated_at: string
           user_id: string
@@ -804,6 +805,7 @@ export type Database = {
           neighborhood?: string | null
           notes?: string | null
           phone?: string | null
+          referral_code?: string | null
           state?: string | null
           updated_at?: string
           user_id: string
@@ -823,6 +825,7 @@ export type Database = {
           neighborhood?: string | null
           notes?: string | null
           phone?: string | null
+          referral_code?: string | null
           state?: string | null
           updated_at?: string
           user_id?: string
@@ -920,6 +923,36 @@ export type Database = {
           total_estimated?: number | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code: string
+          referred_id: string
+          referred_points_credited: boolean
+          referrer_id: string
+          referrer_points_credited: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_id: string
+          referred_points_credited?: boolean
+          referrer_id: string
+          referrer_points_credited?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referred_points_credited?: boolean
+          referrer_id?: string
+          referrer_points_credited?: boolean
         }
         Relationships: []
       }
@@ -1175,6 +1208,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      process_referral: {
+        Args: { p_referral_code: string; p_referred_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "seller"
