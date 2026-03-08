@@ -70,7 +70,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
