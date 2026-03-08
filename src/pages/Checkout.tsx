@@ -549,7 +549,27 @@ const Checkout = () => {
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2"><Label>Nome Completo *</Label><Input value={shipping.full_name} onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })} /></div>
                 <div><Label>Telefone *</Label><Input value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
-                <div><Label>CEP *</Label><Input value={shipping.zip_code} onChange={(e) => setShipping({ ...shipping, zip_code: e.target.value })} placeholder="00000-000" /></div>
+                <div>
+                  <Label>CEP *</Label>
+                  <Input
+                    value={shipping.zip_code}
+                    onChange={(e) => {
+                      const formatted = formatCep(e.target.value);
+                      setShipping({ ...shipping, zip_code: formatted });
+                      setShippingCepInput(formatted);
+                      const clean = formatted.replace(/\D/g, "");
+                      if (clean.length === 8) {
+                        const options = calculateShipping(clean);
+                        setShippingOptions(options);
+                        if (options && options.length > 0 && !selectedShipping) {
+                          setSelectedShipping(options[0]);
+                        }
+                      }
+                    }}
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                </div>
                 <div className="md:col-span-2"><Label>Endereço (Rua) *</Label><Input value={shipping.address} onChange={(e) => setShipping({ ...shipping, address: e.target.value })} /></div>
                 <div><Label>Número *</Label><Input value={shipping.address_number} onChange={(e) => setShipping({ ...shipping, address_number: e.target.value })} /></div>
                 <div><Label>Complemento</Label><Input value={shipping.address_complement} onChange={(e) => setShipping({ ...shipping, address_complement: e.target.value })} /></div>
