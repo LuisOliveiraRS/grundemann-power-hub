@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FavoriteButton from "@/components/FavoriteButton";
 import ProductSEO from "@/components/ProductSEO";
+import AIAssistant from "@/components/AIAssistant";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
@@ -296,6 +297,7 @@ const ProductDetail = () => {
         </div>
       </div>
       <WhatsAppButton message={whatsappMessage} />
+      <AIAssistant />
       <Footer />
     </div>
   );
