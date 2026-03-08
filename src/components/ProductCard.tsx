@@ -1,8 +1,9 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import FavoriteButton from "@/components/FavoriteButton";
 
 interface ProductCardProps {
   id?: string;
@@ -13,9 +14,11 @@ interface ProductCardProps {
   installments?: string;
   sku?: string;
   stockQuantity?: number;
+  isFavorite?: boolean;
+  onToggleFavorite?: (productId: string, productName?: string) => void;
 }
 
-const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stockQuantity }: ProductCardProps) => {
+const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stockQuantity, isFavorite = false, onToggleFavorite }: ProductCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -24,15 +27,7 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
     e.stopPropagation();
     if (!user) { navigate("/auth"); return; }
     if (!id) return;
-
-    // Check if item already exists in cart
-    const { data: existing } = await supabase
-      .from("cart_items")
-      .select("id, quantity")
-      .eq("user_id", user.id)
-      .eq("product_id", id)
-      .maybeSingle();
-
+    const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", id).maybeSingle();
     let error;
     if (existing) {
       ({ error } = await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id));
@@ -49,6 +44,11 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
         <img src={image} alt={name} className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
         {oldPrice && (
           <span className="absolute top-2 left-2 rounded bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">OFERTA</span>
+        )}
+        {id && onToggleFavorite && (
+          <div className="absolute top-2 right-2">
+            <FavoriteButton productId={id} productName={name} isFavorite={isFavorite} onToggle={onToggleFavorite} />
+          </div>
         )}
       </div>
       <div className="p-4">

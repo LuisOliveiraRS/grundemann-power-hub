@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useFavorites } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2 } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -20,38 +21,57 @@ interface Profile {
   cpf_cnpj: string; company_name: string; notes: string;
 }
 
-interface OrderItem {
-  id: string; product_name: string; quantity: number; price_at_purchase: number;
-}
-
+interface OrderItem { id: string; product_name: string; quantity: number; price_at_purchase: number; }
 interface Order {
-  id: string; status: string; total_amount: number;
-  created_at: string; shipping_address: string | null; notes: string | null;
-  tracking_code?: string | null;
+  id: string; status: string; total_amount: number; created_at: string;
+  shipping_address: string | null; notes: string | null; tracking_code?: string | null;
   items?: OrderItem[];
 }
+interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; }
+interface FavProduct { id: string; name: string; price: number; image_url: string | null; sku: string | null; }
+
+const statusLabel: Record<string, string> = {
+  pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
+  shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
+};
+const statusIcon: Record<string, any> = {
+  pending: Clock, confirmed: CheckCircle, processing: Package,
+  shipped: Truck, delivered: CheckCircle, cancelled: XCircle,
+};
+const statusColor: Record<string, string> = {
+  pending: "bg-accent/20 text-accent-foreground border-accent/30",
+  confirmed: "bg-primary/10 text-primary border-primary/20",
+  processing: "bg-secondary/10 text-secondary border-secondary/20",
+  shipped: "bg-primary/20 text-primary border-primary/30",
+  delivered: "bg-primary text-primary-foreground border-primary",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+};
+const quoteStatusLabel: Record<string, string> = {
+  pending: "Pendente", reviewing: "Em Análise", quoted: "Orçado", accepted: "Aceito", rejected: "Rejeitado",
+};
 
 const ClientDashboard = () => {
   const { user, signOut } = useAuth();
-  const [tab, setTab] = useState<"profile" | "orders">("profile");
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const [tab, setTab] = useState<"profile" | "orders" | "quotes" | "favorites">("profile");
   const [profile, setProfile] = useState<Profile>({
     full_name: "", email: "", phone: "", address: "", address_number: "",
     address_complement: "", neighborhood: "", city: "", state: "", zip_code: "",
     cpf_cnpj: "", company_name: "", notes: ""
   });
   const [orders, setOrders] = useState<Order[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [favProducts, setFavProducts] = useState<FavProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
 
-  useEffect(() => {
-    if (user) { loadProfile(); loadOrders(); }
-  }, [user]);
+  useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); } }, [user]);
+  useEffect(() => { if (user && favoriteIds.size > 0) loadFavoriteProducts(); }, [favoriteIds]);
 
   const loadProfile = async () => {
     const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
@@ -69,6 +89,18 @@ const ClientDashboard = () => {
     if (data) setOrders(data as Order[]);
   };
 
+  const loadQuotes = async () => {
+    const { data } = await supabase.from("quotes").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+    if (data) setQuotes(data as Quote[]);
+  };
+
+  const loadFavoriteProducts = async () => {
+    const ids = Array.from(favoriteIds);
+    if (ids.length === 0) { setFavProducts([]); return; }
+    const { data } = await supabase.from("products").select("id, name, price, image_url, sku").in("id", ids);
+    if (data) setFavProducts(data as FavProduct[]);
+  };
+
   const loadOrderItems = async (orderId: string) => {
     if (expandedOrder === orderId) { setExpandedOrder(null); return; }
     const { data } = await supabase.from("order_items").select("*").eq("order_id", orderId);
@@ -81,10 +113,8 @@ const ClientDashboard = () => {
     const { error } = await supabase.from("profiles").update({
       full_name: profile.full_name, phone: profile.phone || null,
       address: profile.address || null, address_number: profile.address_number || null,
-      address_complement: profile.address_complement || null,
-      neighborhood: profile.neighborhood || null,
-      city: profile.city || null, state: profile.state || null,
-      zip_code: profile.zip_code || null,
+      address_complement: profile.address_complement || null, neighborhood: profile.neighborhood || null,
+      city: profile.city || null, state: profile.state || null, zip_code: profile.zip_code || null,
       cpf_cnpj: profile.cpf_cnpj || null, company_name: profile.company_name || null,
     }).eq("user_id", user!.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -95,32 +125,11 @@ const ClientDashboard = () => {
   const cancelOrder = async (orderId: string) => {
     if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
     const { error } = await supabase.from("orders").update({ status: "cancelled" as any }).eq("id", orderId);
-    if (error) {
-      toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" });
-    } else {
+    if (error) { toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" }); }
+    else {
       await supabase.from("order_status_history").insert({ order_id: orderId, status: "cancelled" as any, notes: "Cancelado pelo cliente" });
-      toast({ title: "Pedido cancelado com sucesso!" });
-      loadOrders();
+      toast({ title: "Pedido cancelado com sucesso!" }); loadOrders();
     }
-  };
-
-  const statusLabel: Record<string, string> = {
-    pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
-    shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
-  };
-
-  const statusIcon: Record<string, any> = {
-    pending: Clock, confirmed: CheckCircle, processing: Package,
-    shipped: Truck, delivered: CheckCircle, cancelled: XCircle,
-  };
-
-  const statusColor: Record<string, string> = {
-    pending: "bg-accent/20 text-accent-foreground border-accent/30",
-    confirmed: "bg-primary/10 text-primary border-primary/20",
-    processing: "bg-secondary/10 text-secondary border-secondary/20",
-    shipped: "bg-primary/20 text-primary border-primary/30",
-    delivered: "bg-primary text-primary-foreground border-primary",
-    cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   };
 
   const canCancel = (status: string) => ["pending", "confirmed"].includes(status);
@@ -131,18 +140,22 @@ const ClientDashboard = () => {
     if (orderDateTo && new Date(o.created_at) > new Date(orderDateTo + "T23:59:59")) return false;
     return true;
   });
-
   const hasFilters = orderStatusFilter || orderDateFrom || orderDateTo;
+
+  const tabs = [
+    { id: "profile" as const, label: "Meus Dados", icon: User },
+    { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
+    { id: "quotes" as const, label: "Orçamentos", icon: FileText, count: quotes.length },
+    { id: "favorites" as const, label: "Favoritos", icon: Heart, count: favoriteIds.size },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar />
-      <Header />
+      <TopBar /><Header />
       <div className="flex-1 bg-muted/50">
         <div className="container py-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Minha Conta</h1>
           <p className="text-muted-foreground mb-6">Gerencie seus dados e acompanhe seus pedidos</p>
-
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Sidebar */}
             <div className="bg-sidebar rounded-xl shadow-lg p-4 space-y-1 h-fit">
@@ -157,13 +170,13 @@ const ClientDashboard = () => {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setTab("profile")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "profile" ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
-                <User className="h-5 w-5" /> Meus Dados
-              </button>
-              <button onClick={() => setTab("orders")} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${tab === "orders" ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
-                <Package className="h-5 w-5" /> Meus Pedidos
-                {orders.length > 0 && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{orders.length}</Badge>}
-              </button>
+              {tabs.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
+                  <t.icon className="h-5 w-5" /> {t.label}
+                  {t.count !== undefined && t.count > 0 && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{t.count}</Badge>}
+                </button>
+              ))}
               <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
                 <ShoppingCart className="h-5 w-5" /> Continuar Comprando
               </button>
@@ -174,120 +187,73 @@ const ClientDashboard = () => {
 
             {/* Content */}
             <div className="md:col-span-3 space-y-6">
+              {/* PROFILE TAB */}
               {tab === "profile" && (
                 <div className="bg-card rounded-xl shadow-sm border border-border p-6">
                   <h2 className="font-heading text-xl font-bold mb-2 flex items-center gap-2">
                     <div className="bg-primary/10 rounded-lg p-2"><User className="h-5 w-5 text-primary" /></div>
                     Dados Pessoais
                   </h2>
-                  <p className="text-muted-foreground text-sm mb-6">Mantenha seus dados atualizados para facilitar suas compras</p>
+                  <p className="text-muted-foreground text-sm mb-6">Mantenha seus dados atualizados</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nome Completo</Label>
-                      <Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Email</Label>
-                      <Input value={profile.email} disabled className="bg-muted" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />Telefone</Label>
-                      <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="(00) 00000-0000" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">CPF / CNPJ</Label>
-                      <Input value={profile.cpf_cnpj} onChange={(e) => setProfile({ ...profile, cpf_cnpj: e.target.value })} placeholder="000.000.000-00 ou 00.000.000/0000-00" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" />Razão Social / Empresa</Label>
-                      <Input value={profile.company_name} onChange={(e) => setProfile({ ...profile, company_name: e.target.value })} placeholder="Nome da empresa (opcional)" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">CEP</Label>
-                      <Input value={profile.zip_code} onChange={(e) => setProfile({ ...profile, zip_code: e.target.value })} placeholder="00000-000" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />Endereço</Label>
-                      <Input value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} placeholder="Rua, Avenida..." />
-                    </div>
+                    {[
+                      { label: "Nome Completo", key: "full_name" },
+                      { label: "Email", key: "email", disabled: true },
+                      { label: "Telefone", key: "phone", placeholder: "(00) 00000-0000", icon: Phone },
+                      { label: "CPF / CNPJ", key: "cpf_cnpj", placeholder: "000.000.000-00" },
+                      { label: "Empresa", key: "company_name", placeholder: "Nome da empresa", icon: Building2 },
+                      { label: "CEP", key: "zip_code", placeholder: "00000-000" },
+                      { label: "Endereço", key: "address", placeholder: "Rua, Avenida...", icon: MapPin },
+                    ].map(f => (
+                      <div key={f.key} className="space-y-1.5">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">{f.label}</Label>
+                        <Input value={(profile as any)[f.key]} onChange={e => setProfile(p => ({ ...p, [f.key]: e.target.value }))} disabled={f.disabled} className={f.disabled ? "bg-muted" : ""} placeholder={f.placeholder} />
+                      </div>
+                    ))}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Número</Label>
-                        <Input value={profile.address_number} onChange={(e) => setProfile({ ...profile, address_number: e.target.value })} placeholder="Nº" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Complemento</Label>
-                        <Input value={profile.address_complement} onChange={(e) => setProfile({ ...profile, address_complement: e.target.value })} placeholder="Apto, Sala..." />
-                      </div>
+                      <div className="space-y-1.5"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Número</Label><Input value={profile.address_number} onChange={e => setProfile(p => ({ ...p, address_number: e.target.value }))} /></div>
+                      <div className="space-y-1.5"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Complemento</Label><Input value={profile.address_complement} onChange={e => setProfile(p => ({ ...p, address_complement: e.target.value }))} /></div>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bairro</Label>
-                      <Input value={profile.neighborhood} onChange={(e) => setProfile({ ...profile, neighborhood: e.target.value })} placeholder="Bairro" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Cidade</Label>
-                      <Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Estado</Label>
-                      <Input value={profile.state} onChange={(e) => setProfile({ ...profile, state: e.target.value })} placeholder="RS" />
-                    </div>
+                    <div className="space-y-1.5"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Bairro</Label><Input value={profile.neighborhood} onChange={e => setProfile(p => ({ ...p, neighborhood: e.target.value }))} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Cidade</Label><Input value={profile.city} onChange={e => setProfile(p => ({ ...p, city: e.target.value }))} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs uppercase tracking-wider text-muted-foreground">Estado</Label><Input value={profile.state} onChange={e => setProfile(p => ({ ...p, state: e.target.value }))} placeholder="RS" /></div>
                   </div>
                   <Button onClick={saveProfile} disabled={loading} className="mt-6 shadow-md">{loading ? "Salvando..." : "Salvar Alterações"}</Button>
                 </div>
               )}
 
+              {/* ORDERS TAB */}
               {tab === "orders" && (
                 <div>
-                  <h2 className="font-heading text-xl font-bold mb-2 flex items-center gap-2">
+                  <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
                     <div className="bg-primary/10 rounded-lg p-2"><Package className="h-5 w-5 text-primary" /></div>
                     Meus Pedidos
                   </h2>
-                  <p className="text-muted-foreground text-sm mb-4">Acompanhe o status dos seus pedidos</p>
-
                   {orders.length > 0 && (
                     <div className="bg-card rounded-xl border border-border p-4 mb-4">
-                      <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
-                        <Filter className="h-4 w-4" /> Filtrar Pedidos
-                      </div>
+                      <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground"><Filter className="h-4 w-4" /> Filtrar</div>
                       <div className="flex flex-wrap gap-3">
-                        <select className="h-9 border border-input rounded-md px-3 text-sm bg-background flex-1 min-w-[140px]" value={orderStatusFilter} onChange={(e) => setOrderStatusFilter(e.target.value)}>
+                        <select className="h-9 border border-input rounded-md px-3 text-sm bg-background flex-1 min-w-[140px]" value={orderStatusFilter} onChange={e => setOrderStatusFilter(e.target.value)}>
                           <option value="">Todos os status</option>
                           {Object.entries(statusLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                         </select>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">De:</span>
-                          <Input type="date" className="h-9 w-auto text-sm" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Até:</span>
-                          <Input type="date" className="h-9 w-auto text-sm" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
-                        </div>
-                        {hasFilters && (
-                          <Button variant="ghost" size="sm" onClick={() => { setOrderStatusFilter(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
-                            <X className="h-4 w-4 mr-1" /> Limpar
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-2"><span className="text-xs text-muted-foreground">De:</span><Input type="date" className="h-9 w-auto text-sm" value={orderDateFrom} onChange={e => setOrderDateFrom(e.target.value)} /></div>
+                        <div className="flex items-center gap-2"><span className="text-xs text-muted-foreground">Até:</span><Input type="date" className="h-9 w-auto text-sm" value={orderDateTo} onChange={e => setOrderDateTo(e.target.value)} /></div>
+                        {hasFilters && <Button variant="ghost" size="sm" onClick={() => { setOrderStatusFilter(""); setOrderDateFrom(""); setOrderDateTo(""); }}><X className="h-4 w-4 mr-1" /> Limpar</Button>}
                       </div>
-                      {hasFilters && <p className="text-xs text-muted-foreground mt-2">{filteredOrders.length} pedido(s) encontrado(s)</p>}
                     </div>
                   )}
-
                   {orders.length === 0 ? (
                     <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
-                      <div className="bg-muted rounded-full p-6 w-fit mx-auto mb-4"><ShoppingCart className="h-12 w-12 text-muted-foreground" /></div>
+                      <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="font-heading font-bold text-lg mb-2">Nenhum pedido ainda</h3>
-                      <p className="text-muted-foreground mb-6">Você ainda não fez nenhum pedido. Explore nossos produtos!</p>
-                      <Button onClick={() => navigate("/")} className="shadow-md">Explorar Produtos</Button>
+                      <Button onClick={() => navigate("/")}>Explorar Produtos</Button>
                     </div>
                   ) : filteredOrders.length === 0 ? (
-                    <div className="bg-card rounded-xl border border-border p-8 text-center">
-                      <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">Nenhum pedido encontrado com os filtros selecionados.</p>
-                    </div>
+                    <div className="bg-card rounded-xl border border-border p-8 text-center"><p className="text-muted-foreground">Nenhum pedido encontrado com os filtros.</p></div>
                   ) : (
                     <div className="space-y-3">
-                      {filteredOrders.map((order) => {
+                      {filteredOrders.map(order => {
                         const StatusIcon = statusIcon[order.status] || Clock;
                         return (
                           <div key={order.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow">
@@ -302,38 +268,17 @@ const ClientDashboard = () => {
                               <div className="flex items-center gap-3 flex-wrap">
                                 <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${statusColor[order.status] || ""}`}>{statusLabel[order.status] || order.status}</span>
                                 <p className="font-heading font-bold text-lg text-price">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
-                                {canCancel(order.status) && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                                    onClick={(e) => { e.stopPropagation(); cancelOrder(order.id); }}
-                                  >
-                                    <XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar
-                                  </Button>
-                                )}
+                                {canCancel(order.status) && <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={e => { e.stopPropagation(); cancelOrder(order.id); }}><XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar</Button>}
                                 {expandedOrder === order.id ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                               </div>
                             </div>
                             {expandedOrder === order.id && (
                               <div className="border-t border-border p-5 bg-muted/20">
                                 <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-xs text-muted-foreground uppercase tracking-wider">
-                                      <th className="text-left pb-3">Produto</th>
-                                      <th className="text-center pb-3">Qtd</th>
-                                      <th className="text-right pb-3">Preço</th>
-                                      <th className="text-right pb-3">Subtotal</th>
-                                    </tr>
-                                  </thead>
+                                  <thead><tr className="text-xs text-muted-foreground uppercase tracking-wider"><th className="text-left pb-3">Produto</th><th className="text-center pb-3">Qtd</th><th className="text-right pb-3">Preço</th><th className="text-right pb-3">Subtotal</th></tr></thead>
                                   <tbody className="divide-y divide-border">
                                     {(order.items || []).map(item => (
-                                      <tr key={item.id}>
-                                        <td className="py-3 font-medium">{item.product_name}</td>
-                                        <td className="py-3 text-center">{item.quantity}</td>
-                                        <td className="py-3 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".", ",")}</td>
-                                        <td className="py-3 text-right font-semibold">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".", ",")}</td>
-                                      </tr>
+                                      <tr key={item.id}><td className="py-3 font-medium">{item.product_name}</td><td className="py-3 text-center">{item.quantity}</td><td className="py-3 text-right">R$ {Number(item.price_at_purchase).toFixed(2).replace(".", ",")}</td><td className="py-3 text-right font-semibold">R$ {(item.quantity * Number(item.price_at_purchase)).toFixed(2).replace(".", ",")}</td></tr>
                                     ))}
                                   </tbody>
                                 </table>
@@ -341,23 +286,84 @@ const ClientDashboard = () => {
                                   <div className="mt-4 pt-3 border-t border-border">
                                     <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
                                       <Truck className="h-4 w-4 text-primary flex-shrink-0" />
-                                      <div>
-                                        <p className="text-xs font-semibold text-primary">Código de Rastreamento</p>
-                                        <p className="text-sm font-mono font-bold text-card-foreground">{order.tracking_code}</p>
-                                      </div>
+                                      <div><p className="text-xs font-semibold text-primary">Código de Rastreamento</p><p className="text-sm font-mono font-bold text-card-foreground">{order.tracking_code}</p></div>
                                     </div>
                                   </div>
                                 )}
-                                {order.shipping_address && (
-                                  <div className="mt-3 pt-3 border-t border-border">
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {order.shipping_address}</p>
-                                  </div>
-                                )}
+                                {order.shipping_address && <div className="mt-3 pt-3 border-t border-border"><p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {order.shipping_address}</p></div>}
                               </div>
                             )}
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* QUOTES TAB */}
+              {tab === "quotes" && (
+                <div>
+                  <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-primary/10 rounded-lg p-2"><FileText className="h-5 w-5 text-primary" /></div>
+                    Meus Orçamentos
+                  </h2>
+                  {quotes.length === 0 ? (
+                    <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-heading font-bold text-lg mb-2">Nenhum orçamento</h3>
+                      <p className="text-muted-foreground mb-4">Você ainda não solicitou nenhum orçamento.</p>
+                      <Button onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {quotes.map(q => (
+                        <div key={q.id} className="bg-card rounded-xl shadow-sm border border-border p-5">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-heading font-bold">Orçamento #{q.id.slice(0, 8)}</p>
+                            <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : "bg-accent/20 text-accent-foreground"}>
+                              {quoteStatusLabel[q.status] || q.status}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                          {q.message && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{q.message}</p>}
+                          <p className="font-heading font-bold text-price mt-2">R$ {Number(q.total_estimated).toFixed(2).replace(".", ",")}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* FAVORITES TAB */}
+              {tab === "favorites" && (
+                <div>
+                  <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-primary/10 rounded-lg p-2"><Heart className="h-5 w-5 text-primary" /></div>
+                    Meus Favoritos
+                  </h2>
+                  {favProducts.length === 0 ? (
+                    <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
+                      <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-heading font-bold text-lg mb-2">Nenhum favorito</h3>
+                      <p className="text-muted-foreground mb-4">Adicione produtos aos favoritos clicando no coração.</p>
+                      <Button onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {favProducts.map(p => (
+                        <div key={p.id} onClick={() => navigate(`/produto/${p.id}`)} className="bg-card rounded-xl border border-border p-4 cursor-pointer hover:shadow-lg transition-shadow relative group">
+                          <button onClick={e => { e.stopPropagation(); toggleFavorite(p.id, p.name); }} className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors z-10">
+                            <Heart className="h-4 w-4 fill-current" />
+                          </button>
+                          <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                            {p.image_url ? <img src={p.image_url} alt={p.name} className="max-h-full max-w-full object-contain" /> : <Package className="h-10 w-10 text-muted-foreground" />}
+                          </div>
+                          <h3 className="font-heading text-sm font-semibold line-clamp-2">{p.name}</h3>
+                          {p.sku && <p className="text-[10px] text-muted-foreground mt-1">Cód: {p.sku}</p>}
+                          <p className="font-heading text-lg font-bold text-price mt-2">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
