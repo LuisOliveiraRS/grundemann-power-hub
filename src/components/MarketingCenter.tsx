@@ -125,63 +125,59 @@ const generateCompositeImage = async (
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // ── Dynamic color palette based on product category keywords ──
-  const name = (productName || "").toLowerCase();
-  let accent = "#e94560";
-  let gradA = "#0d1117";
-  let gradB = "#1e3a5f";
-
-  if (name.includes("filtro") || name.includes("ar")) {
-    accent = "#00b4d8"; gradA = "#0a0e27"; gradB = "#003566";
-  } else if (name.includes("carburador") || name.includes("motor")) {
-    accent = "#ff6b35"; gradA = "#1a0a00"; gradB = "#4a1a00";
-  } else if (name.includes("bomba") || name.includes("óleo") || name.includes("oleo")) {
-    accent = "#ffd60a"; gradA = "#1a1a00"; gradB = "#3d3d00";
-  } else if (name.includes("ignição") || name.includes("vela") || name.includes("bobina")) {
-    accent = "#e63946"; gradA = "#1a0000"; gradB = "#4a0000";
-  } else if (name.includes("pistão") || name.includes("cilindro") || name.includes("biela")) {
-    accent = "#adb5bd"; gradA = "#0d0d0d"; gradB = "#2d2d2d";
-  }
+  // ── Brand colors: Verde e Azul Bandeira do Brasil ──
+  const BRAND_GREEN = "#009739";
+  const BRAND_BLUE = "#002776";
+  const BRAND_GOLD = "#FFDF00";
+  const accent = BRAND_GREEN;
 
   if (bgStyle === "white") {
     // Clean white/light gray
     ctx.fillStyle = "#f8f9fa";
     ctx.fillRect(0, 0, W, H);
-    // Subtle border
-    ctx.strokeStyle = "#dee2e6";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(20, 20, W - 40, H - 40);
-    // Accent bar top
-    ctx.fillStyle = accent;
-    ctx.fillRect(20, 20, W - 40, 6);
+    // Green + blue border
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(18, 18, W - 36, H - 36);
+    ctx.strokeStyle = BRAND_BLUE;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(26, 26, W - 52, H - 52);
+    // Green accent bar top
+    ctx.fillStyle = BRAND_GREEN;
+    ctx.fillRect(18, 18, W - 36, 8);
+    // Blue accent bar below
+    ctx.fillStyle = BRAND_BLUE;
+    ctx.fillRect(18, 26, W - 36, 4);
   } else {
-    // Creative dynamic background
+    // Creative background with brand colors
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, gradA);
-    grad.addColorStop(0.5, gradB);
-    grad.addColorStop(1, gradA);
+    grad.addColorStop(0, "#001a3a");
+    grad.addColorStop(0.35, BRAND_BLUE);
+    grad.addColorStop(0.65, "#003d1a");
+    grad.addColorStop(1, "#001a0d");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Decorative elements related to industrial/mechanical theme
+    // Decorative elements with brand colors
     ctx.save();
-    ctx.globalAlpha = 0.04;
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 1.5;
     // Gear-like circles
     for (let i = 0; i < 6; i++) {
       ctx.beginPath();
       ctx.arc(W * 0.88, H * 0.15, 50 + i * 35, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.strokeStyle = BRAND_BLUE;
     for (let i = 0; i < 4; i++) {
       ctx.beginPath();
       ctx.arc(W * 0.08, H * 0.85, 40 + i * 30, 0, Math.PI * 2);
       ctx.stroke();
     }
-    // Subtle grid pattern
+    // Subtle grid
     ctx.globalAlpha = 0.02;
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = BRAND_GOLD;
     for (let x = 0; x < W; x += 60) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
@@ -190,13 +186,15 @@ const generateCompositeImage = async (
     }
     ctx.restore();
 
-    // Accent bar top
-    ctx.fillStyle = accent;
-    ctx.fillRect(0, 0, W, 8);
+    // Top accent bars: green then blue
+    ctx.fillStyle = BRAND_GREEN;
+    ctx.fillRect(0, 0, W, 6);
+    ctx.fillStyle = BRAND_BLUE;
+    ctx.fillRect(0, 6, W, 4);
 
-    // Subtle glow behind product area
+    // Subtle glow behind product area with green
     const glowGrad = ctx.createRadialGradient(W / 2, H * 0.3, 50, W / 2, H * 0.3, 350);
-    glowGrad.addColorStop(0, `${accent}22`);
+    glowGrad.addColorStop(0, `${BRAND_GREEN}22`);
     glowGrad.addColorStop(1, "transparent");
     ctx.fillStyle = glowGrad;
     ctx.fillRect(0, 0, W, H * 0.6);
@@ -251,12 +249,12 @@ const generateCompositeImage = async (
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(60, priceY - 4); ctx.lineTo(60 + tw, priceY - 4); ctx.stroke();
 
-      // New price
-      ctx.fillStyle = accent;
+      // New price (brand green)
+      ctx.fillStyle = BRAND_GREEN;
       ctx.font = `bold 48px 'Segoe UI', Arial, sans-serif`;
       ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 50);
     } else {
-      ctx.fillStyle = accent;
+      ctx.fillStyle = BRAND_GREEN;
       ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
       ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 10);
@@ -284,13 +282,13 @@ const generateCompositeImage = async (
     wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 38 : 32);
   }
 
-  // ── CTA button ──
+  // ── CTA button (brand green) ──
   if (text?.cta) {
     const ctaY = H - (isStory ? 280 : 160);
     const ctaW = 420;
     const ctaH = 60;
     const ctaX = (W - ctaW) / 2;
-    ctx.fillStyle = accent;
+    ctx.fillStyle = BRAND_GREEN;
     roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30);
     ctx.fill();
     ctx.fillStyle = "#ffffff";
@@ -312,37 +310,55 @@ const generateCompositeImage = async (
 
   // ── Hashtags ──
   if (text?.hashtags) {
-    ctx.fillStyle = accent;
+    ctx.fillStyle = BRAND_GREEN;
     ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
     ctx.textAlign = "left";
     const hashY = H - (isStory ? 150 : 45);
     ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
   }
 
-  // ── Logo Grundemann (top-left, ALWAYS) ──
+  // ── Logo Grundemann (top-left, LARGE & PROMINENT) ──
   try {
     const logo = await loadImage(logoGrundemann);
-    const logoH = isStory ? 65 : 55;
+    const logoH = isStory ? 100 : 85;
     const logoW = (logo.width / logo.height) * logoH;
-    const logoX = 28;
-    const logoY = 18;
+    const logoX = 35;
+    const logoY = isStory ? 22 : 18;
+    // Prominent backing with brand blue
     ctx.save();
-    ctx.fillStyle = bgStyle === "white" ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.6)";
-    roundRect(ctx, logoX - 10, logoY - 8, logoW + 20, logoH + 16, 10);
+    ctx.fillStyle = bgStyle === "white" ? "rgba(0,39,118,0.9)" : "rgba(0,39,118,0.85)";
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 4;
+    roundRect(ctx, logoX - 16, logoY - 12, logoW + 32, logoH + 24, 14);
     ctx.fill();
+    // Green border on logo card
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 3;
+    roundRect(ctx, logoX - 16, logoY - 12, logoW + 32, logoH + 24, 14);
+    ctx.stroke();
     ctx.restore();
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
   } catch {
     ctx.save();
-    ctx.fillStyle = bgStyle === "white" ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)";
-    ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("GRÜNDEMANN", 30, 50);
+    ctx.fillStyle = "rgba(0,39,118,0.9)";
+    roundRect(ctx, 20, 10, 320, 70, 14);
+    ctx.fill();
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 3;
+    roundRect(ctx, 20, 10, 320, 70, 14);
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold 34px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("GRÜNDEMANN", 35, 55);
     ctx.restore();
   }
 
-  // ── Bottom accent bar ──
-  ctx.fillStyle = accent;
-  ctx.fillRect(0, H - 6, W, 6);
+  // ── Bottom accent bars: green + blue ──
+  ctx.fillStyle = BRAND_BLUE;
+  ctx.fillRect(0, H - 10, W, 10);
+  ctx.fillStyle = BRAND_GREEN;
+  ctx.fillRect(0, H - 10, W, 5);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
