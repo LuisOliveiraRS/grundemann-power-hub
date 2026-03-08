@@ -24,6 +24,7 @@ interface Product {
   brand: string | null; hp: string | null; engine_model: string | null;
   specifications: any; documents: string[] | null;
   meta_title: string | null; meta_description: string | null;
+  compatible_motors: string[] | null;
 }
 
 const ProductDetail = () => {
