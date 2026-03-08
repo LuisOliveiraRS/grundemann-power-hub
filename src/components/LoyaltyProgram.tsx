@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Star, Gift, Trophy, Zap, Clock, CheckCircle, Award } from "lucide-react";
+import { Star, Gift, Trophy, Zap, Clock, CheckCircle, Award, Ticket } from "lucide-react";
 
 interface PointEntry {
   id: string;
@@ -33,6 +33,16 @@ interface Redemption {
   reward_id: string;
 }
 
+interface Coupon {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  is_used: boolean;
+  expires_at: string | null;
+  created_at: string;
+}
+
 const tierConfig = [
   { name: "Bronze", min: 0, max: 499, color: "text-amber-700", bg: "bg-amber-100", icon: Star },
   { name: "Prata", min: 500, max: 1499, color: "text-muted-foreground", bg: "bg-muted", icon: Award },
@@ -47,14 +57,16 @@ const LoyaltyProgram = () => {
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [redeeming, setRedeeming] = useState<string | null>(null);
-  const [tab, setTab] = useState<"rewards" | "history" | "redemptions">("rewards");
+  const [tab, setTab] = useState<"rewards" | "history" | "redemptions" | "coupons">("rewards");
 
   useEffect(() => {
     if (user) {
       loadPoints();
       loadRewards();
       loadRedemptions();
+      loadCoupons();
     }
   }, [user]);
 
@@ -89,6 +101,15 @@ const LoyaltyProgram = () => {
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
     if (data) setRedemptions(data as Redemption[]);
+  };
+
+  const loadCoupons = async () => {
+    const { data } = await supabase
+      .from("discount_coupons")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false });
+    if (data) setCoupons(data as Coupon[]);
   };
 
   const redeemReward = async (reward: Reward) => {
@@ -183,6 +204,7 @@ const LoyaltyProgram = () => {
       <div className="flex gap-2 border-b border-border pb-1">
         {[
           { id: "rewards" as const, label: "Recompensas", icon: Gift },
+          { id: "coupons" as const, label: `Cupons${coupons.filter(c => !c.is_used).length > 0 ? ` (${coupons.filter(c => !c.is_used).length})` : ""}`, icon: Ticket },
           { id: "history" as const, label: "Histórico", icon: Clock },
           { id: "redemptions" as const, label: "Meus Resgates", icon: CheckCircle },
         ].map(t => (
@@ -311,6 +333,48 @@ const LoyaltyProgram = () => {
                     </div>
                     <Badge variant={rd.status === "approved" ? "default" : rd.status === "rejected" ? "destructive" : "secondary"}>
                       {rd.status === "pending" ? "Pendente" : rd.status === "approved" ? "Aprovado" : "Rejeitado"}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Coupons */}
+      {tab === "coupons" && (
+        <div className="bg-card rounded-xl border border-border">
+          {coupons.length === 0 ? (
+            <div className="p-12 text-center">
+              <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-heading font-bold text-lg mb-2">Nenhum cupom</h3>
+              <p className="text-muted-foreground">Resgate recompensas para ganhar cupons de desconto!</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {coupons.map(c => {
+                const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
+                return (
+                  <div key={c.id} className={`p-4 flex items-center justify-between ${c.is_used || isExpired ? "opacity-50" : ""}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${c.is_used ? "bg-muted" : "bg-primary/10"}`}>
+                        <Ticket className={`h-5 w-5 ${c.is_used ? "text-muted-foreground" : "text-primary"}`} />
+                      </div>
+                      <div>
+                        <p className="font-mono font-bold text-sm">{c.code}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {c.discount_type === "percentage" ? `${c.discount_value}% de desconto` : c.discount_type === "freeShipping" ? "Frete Grátis" : `R$ ${Number(c.discount_value).toFixed(2).replace(".", ",")} de desconto`}
+                        </p>
+                        {c.expires_at && (
+                          <p className="text-[10px] text-muted-foreground">
+                            Válido até {new Date(c.expires_at).toLocaleDateString("pt-BR")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant={c.is_used ? "secondary" : isExpired ? "destructive" : "default"}>
+                      {c.is_used ? "Usado" : isExpired ? "Expirado" : "Disponível"}
                     </Badge>
                   </div>
                 );

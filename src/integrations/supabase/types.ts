@@ -106,6 +106,60 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_used: boolean
+          order_id: string | null
+          reward_redemption_id: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          order_id?: string | null
+          reward_redemption_id?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          order_id?: string | null
+          reward_redemption_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_coupons_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_coupons_reward_redemption_id_fkey"
+            columns: ["reward_redemption_id"]
+            isOneToOne: false
+            referencedRelation: "reward_redemptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_subscribers: {
         Row: {
           created_at: string
