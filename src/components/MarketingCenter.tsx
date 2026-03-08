@@ -46,7 +46,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
-type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica" | "ai";
+type BackgroundStyle = "ai_pro";
 type LogoSize = "small" | "medium" | "large";
 type LayoutMode = "single" | "grid2x2";
 
