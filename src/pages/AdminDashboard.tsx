@@ -1859,6 +1859,19 @@ const AdminDashboard = () => {
             <EmailSubscriberManagement />
           </div>
         )}
+
+        {/* REWARDS TAB */}
+        {tab === "rewards" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Gift className="h-8 w-8 text-primary" /> Programa de Fidelidade
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie recompensas, aprove resgates e credite pontos manualmente. Pontos são creditados automaticamente na entrega.</p>
+            </div>
+            <RewardsManagement />
+          </div>
+        )}
       </main>
     </div>
   );
