@@ -160,6 +160,7 @@ const MarketingCenter = () => {
   const [generatingAiBg, setGeneratingAiBg] = useState(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("single");
   const [creativeStyle, setCreativeStyle] = useState<CreativeStyle>("dark_industrial");
+  const [customColors, setCustomColors] = useState<CustomColors>(defaultCustomColors);
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
