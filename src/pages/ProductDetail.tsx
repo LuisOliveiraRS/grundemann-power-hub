@@ -14,6 +14,8 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FavoriteButton from "@/components/FavoriteButton";
 import ProductSEO from "@/components/ProductSEO";
+import ProductReviews from "@/components/ProductReviews";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import AIAssistant from "@/components/AIAssistant";
 
 interface Product {
