@@ -274,15 +274,26 @@ const generateCompositeImage = async (
       ctx.fillText(`-${discount}% OFF`, W - 140, priceY + 1);
       ctx.textAlign = "left";
 
-      // New price (HUGE)
-      ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 72px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 70);
+      // New price (HUGE) - YELLOW/GOLD like homepage banners
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = BRAND_GOLD;
+      ctx.font = `bold 78px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 72);
+      ctx.restore();
     } else {
-      ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 68px 'Segoe UI', Arial, sans-serif`;
+      // Price - YELLOW/GOLD like homepage banners
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = BRAND_GOLD;
+      ctx.font = `bold 74px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
-      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 30);
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 32);
+      ctx.restore();
     }
   }
 
