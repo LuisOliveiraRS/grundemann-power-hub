@@ -39,9 +39,12 @@ const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingInfo>({
     full_name: "", phone: "", zip_code: "", address: "", address_number: "",
     address_complement: "", neighborhood: "", city: "", state: "", notes: "",
