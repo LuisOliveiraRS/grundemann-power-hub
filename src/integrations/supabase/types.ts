@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversation_logs: {
+        Row: {
+          ai_response: string | null
+          created_at: string
+          id: string
+          problem_identified: string | null
+          products_suggested: Json | null
+          session_id: string | null
+          user_question: string
+        }
+        Insert: {
+          ai_response?: string | null
+          created_at?: string
+          id?: string
+          problem_identified?: string | null
+          products_suggested?: Json | null
+          session_id?: string | null
+          user_question: string
+        }
+        Update: {
+          ai_response?: string | null
+          created_at?: string
+          id?: string
+          problem_identified?: string | null
+          products_suggested?: Json | null
+          session_id?: string | null
+          user_question?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
