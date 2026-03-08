@@ -16,6 +16,7 @@ import MarketingCenter from "@/components/MarketingCenter";
 import SellerManagement from "@/components/SellerManagement";
 import QuoteManagement from "@/components/QuoteManagement";
 import UserRoleManagement from "@/components/UserRoleManagement";
+import MechanicManagement from "@/components/MechanicManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
