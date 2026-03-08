@@ -194,7 +194,7 @@ const PartsFinder = () => {
                         className="rounded-lg border border-border bg-background p-3 hover:shadow-md hover:border-primary/30 transition-all text-left"
                       >
                         <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
-                          <img src={p.image_url || "/placeholder.svg"} alt={p.name} className="w-full h-full object-contain p-2" />
+                          <img src={p.image_url || "/placeholder.svg"} alt={p.name} loading="lazy" className="w-full h-full object-contain p-2" />
                         </div>
                         <p className="text-xs font-semibold text-card-foreground line-clamp-2">{p.name}</p>
                         {p.sku && <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {p.sku}</p>}
