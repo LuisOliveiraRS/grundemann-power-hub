@@ -54,7 +54,7 @@ const quoteStatusLabel: Record<string, string> = {
 const ClientDashboard = () => {
   const { user, signOut } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const [tab, setTab] = useState<"profile" | "orders" | "quotes" | "favorites">("profile");
+  const [tab, setTab] = useState<"profile" | "orders" | "quotes" | "favorites" | "loyalty">("profile");
   const [profile, setProfile] = useState<Profile>({
     full_name: "", email: "", phone: "", address: "", address_number: "",
     address_complement: "", neighborhood: "", city: "", state: "", zip_code: "",
