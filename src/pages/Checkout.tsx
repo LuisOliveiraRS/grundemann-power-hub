@@ -653,6 +653,13 @@ const Checkout = () => {
                     {shipping.neighborhood} - {shipping.city}/{shipping.state} - CEP: {shipping.zip_code}
                   </p>
                   {shipping.phone && <p className="text-sm text-muted-foreground">Tel: {shipping.phone}</p>}
+                  {selectedShipping && (
+                    <p className="text-sm text-primary font-semibold mt-1 flex items-center gap-1">
+                      <Truck className="h-3.5 w-3.5" />
+                      {selectedShipping.label} — {selectedShipping.days} dias úteis
+                      {isFreeShipping ? " (Frete Grátis)" : ` (R$ ${selectedShipping.price.toFixed(2).replace(".", ",")})`}
+                    </p>
+                  )}
                 </div>
 
                 {/* Items summary */}
