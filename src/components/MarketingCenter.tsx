@@ -470,7 +470,7 @@ const MarketingCenter = () => {
     setPublishPlatforms(new Set(["instagram"]));
     setScheduleDate("");
     setPublishMode("save");
-    setBackgroundStyle("creative");
+    setBackgroundStyle("ai_pro");
     setCustomCta("");
     setCustomSlogan("");
     setLogoSize("medium");
