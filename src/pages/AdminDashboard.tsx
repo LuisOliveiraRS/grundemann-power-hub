@@ -21,6 +21,8 @@ import MechanicManagement from "@/components/MechanicManagement";
 import StockManagement from "@/components/StockManagement";
 import EmailSubscriberManagement from "@/components/EmailSubscriberManagement";
 import RewardsManagement from "@/components/RewardsManagement";
+import ArticleManagement from "@/components/ArticleManagement";
+import SEOBatchGenerator from "@/components/SEOBatchGenerator";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
