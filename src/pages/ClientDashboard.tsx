@@ -337,6 +337,9 @@ const ClientDashboard = () => {
                 </div>
               )}
 
+              {/* LOYALTY TAB */}
+              {tab === "loyalty" && <LoyaltyProgram />}
+
               {/* FAVORITES TAB */}
               {tab === "favorites" && (
                 <div>

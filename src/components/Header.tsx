@@ -52,6 +52,7 @@ const Header = () => {
           <SmartSearch />
 
           <div className="flex items-center gap-6">
+            <NotificationBell />
             {isAdmin && (
               <button onClick={() => navigate("/admin")} className="text-xs font-bold text-primary hover:underline">
                 Admin
