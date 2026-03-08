@@ -535,6 +535,7 @@ const MarketingCenter = () => {
             campaignType: product.stock_quantity > 20 ? "high_stock" : "promotion",
             customCta: data.cta || "CONFIRA JÁ",
             layoutMode: "single",
+            creativeStyle: "dark_industrial",
           },
         });
         if (!imgError && imgData?.image_url) {
