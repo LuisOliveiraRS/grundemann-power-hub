@@ -1394,57 +1394,12 @@ const MarketingCenter = () => {
                     {/* Background Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
-                        <Palette className="h-4 w-4 text-primary" /> Estilo do Fundo
+                        <Palette className="h-4 w-4 text-primary" /> Estilo do Criativo
                       </Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setBackgroundStyle("white")}
-                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                          <div className="w-10 h-10 rounded bg-white border shrink-0 flex items-center justify-center"><Package className="h-5 w-5 text-muted-foreground" /></div>
-                          <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Branco</p>
-                            <p className="text-xs text-muted-foreground">Catálogo limpo</p>
-                          </div>
-                        </button>
-                        <button onClick={() => setBackgroundStyle("creative")}
-                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                          <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-700 to-slate-800 shrink-0 flex items-center justify-center"><Sparkles className="h-5 w-5 text-amber-200" /></div>
-                          <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Criativo</p>
-                            <p className="text-xs text-muted-foreground">Gradiente industrial</p>
-                          </div>
-                        </button>
-                        {Object.entries(bgPhotoMap).map(([key, info]) => (
-                          <button key={key} onClick={() => setBackgroundStyle(key as BackgroundStyle)}
-                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                            <div className="w-10 h-10 rounded shrink-0 overflow-hidden border">
-                              <img src={info.landscape} alt={info.label} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                              <p className={`text-sm font-semibold ${backgroundStyle === key ? "text-primary" : ""}`}>{info.emoji} {info.label}</p>
-                              <p className="text-xs text-muted-foreground">Foto industrial</p>
-                            </div>
-                          </button>
-                        ))}
-                        <button onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }}
-                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "ai" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                          <div className="w-10 h-10 rounded bg-gradient-to-br from-violet-600 to-indigo-900 shrink-0 flex items-center justify-center">
-                            {generatingAiBg ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <Wand2 className="h-5 w-5 text-white" />}
-                          </div>
-                          <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "ai" ? "text-primary" : ""}`}>🤖 Fundo IA</p>
-                            <p className="text-xs text-muted-foreground">{generatingAiBg ? "Gerando..." : aiBgUrl ? "Gerado ✓" : "Gerado por IA"}</p>
-                          </div>
-                        </button>
+                      <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                        <p className="text-sm font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
+                        <p className="text-xs text-muted-foreground mt-1">Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca.</p>
                       </div>
-                      {backgroundStyle === "ai" && (
-                        <div className="flex gap-2 mt-2">
-                          <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs">
-                            {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                            {generatingAiBg ? "Gerando..." : "Gerar Novo Fundo IA"}
-                          </Button>
-                          {aiBgUrl && <Badge variant="secondary" className="text-xs">✓ Fundo pronto</Badge>}
-                        </div>
-                      )}
                     </div>
 
                     {/* Logo Size */}
