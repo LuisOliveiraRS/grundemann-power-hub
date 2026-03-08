@@ -619,6 +619,8 @@ const AdminDashboard = () => {
     { key: "mechanics", label: "Mecânicos", icon: Wrench },
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
+    { key: "articles", label: "Central Técnica", icon: BookOpen },
+    { key: "seo", label: "SEO", icon: Globe },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
     { key: "subscribers", label: "Leads & Cupons", icon: Mail },
     { key: "rewards", label: "Fidelidade", icon: Gift },
