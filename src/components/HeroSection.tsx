@@ -176,7 +176,7 @@ const HeroSection = () => {
                             R$ {current.original_price.toFixed(2).replace(".", ",")}
                           </span>
                         )}
-                        <span className="text-primary font-black text-2xl">
+                        <span className="text-[#FFDF00] font-black text-2xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
                           R$ {current.price.toFixed(2).replace(".", ",")}
                         </span>
                       </div>
