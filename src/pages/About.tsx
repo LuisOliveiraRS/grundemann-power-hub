@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
