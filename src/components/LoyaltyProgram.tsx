@@ -341,8 +341,49 @@ const LoyaltyProgram = () => {
           )}
         </div>
       )}
+
+      {/* Coupons */}
+      {tab === "coupons" && (
+        <div className="bg-card rounded-xl border border-border">
+          {coupons.length === 0 ? (
+            <div className="p-12 text-center">
+              <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="font-heading font-bold text-lg mb-2">Nenhum cupom</h3>
+              <p className="text-muted-foreground">Resgate recompensas para ganhar cupons de desconto!</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {coupons.map(c => {
+                const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
+                return (
+                  <div key={c.id} className={`p-4 flex items-center justify-between ${c.is_used || isExpired ? "opacity-50" : ""}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${c.is_used ? "bg-muted" : "bg-primary/10"}`}>
+                        <Ticket className={`h-5 w-5 ${c.is_used ? "text-muted-foreground" : "text-primary"}`} />
+                      </div>
+                      <div>
+                        <p className="font-mono font-bold text-sm">{c.code}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {c.discount_type === "percentage" ? `${c.discount_value}% de desconto` : c.discount_type === "freeShipping" ? "Frete Grátis" : `R$ ${Number(c.discount_value).toFixed(2).replace(".", ",")} de desconto`}
+                        </p>
+                        {c.expires_at && (
+                          <p className="text-[10px] text-muted-foreground">
+                            Válido até {new Date(c.expires_at).toLocaleDateString("pt-BR")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant={c.is_used ? "secondary" : isExpired ? "destructive" : "default"}>
+                      {c.is_used ? "Usado" : isExpired ? "Expirado" : "Disponível"}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
-  );
 };
 
 export default LoyaltyProgram;
