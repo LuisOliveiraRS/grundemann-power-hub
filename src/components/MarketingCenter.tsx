@@ -165,6 +165,25 @@ const generateCompositeImage = async (
     ctx.strokeStyle = BRAND_GOLD;
     ctx.lineWidth = 2;
     ctx.strokeRect(14, 14, W - 28, H - 28);
+  } else if (bgPhotoMap[bgStyle]) {
+    // ── PHOTO BACKGROUND ──
+    try {
+      const bgInfo = bgPhotoMap[bgStyle];
+      const bgSrc = isStory ? bgInfo.story : bgInfo.landscape;
+      const bgImg = await loadImage(bgSrc);
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      // Dark overlay for text readability
+      const overlay = ctx.createLinearGradient(0, 0, W * 0.6, H);
+      overlay.addColorStop(0, "rgba(0,0,0,0.75)");
+      overlay.addColorStop(0.5, "rgba(0,0,0,0.55)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.35)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, W, H);
+    } catch {
+      // Fallback to dark gradient
+      ctx.fillStyle = "#0d0d0d";
+      ctx.fillRect(0, 0, W, H);
+    }
   } else {
     // Rich dark industrial background like reference images
     const grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
