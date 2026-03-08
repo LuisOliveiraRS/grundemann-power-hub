@@ -1546,31 +1546,9 @@ const MarketingCenter = () => {
                       </div>
                     )}
 
-                    {/* Style toggle */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Estilo do Fundo</Label>
-                      <div className="flex gap-1.5 flex-wrap">
-                        <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1 text-xs h-8">
-                          <Sparkles className="h-3 w-3" /> Criativo
-                        </Button>
-                        <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1 text-xs h-8">
-                          <Package className="h-3 w-3" /> Branco
-                        </Button>
-                        {Object.entries(bgPhotoMap).map(([key, info]) => (
-                          <Button key={key} size="sm" variant={backgroundStyle === key ? "default" : "outline"} onClick={() => setBackgroundStyle(key as BackgroundStyle)} className="gap-1 text-xs h-8">
-                            {info.emoji} {info.label}
-                          </Button>
-                        ))}
-                        <Button size="sm" variant={backgroundStyle === "ai" ? "default" : "outline"} onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }} className="gap-1 text-xs h-8" disabled={generatingAiBg}>
-                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Fundo IA
-                        </Button>
-                      </div>
-                      {backgroundStyle === "ai" && (
-                        <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs mt-1">
-                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                          {generatingAiBg ? "Gerando..." : "Novo Fundo IA"}
-                        </Button>
-                      )}
+                    {/* Style info */}
+                    <div className="p-3 rounded-lg border bg-primary/5">
+                      <p className="text-xs font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
                     </div>
 
                     {/* Logo size in preview */}
