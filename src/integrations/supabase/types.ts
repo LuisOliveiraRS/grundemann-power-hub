@@ -630,6 +630,59 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          mp_status_detail: string | null
+          order_id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          mp_status_detail?: string | null
+          order_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          mp_preference_id?: string | null
+          mp_status_detail?: string | null
+          order_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           comment: string
