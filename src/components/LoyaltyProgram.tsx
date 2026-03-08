@@ -66,6 +66,7 @@ const LoyaltyProgram = () => {
       loadPoints();
       loadRewards();
       loadRedemptions();
+      loadCoupons();
     }
   }, [user]);
 
