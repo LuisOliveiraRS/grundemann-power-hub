@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.generate-ai-background]
 verify_jwt = false
+
+[functions.generate-creative-image]
+verify_jwt = false

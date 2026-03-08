@@ -46,7 +46,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
-type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica" | "ai";
+type BackgroundStyle = "ai_pro";
 type LogoSize = "small" | "medium" | "large";
 type LayoutMode = "single" | "grid2x2";
 
@@ -94,792 +94,11 @@ const WIZARD_STEPS = [
 
 import logoGrundemann from "@/assets/logo-grundemann.png";
 
-const loadImage = (src: string): Promise<HTMLImageElement> =>
-  new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-
 const getProductUrl = (productId: string) => {
   const base = window.location.origin;
   return `${base}/produto/${productId}`;
 };
 
-// ─── Canvas composite: professional commercial design matching Grundemann reference ───
-const generateCompositeImage = async (
-  imageUrl: string | null,
-  text: any,
-  format: string,
-  bgStyle: BackgroundStyle = "creative",
-  productUrl?: string,
-  price?: number,
-  originalPrice?: number | null,
-  productName?: string,
-  logoSize: LogoSize = "medium",
-  customSlogan?: string,
-  aiBgDataUrl?: string | null,
-): Promise<Blob> => {
-  const isStory = format === "story_instagram";
-  const W = 1080;
-  const H = isStory ? 1920 : 1080;
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-
-  const BRAND_GREEN = "#006B3F";
-  const BRAND_GREEN_DARK = "#004D2C";
-  const BRAND_GREEN_LIGHT = "#009739";
-  const BRAND_BLUE = "#002776";
-  const BRAND_GOLD = "#FFDF00";
-  const CARD_BG = "#e8ecef";
-  const CARD_SHADOW = "rgba(0,0,0,0.15)";
-  const TEXT_DARK = "#1a1a1a";
-  const TEXT_GRAY = "#555555";
-  const WHITE = "#ffffff";
-
-  // ══════════ BACKGROUND: Light silver gradient with subtle green wave curves ══════════
-  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-  bgGrad.addColorStop(0, "#f0f2f5");
-  bgGrad.addColorStop(0.3, "#e8edf2");
-  bgGrad.addColorStop(0.6, "#f2f4f6");
-  bgGrad.addColorStop(1, "#eaecf0");
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Subtle wave decorations (green curves like reference)
-  ctx.save();
-  ctx.globalAlpha = 0.07;
-  ctx.strokeStyle = BRAND_GREEN;
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 6; i++) {
-    ctx.beginPath();
-    ctx.moveTo(-50 + i * 80, 0);
-    ctx.bezierCurveTo(W * 0.2 + i * 40, H * 0.15, W * 0.5 - i * 30, H * 0.25, W + 50, H * 0.1 + i * 60);
-    ctx.stroke();
-  }
-  for (let i = 0; i < 4; i++) {
-    ctx.beginPath();
-    ctx.moveTo(-50, H * 0.7 + i * 50);
-    ctx.bezierCurveTo(W * 0.3, H * 0.65 + i * 40, W * 0.7, H * 0.8 + i * 30, W + 50, H * 0.75 + i * 50);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Thin green accent line at very top
-  ctx.fillStyle = BRAND_GREEN;
-  ctx.fillRect(0, 0, W, 6);
-
-  // ══════════ HEADER AREA ══════════
-  const headerH = isStory ? 280 : 200;
-
-  // Logo (top-left)
-  let logoEndY = 80;
-  try {
-    const logo = await loadImage(logoGrundemann);
-    const sizeMap = { small: 90, medium: 120, large: 160 };
-    const logoH = sizeMap[logoSize];
-    const logoW = (logo.width / logo.height) * logoH;
-    const logoX = 40;
-    const logoY = 22;
-    ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-    logoEndY = logoY + logoH;
-  } catch {
-    ctx.fillStyle = BRAND_GREEN;
-    ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("Gründemann", 40, 70);
-    logoEndY = 80;
-  }
-
-  // Contact info (top-right)
-  ctx.save();
-  ctx.fillStyle = BRAND_GREEN_DARK;
-  ctx.font = `bold 30px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "right";
-  ctx.fillText("51-981825748", W - 40, 50);
-  ctx.fillStyle = TEXT_GRAY;
-  ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-  ctx.fillText("adair.grundemann@gmail.com", W - 40, 82);
-  ctx.textAlign = "left";
-  ctx.restore();
-
-  // Subtitle line
-  ctx.save();
-  ctx.fillStyle = TEXT_GRAY;
-  ctx.font = `italic 22px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Oficina Geradores — peças: Diesel, gasolina, geradores e oficina", W / 2, logoEndY + 20);
-  ctx.restore();
-
-  // Separator line
-  const sepY = logoEndY + 38;
-  ctx.strokeStyle = BRAND_GREEN;
-  ctx.globalAlpha = 0.3;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(60, sepY);
-  ctx.lineTo(W - 60, sepY);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  const contentStartY = sepY + 15;
-  const footerH = 65;
-  const contentEndY = H - footerH - 10;
-  const contentH = contentEndY - contentStartY;
-
-  // ══════════ PRODUCT CARD ══════════
-  const cardPad = isStory ? 40 : 50;
-  const cardX = cardPad;
-  const cardY = contentStartY;
-  const cardW = W - cardPad * 2;
-  const cardH = contentH;
-
-  // Card shadow
-  ctx.save();
-  ctx.shadowColor = CARD_SHADOW;
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetX = 4;
-  ctx.shadowOffsetY = 6;
-  ctx.fillStyle = CARD_BG;
-  roundRect(ctx, cardX, cardY, cardW, cardH, 18);
-  ctx.fill();
-  ctx.restore();
-
-  // Card white inner
-  ctx.fillStyle = WHITE;
-  roundRect(ctx, cardX + 3, cardY + 3, cardW - 6, cardH - 6, 16);
-  ctx.fill();
-
-  // ── Green header bar with product name ──
-  const greenBarH = isStory ? 65 : 55;
-  ctx.save();
-  const gBarGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY);
-  gBarGrad.addColorStop(0, BRAND_GREEN_DARK);
-  gBarGrad.addColorStop(0.5, BRAND_GREEN);
-  gBarGrad.addColorStop(1, BRAND_GREEN_DARK);
-  ctx.fillStyle = gBarGrad;
-  // Top rounded corners only
-  ctx.beginPath();
-  ctx.moveTo(cardX + 16, cardY);
-  ctx.lineTo(cardX + cardW - 16, cardY);
-  ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + 16);
-  ctx.lineTo(cardX + cardW, cardY + greenBarH);
-  ctx.lineTo(cardX, cardY + greenBarH);
-  ctx.lineTo(cardX, cardY + 16);
-  ctx.quadraticCurveTo(cardX, cardY, cardX + 16, cardY);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-
-  // Product name in green bar
-  const displayName = productName || text?.headline || "Produto";
-  ctx.save();
-  ctx.fillStyle = WHITE;
-  ctx.font = `bold ${isStory ? 34 : 30}px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(displayName.length > 40 ? displayName.slice(0, 37) + "..." : displayName, cardX + cardW / 2, cardY + greenBarH - (isStory ? 18 : 15));
-  ctx.textAlign = "left";
-  ctx.restore();
-
-  // ── Card content area ──
-  const innerY = cardY + greenBarH + 15;
-  const innerH = cardH - greenBarH - 15;
-
-  if (isStory) {
-    // ═══ STORY LAYOUT: image top, price+desc below, CTA at bottom ═══
-
-    // Product image (centered, upper area)
-    let imgBottomY = innerY + innerH * 0.45;
-    if (imageUrl) {
-      try {
-        const img = await loadImage(imageUrl);
-        const maxImgW = cardW - 80;
-        const maxImgH = innerH * 0.40;
-        const scale = Math.min(maxImgW / img.width, maxImgH / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        const dx = cardX + (cardW - dw) / 2;
-        const dy = innerY + 15;
-        ctx.save();
-        ctx.shadowColor = "rgba(0,0,0,0.12)";
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetY = 5;
-        ctx.drawImage(img, dx, dy, dw, dh);
-        ctx.restore();
-        imgBottomY = dy + dh + 20;
-      } catch { /* fallback */ }
-    }
-
-    // Price section
-    if (price) {
-      const priceAreaY = imgBottomY + 10;
-
-      // Price prefix "R$"
-      ctx.save();
-      ctx.fillStyle = TEXT_DARK;
-      ctx.font = `bold 32px 'Segoe UI', Arial, sans-serif`;
-      const priceStr = `R$${price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-      // Show full formatted price large and centered
-      ctx.textAlign = "center";
-      ctx.font = `bold 72px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(priceStr, cardX + cardW / 2, priceAreaY + 50);
-      ctx.restore();
-
-      if (originalPrice && originalPrice > price) {
-        ctx.save();
-        ctx.fillStyle = "#999";
-        ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
-        ctx.textAlign = "center";
-        const oldText = `De R$ ${originalPrice.toFixed(2)}`;
-        ctx.fillText(oldText, cardX + cardW / 2, priceAreaY - 5);
-        const tw = ctx.measureText(oldText).width;
-        ctx.strokeStyle = "#999";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(cardX + cardW / 2 - tw / 2, priceAreaY - 10);
-        ctx.lineTo(cardX + cardW / 2 + tw / 2, priceAreaY - 10);
-        ctx.stroke();
-        ctx.textAlign = "left";
-        ctx.restore();
-      }
-
-      // Installments
-      ctx.save();
-      ctx.fillStyle = TEXT_GRAY;
-      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText(`ou 3x de R$ ${(price / 3).toFixed(2)} sem juros`, cardX + cardW / 2, priceAreaY + 85);
-      ctx.textAlign = "left";
-      ctx.restore();
-    }
-
-    // Description text
-    if (text?.body_text || text?.headline) {
-      const descText = text.body_text || text.headline || "";
-      ctx.save();
-      ctx.fillStyle = TEXT_GRAY;
-      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-      const descY = price ? imgBottomY + 130 : imgBottomY + 30;
-      wrapText(ctx, descText.slice(0, 150), cardX + 40, descY, cardW - 80, 30);
-      ctx.restore();
-    }
-
-    // Custom slogan
-    if (customSlogan) {
-      ctx.save();
-      ctx.fillStyle = BRAND_BLUE;
-      ctx.font = `bold italic 24px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText(customSlogan, cardX + cardW / 2, contentEndY - 115);
-      ctx.textAlign = "left";
-      ctx.restore();
-    }
-
-    // CTA Button (green, WhatsApp style)
-    const ctaBtnY = contentEndY - 80;
-    const ctaBtnW = cardW - 100;
-    const ctaBtnH = 60;
-    const ctaBtnX = cardX + 50;
-    ctx.save();
-    const ctaGrad = ctx.createLinearGradient(ctaBtnX, ctaBtnY, ctaBtnX + ctaBtnW, ctaBtnY);
-    ctaGrad.addColorStop(0, BRAND_GREEN_DARK);
-    ctaGrad.addColorStop(0.5, BRAND_GREEN_LIGHT);
-    ctaGrad.addColorStop(1, BRAND_GREEN_DARK);
-    ctx.fillStyle = ctaGrad;
-    ctx.shadowColor = "rgba(0,0,0,0.2)";
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 3;
-    roundRect(ctx, ctaBtnX, ctaBtnY, ctaBtnW, ctaBtnH, 12);
-    ctx.fill();
-    ctx.restore();
-    // WhatsApp icon placeholder + text
-    ctx.fillStyle = WHITE;
-    ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    const ctaLabel = text?.cta || "COMPRAR";
-    ctx.fillText(`☎  ${ctaLabel.toUpperCase()}`, ctaBtnX + ctaBtnW / 2, ctaBtnY + 40);
-    ctx.textAlign = "left";
-
-  } else {
-    // ═══ POST LAYOUT (1080x1080): image left, info right ═══
-    const splitX = cardX + cardW * 0.48;
-    const rightX = splitX + 20;
-    const rightW = cardX + cardW - rightX - 20;
-
-    // Product image (left side of card)
-    if (imageUrl) {
-      try {
-        const img = await loadImage(imageUrl);
-        const maxImgW = splitX - cardX - 40;
-        const maxImgH = innerH - 100;
-        const scale = Math.min(maxImgW / img.width, maxImgH / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        const dx = cardX + (splitX - cardX - dw) / 2;
-        const dy = innerY + (innerH - 80 - dh) / 2;
-        ctx.save();
-        ctx.shadowColor = "rgba(0,0,0,0.12)";
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetY = 5;
-        ctx.drawImage(img, dx, dy, dw, dh);
-        ctx.restore();
-      } catch { /* fallback */ }
-    }
-
-    // Right side: Price + Description + CTA
-    const rightContentY = innerY + 20;
-
-    // Price
-    if (price) {
-      ctx.save();
-      ctx.fillStyle = TEXT_DARK;
-      ctx.font = `bold 60px 'Segoe UI', Arial, sans-serif`;
-      const priceStr = `R$${price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-      ctx.fillText(priceStr, rightX, rightContentY + 50);
-      ctx.restore();
-
-      if (originalPrice && originalPrice > price) {
-        ctx.save();
-        ctx.fillStyle = "#999";
-        ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-        const oldText = `De R$ ${originalPrice.toFixed(2)}`;
-        ctx.fillText(oldText, rightX, rightContentY - 5);
-        const tw = ctx.measureText(oldText).width;
-        ctx.strokeStyle = "#999";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(rightX, rightContentY - 10);
-        ctx.lineTo(rightX + tw, rightContentY - 10);
-        ctx.stroke();
-        ctx.restore();
-
-        // Discount badge
-        const discount = Math.round((1 - price / originalPrice) * 100);
-        ctx.save();
-        ctx.fillStyle = "#cc0000";
-        roundRect(ctx, rightX + tw + 10, rightContentY - 28, 90, 28, 14);
-        ctx.fill();
-        ctx.fillStyle = WHITE;
-        ctx.font = `bold 16px 'Segoe UI', Arial, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(`-${discount}%`, rightX + tw + 55, rightContentY - 10);
-        ctx.textAlign = "left";
-        ctx.restore();
-      }
-
-      // Installments
-      ctx.save();
-      ctx.fillStyle = TEXT_GRAY;
-      ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`ou 3x de R$ ${(price / 3).toFixed(2)}`, rightX, rightContentY + 80);
-      ctx.fillText("sem juros", rightX, rightContentY + 105);
-      ctx.restore();
-    }
-
-    // Description
-    if (text?.body_text || text?.headline) {
-      const descText = text.body_text || text.headline || "";
-      ctx.save();
-      ctx.fillStyle = TEXT_GRAY;
-      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-      const descStartY = price ? rightContentY + 140 : rightContentY + 30;
-      wrapText(ctx, descText.slice(0, 120), rightX, descStartY, rightW, 28);
-      ctx.restore();
-    }
-
-    // Custom slogan
-    if (customSlogan) {
-      ctx.save();
-      ctx.fillStyle = BRAND_BLUE;
-      ctx.font = `bold italic 22px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(customSlogan, rightX, contentEndY - 95);
-      ctx.restore();
-    }
-
-    // CTA Button (green, WhatsApp style, right side)
-    const ctaBtnY = contentEndY - 75;
-    const ctaBtnW = rightW;
-    const ctaBtnH = 52;
-    ctx.save();
-    const ctaGrad = ctx.createLinearGradient(rightX, ctaBtnY, rightX + ctaBtnW, ctaBtnY);
-    ctaGrad.addColorStop(0, BRAND_GREEN_DARK);
-    ctaGrad.addColorStop(0.5, BRAND_GREEN_LIGHT);
-    ctaGrad.addColorStop(1, BRAND_GREEN_DARK);
-    ctx.fillStyle = ctaGrad;
-    ctx.shadowColor = "rgba(0,0,0,0.2)";
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 3;
-    roundRect(ctx, rightX, ctaBtnY, ctaBtnW, ctaBtnH, 12);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = WHITE;
-    ctx.font = `bold 24px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    const ctaLabel = text?.cta || "COMPRAR";
-    ctx.fillText(`☎  ${ctaLabel.toUpperCase()}`, rightX + ctaBtnW / 2, ctaBtnY + 35);
-    ctx.textAlign = "left";
-  }
-
-  // ══════════ FOOTER BAR ══════════
-  // Green footer strip
-  ctx.save();
-  ctx.fillStyle = BRAND_GREEN;
-  ctx.fillRect(0, H - footerH, W, footerH);
-  // Address text centered
-  ctx.fillStyle = WHITE;
-  ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, H - footerH + 28);
-  // Phone + email
-  ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
-  ctx.fillText("📞 (51) 98182-5748   •   ✉ adair.grundemann@gmail.com", W / 2, H - footerH + 55);
-  ctx.textAlign = "left";
-  ctx.restore();
-
-  // Product link (subtle, above footer)
-  if (productUrl) {
-    ctx.fillStyle = TEXT_GRAY;
-    ctx.font = `16px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(`🔗 ${productUrl}`, W / 2, H - footerH - 8);
-    ctx.textAlign = "left";
-  }
-
-  // Bottom accent line
-  ctx.fillStyle = BRAND_GREEN_DARK;
-  ctx.fillRect(0, H - 4, W, 4);
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
-  });
-};
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lineH: number) {
-  const words = text.split(" ");
-  let line = "";
-  let cy = y;
-  for (const w of words) {
-    const test = line + w + " ";
-    if (ctx.measureText(test).width > maxW && line) {
-      ctx.fillText(line.trim(), x, cy);
-      line = w + " ";
-      cy += lineH;
-    } else {
-      line = test;
-    }
-  }
-  ctx.fillText(line.trim(), x, cy);
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-// ─── Multi-product 2x2 grid composite ───
-const CARD_STYLES = [
-  { headerColor: "#006B3F", headerColorEnd: "#004D2C", accent: "#009739", label: "A" },
-  { headerColor: "#002776", headerColorEnd: "#001A52", accent: "#0044CC", label: "B" },
-  { headerColor: "#B8860B", headerColorEnd: "#8B6508", accent: "#DAA520", label: "C" },
-  { headerColor: "#8B0000", headerColorEnd: "#5C0000", accent: "#CC0000", label: "D" },
-];
-
-const generateMultiProductComposite = async (
-  products: { name: string; price: number; originalPrice?: number | null; imageUrl: string | null; id: string }[],
-  text: any,
-  format: string,
-  logoSize: LogoSize = "medium",
-  customSlogan?: string,
-): Promise<Blob> => {
-  const isStory = format === "story_instagram";
-  const W = 1080;
-  const H = isStory ? 1920 : 1080;
-  const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-
-  const BRAND_GREEN = "#006B3F";
-  const BRAND_GREEN_DARK = "#004D2C";
-  const WHITE = "#ffffff";
-  const TEXT_DARK = "#1a1a1a";
-  const TEXT_GRAY = "#555555";
-
-  // ── Background ──
-  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-  bgGrad.addColorStop(0, "#f0f2f5");
-  bgGrad.addColorStop(0.5, "#e8edf2");
-  bgGrad.addColorStop(1, "#eaecf0");
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Subtle wave decorations
-  ctx.save();
-  ctx.globalAlpha = 0.06;
-  ctx.strokeStyle = BRAND_GREEN;
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 5; i++) {
-    ctx.beginPath();
-    ctx.moveTo(-50 + i * 90, 0);
-    ctx.bezierCurveTo(W * 0.3 + i * 30, H * 0.12, W * 0.6 - i * 20, H * 0.2, W + 50, H * 0.08 + i * 50);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Top accent line
-  ctx.fillStyle = BRAND_GREEN;
-  ctx.fillRect(0, 0, W, 6);
-
-  // ── Header: Logo + Contact ──
-  let logoEndY = 80;
-  try {
-    const logo = await loadImage(logoGrundemann);
-    const sizeMap = { small: 80, medium: 100, large: 130 };
-    const logoH = sizeMap[logoSize];
-    const logoW = (logo.width / logo.height) * logoH;
-    ctx.drawImage(logo, 35, 18, logoW, logoH);
-    logoEndY = 18 + logoH;
-  } catch {
-    ctx.fillStyle = BRAND_GREEN;
-    ctx.font = `bold 38px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("Gründemann", 35, 60);
-  }
-
-  ctx.save();
-  ctx.fillStyle = BRAND_GREEN_DARK;
-  ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "right";
-  ctx.fillText("51-981825748", W - 35, 45);
-  ctx.fillStyle = TEXT_GRAY;
-  ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
-  ctx.fillText("adair.grundemann@gmail.com", W - 35, 72);
-  ctx.textAlign = "left";
-  ctx.restore();
-
-  // Subtitle
-  ctx.save();
-  ctx.fillStyle = TEXT_GRAY;
-  ctx.font = `italic 20px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Oficina Geradores — peças: Diesel, gasolina, geradores e oficina", W / 2, logoEndY + 16);
-  ctx.textAlign = "left";
-  ctx.restore();
-
-  // Separator
-  const sepY = logoEndY + 30;
-  ctx.strokeStyle = BRAND_GREEN;
-  ctx.globalAlpha = 0.3;
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(50, sepY); ctx.lineTo(W - 50, sepY); ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  // Custom slogan
-  let sloganEndY = sepY + 10;
-  if (customSlogan) {
-    const sloganY = sepY + 8;
-    ctx.save();
-    ctx.fillStyle = "#002776";
-    ctx.globalAlpha = 0.85;
-    roundRect(ctx, 60, sloganY, W - 120, 40, 8);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = "#FFDF00";
-    ctx.font = `bold italic 22px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(customSlogan, W / 2, sloganY + 28);
-    ctx.textAlign = "left";
-    ctx.restore();
-    sloganEndY = sloganY + 52;
-  }
-
-  // ── Footer ──
-  const footerH = 60;
-  ctx.save();
-  ctx.fillStyle = BRAND_GREEN;
-  ctx.fillRect(0, H - footerH, W, footerH);
-  ctx.fillStyle = WHITE;
-  ctx.font = `bold 20px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, H - footerH + 24);
-  ctx.font = `18px 'Segoe UI', Arial, sans-serif`;
-  ctx.fillText("📞 (51) 98182-5748   •   ✉ adair.grundemann@gmail.com", W / 2, H - footerH + 48);
-  ctx.textAlign = "left";
-  ctx.restore();
-  ctx.fillStyle = BRAND_GREEN_DARK;
-  ctx.fillRect(0, H - 4, W, 4);
-
-  // ── 2x2 Grid area ──
-  const gridTop = sloganEndY + 8;
-  const gridBottom = H - footerH - 12;
-  const gridH = gridBottom - gridTop;
-  const gridW = W - 80;
-  const gridX = 40;
-  const gap = isStory ? 16 : 14;
-
-  const cols = 2;
-  const rows = 2;
-  const cellW = (gridW - gap) / cols;
-  const cellH = (gridH - gap) / rows;
-
-  const prods = products.slice(0, 4);
-  for (let i = 0; i < Math.min(prods.length, 4); i++) {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const cx = gridX + col * (cellW + gap);
-    const cy = gridTop + row * (cellH + gap);
-    const style = CARD_STYLES[i % CARD_STYLES.length];
-    const p = prods[i];
-
-    // Card shadow
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.12)";
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 4;
-    ctx.fillStyle = "#e0e3e8";
-    roundRect(ctx, cx, cy, cellW, cellH, 14);
-    ctx.fill();
-    ctx.restore();
-
-    // Card white body
-    ctx.fillStyle = WHITE;
-    roundRect(ctx, cx + 2, cy + 2, cellW - 4, cellH - 4, 12);
-    ctx.fill();
-
-    // Colored header bar
-    const barH = isStory ? 48 : 42;
-    ctx.save();
-    const barGrad = ctx.createLinearGradient(cx, cy, cx + cellW, cy);
-    barGrad.addColorStop(0, style.headerColorEnd);
-    barGrad.addColorStop(0.5, style.headerColor);
-    barGrad.addColorStop(1, style.headerColorEnd);
-    ctx.fillStyle = barGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx + 12, cy);
-    ctx.lineTo(cx + cellW - 12, cy);
-    ctx.quadraticCurveTo(cx + cellW, cy, cx + cellW, cy + 12);
-    ctx.lineTo(cx + cellW, cy + barH);
-    ctx.lineTo(cx, cy + barH);
-    ctx.lineTo(cx, cy + 12);
-    ctx.quadraticCurveTo(cx, cy, cx + 12, cy);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    // Product name in bar
-    ctx.save();
-    ctx.fillStyle = WHITE;
-    const nameFontSize = isStory ? 20 : 18;
-    ctx.font = `bold ${nameFontSize}px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    const displayName = p.name.length > 28 ? p.name.slice(0, 25) + "..." : p.name;
-    ctx.fillText(displayName, cx + cellW / 2, cy + barH - (isStory ? 14 : 12));
-    ctx.textAlign = "left";
-    ctx.restore();
-
-    // Product image
-    const imgAreaTop = cy + barH + 8;
-    const imgAreaH = cellH - barH - (isStory ? 130 : 110);
-    if (p.imageUrl) {
-      try {
-        const img = await loadImage(p.imageUrl);
-        const maxW = cellW - 30;
-        const maxH = imgAreaH;
-        const scale = Math.min(maxW / img.width, maxH / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        const dx = cx + (cellW - dw) / 2;
-        const dy = imgAreaTop + (imgAreaH - dh) / 2;
-        ctx.save();
-        ctx.shadowColor = "rgba(0,0,0,0.08)";
-        ctx.shadowBlur = 8;
-        ctx.shadowOffsetY = 3;
-        ctx.drawImage(img, dx, dy, dw, dh);
-        ctx.restore();
-      } catch { /* skip */ }
-    }
-
-    // Price area
-    const priceY = cy + cellH - (isStory ? 85 : 70);
-
-    if (p.originalPrice && p.originalPrice > p.price) {
-      ctx.save();
-      ctx.fillStyle = "#999";
-      ctx.font = `${isStory ? 16 : 14}px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "center";
-      const oldStr = `De R$ ${p.originalPrice.toFixed(2)}`;
-      ctx.fillText(oldStr, cx + cellW / 2, priceY - 4);
-      const tw = ctx.measureText(oldStr).width;
-      ctx.strokeStyle = "#999";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(cx + cellW / 2 - tw / 2, priceY - 8);
-      ctx.lineTo(cx + cellW / 2 + tw / 2, priceY - 8);
-      ctx.stroke();
-      ctx.textAlign = "left";
-      ctx.restore();
-    }
-
-    ctx.save();
-    ctx.fillStyle = TEXT_DARK;
-    ctx.font = `bold ${isStory ? 38 : 34}px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(`R$${p.price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, cx + cellW / 2, priceY + 28);
-    ctx.restore();
-
-    // Installments
-    ctx.save();
-    ctx.fillStyle = TEXT_GRAY;
-    ctx.font = `${isStory ? 14 : 13}px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(`3x R$ ${(p.price / 3).toFixed(2)} s/ juros`, cx + cellW / 2, priceY + 50);
-    ctx.textAlign = "left";
-    ctx.restore();
-
-    // Mini CTA strip at bottom of card
-    const ctaH = isStory ? 28 : 24;
-    const ctaY = cy + cellH - ctaH - 2;
-    ctx.save();
-    const ctaGrad = ctx.createLinearGradient(cx, ctaY, cx + cellW, ctaY);
-    ctaGrad.addColorStop(0, style.headerColorEnd);
-    ctaGrad.addColorStop(0.5, style.accent);
-    ctaGrad.addColorStop(1, style.headerColorEnd);
-    ctx.fillStyle = ctaGrad;
-    ctx.beginPath();
-    ctx.moveTo(cx, ctaY);
-    ctx.lineTo(cx + cellW, ctaY);
-    ctx.lineTo(cx + cellW, cy + cellH - 12);
-    ctx.quadraticCurveTo(cx + cellW, cy + cellH, cx + cellW - 12, cy + cellH);
-    ctx.lineTo(cx + 12, cy + cellH);
-    ctx.quadraticCurveTo(cx, cy + cellH, cx, cy + cellH - 12);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    ctx.save();
-    ctx.fillStyle = WHITE;
-    ctx.font = `bold ${isStory ? 14 : 13}px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText("☎ COMPRAR", cx + cellW / 2, ctaY + (isStory ? 19 : 17));
-    ctx.textAlign = "left";
-    ctx.restore();
-  }
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
-  });
-};
 
 // ─── Calendar helpers ───
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -906,7 +125,7 @@ const MarketingCenter = () => {
   const [genInstructions, setGenInstructions] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generatedText, setGeneratedText] = useState<any>(null);
-  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>("creative");
+  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>("ai_pro");
   const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
@@ -942,65 +161,46 @@ const MarketingCenter = () => {
 
   const selectedProducts = products.filter(p => selectedProductIds.has(p.id));
 
-  // Generate composite whenever text changes
+  // Generate AI creative when entering preview step
   useEffect(() => {
-    if (generatedText && wizardStep >= 3) {
+    if (generatedText && wizardStep >= 3 && !compositeUrl && !generatingComposite) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta, customSlogan, aiBgUrl, layoutMode]);
+  }, [generatedText, wizardStep]);
 
-  const generateAiBackground = async () => {
-    setGeneratingAiBg(true);
+  const buildComposite = async () => {
+    if (!generatedText) return;
+    setGeneratingComposite(true);
+    setCompositeBlob(null);
+    if (compositeUrl) URL.revokeObjectURL(compositeUrl);
+    setCompositeUrl(null);
     try {
-      const product = selectedProducts[0];
-      const { data, error } = await supabase.functions.invoke("generate-ai-background", {
+      const prods = selectedProducts.map(p => ({
+        name: p.name, price: p.price, originalPrice: p.original_price,
+        imageUrl: p.image_url, description: p.description, id: p.id,
+      }));
+      const { data, error } = await supabase.functions.invoke("generate-creative-image", {
         body: {
-          productName: product?.name || "peças industriais",
-          category: product?.category_id ? getCategoryName(product.category_id) : "motores",
+          products: prods,
           format: genFormat,
+          campaignType: genCampaignType,
+          customSlogan,
+          customCta: customCta || generatedText?.cta || "CONFIRA JÁ",
+          layoutMode,
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.image_url) {
-        setAiBgUrl(data.image_url);
-        toast({ title: "🎨 Fundo IA gerado!", description: "O fundo personalizado foi criado com sucesso." });
+        const resp = await fetch(data.image_url);
+        const blob = await resp.blob();
+        setCompositeBlob(blob);
+        setCompositeUrl(URL.createObjectURL(blob));
+        toast({ title: "🎨 Arte criativa gerada com IA!", description: "Design profissional criado com sucesso." });
       }
     } catch (err: any) {
-      toast({ title: "Erro ao gerar fundo IA", description: err.message, variant: "destructive" });
-    } finally {
-      setGeneratingAiBg(false);
-    }
-  };
-
-  const buildComposite = async () => {
-    if (!generatedText) return;
-    if (backgroundStyle === "ai" && !aiBgUrl) return;
-    setGeneratingComposite(true);
-    try {
-      let blob: Blob;
-      if (layoutMode === "grid2x2" && selectedProducts.length >= 2) {
-        const prods = selectedProducts.slice(0, 4).map(p => ({
-          name: p.name, price: p.price, originalPrice: p.original_price,
-          imageUrl: p.image_url, id: p.id,
-        }));
-        blob = await generateMultiProductComposite(prods, generatedText, genFormat, logoSize, customSlogan);
-      } else {
-        const product = selectedProducts[0];
-        const imgSrc = product?.image_url || null;
-        const productUrl = product ? getProductUrl(product.id) : undefined;
-        const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
-        blob = await generateCompositeImage(
-          imgSrc, textWithCta, genFormat, backgroundStyle,
-          productUrl, product?.price, product?.original_price, product?.name, logoSize,
-          customSlogan, aiBgUrl,
-        );
-      }
-      setCompositeBlob(blob);
-      if (compositeUrl) URL.revokeObjectURL(compositeUrl);
-      setCompositeUrl(URL.createObjectURL(blob));
-    } catch (err) {
-      console.error("Composite error:", err);
+      console.error("AI Creative error:", err);
+      toast({ title: "Erro ao gerar arte", description: err.message, variant: "destructive" });
     } finally {
       setGeneratingComposite(false);
     }
@@ -1270,7 +470,7 @@ const MarketingCenter = () => {
     setPublishPlatforms(new Set(["instagram"]));
     setScheduleDate("");
     setPublishMode("save");
-    setBackgroundStyle("creative");
+    setBackgroundStyle("ai_pro");
     setCustomCta("");
     setCustomSlogan("");
     setLogoSize("medium");
@@ -1316,16 +516,25 @@ const MarketingCenter = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Generate composite image for the auto-generated ad
+      // Generate AI creative image for the auto-generated ad
       let creativeImageUrl = product.image_url || null;
       try {
-        const compositeBlob = await generateCompositeImage(
-          product.image_url, data, "post_instagram", "creative",
-          getProductUrl(product.id), product.price, product.original_price, product.name, "medium",
-        );
-        const filename = `creative-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
-        const uploadedUrl = await uploadCompositeToStorage(compositeBlob, filename);
-        if (uploadedUrl) creativeImageUrl = uploadedUrl;
+        const { data: imgData, error: imgError } = await supabase.functions.invoke("generate-creative-image", {
+          body: {
+            products: [{ name: product.name, price: product.price, originalPrice: product.original_price, imageUrl: product.image_url, description: product.description, id: product.id }],
+            format: "post_instagram",
+            campaignType: product.stock_quantity > 20 ? "high_stock" : "promotion",
+            customCta: data.cta || "CONFIRA JÁ",
+            layoutMode: "single",
+          },
+        });
+        if (!imgError && imgData?.image_url) {
+          const resp = await fetch(imgData.image_url);
+          const blob = await resp.blob();
+          const filename = `creative-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+          const uploadedUrl = await uploadCompositeToStorage(blob, filename);
+          if (uploadedUrl) creativeImageUrl = uploadedUrl;
+        }
       } catch (compErr) {
         console.error("Auto composite error:", compErr);
       }
@@ -1696,37 +905,16 @@ const MarketingCenter = () => {
                       )}
                     </div>
 
-                    {/* Background Style */}
+                    {/* AI Creative Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
-                        <Palette className="h-4 w-4 text-primary" /> Estilo do Criativo
+                        <Sparkles className="h-4 w-4 text-primary" /> Estilo do Criativo
                       </Label>
                       <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
-                        <p className="text-sm font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
+                        <p className="text-sm font-semibold text-primary">🤖 Arte Gerada por IA Profissional</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {layoutMode === "grid2x2"
-                            ? "Grid com 4 cards coloridos (verde, azul, dourado, vermelho), cada um com foto, preço e botão COMPRAR."
-                            : "Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca."}
+                          A IA criará uma arte publicitária profissional com fundo industrial dramático, iluminação cinematográfica, preços em destaque dourado e a foto original do produto em alta qualidade. Estilo inspirado em anúncios premium de peças industriais.
                         </p>
-                      </div>
-                    </div>
-
-                    {/* Logo Size */}
-                    <div className="space-y-3">
-                      <Label className="font-semibold flex items-center gap-2">
-                        <Image className="h-4 w-4 text-primary" /> Tamanho do Logo
-                      </Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {([
-                          { key: "small" as LogoSize, label: "Pequeno" },
-                          { key: "medium" as LogoSize, label: "Médio" },
-                          { key: "large" as LogoSize, label: "Grande" },
-                        ]).map(s => (
-                          <button key={s.key} onClick={() => setLogoSize(s.key)}
-                            className={`p-3 rounded-lg border-2 text-center transition-all ${logoSize === s.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                            <p className={`text-sm font-semibold ${logoSize === s.key ? "text-primary" : ""}`}>{s.label}</p>
-                          </button>
-                        ))}
                       </div>
                     </div>
 
@@ -1777,7 +965,7 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: Grundemann Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
+                  <p className="text-sm">🎨 Estilo: Arte IA Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
                   {customSlogan && <p className="text-sm">📢 Slogan: {customSlogan}</p>}
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
@@ -1822,13 +1010,14 @@ const MarketingCenter = () => {
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Image className="h-5 w-5 text-primary" /> Arte Final
                     </CardTitle>
-                    <CardDescription>A imagem do produto está preservada sem alterações. O fundo é gerado automaticamente baseado no tipo de produto.</CardDescription>
+                    <CardDescription>A IA cria uma arte publicitária profissional com fundo dramático, iluminação cinematográfica e a foto do produto em destaque.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {generatingComposite ? (
-                      <div className="flex flex-col items-center justify-center py-16 gap-3">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">Montando arte final...</p>
+                      <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                        <p className="text-sm font-medium text-foreground">🤖 Gerando arte profissional com IA...</p>
+                        <p className="text-xs text-muted-foreground text-center max-w-xs">A IA está criando um design exclusivo com fundo industrial, tipografia premium e a foto do seu produto. Isso pode levar alguns segundos.</p>
                       </div>
                     ) : compositeUrl ? (
                       <div className="space-y-3">
@@ -1855,34 +1044,15 @@ const MarketingCenter = () => {
                       </div>
                     )}
 
-                    {/* Style info */}
+                    {/* AI info */}
                     <div className="p-3 rounded-lg border bg-primary/5">
-                      <p className="text-xs font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
+                      <p className="text-xs font-semibold text-primary">🤖 Arte gerada por IA profissional</p>
+                      <p className="text-xs text-muted-foreground mt-1">Clique em "Gerar Novamente" para criar uma nova variação da arte.</p>
                     </div>
 
-                    {/* Logo size in preview */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Tamanho do Logo</Label>
-                      <div className="flex gap-2">
-                        {(["small", "medium", "large"] as LogoSize[]).map(s => (
-                          <Button key={s} size="sm" variant={logoSize === s ? "default" : "outline"} onClick={() => setLogoSize(s)}>
-                            {s === "small" ? "P" : s === "medium" ? "M" : "G"}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Custom Slogan in preview */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Slogan / Mensagem</Label>
-                      <Input size={1} value={customSlogan} onChange={e => setCustomSlogan(e.target.value)} placeholder="Ex: Qualidade que move o Brasil!" className="h-8 text-xs" />
-                    </div>
-
-                    {/* Custom CTA in preview */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Texto do CTA</Label>
-                      <Input size={1} value={customCta} onChange={e => setCustomCta(e.target.value)} placeholder={generatedText?.cta || "COMPRE AGORA"} className="h-8 text-xs" />
-                    </div>
+                    <Button onClick={buildComposite} disabled={generatingComposite} variant="outline" className="w-full gap-2">
+                      <RefreshCw className={`h-4 w-4 ${generatingComposite ? "animate-spin" : ""}`} /> Gerar Nova Variação
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -1952,7 +1122,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Estilo: Grundemann Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
+                  <p className="text-sm">🎨 Estilo: Arte IA Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
