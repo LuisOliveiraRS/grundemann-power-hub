@@ -1392,23 +1392,35 @@ const MarketingCenter = () => {
                       <Label className="font-semibold flex items-center gap-2">
                         <Palette className="h-4 w-4 text-primary" /> Estilo do Fundo
                       </Label>
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setBackgroundStyle("white")}
-                          className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
                           <div className="w-10 h-10 rounded bg-white border shrink-0 flex items-center justify-center"><Package className="h-5 w-5 text-muted-foreground" /></div>
                           <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Fundo Branco</p>
-                            <p className="text-xs text-muted-foreground">Estilo catálogo limpo e profissional</p>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Branco</p>
+                            <p className="text-xs text-muted-foreground">Catálogo limpo</p>
                           </div>
                         </button>
                         <button onClick={() => setBackgroundStyle("creative")}
-                          className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
                           <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-700 to-slate-800 shrink-0 flex items-center justify-center"><Sparkles className="h-5 w-5 text-amber-200" /></div>
                           <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Arte Criativa</p>
-                            <p className="text-xs text-muted-foreground">Fundo temático relacionado ao produto com cores dinâmicas</p>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Criativo</p>
+                            <p className="text-xs text-muted-foreground">Gradiente industrial</p>
                           </div>
                         </button>
+                        {Object.entries(bgPhotoMap).map(([key, info]) => (
+                          <button key={key} onClick={() => setBackgroundStyle(key as BackgroundStyle)}
+                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                            <div className="w-10 h-10 rounded shrink-0 overflow-hidden border">
+                              <img src={info.landscape} alt={info.label} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <p className={`text-sm font-semibold ${backgroundStyle === key ? "text-primary" : ""}`}>{info.emoji} {info.label}</p>
+                              <p className="text-xs text-muted-foreground">Foto industrial</p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
