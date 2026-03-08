@@ -38,13 +38,25 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const { products, format, campaignType, customSlogan, customCta, layoutMode, creativeStyle = "dark_industrial" } = await req.json();
+    const { products, format, campaignType, customSlogan, customCta, layoutMode, creativeStyle = "dark_industrial", customColors } = await req.json();
 
     if (!products || products.length === 0) throw new Error("Nenhum produto fornecido");
 
     const isStory = format === "story_instagram";
     const isGrid = layoutMode === "grid2x2" && products.length >= 2;
-    const style = STYLE_CONFIGS[creativeStyle as keyof typeof STYLE_CONFIGS] || STYLE_CONFIGS.dark_industrial;
+
+    let style: any;
+    if (creativeStyle === "custom" && customColors) {
+      style = {
+        background: `Background using these colors: main background ${customColors.background}, with subtle atmospheric effects. Accent color ${customColors.accent} for borders and decorative elements`,
+        colors: `Background: ${customColors.background}, Accent/borders: ${customColors.accent}, Price text: ${customColors.priceColor}, Body text: ${customColors.textColor}, Card backgrounds: ${customColors.cardBg}`,
+        feel: "Professional, custom-branded commercial design. High contrast, clean layout with premium feel. Commercial photography quality",
+        priceColor: `VERY LARGE bold ${customColors.priceColor}`,
+        cardBg: `cards with background color ${customColors.cardBg} and ${customColors.accent} accent borders`,
+      };
+    } else {
+      style = STYLE_CONFIGS[creativeStyle as keyof typeof STYLE_CONFIGS] || STYLE_CONFIGS.dark_industrial;
+    }
 
     let prompt: string;
 
