@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Star, Gift, Trophy, Zap, Clock, CheckCircle, Award } from "lucide-react";
+import { Star, Gift, Trophy, Zap, Clock, CheckCircle, Award, Ticket } from "lucide-react";
 
 interface PointEntry {
   id: string;
