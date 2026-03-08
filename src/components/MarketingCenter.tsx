@@ -195,6 +195,7 @@ const MarketingCenter = () => {
           customSlogan,
           customCta: customCta || generatedText?.cta || "CONFIRA JÁ",
           layoutMode,
+          creativeStyle,
         },
       });
       if (error) throw error;
