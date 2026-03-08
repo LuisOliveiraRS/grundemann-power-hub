@@ -117,6 +117,7 @@ const generateCompositeImage = async (
   price?: number,
   originalPrice?: number | null,
   productName?: string,
+  logoSize: LogoSize = "medium",
 ): Promise<Blob> => {
   const isStory = format === "story_instagram";
   const W = 1080;
