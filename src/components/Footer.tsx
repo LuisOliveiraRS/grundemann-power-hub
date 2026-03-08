@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <img src={logo} alt="Gründemann Geradores" className="h-28 w-auto brightness-0 invert" />
+            <img src={logo} alt="Gründemann Geradores" className="h-28 w-auto" />
             <p className="mt-4 text-sm leading-relaxed">
               Especialistas em geradores diesel e gasolina. Venda de peças, manutenção preventiva e corretiva.
             </p>
