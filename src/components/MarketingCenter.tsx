@@ -1186,7 +1186,6 @@ const MarketingCenter = () => {
                   <Textarea value={genInstructions} onChange={e => setGenInstructions(e.target.value)}
                     placeholder="Ex: Usar tom urgente, mencionar frete grátis, destacar garantia de 1 ano..." rows={3} className="mt-2" />
                 </div>
-                </div>
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setWizardStep(0)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
                   <Button onClick={() => setWizardStep(2)} className="gap-2">Gerar Conteúdo <ArrowRight className="h-4 w-4" /></Button>
