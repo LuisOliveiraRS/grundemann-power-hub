@@ -1287,13 +1287,31 @@ const MarketingCenter = () => {
                     )}
 
                     {/* Style toggle */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1">
                         <Sparkles className="h-3 w-3" /> Criativo
                       </Button>
                       <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1">
                         <Package className="h-3 w-3" /> Branco
                       </Button>
+                    </div>
+
+                    {/* Logo size in preview */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Tamanho do Logo</Label>
+                      <div className="flex gap-2">
+                        {(["small", "medium", "large"] as LogoSize[]).map(s => (
+                          <Button key={s} size="sm" variant={logoSize === s ? "default" : "outline"} onClick={() => setLogoSize(s)}>
+                            {s === "small" ? "P" : s === "medium" ? "M" : "G"}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom CTA in preview */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Texto do CTA</Label>
+                      <Input size={1} value={customCta} onChange={e => setCustomCta(e.target.value)} placeholder={generatedText?.cta || "COMPRE AGORA"} className="h-8 text-xs" />
                     </div>
                   </CardContent>
                 </Card>
