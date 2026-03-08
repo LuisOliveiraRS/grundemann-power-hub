@@ -24,6 +24,7 @@ import ProductImport from "./pages/ProductImport";
 import MLExport from "./pages/MLExport";
 import SellerDashboard from "./pages/SellerDashboard";
 import QuoteRequest from "./pages/QuoteRequest";
+import MechanicArea from "./pages/MechanicArea";
 
 const queryClient = new QueryClient();
 
