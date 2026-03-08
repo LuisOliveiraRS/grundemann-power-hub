@@ -58,6 +58,39 @@ const quoteStatusLabel: Record<string, string> = {
   pending: "Pendente", reviewing: "Em Análise", quoted: "Orçado", accepted: "Aceito", rejected: "Rejeitado",
 };
 
+const paymentStatusLabel: Record<string, string> = {
+  pending: "Pendente", approved: "Aprovado", rejected: "Rejeitado",
+  cancelled: "Cancelado", refunded: "Reembolsado",
+};
+const paymentStatusColor: Record<string, string> = {
+  pending: "bg-accent/20 text-accent-foreground border-accent/30",
+  approved: "bg-primary text-primary-foreground border-primary",
+  rejected: "bg-destructive/10 text-destructive border-destructive/20",
+  cancelled: "bg-muted text-muted-foreground border-border",
+  refunded: "bg-secondary/10 text-secondary-foreground border-secondary/20",
+};
+const paymentStatusIcon: Record<string, any> = {
+  pending: Clock, approved: CheckCircle, rejected: XCircle,
+  cancelled: XCircle, refunded: RefreshCw,
+};
+const paymentMethodLabel: Record<string, string> = {
+  credit_card: "Cartão de Crédito", debit_card: "Cartão de Débito",
+  pix: "PIX", bolbradesco: "Boleto", ticket: "Boleto",
+  bank_transfer: "Transferência",
+};
+const mpStatusDetailLabel: Record<string, string> = {
+  accredited: "Pagamento aprovado",
+  pending_contingency: "Processando pagamento",
+  pending_review_manual: "Em análise manual",
+  cc_rejected_other_reason: "Cartão recusado",
+  cc_rejected_call_for_authorize: "Cartão requer autorização",
+  cc_rejected_insufficient_amount: "Saldo insuficiente",
+  cc_rejected_bad_filled_security_code: "Código de segurança inválido",
+  cc_rejected_bad_filled_date: "Data de validade inválida",
+  cc_rejected_bad_filled_other: "Dados incorretos",
+  pending_waiting_payment: "Aguardando pagamento",
+  pending_waiting_transfer: "Aguardando transferência",
+};
 const ClientDashboard = () => {
   const { user, signOut } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
