@@ -26,7 +26,7 @@ const CategoriesSection = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data: cats } = await supabase.from("categories").select("*").order("name");
+      const { data: cats } = await supabase.from("categories").select("*").eq("is_visible", true).order("name");
       if (cats && cats.length > 0) {
         // Get product counts
         const { data: products } = await supabase.from("products").select("category_id").eq("is_active", true);
