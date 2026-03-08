@@ -118,18 +118,18 @@ const HeroSection = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="hidden lg:flex items-center justify-center relative"
+            className="flex items-center justify-center relative mt-6 lg:mt-0"
           >
             {/* Glow effect */}
-            <div className="absolute w-80 h-80 rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute w-60 h-60 lg:w-80 lg:h-80 rounded-full bg-primary/10 blur-3xl" />
 
             {current ? (
               <div
-                className="relative z-10 w-80 cursor-pointer group"
+                className="relative z-10 w-full max-w-[280px] lg:max-w-[320px] cursor-pointer group"
                 onClick={() => navigate(`/produto/${current.id}`)}
               >
                 {/* Product card */}
-                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-6 overflow-hidden">
+                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-4 lg:p-6 overflow-hidden">
                   {/* Discount badge */}
                   {current.original_price && current.original_price > current.price && (
                     <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-accent text-accent-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
@@ -146,7 +146,7 @@ const HeroSection = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.5 }}
-                      className="flex items-center justify-center h-56 mb-4"
+                      className="flex items-center justify-center h-40 lg:h-56 mb-3 lg:mb-4"
                     >
                       <img
                         src={current.image_url || "/placeholder.svg"}
@@ -172,7 +172,7 @@ const HeroSection = () => {
                       </h3>
                       <div className="flex items-center justify-center gap-3">
                         {current.original_price && current.original_price > current.price && (
-                          <span className="text-background/40 line-through text-sm">
+                          <span className="text-background/60 line-through text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
                             R$ {current.original_price.toFixed(2).replace(".", ",")}
                           </span>
                         )}
