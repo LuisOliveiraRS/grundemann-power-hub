@@ -103,6 +103,15 @@ const LoyaltyProgram = () => {
     if (data) setRedemptions(data as Redemption[]);
   };
 
+  const loadCoupons = async () => {
+    const { data } = await supabase
+      .from("discount_coupons")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false });
+    if (data) setCoupons(data as Coupon[]);
+  };
+
   const redeemReward = async (reward: Reward) => {
     if (totalPoints < reward.points_required) {
       toast({ title: "Pontos insuficientes", description: `Você precisa de ${reward.points_required} pontos.`, variant: "destructive" });
