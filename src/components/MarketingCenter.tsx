@@ -622,6 +622,7 @@ const MarketingCenter = () => {
   const [logoSize, setLogoSize] = useState<LogoSize>("medium");
   const [aiBgUrl, setAiBgUrl] = useState<string | null>(null);
   const [generatingAiBg, setGeneratingAiBg] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>("single");
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
