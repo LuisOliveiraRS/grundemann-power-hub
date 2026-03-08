@@ -13,6 +13,7 @@ import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import LoyaltyProgram from "@/components/LoyaltyProgram";
 
 interface Profile {
   full_name: string; email: string; phone: string;
