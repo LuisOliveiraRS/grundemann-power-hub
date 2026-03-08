@@ -92,30 +92,6 @@ const WIZARD_STEPS = [
 ];
 
 import logoGrundemann from "@/assets/logo-grundemann.png";
-import bgOficina from "@/assets/bg-oficina.jpg";
-import bgGeradores from "@/assets/bg-geradores.jpg";
-import bgPecas from "@/assets/bg-pecas.jpg";
-import bgPremium from "@/assets/bg-premium.jpg";
-import bgOficinaStory from "@/assets/bg-oficina-story.jpg";
-import bgGeradoresStory from "@/assets/bg-geradores-story.jpg";
-import bgPecasStory from "@/assets/bg-pecas-story.jpg";
-import bgPremiumStory from "@/assets/bg-premium-story.jpg";
-import bgManutencao from "@/assets/bg-manutencao.jpg";
-import bgManutencaoStory from "@/assets/bg-manutencao-story.jpg";
-import bgFerramentas from "@/assets/bg-ferramentas.jpg";
-import bgFerramentasStory from "@/assets/bg-ferramentas-story.jpg";
-import bgFabrica from "@/assets/bg-fabrica.jpg";
-import bgFabricaStory from "@/assets/bg-fabrica-story.jpg";
-
-const bgPhotoMap: Record<string, { landscape: string; story: string; label: string; emoji: string }> = {
-  oficina: { landscape: bgOficina, story: bgOficinaStory, label: "Oficina", emoji: "🔧" },
-  geradores: { landscape: bgGeradores, story: bgGeradoresStory, label: "Geradores", emoji: "⚡" },
-  pecas: { landscape: bgPecas, story: bgPecasStory, label: "Peças", emoji: "⚙️" },
-  premium: { landscape: bgPremium, story: bgPremiumStory, label: "Premium", emoji: "✨" },
-  manutencao: { landscape: bgManutencao, story: bgManutencaoStory, label: "Manutenção", emoji: "🚗" },
-  ferramentas: { landscape: bgFerramentas, story: bgFerramentasStory, label: "Ferramentas", emoji: "🔨" },
-  fabrica: { landscape: bgFabrica, story: bgFabricaStory, label: "Fábrica", emoji: "🏭" },
-};
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -131,7 +107,7 @@ const getProductUrl = (productId: string) => {
   return `${base}/produto/${productId}`;
 };
 
-// ─── Canvas composite: professional commercial design inspired by reference ───
+// ─── Canvas composite: professional commercial design matching Grundemann reference ───
 const generateCompositeImage = async (
   imageUrl: string | null,
   text: any,
@@ -153,541 +129,436 @@ const generateCompositeImage = async (
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  const BRAND_GREEN = "#009739";
+  const BRAND_GREEN = "#006B3F";
+  const BRAND_GREEN_DARK = "#004D2C";
+  const BRAND_GREEN_LIGHT = "#009739";
   const BRAND_BLUE = "#002776";
   const BRAND_GOLD = "#FFDF00";
-  const DARK_BG = "#1a1a1a";
-  const WARM_DARK = "#2a1f14";
+  const CARD_BG = "#e8ecef";
+  const CARD_SHADOW = "rgba(0,0,0,0.15)";
+  const TEXT_DARK = "#1a1a1a";
+  const TEXT_GRAY = "#555555";
+  const WHITE = "#ffffff";
 
-  // ── BACKGROUND ──
-  if (bgStyle === "white") {
-    ctx.fillStyle = "#f2f2f2";
-    ctx.fillRect(0, 0, W, H);
-    const wg = ctx.createLinearGradient(0, 0, W, H);
-    wg.addColorStop(0, "rgba(255,255,255,0.9)");
-    wg.addColorStop(1, "rgba(230,230,230,0.9)");
-    ctx.fillStyle = wg;
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = BRAND_GREEN;
-    ctx.lineWidth = 5;
-    ctx.strokeRect(8, 8, W - 16, H - 16);
-    ctx.strokeStyle = BRAND_GOLD;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(14, 14, W - 28, H - 28);
-  } else if (bgStyle === "ai" && aiBgDataUrl) {
-    // ── AI-GENERATED BACKGROUND ──
-    try {
-      const bgImg = await loadImage(aiBgDataUrl);
-      ctx.drawImage(bgImg, 0, 0, W, H);
-      // Subtle overlay for text readability
-      const overlay = ctx.createLinearGradient(0, 0, W * 0.5, H);
-      overlay.addColorStop(0, "rgba(0,0,0,0.65)");
-      overlay.addColorStop(0.5, "rgba(0,0,0,0.40)");
-      overlay.addColorStop(1, "rgba(0,0,0,0.25)");
-      ctx.fillStyle = overlay;
-      ctx.fillRect(0, 0, W, H);
-    } catch {
-      ctx.fillStyle = "#0d0d0d";
-      ctx.fillRect(0, 0, W, H);
-    }
-  } else if (bgPhotoMap[bgStyle]) {
-    // ── PHOTO BACKGROUND ──
-    try {
-      const bgInfo = bgPhotoMap[bgStyle];
-      const bgSrc = isStory ? bgInfo.story : bgInfo.landscape;
-      const bgImg = await loadImage(bgSrc);
-      ctx.drawImage(bgImg, 0, 0, W, H);
-      // Dark overlay for text readability
-      const overlay = ctx.createLinearGradient(0, 0, W * 0.6, H);
-      overlay.addColorStop(0, "rgba(0,0,0,0.75)");
-      overlay.addColorStop(0.5, "rgba(0,0,0,0.55)");
-      overlay.addColorStop(1, "rgba(0,0,0,0.35)");
-      ctx.fillStyle = overlay;
-      ctx.fillRect(0, 0, W, H);
-    } catch {
-      // Fallback to dark gradient
-      ctx.fillStyle = "#0d0d0d";
-      ctx.fillRect(0, 0, W, H);
-    }
-  } else {
-    // Rich dark industrial background like reference images
-    const grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
-    grad.addColorStop(0, "#0d0d0d");
-    grad.addColorStop(0.3, "#1a1510");
-    grad.addColorStop(0.6, "#1a1a1a");
-    grad.addColorStop(1, "#0a0a12");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
+  // ══════════ BACKGROUND: Light silver gradient with subtle green wave curves ══════════
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0, "#f0f2f5");
+  bgGrad.addColorStop(0.3, "#e8edf2");
+  bgGrad.addColorStop(0.6, "#f2f4f6");
+  bgGrad.addColorStop(1, "#eaecf0");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
 
-    // Warm industrial texture overlay
-    const texGrad = ctx.createRadialGradient(W * 0.7, H * 0.4, 50, W * 0.7, H * 0.4, W * 0.6);
-    texGrad.addColorStop(0, "rgba(60,40,20,0.35)");
-    texGrad.addColorStop(0.5, "rgba(40,30,15,0.2)");
-    texGrad.addColorStop(1, "transparent");
-    ctx.fillStyle = texGrad;
-    ctx.fillRect(0, 0, W, H);
+  // Subtle wave decorations (green curves like reference)
+  ctx.save();
+  ctx.globalAlpha = 0.07;
+  ctx.strokeStyle = BRAND_GREEN;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-50 + i * 80, 0);
+    ctx.bezierCurveTo(W * 0.2 + i * 40, H * 0.15, W * 0.5 - i * 30, H * 0.25, W + 50, H * 0.1 + i * 60);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-50, H * 0.7 + i * 50);
+    ctx.bezierCurveTo(W * 0.3, H * 0.65 + i * 40, W * 0.7, H * 0.8 + i * 30, W + 50, H * 0.75 + i * 50);
+    ctx.stroke();
+  }
+  ctx.restore();
 
-    // Subtle diagonal light sweep (top-left to center)
-    const sweepGrad = ctx.createLinearGradient(0, 0, W * 0.5, H * 0.3);
-    sweepGrad.addColorStop(0, "rgba(200,180,140,0.08)");
-    sweepGrad.addColorStop(0.5, "rgba(200,180,140,0.03)");
-    sweepGrad.addColorStop(1, "transparent");
-    ctx.fillStyle = sweepGrad;
-    ctx.fillRect(0, 0, W, H);
+  // Thin green accent line at very top
+  ctx.fillStyle = BRAND_GREEN;
+  ctx.fillRect(0, 0, W, 6);
 
-    // Decorative curved lines (like reference)
-    ctx.save();
-    ctx.globalAlpha = 0.06;
-    ctx.strokeStyle = "rgba(200,180,140,0.5)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.moveTo(W * 0.3 + i * 60, 0);
-      ctx.quadraticCurveTo(W * 0.6 + i * 30, H * 0.3, W * 0.9, H * 0.1 + i * 40);
-      ctx.stroke();
-    }
-    ctx.restore();
+  // ══════════ HEADER AREA ══════════
+  const headerH = isStory ? 280 : 200;
 
-    // Bottom gradient bar
-    const bottomGrad = ctx.createLinearGradient(0, H - 120, 0, H);
-    bottomGrad.addColorStop(0, "transparent");
-    bottomGrad.addColorStop(1, "rgba(0,0,0,0.6)");
-    ctx.fillStyle = bottomGrad;
-    ctx.fillRect(0, H - 120, W, 120);
+  // Logo (top-left)
+  let logoEndY = 80;
+  try {
+    const logo = await loadImage(logoGrundemann);
+    const sizeMap = { small: 90, medium: 120, large: 160 };
+    const logoH = sizeMap[logoSize];
+    const logoW = (logo.width / logo.height) * logoH;
+    const logoX = 40;
+    const logoY = 22;
+    ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+    logoEndY = logoY + logoH;
+  } catch {
+    ctx.fillStyle = BRAND_GREEN;
+    ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("Gründemann", 40, 70);
+    logoEndY = 80;
   }
 
-  // Top accent bars
-  ctx.fillStyle = BRAND_GREEN;
-  ctx.fillRect(0, 0, W, 5);
-  const goldBarGrad = ctx.createLinearGradient(0, 5, W, 5);
-  goldBarGrad.addColorStop(0, BRAND_GOLD);
-  goldBarGrad.addColorStop(0.5, "#c9a800");
-  goldBarGrad.addColorStop(1, BRAND_GOLD);
-  ctx.fillStyle = goldBarGrad;
-  ctx.fillRect(0, 5, W, 3);
+  // Contact info (top-right)
+  ctx.save();
+  ctx.fillStyle = BRAND_GREEN_DARK;
+  ctx.font = `bold 30px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText("51-981825748", W - 40, 50);
+  ctx.fillStyle = TEXT_GRAY;
+  ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+  ctx.fillText("adair.grundemann@gmail.com", W - 40, 82);
+  ctx.textAlign = "left";
+  ctx.restore();
 
-  // ── LAYOUT: For landscape (1080x1080), use split layout like references ──
-  // Left side: branding + text + price | Right side: product image
-  const isLandscape = !isStory;
+  // Subtitle line
+  ctx.save();
+  ctx.fillStyle = TEXT_GRAY;
+  ctx.font = `italic 22px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Oficina Geradores — peças: Diesel, gasolina, geradores e oficina", W / 2, logoEndY + 20);
+  ctx.restore();
 
-  if (isLandscape) {
-    // ═══ SPLIT LAYOUT (landscape) ═══
-    const leftW = W * 0.5;
-    const rightW = W * 0.5;
+  // Address line
+  const addrY = logoEndY + 50;
+  ctx.save();
+  ctx.fillStyle = TEXT_DARK;
+  ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, addrY);
+  ctx.textAlign = "left";
+  ctx.restore();
 
-    // ── Logo (top-left, LARGE) ──
-    try {
-      const logo = await loadImage(logoGrundemann);
-      const sizeMap = { small: 130, medium: 180, large: 240 };
-      const logoH = sizeMap[logoSize];
-      const logoW = (logo.width / logo.height) * logoH;
-      const logoX = 40;
-      const logoY = 25;
-      // Subtle dark backing for logo
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.4)";
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 20;
-      roundRect(ctx, logoX - 12, logoY - 8, logoW + 24, logoH + 16, 12);
-      ctx.fill();
-      ctx.restore();
-      ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-    } catch {
-      ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 40px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText("GRÜNDEMANN", 50, 70);
+  // Separator line
+  ctx.strokeStyle = BRAND_GREEN;
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, addrY + 18);
+  ctx.lineTo(W - 60, addrY + 18);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  const contentStartY = addrY + 35;
+  const footerH = 65;
+  const contentEndY = H - footerH - 10;
+  const contentH = contentEndY - contentStartY;
+
+  // ══════════ PRODUCT CARD ══════════
+  const cardPad = isStory ? 40 : 50;
+  const cardX = cardPad;
+  const cardY = contentStartY;
+  const cardW = W - cardPad * 2;
+  const cardH = contentH;
+
+  // Card shadow
+  ctx.save();
+  ctx.shadowColor = CARD_SHADOW;
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetX = 4;
+  ctx.shadowOffsetY = 6;
+  ctx.fillStyle = CARD_BG;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 18);
+  ctx.fill();
+  ctx.restore();
+
+  // Card white inner
+  ctx.fillStyle = WHITE;
+  roundRect(ctx, cardX + 3, cardY + 3, cardW - 6, cardH - 6, 16);
+  ctx.fill();
+
+  // ── Green header bar with product name ──
+  const greenBarH = isStory ? 65 : 55;
+  ctx.save();
+  const gBarGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY);
+  gBarGrad.addColorStop(0, BRAND_GREEN_DARK);
+  gBarGrad.addColorStop(0.5, BRAND_GREEN);
+  gBarGrad.addColorStop(1, BRAND_GREEN_DARK);
+  ctx.fillStyle = gBarGrad;
+  // Top rounded corners only
+  ctx.beginPath();
+  ctx.moveTo(cardX + 16, cardY);
+  ctx.lineTo(cardX + cardW - 16, cardY);
+  ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + 16);
+  ctx.lineTo(cardX + cardW, cardY + greenBarH);
+  ctx.lineTo(cardX, cardY + greenBarH);
+  ctx.lineTo(cardX, cardY + 16);
+  ctx.quadraticCurveTo(cardX, cardY, cardX + 16, cardY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Product name in green bar
+  const displayName = productName || text?.headline || "Produto";
+  ctx.save();
+  ctx.fillStyle = WHITE;
+  ctx.font = `bold ${isStory ? 34 : 30}px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText(displayName.length > 40 ? displayName.slice(0, 37) + "..." : displayName, cardX + cardW / 2, cardY + greenBarH - (isStory ? 18 : 15));
+  ctx.textAlign = "left";
+  ctx.restore();
+
+  // ── Card content area ──
+  const innerY = cardY + greenBarH + 15;
+  const innerH = cardH - greenBarH - 15;
+
+  if (isStory) {
+    // ═══ STORY LAYOUT: image top, price+desc below, CTA at bottom ═══
+
+    // Product image (centered, upper area)
+    let imgBottomY = innerY + innerH * 0.45;
+    if (imageUrl) {
+      try {
+        const img = await loadImage(imageUrl);
+        const maxImgW = cardW - 80;
+        const maxImgH = innerH * 0.40;
+        const scale = Math.min(maxImgW / img.width, maxImgH / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const dx = cardX + (cardW - dw) / 2;
+        const dy = innerY + 15;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.12)";
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetY = 5;
+        ctx.drawImage(img, dx, dy, dw, dh);
+        ctx.restore();
+        imgBottomY = dy + dh + 20;
+      } catch { /* fallback */ }
     }
 
-    // ── Contact info (top-right) ──
-    ctx.save();
-    const contactColor = bgStyle === "white" ? BRAND_BLUE : "#ffffff";
-    ctx.fillStyle = contactColor;
-    ctx.font = `bold 28px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "right";
-    ctx.fillText("51-981825748", W - 40, 50);
-    ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("adair.grundemann@gmail.com", W - 40, 82);
-    ctx.textAlign = "left";
-    ctx.restore();
-
-    // ── Stars decoration ──
-    const starsY = isStory ? 280 : 200;
-    ctx.save();
-    ctx.fillStyle = BRAND_GOLD;
-    ctx.font = `32px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("★ ★ ★ ★ ★", 50, starsY);
-    ctx.restore();
-
-    // ── Campaign type badge ──
-    const badgeY = starsY + 20;
-    const campaignLabel = text?.short_description ? text.short_description.toUpperCase().slice(0, 20) : "OFERTA ESPECIAL";
-    ctx.save();
-    // Golden gradient badge
-    const badgeGrad = ctx.createLinearGradient(45, badgeY, 45, badgeY + 42);
-    badgeGrad.addColorStop(0, "#d4a017");
-    badgeGrad.addColorStop(0.5, BRAND_GOLD);
-    badgeGrad.addColorStop(1, "#c9a800");
-    ctx.fillStyle = badgeGrad;
-    ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
-    const badgeTextW = ctx.measureText(campaignLabel).width;
-    roundRect(ctx, 45, badgeY, badgeTextW + 36, 42, 6);
-    ctx.fill();
-    ctx.strokeStyle = "#a08520";
-    ctx.lineWidth = 1;
-    roundRect(ctx, 45, badgeY, badgeTextW + 36, 42, 6);
-    ctx.stroke();
-    ctx.fillStyle = "#1a1000";
-    ctx.fillText(campaignLabel, 63, badgeY + 30);
-    ctx.restore();
-
-    // ── Product Name (LARGE, left side) ──
-    const nameY = badgeY + 65;
-    if (productName || text?.headline) {
-      const displayName = productName || text?.headline || "";
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? "#1a1a1a" : "#ffffff";
-      ctx.font = `bold 48px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "left";
-      // Add text shadow for readability
-      if (bgStyle !== "white") {
-        ctx.shadowColor = "rgba(0,0,0,0.7)";
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetY = 3;
-      }
-      wrapText(ctx, displayName.toUpperCase(), 50, nameY, leftW - 60, 56);
-      ctx.restore();
-    }
-
-    // ── Headline / description (below name) ──
-    const descY = nameY + 130;
-    if (text?.headline && productName) {
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? BRAND_BLUE : BRAND_GOLD;
-      ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-      wrapText(ctx, text.headline, 50, descY, leftW - 60, 34);
-      ctx.restore();
-    }
-
-    // ── PRICE (prominent, gold, left side) ──
+    // Price section
     if (price) {
-      const priceY = isStory ? H * 0.55 : H * 0.62;
+      const priceAreaY = imgBottomY + 10;
+
+      // Price prefix "R$"
+      ctx.save();
+      ctx.fillStyle = TEXT_DARK;
+      ctx.font = `bold 32px 'Segoe UI', Arial, sans-serif`;
+      const priceStr = `R$${price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      // Show full formatted price large and centered
+      ctx.textAlign = "center";
+      ctx.font = `bold 72px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillText(priceStr, cardX + cardW / 2, priceAreaY + 50);
+      ctx.restore();
 
       if (originalPrice && originalPrice > price) {
-        // "De" old price strikethrough
-        ctx.fillStyle = bgStyle === "white" ? "#999" : "#888";
+        ctx.save();
+        ctx.fillStyle = "#999";
         ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
+        ctx.textAlign = "center";
         const oldText = `De R$ ${originalPrice.toFixed(2)}`;
-        ctx.fillText(oldText, 50, priceY - 10);
+        ctx.fillText(oldText, cardX + cardW / 2, priceAreaY - 5);
         const tw = ctx.measureText(oldText).width;
-        ctx.strokeStyle = ctx.fillStyle;
+        ctx.strokeStyle = "#999";
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(50, priceY - 15); ctx.lineTo(50 + tw, priceY - 15); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cardX + cardW / 2 - tw / 2, priceAreaY - 10);
+        ctx.lineTo(cardX + cardW / 2 + tw / 2, priceAreaY - 10);
+        ctx.stroke();
+        ctx.textAlign = "left";
+        ctx.restore();
+      }
+
+      // Installments
+      ctx.save();
+      ctx.fillStyle = TEXT_GRAY;
+      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`ou 3x de R$ ${(price / 3).toFixed(2)} sem juros`, cardX + cardW / 2, priceAreaY + 85);
+      ctx.textAlign = "left";
+      ctx.restore();
+    }
+
+    // Description text
+    if (text?.body_text || text?.headline) {
+      const descText = text.body_text || text.headline || "";
+      ctx.save();
+      ctx.fillStyle = TEXT_GRAY;
+      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+      const descY = price ? imgBottomY + 130 : imgBottomY + 30;
+      wrapText(ctx, descText.slice(0, 150), cardX + 40, descY, cardW - 80, 30);
+      ctx.restore();
+    }
+
+    // Custom slogan
+    if (customSlogan) {
+      ctx.save();
+      ctx.fillStyle = BRAND_BLUE;
+      ctx.font = `bold italic 24px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(customSlogan, cardX + cardW / 2, contentEndY - 115);
+      ctx.textAlign = "left";
+      ctx.restore();
+    }
+
+    // CTA Button (green, WhatsApp style)
+    const ctaBtnY = contentEndY - 80;
+    const ctaBtnW = cardW - 100;
+    const ctaBtnH = 60;
+    const ctaBtnX = cardX + 50;
+    ctx.save();
+    const ctaGrad = ctx.createLinearGradient(ctaBtnX, ctaBtnY, ctaBtnX + ctaBtnW, ctaBtnY);
+    ctaGrad.addColorStop(0, BRAND_GREEN_DARK);
+    ctaGrad.addColorStop(0.5, BRAND_GREEN_LIGHT);
+    ctaGrad.addColorStop(1, BRAND_GREEN_DARK);
+    ctx.fillStyle = ctaGrad;
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
+    roundRect(ctx, ctaBtnX, ctaBtnY, ctaBtnW, ctaBtnH, 12);
+    ctx.fill();
+    ctx.restore();
+    // WhatsApp icon placeholder + text
+    ctx.fillStyle = WHITE;
+    ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    const ctaLabel = text?.cta || "COMPRAR";
+    ctx.fillText(`☎  ${ctaLabel.toUpperCase()}`, ctaBtnX + ctaBtnW / 2, ctaBtnY + 40);
+    ctx.textAlign = "left";
+
+  } else {
+    // ═══ POST LAYOUT (1080x1080): image left, info right ═══
+    const splitX = cardX + cardW * 0.48;
+    const rightX = splitX + 20;
+    const rightW = cardX + cardW - rightX - 20;
+
+    // Product image (left side of card)
+    if (imageUrl) {
+      try {
+        const img = await loadImage(imageUrl);
+        const maxImgW = splitX - cardX - 40;
+        const maxImgH = innerH - 100;
+        const scale = Math.min(maxImgW / img.width, maxImgH / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const dx = cardX + (splitX - cardX - dw) / 2;
+        const dy = innerY + (innerH - 80 - dh) / 2;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.12)";
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetY = 5;
+        ctx.drawImage(img, dx, dy, dw, dh);
+        ctx.restore();
+      } catch { /* fallback */ }
+    }
+
+    // Right side: Price + Description + CTA
+    const rightContentY = innerY + 20;
+
+    // Price
+    if (price) {
+      ctx.save();
+      ctx.fillStyle = TEXT_DARK;
+      ctx.font = `bold 60px 'Segoe UI', Arial, sans-serif`;
+      const priceStr = `R$${price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+      ctx.fillText(priceStr, rightX, rightContentY + 50);
+      ctx.restore();
+
+      if (originalPrice && originalPrice > price) {
+        ctx.save();
+        ctx.fillStyle = "#999";
+        ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+        const oldText = `De R$ ${originalPrice.toFixed(2)}`;
+        ctx.fillText(oldText, rightX, rightContentY - 5);
+        const tw = ctx.measureText(oldText).width;
+        ctx.strokeStyle = "#999";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(rightX, rightContentY - 10);
+        ctx.lineTo(rightX + tw, rightContentY - 10);
+        ctx.stroke();
+        ctx.restore();
 
         // Discount badge
         const discount = Math.round((1 - price / originalPrice) * 100);
         ctx.save();
         ctx.fillStyle = "#cc0000";
-        const discBadgeX = 50 + tw + 15;
-        roundRect(ctx, discBadgeX, priceY - 32, 110, 32, 16);
+        roundRect(ctx, rightX + tw + 10, rightContentY - 28, 90, 28, 14);
         ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.font = `bold 18px 'Segoe UI', Arial, sans-serif`;
+        ctx.fillStyle = WHITE;
+        ctx.font = `bold 16px 'Segoe UI', Arial, sans-serif`;
         ctx.textAlign = "center";
-        ctx.fillText(`-${discount}% OFF`, discBadgeX + 55, priceY - 11);
+        ctx.fillText(`-${discount}%`, rightX + tw + 55, rightContentY - 10);
         ctx.textAlign = "left";
         ctx.restore();
       }
 
-      // "Por" label
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? "#666" : "#ccc";
-      ctx.font = `italic 30px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText("Por", 50, (originalPrice && originalPrice > price) ? priceY + 30 : priceY + 5);
-
-      // Main price - LARGE GOLD
-      const priceStr = price.toFixed(2).split(".");
-      ctx.fillStyle = BRAND_GOLD;
-      ctx.font = `bold 90px 'Segoe UI', Arial, sans-serif`;
-      if (bgStyle !== "white") {
-        ctx.shadowColor = "rgba(0,0,0,0.8)";
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetY = 4;
-      }
-      const mainPriceY = (originalPrice && originalPrice > price) ? priceY + 75 : priceY + 55;
-      ctx.fillText(priceStr[0] + ",", 50, mainPriceY);
-      // Cents (smaller, superscript)
-      const mainW = ctx.measureText(priceStr[0] + ",").width;
-      ctx.font = `bold 50px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(priceStr[1], 50 + mainW, mainPriceY - 20);
-      ctx.restore();
-
-      // Installment info
-      const installmentY = mainPriceY + 35;
-      const installment = (price / 3).toFixed(2);
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? "#555" : "#bbb";
-      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`ou 3x de R$ ${installment} sem juros`, 50, installmentY);
-      ctx.restore();
-    }
-
-    // ── CTA button (golden gradient like reference) ──
-    if (text?.cta) {
-      const ctaY = H - 155;
-      const ctaW = leftW - 80;
-      const ctaH = 56;
-      const ctaX = 45;
-      ctx.save();
-      // Golden gradient button
-      const ctaGrad = ctx.createLinearGradient(ctaX, ctaY, ctaX, ctaY + ctaH);
-      ctaGrad.addColorStop(0, "#d4a017");
-      ctaGrad.addColorStop(0.5, BRAND_GOLD);
-      ctaGrad.addColorStop(1, "#b8930f");
-      ctx.fillStyle = ctaGrad;
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 12;
-      ctx.shadowOffsetY = 4;
-      roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 8);
-      ctx.fill();
-      // Border
-      ctx.strokeStyle = "#a08520";
-      ctx.lineWidth = 2;
-      roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 8);
-      ctx.stroke();
-      ctx.restore();
-      // CTA text
-      ctx.fillStyle = "#1a1000";
-      ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText((text.cta).toUpperCase() + "  ›", ctaX + ctaW / 2, ctaY + 38);
-      ctx.textAlign = "left";
-    }
-
-    // ── PRODUCT IMAGE (right side, large) ──
-    if (imageUrl) {
-      try {
-        const img = await loadImage(imageUrl);
-        const imgPadding = 30;
-        const maxImgW = rightW - imgPadding * 2;
-        const maxImgH = H - 200;
-        const scale = Math.min(maxImgW / img.width, maxImgH / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        const dx = leftW + (rightW - dw) / 2;
-        const dy = 100 + (H - 200 - dh) / 2;
-
-        // Subtle glow behind product
-        ctx.save();
-        const imgGlow = ctx.createRadialGradient(dx + dw / 2, dy + dh / 2, 20, dx + dw / 2, dy + dh / 2, Math.max(dw, dh) * 0.7);
-        imgGlow.addColorStop(0, "rgba(255,255,255,0.1)");
-        imgGlow.addColorStop(1, "transparent");
-        ctx.fillStyle = imgGlow;
-        ctx.fillRect(leftW, 0, rightW, H);
-        ctx.restore();
-
-        // Product drop shadow
-        ctx.save();
-        ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 35;
-        ctx.shadowOffsetY = 15;
-        ctx.drawImage(img, dx, dy, dw, dh);
-        ctx.restore();
-      } catch { /* fallback */ }
-    }
-
-  } else {
-    // ═══ STORY LAYOUT (vertical) ═══
-
-    // ── Logo (top-left, LARGE) ──
-    try {
-      const logo = await loadImage(logoGrundemann);
-      const sizeMap = { small: 140, medium: 200, large: 280 };
-      const logoH = sizeMap[logoSize];
-      const logoW = (logo.width / logo.height) * logoH;
-      const logoX = 40;
-      const logoY = 30;
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.4)";
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 20;
-      roundRect(ctx, logoX - 12, logoY - 8, logoW + 24, logoH + 16, 12);
-      ctx.fill();
-      ctx.restore();
-      ctx.drawImage(logo, logoX, logoY, logoW, logoH);
-    } catch {
-      ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 40px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText("GRÜNDEMANN", 50, 70);
-    }
-
-    // ── Contact info (top-right) ──
-    ctx.save();
-    ctx.fillStyle = bgStyle === "white" ? BRAND_BLUE : "#ffffff";
-    ctx.font = `bold 28px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "right";
-    ctx.fillText("51-981825748", W - 40, 55);
-    ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("adair.grundemann@gmail.com", W - 40, 87);
-    ctx.textAlign = "left";
-    ctx.restore();
-
-    // Stars
-    ctx.fillStyle = BRAND_GOLD;
-    ctx.font = `36px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("★ ★ ★ ★ ★", 50, 320);
-
-    // Badge
-    const badgeLabel = text?.short_description ? text.short_description.toUpperCase().slice(0, 20) : "OFERTA ESPECIAL";
-    ctx.save();
-    const bGrad = ctx.createLinearGradient(45, 340, 45, 382);
-    bGrad.addColorStop(0, "#d4a017");
-    bGrad.addColorStop(1, BRAND_GOLD);
-    ctx.fillStyle = bGrad;
-    ctx.font = `bold 24px 'Segoe UI', Arial, sans-serif`;
-    const bw = ctx.measureText(badgeLabel).width;
-    roundRect(ctx, 45, 340, bw + 40, 45, 6);
-    ctx.fill();
-    ctx.fillStyle = "#1a1000";
-    ctx.fillText(badgeLabel, 65, 372);
-    ctx.restore();
-
-    // Product name
-    if (productName || text?.headline) {
-      ctx.save();
-      ctx.fillStyle = bgStyle === "white" ? "#1a1a1a" : "#ffffff";
-      ctx.font = `bold 52px 'Segoe UI', Arial, sans-serif`;
-      if (bgStyle !== "white") { ctx.shadowColor = "rgba(0,0,0,0.7)"; ctx.shadowBlur = 10; }
-      wrapText(ctx, (productName || text?.headline || "").toUpperCase(), 50, 440, W - 100, 62);
-      ctx.restore();
-    }
-
-    // Product image (center area)
-    if (imageUrl) {
-      try {
-        const img = await loadImage(imageUrl);
-        const maxImgW = W - 120;
-        const maxImgH = H * 0.32;
-        const scale = Math.min(maxImgW / img.width, maxImgH / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        const dx = (W - dw) / 2;
-        const dy = H * 0.35;
-        ctx.save();
-        ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 30;
-        ctx.shadowOffsetY = 10;
-        ctx.drawImage(img, dx, dy, dw, dh);
-        ctx.restore();
-      } catch { /* fallback */ }
-    }
-
-    // Price area
-    if (price) {
-      const priceY = H * 0.72;
-      if (originalPrice && originalPrice > price) {
-        ctx.fillStyle = "#888";
-        ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
-        const oldT = `De R$ ${originalPrice.toFixed(2)}`;
-        ctx.fillText(oldT, 50, priceY);
-        const tw = ctx.measureText(oldT).width;
-        ctx.strokeStyle = "#888"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(50, priceY - 5); ctx.lineTo(50 + tw, priceY - 5); ctx.stroke();
-      }
-      ctx.save();
-      ctx.fillStyle = "#ccc";
-      ctx.font = `italic 32px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText("Por", 50, (originalPrice && originalPrice > price) ? priceY + 40 : priceY + 5);
-      ctx.fillStyle = BRAND_GOLD;
-      ctx.font = `bold 100px 'Segoe UI', Arial, sans-serif`;
-      if (bgStyle !== "white") { ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 15; }
-      const ps = price.toFixed(2).split(".");
-      const mpY = (originalPrice && originalPrice > price) ? priceY + 95 : priceY + 65;
-      ctx.fillText(ps[0] + ",", 50, mpY);
-      const mw = ctx.measureText(ps[0] + ",").width;
-      ctx.font = `bold 56px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(ps[1], 50 + mw, mpY - 22);
-      ctx.restore();
       // Installments
-      ctx.fillStyle = "#bbb";
-      ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`ou 3x de R$ ${(price / 3).toFixed(2)} sem juros`, 50, mpY + 40);
-    }
-
-    // CTA button
-    if (text?.cta) {
-      const ctaY = H - 260;
-      const ctaW = W - 120;
-      const ctaH = 60;
-      const ctaX = 60;
       ctx.save();
-      const cg = ctx.createLinearGradient(ctaX, ctaY, ctaX, ctaY + ctaH);
-      cg.addColorStop(0, "#d4a017"); cg.addColorStop(0.5, BRAND_GOLD); cg.addColorStop(1, "#b8930f");
-      ctx.fillStyle = cg;
-      ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 12;
-      roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 8);
-      ctx.fill();
+      ctx.fillStyle = TEXT_GRAY;
+      ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillText(`ou 3x de R$ ${(price / 3).toFixed(2)}`, rightX, rightContentY + 80);
+      ctx.fillText("sem juros", rightX, rightContentY + 105);
       ctx.restore();
-      ctx.fillStyle = "#1a1000";
-      ctx.font = `bold 28px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText((text.cta).toUpperCase() + "  ›", W / 2, ctaY + 42);
-      ctx.textAlign = "left";
     }
-  }
 
-  // ── Product link (subtle, above bottom bar) ──
-  if (productUrl) {
-    ctx.fillStyle = bgStyle === "white" ? "#888" : "#777";
-    ctx.font = `18px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(`🔗 ${productUrl}`, W / 2, H - 70);
-    ctx.textAlign = "left";
-  }
+    // Description
+    if (text?.body_text || text?.headline) {
+      const descText = text.body_text || text.headline || "";
+      ctx.save();
+      ctx.fillStyle = TEXT_GRAY;
+      ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+      const descStartY = price ? rightContentY + 140 : rightContentY + 30;
+      wrapText(ctx, descText.slice(0, 120), rightX, descStartY, rightW, 28);
+      ctx.restore();
+    }
 
-  // ── Hashtags ──
-  if (text?.hashtags && !isLandscape) {
-    ctx.fillStyle = BRAND_GREEN;
-    ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText(text.hashtags.slice(0, 90), 50, H - 120);
-  }
+    // Custom slogan
+    if (customSlogan) {
+      ctx.save();
+      ctx.fillStyle = BRAND_BLUE;
+      ctx.font = `bold italic 22px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillText(customSlogan, rightX, contentEndY - 95);
+      ctx.restore();
+    }
 
-  // ── Custom Slogan ──
-  if (customSlogan) {
+    // CTA Button (green, WhatsApp style, right side)
+    const ctaBtnY = contentEndY - 75;
+    const ctaBtnW = rightW;
+    const ctaBtnH = 52;
     ctx.save();
-    const sloganY = H - 85;
-    // Slogan background strip
-    ctx.fillStyle = "rgba(0,39,118,0.7)";
-    ctx.fillRect(0, sloganY - 28, W, 40);
-    ctx.fillStyle = BRAND_GOLD;
-    ctx.font = `bold italic 24px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    const ctaGrad = ctx.createLinearGradient(rightX, ctaBtnY, rightX + ctaBtnW, ctaBtnY);
+    ctaGrad.addColorStop(0, BRAND_GREEN_DARK);
+    ctaGrad.addColorStop(0.5, BRAND_GREEN_LIGHT);
+    ctaGrad.addColorStop(1, BRAND_GREEN_DARK);
+    ctx.fillStyle = ctaGrad;
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
     ctx.shadowBlur = 8;
-    ctx.fillText(customSlogan.toUpperCase(), W / 2, sloganY);
-    ctx.textAlign = "left";
+    ctx.shadowOffsetY = 3;
+    roundRect(ctx, rightX, ctaBtnY, ctaBtnW, ctaBtnH, 12);
+    ctx.fill();
     ctx.restore();
+    ctx.fillStyle = WHITE;
+    ctx.font = `bold 24px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    const ctaLabel = text?.cta || "COMPRAR";
+    ctx.fillText(`☎  ${ctaLabel.toUpperCase()}`, rightX + ctaBtnW / 2, ctaBtnY + 35);
+    ctx.textAlign = "left";
   }
 
-  // ── Bottom contact bar ──
+  // ══════════ FOOTER BAR ══════════
+  // Green footer strip
   ctx.save();
-  ctx.fillStyle = bgStyle === "white" ? "rgba(0,39,118,0.95)" : "rgba(0,39,118,0.85)";
-  ctx.fillRect(0, H - 52, W, 42);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = `bold 20px 'Segoe UI', Arial, sans-serif`;
+  ctx.fillStyle = BRAND_GREEN;
+  ctx.fillRect(0, H - footerH, W, footerH);
+  // Address text centered
+  ctx.fillStyle = WHITE;
+  ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText("📞 (51) 98182-5748   •   ✉ adair.grundemann@gmail.com   •   Peças: Diesel, Gasolina, Geradores e Oficina", W / 2, H - 26);
+  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, H - footerH + 28);
+  // Phone + email
+  ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
+  ctx.fillText("📞 (51) 98182-5748   •   ✉ adair.grundemann@gmail.com", W / 2, H - footerH + 55);
   ctx.textAlign = "left";
   ctx.restore();
 
-  // Bottom accent bars
-  ctx.fillStyle = BRAND_GREEN;
-  ctx.fillRect(0, H - 10, W, 5);
-  const bottomGoldGrad = ctx.createLinearGradient(0, H - 5, W, H - 5);
-  bottomGoldGrad.addColorStop(0, BRAND_GOLD);
-  bottomGoldGrad.addColorStop(0.5, "#c9a800");
-  bottomGoldGrad.addColorStop(1, BRAND_GOLD);
-  ctx.fillStyle = bottomGoldGrad;
-  ctx.fillRect(0, H - 5, W, 5);
+  // Product link (subtle, above footer)
+  if (productUrl) {
+    ctx.fillStyle = TEXT_GRAY;
+    ctx.font = `16px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(`🔗 ${productUrl}`, W / 2, H - footerH - 8);
+    ctx.textAlign = "left";
+  }
+
+  // Bottom accent line
+  ctx.fillStyle = BRAND_GREEN_DARK;
+  ctx.fillRect(0, H - 4, W, 4);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
@@ -1499,57 +1370,12 @@ const MarketingCenter = () => {
                     {/* Background Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
-                        <Palette className="h-4 w-4 text-primary" /> Estilo do Fundo
+                        <Palette className="h-4 w-4 text-primary" /> Estilo do Criativo
                       </Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setBackgroundStyle("white")}
-                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                          <div className="w-10 h-10 rounded bg-white border shrink-0 flex items-center justify-center"><Package className="h-5 w-5 text-muted-foreground" /></div>
-                          <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Branco</p>
-                            <p className="text-xs text-muted-foreground">Catálogo limpo</p>
-                          </div>
-                        </button>
-                        <button onClick={() => setBackgroundStyle("creative")}
-                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                          <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-700 to-slate-800 shrink-0 flex items-center justify-center"><Sparkles className="h-5 w-5 text-amber-200" /></div>
-                          <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Criativo</p>
-                            <p className="text-xs text-muted-foreground">Gradiente industrial</p>
-                          </div>
-                        </button>
-                        {Object.entries(bgPhotoMap).map(([key, info]) => (
-                          <button key={key} onClick={() => setBackgroundStyle(key as BackgroundStyle)}
-                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                            <div className="w-10 h-10 rounded shrink-0 overflow-hidden border">
-                              <img src={info.landscape} alt={info.label} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                              <p className={`text-sm font-semibold ${backgroundStyle === key ? "text-primary" : ""}`}>{info.emoji} {info.label}</p>
-                              <p className="text-xs text-muted-foreground">Foto industrial</p>
-                            </div>
-                          </button>
-                        ))}
-                        <button onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }}
-                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "ai" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                          <div className="w-10 h-10 rounded bg-gradient-to-br from-violet-600 to-indigo-900 shrink-0 flex items-center justify-center">
-                            {generatingAiBg ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <Wand2 className="h-5 w-5 text-white" />}
-                          </div>
-                          <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "ai" ? "text-primary" : ""}`}>🤖 Fundo IA</p>
-                            <p className="text-xs text-muted-foreground">{generatingAiBg ? "Gerando..." : aiBgUrl ? "Gerado ✓" : "Gerado por IA"}</p>
-                          </div>
-                        </button>
+                      <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                        <p className="text-sm font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
+                        <p className="text-xs text-muted-foreground mt-1">Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca.</p>
                       </div>
-                      {backgroundStyle === "ai" && (
-                        <div className="flex gap-2 mt-2">
-                          <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs">
-                            {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                            {generatingAiBg ? "Gerando..." : "Gerar Novo Fundo IA"}
-                          </Button>
-                          {aiBgUrl && <Badge variant="secondary" className="text-xs">✓ Fundo pronto</Badge>}
-                        </div>
-                      )}
                     </div>
 
                     {/* Logo Size */}
@@ -1618,7 +1444,7 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : backgroundStyle === "ai" ? "🤖 Fundo IA" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  <p className="text-sm">🎨 Estilo: Grundemann Profissional</p>
                   {customSlogan && <p className="text-sm">📢 Slogan: {customSlogan}</p>}
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
@@ -1696,31 +1522,9 @@ const MarketingCenter = () => {
                       </div>
                     )}
 
-                    {/* Style toggle */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Estilo do Fundo</Label>
-                      <div className="flex gap-1.5 flex-wrap">
-                        <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1 text-xs h-8">
-                          <Sparkles className="h-3 w-3" /> Criativo
-                        </Button>
-                        <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1 text-xs h-8">
-                          <Package className="h-3 w-3" /> Branco
-                        </Button>
-                        {Object.entries(bgPhotoMap).map(([key, info]) => (
-                          <Button key={key} size="sm" variant={backgroundStyle === key ? "default" : "outline"} onClick={() => setBackgroundStyle(key as BackgroundStyle)} className="gap-1 text-xs h-8">
-                            {info.emoji} {info.label}
-                          </Button>
-                        ))}
-                        <Button size="sm" variant={backgroundStyle === "ai" ? "default" : "outline"} onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }} className="gap-1 text-xs h-8" disabled={generatingAiBg}>
-                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Fundo IA
-                        </Button>
-                      </div>
-                      {backgroundStyle === "ai" && (
-                        <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs mt-1">
-                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                          {generatingAiBg ? "Gerando..." : "Novo Fundo IA"}
-                        </Button>
-                      )}
+                    {/* Style info */}
+                    <div className="p-3 rounded-lg border bg-primary/5">
+                      <p className="text-xs font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
                     </div>
 
                     {/* Logo size in preview */}
@@ -1815,7 +1619,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : backgroundStyle === "ai" ? "🤖 Fundo IA" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  <p className="text-sm">🎨 Estilo: Grundemann Profissional</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
