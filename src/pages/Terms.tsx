@@ -1,9 +1,17 @@
+import { Helmet } from "react-helmet-async";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const Terms = () => (
   <div className="min-h-screen flex flex-col">
+    <Helmet>
+      <title>Termos de Uso | Grundemann Power Hub</title>
+      <meta name="description" content="Termos de uso da Grundemann Power Hub. Condições de compra, pagamento, entrega, garantia e trocas de peças para motores estacionários e geradores de energia." />
+      <meta property="og:title" content="Termos de Uso | Grundemann Power Hub" />
+      <meta property="og:description" content="Condições de compra, pagamento, entrega e garantia de peças para motores e geradores." />
+      <link rel="canonical" href="https://grundemann-power-hub.lovable.app/termos" />
+    </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
       <h1 className="font-heading text-3xl font-bold mb-8">Termos de Uso</h1>
