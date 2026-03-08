@@ -44,7 +44,7 @@ const CategoriesSection = () => {
     <section className="py-12 bg-muted/30">
       <div className="container">
         <h2 className="font-heading text-2xl font-extrabold text-foreground text-center mb-8 uppercase tracking-wide">
-          Categorias
+          Categorias de Peças para Motores e Geradores
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {categories.map((cat) => {

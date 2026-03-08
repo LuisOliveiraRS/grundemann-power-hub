@@ -31,7 +31,7 @@ const TestimonialsSection = () => {
     <section className="py-12 bg-muted/30">
       <div className="container">
         <h2 className="font-heading text-2xl font-extrabold text-foreground text-center mb-2 uppercase tracking-wide">
-          Depoimentos de Clientes
+          Depoimentos de Clientes Satisfeitos
         </h2>
         <p className="text-center text-muted-foreground mb-8">Veja o que nossos clientes dizem sobre nós</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
