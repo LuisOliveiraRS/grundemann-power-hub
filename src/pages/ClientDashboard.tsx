@@ -112,7 +112,18 @@ const ClientDashboard = () => {
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
 
-  useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); } }, [user]);
+  useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); loadPayments(); } }, [user]);
+
+  // Realtime payments subscription
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('user-payments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
+        () => { loadPayments(); }
+      ).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
   useEffect(() => { if (user && favoriteIds.size > 0) loadFavoriteProducts(); }, [favoriteIds]);
 
   const loadProfile = async () => {
