@@ -47,6 +47,7 @@ interface MarketingPost {
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
 type BackgroundStyle = "white" | "creative";
+type LogoSize = "small" | "medium" | "large";
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
@@ -116,6 +117,7 @@ const generateCompositeImage = async (
   price?: number,
   originalPrice?: number | null,
   productName?: string,
+  logoSize: LogoSize = "medium",
 ): Promise<Blob> => {
   const isStory = format === "story_instagram";
   const W = 1080;
@@ -234,34 +236,57 @@ const generateCompositeImage = async (
   // Text area starts after image
   const textStartY = imgAreaTop + imgAreaH + 30;
 
-  // ── Price display ──
+  // ── Price display (LARGE & PROMINENT) ──
   if (price) {
     const priceY = textStartY;
+    // Price background highlight
+    const priceBoxH = originalPrice && originalPrice > price ? 120 : 80;
+    ctx.save();
+    ctx.fillStyle = bgStyle === "white" ? "rgba(0,151,57,0.08)" : "rgba(0,151,57,0.2)";
+    roundRect(ctx, 40, priceY - 30, W - 80, priceBoxH, 16);
+    ctx.fill();
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 3;
+    roundRect(ctx, 40, priceY - 30, W - 80, priceBoxH, 16);
+    ctx.stroke();
+    ctx.restore();
+
     if (originalPrice && originalPrice > price) {
       // Old price (strikethrough)
-      ctx.fillStyle = bgStyle === "white" ? "#999999" : "#888888";
-      ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillStyle = bgStyle === "white" ? "#999999" : "#aaaaaa";
+      ctx.font = `28px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
       const oldText = `De R$ ${originalPrice.toFixed(2)}`;
-      ctx.fillText(oldText, 60, priceY);
+      ctx.fillText(oldText, 70, priceY);
       const tw = ctx.measureText(oldText).width;
       ctx.strokeStyle = ctx.fillStyle;
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(60, priceY - 4); ctx.lineTo(60 + tw, priceY - 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(70, priceY - 5); ctx.lineTo(70 + tw, priceY - 5); ctx.stroke();
 
-      // New price (brand green)
+      // Discount badge
+      const discount = Math.round((1 - price / originalPrice) * 100);
+      ctx.fillStyle = "#ff0000";
+      roundRect(ctx, W - 220, priceY - 28, 160, 40, 20);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`-${discount}% OFF`, W - 140, priceY + 1);
+      ctx.textAlign = "left";
+
+      // New price (HUGE)
       ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 48px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 50);
+      ctx.font = `bold 72px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 70);
     } else {
       ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
+      ctx.font = `bold 68px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
-      ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 10);
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 30);
     }
   }
 
-  const headlineY = textStartY + (price ? (originalPrice && originalPrice > price ? 80 : 40) : 0);
+  const headlineY = textStartY + (price ? (originalPrice && originalPrice > price ? 130 : 90) : 0);
 
   // ── Headline ──
   if (text?.headline) {
@@ -317,10 +342,11 @@ const generateCompositeImage = async (
     ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
   }
 
-  // ── Logo Grundemann (top-left, LARGE & PROMINENT) ──
+  // ── Logo Grundemann (configurable size) ──
   try {
     const logo = await loadImage(logoGrundemann);
-    const logoH = isStory ? 100 : 85;
+    const sizeMap = { small: isStory ? 70 : 60, medium: isStory ? 100 : 85, large: isStory ? 140 : 120 };
+    const logoH = sizeMap[logoSize];
     const logoW = (logo.width / logo.height) * logoH;
     const logoX = 35;
     const logoY = isStory ? 22 : 18;
@@ -342,15 +368,18 @@ const generateCompositeImage = async (
   } catch {
     ctx.save();
     ctx.fillStyle = "rgba(0,39,118,0.9)";
-    roundRect(ctx, 20, 10, 320, 70, 14);
+    const fallbackW = logoSize === "large" ? 400 : logoSize === "medium" ? 320 : 240;
+    const fallbackH = logoSize === "large" ? 90 : logoSize === "medium" ? 70 : 55;
+    const fallbackFont = logoSize === "large" ? 42 : logoSize === "medium" ? 34 : 26;
+    roundRect(ctx, 20, 10, fallbackW, fallbackH, 14);
     ctx.fill();
     ctx.strokeStyle = BRAND_GREEN;
     ctx.lineWidth = 3;
-    roundRect(ctx, 20, 10, 320, 70, 14);
+    roundRect(ctx, 20, 10, fallbackW, fallbackH, 14);
     ctx.stroke();
     ctx.fillStyle = "#ffffff";
-    ctx.font = `bold 34px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("GRÜNDEMANN", 35, 55);
+    ctx.font = `bold ${fallbackFont}px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("GRÜNDEMANN", 35, 10 + fallbackH * 0.65);
     ctx.restore();
   }
 
@@ -425,6 +454,8 @@ const MarketingCenter = () => {
   const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
+  const [customCta, setCustomCta] = useState("");
+  const [logoSize, setLogoSize] = useState<LogoSize>("medium");
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
@@ -456,7 +487,7 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle]);
+  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta]);
 
   const buildComposite = async () => {
     if (!generatedText) return;
@@ -465,9 +496,11 @@ const MarketingCenter = () => {
       const product = selectedProducts[0];
       const imgSrc = product?.image_url || null;
       const productUrl = product ? getProductUrl(product.id) : undefined;
+      // Override CTA if custom text provided
+      const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
       const blob = await generateCompositeImage(
-        imgSrc, generatedText, genFormat, backgroundStyle,
-        productUrl, product?.price, product?.original_price, product?.name,
+        imgSrc, textWithCta, genFormat, backgroundStyle,
+        productUrl, product?.price, product?.original_price, product?.name, logoSize,
       );
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
@@ -584,7 +617,8 @@ const MarketingCenter = () => {
     if (text.headline) parts.push(text.headline);
     if (text.short_description) parts.push(text.short_description);
     if (text.body_text) parts.push("", text.body_text);
-    if (text.cta) parts.push("", `👉 ${text.cta}`);
+    const ctaText = customCta || text.cta;
+    if (ctaText) parts.push("", `👉 ${ctaText}`);
     const p = product || selectedProducts[0];
     if (p) {
       const url = getProductUrl(p.id);
@@ -720,6 +754,8 @@ const MarketingCenter = () => {
     setScheduleDate("");
     setPublishMode("save");
     setBackgroundStyle("creative");
+    setCustomCta("");
+    setLogoSize("medium");
   };
 
   const deleteCreative = async (id: string) => {
@@ -893,9 +929,9 @@ const MarketingCenter = () => {
           )}
         </div>
         <div className="p-3 space-y-2">
-          {text?.cta && (
+          {(customCta || text?.cta) && (
             <button className="w-full bg-primary text-primary-foreground text-xs font-semibold py-2 rounded">
-              {text.cta}
+              {customCta || text.cta}
             </button>
           )}
           {text?.body_text && (
@@ -1117,6 +1153,35 @@ const MarketingCenter = () => {
                         </button>
                       </div>
                     </div>
+
+                    {/* Logo Size */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <Image className="h-4 w-4 text-primary" /> Tamanho do Logo
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { key: "small" as LogoSize, label: "Pequeno" },
+                          { key: "medium" as LogoSize, label: "Médio" },
+                          { key: "large" as LogoSize, label: "Grande" },
+                        ]).map(s => (
+                          <button key={s.key} onClick={() => setLogoSize(s.key)}
+                            className={`p-3 rounded-lg border-2 text-center transition-all ${logoSize === s.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                            <p className={`text-sm font-semibold ${logoSize === s.key ? "text-primary" : ""}`}>{s.label}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom CTA */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <PenTool className="h-4 w-4 text-primary" /> Texto do CTA (botão)
+                      </Label>
+                      <Input value={customCta} onChange={e => setCustomCta(e.target.value)}
+                        placeholder="Ex: COMPRE AGORA, PEÇA JÁ, GARANTA O SEU... (deixe vazio para IA gerar)" />
+                      <p className="text-xs text-muted-foreground">Se deixar vazio, a IA criará automaticamente</p>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -1223,13 +1288,31 @@ const MarketingCenter = () => {
                     )}
 
                     {/* Style toggle */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1">
                         <Sparkles className="h-3 w-3" /> Criativo
                       </Button>
                       <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1">
                         <Package className="h-3 w-3" /> Branco
                       </Button>
+                    </div>
+
+                    {/* Logo size in preview */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Tamanho do Logo</Label>
+                      <div className="flex gap-2">
+                        {(["small", "medium", "large"] as LogoSize[]).map(s => (
+                          <Button key={s} size="sm" variant={logoSize === s ? "default" : "outline"} onClick={() => setLogoSize(s)}>
+                            {s === "small" ? "P" : s === "medium" ? "M" : "G"}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom CTA in preview */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Texto do CTA</Label>
+                      <Input size={1} value={customCta} onChange={e => setCustomCta(e.target.value)} placeholder={generatedText?.cta || "COMPRE AGORA"} className="h-8 text-xs" />
                     </div>
                   </CardContent>
                 </Card>
