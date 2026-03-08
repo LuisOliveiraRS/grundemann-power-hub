@@ -1840,8 +1840,21 @@ const AdminDashboard = () => {
                 <Boxes className="h-8 w-8 text-primary" /> Gestão de Estoque & Mercado Livre
               </h1>
               <p className="text-muted-foreground mt-1">Controle unificado de estoque, sincronização com Mercado Livre e alertas de reposição</p>
+          </div>
+          <StockManagement />
+        </div>
+        )}
+
+        {/* SUBSCRIBERS TAB */}
+        {tab === "subscribers" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Mail className="h-8 w-8 text-primary" /> Leads & Cupons de Desconto
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie emails capturados, cupons e métricas de conversão do pop-up de desconto</p>
             </div>
-            <StockManagement />
+            <EmailSubscriberManagement />
           </div>
         )}
       </main>
