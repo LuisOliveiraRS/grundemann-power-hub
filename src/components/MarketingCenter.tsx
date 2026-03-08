@@ -905,37 +905,16 @@ const MarketingCenter = () => {
                       )}
                     </div>
 
-                    {/* Background Style */}
+                    {/* AI Creative Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
-                        <Palette className="h-4 w-4 text-primary" /> Estilo do Criativo
+                        <Sparkles className="h-4 w-4 text-primary" /> Estilo do Criativo
                       </Label>
                       <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
-                        <p className="text-sm font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
+                        <p className="text-sm font-semibold text-primary">🤖 Arte Gerada por IA Profissional</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {layoutMode === "grid2x2"
-                            ? "Grid com 4 cards coloridos (verde, azul, dourado, vermelho), cada um com foto, preço e botão COMPRAR."
-                            : "Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca."}
+                          A IA criará uma arte publicitária profissional com fundo industrial dramático, iluminação cinematográfica, preços em destaque dourado e a foto original do produto em alta qualidade. Estilo inspirado em anúncios premium de peças industriais.
                         </p>
-                      </div>
-                    </div>
-
-                    {/* Logo Size */}
-                    <div className="space-y-3">
-                      <Label className="font-semibold flex items-center gap-2">
-                        <Image className="h-4 w-4 text-primary" /> Tamanho do Logo
-                      </Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {([
-                          { key: "small" as LogoSize, label: "Pequeno" },
-                          { key: "medium" as LogoSize, label: "Médio" },
-                          { key: "large" as LogoSize, label: "Grande" },
-                        ]).map(s => (
-                          <button key={s.key} onClick={() => setLogoSize(s.key)}
-                            className={`p-3 rounded-lg border-2 text-center transition-all ${logoSize === s.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
-                            <p className={`text-sm font-semibold ${logoSize === s.key ? "text-primary" : ""}`}>{s.label}</p>
-                          </button>
-                        ))}
                       </div>
                     </div>
 
