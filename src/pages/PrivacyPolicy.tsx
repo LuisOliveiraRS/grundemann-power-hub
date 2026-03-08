@@ -23,6 +23,7 @@ const PrivacyPolicy = () => (
     </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
+      <SEOBreadcrumb items={[{ label: "Política de Privacidade" }]} />
       <h1 className="font-heading text-3xl font-bold mb-8">Política de Privacidade</h1>
       {[
         { title: "1. Coleta de Dados", text: "Coletamos informações pessoais como nome, email, telefone e endereço quando você realiza um cadastro ou compra em nosso site. Esses dados são necessários para processar pedidos, emitir notas fiscais e realizar entregas." },

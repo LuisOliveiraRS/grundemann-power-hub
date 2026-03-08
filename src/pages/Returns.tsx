@@ -24,6 +24,7 @@ const Returns = () => (
     </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
+      <SEOBreadcrumb items={[{ label: "Trocas e Devoluções" }]} />
       <h1 className="font-heading text-3xl font-bold mb-8">Trocas e Devoluções</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
