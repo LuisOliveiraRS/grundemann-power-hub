@@ -487,7 +487,7 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle]);
+  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta]);
 
   const buildComposite = async () => {
     if (!generatedText) return;
@@ -496,9 +496,11 @@ const MarketingCenter = () => {
       const product = selectedProducts[0];
       const imgSrc = product?.image_url || null;
       const productUrl = product ? getProductUrl(product.id) : undefined;
+      // Override CTA if custom text provided
+      const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
       const blob = await generateCompositeImage(
-        imgSrc, generatedText, genFormat, backgroundStyle,
-        productUrl, product?.price, product?.original_price, product?.name,
+        imgSrc, textWithCta, genFormat, backgroundStyle,
+        productUrl, product?.price, product?.original_price, product?.name, logoSize,
       );
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
