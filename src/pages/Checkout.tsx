@@ -57,6 +57,11 @@ const Checkout = () => {
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
+  // Shipping state
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[] | null>(null);
+  const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
+  const [shippingCepInput, setShippingCepInput] = useState("");
+
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
     loadCart();
