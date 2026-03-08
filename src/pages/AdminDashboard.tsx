@@ -585,6 +585,7 @@ const AdminDashboard = () => {
     { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
     { key: "sellers", label: "Vendedores", icon: Users },
     { key: "quotes", label: "Orçamentos", icon: FileUp },
+    { key: "mechanics", label: "Mecânicos", icon: Wrench },
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
