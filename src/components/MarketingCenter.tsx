@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
   Instagram, Facebook, MessageCircle, Mail, FileText, TrendingUp, Package,
   Target, Zap, PenTool, Layers, Archive, ArrowRight, ArrowLeft, Check,
   Share2, ExternalLink, RefreshCw, ChevronRight, Printer, Globe, Palette, Image,
-  LayoutTemplate, Link2
+  Link2, ChevronLeft, GripVertical, CalendarDays
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -45,18 +45,8 @@ interface MarketingPost {
   status: string; content: string | null; created_at: string;
 }
 
-type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation";
+type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
 type BackgroundStyle = "white" | "creative";
-type TemplateStyle = "modern" | "bold" | "elegant" | "industrial" | "flash_sale" | "minimal";
-
-const templateOptions: { key: TemplateStyle; label: string; desc: string; colors: [string, string]; accent: string }[] = [
-  { key: "modern", label: "Moderno", desc: "Layout limpo com gradiente suave e tipografia moderna", colors: ["#1a1a2e", "#16213e"], accent: "#4da8da" },
-  { key: "bold", label: "Impactante", desc: "Cores vibrantes, texto grande e destaque máximo", colors: ["#d00000", "#370617"], accent: "#ffba08" },
-  { key: "elegant", label: "Elegante", desc: "Tons escuros sofisticados com detalhes dourados", colors: ["#1b1b1b", "#2d2d2d"], accent: "#c9a84c" },
-  { key: "industrial", label: "Industrial", desc: "Estilo oficina com texturas metálicas e tons de aço", colors: ["#0d1117", "#1e3a5f"], accent: "#e94560" },
-  { key: "flash_sale", label: "Queima de Preço", desc: "Foco total no preço, urgência e escassez", colors: ["#ff0000", "#8b0000"], accent: "#ffff00" },
-  { key: "minimal", label: "Minimalista", desc: "Fundo claro, poucos elementos, foco no produto", colors: ["#f8f9fa", "#e9ecef"], accent: "#212529" },
-];
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
@@ -95,13 +85,11 @@ const statusColors: Record<string, string> = {
 const WIZARD_STEPS = [
   { key: "products", label: "Produtos", icon: Package },
   { key: "config", label: "Configuração", icon: Target },
-  { key: "template", label: "Template", icon: LayoutTemplate },
   { key: "generate", label: "Gerar Conteúdo", icon: Wand2 },
   { key: "preview", label: "Pré-visualização", icon: Eye },
   { key: "publish", label: "Publicar", icon: Send },
 ];
 
-// ─── Load logo once ───
 import logoGrundemann from "@/assets/logo-grundemann.png";
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
@@ -118,16 +106,16 @@ const getProductUrl = (productId: string) => {
   return `${base}/produto/${productId}`;
 };
 
-// ─── Canvas composite generator with templates ───
+// ─── Canvas composite: product image UNALTERED on creative/white background ───
 const generateCompositeImage = async (
   imageUrl: string | null,
   text: any,
   format: string,
   bgStyle: BackgroundStyle = "creative",
-  template: TemplateStyle = "modern",
   productUrl?: string,
   price?: number,
   originalPrice?: number | null,
+  productName?: string,
 ): Promise<Blob> => {
   const isStory = format === "story_instagram";
   const W = 1080;
@@ -137,163 +125,163 @@ const generateCompositeImage = async (
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  const tpl = templateOptions.find(t => t.key === template) || templateOptions[0];
-  const isLight = template === "minimal" || bgStyle === "white";
+  // ── Dynamic color palette based on product category keywords ──
+  const name = (productName || "").toLowerCase();
+  let accent = "#e94560";
+  let gradA = "#0d1117";
+  let gradB = "#1e3a5f";
 
-  // ── Background ──
-  if (bgStyle === "white" || template === "minimal") {
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, tpl.colors[0]);
-    grad.addColorStop(1, tpl.colors[1]);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-  } else {
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, tpl.colors[0]);
-    grad.addColorStop(0.5, tpl.colors[1]);
-    grad.addColorStop(1, tpl.colors[0]);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Template-specific decorations
-    ctx.save();
-    ctx.globalAlpha = 0.06;
-    if (template === "modern" || template === "industrial") {
-      for (let i = 0; i < 8; i++) {
-        ctx.strokeStyle = tpl.accent;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(W * 0.85, H * 0.2, 60 + i * 40, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.strokeStyle = tpl.accent;
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, H * 0.5 + i * 30);
-        ctx.lineTo(W * 0.15, H * 0.45 + i * 30);
-        ctx.stroke();
-      }
-    } else if (template === "bold" || template === "flash_sale") {
-      // Diagonal stripes
-      ctx.globalAlpha = 0.08;
-      ctx.strokeStyle = tpl.accent;
-      ctx.lineWidth = 60;
-      for (let i = -H; i < W + H; i += 120) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i + H, H);
-        ctx.stroke();
-      }
-    } else if (template === "elegant") {
-      // Corner ornaments
-      ctx.globalAlpha = 0.1;
-      ctx.strokeStyle = tpl.accent;
-      ctx.lineWidth = 2;
-      const s = 120;
-      [{ x: 40, y: 40 }, { x: W - 40, y: 40 }, { x: 40, y: H - 40 }, { x: W - 40, y: H - 40 }].forEach(({ x, y }) => {
-        ctx.beginPath();
-        ctx.arc(x, y, s, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x, y, s * 0.6, 0, Math.PI * 2);
-        ctx.stroke();
-      });
-    }
-    ctx.restore();
+  if (name.includes("filtro") || name.includes("ar")) {
+    accent = "#00b4d8"; gradA = "#0a0e27"; gradB = "#003566";
+  } else if (name.includes("carburador") || name.includes("motor")) {
+    accent = "#ff6b35"; gradA = "#1a0a00"; gradB = "#4a1a00";
+  } else if (name.includes("bomba") || name.includes("óleo") || name.includes("oleo")) {
+    accent = "#ffd60a"; gradA = "#1a1a00"; gradB = "#3d3d00";
+  } else if (name.includes("ignição") || name.includes("vela") || name.includes("bobina")) {
+    accent = "#e63946"; gradA = "#1a0000"; gradB = "#4a0000";
+  } else if (name.includes("pistão") || name.includes("cilindro") || name.includes("biela")) {
+    accent = "#adb5bd"; gradA = "#0d0d0d"; gradB = "#2d2d2d";
   }
 
-  // Accent bar top
-  ctx.fillStyle = tpl.accent;
-  ctx.fillRect(0, 0, W, template === "bold" || template === "flash_sale" ? 12 : 6);
+  if (bgStyle === "white") {
+    // Clean white/light gray
+    ctx.fillStyle = "#f8f9fa";
+    ctx.fillRect(0, 0, W, H);
+    // Subtle border
+    ctx.strokeStyle = "#dee2e6";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(20, 20, W - 40, H - 40);
+    // Accent bar top
+    ctx.fillStyle = accent;
+    ctx.fillRect(20, 20, W - 40, 6);
+  } else {
+    // Creative dynamic background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, gradA);
+    grad.addColorStop(0.5, gradB);
+    grad.addColorStop(1, gradA);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
 
-  // ── Product image ──
-  const imgAreaH = isStory ? H * 0.42 : H * 0.48;
+    // Decorative elements related to industrial/mechanical theme
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1;
+    // Gear-like circles
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.arc(W * 0.88, H * 0.15, 50 + i * 35, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.arc(W * 0.08, H * 0.85, 40 + i * 30, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // Subtle grid pattern
+    ctx.globalAlpha = 0.02;
+    ctx.strokeStyle = "#ffffff";
+    for (let x = 0; x < W; x += 60) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += 60) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    ctx.restore();
+
+    // Accent bar top
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, W, 8);
+
+    // Subtle glow behind product area
+    const glowGrad = ctx.createRadialGradient(W / 2, H * 0.3, 50, W / 2, H * 0.3, 350);
+    glowGrad.addColorStop(0, `${accent}22`);
+    glowGrad.addColorStop(1, "transparent");
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(0, 0, W, H * 0.6);
+  }
+
+  // ── Product image (UNALTERED - no filters, no effects on the image itself) ──
+  const imgAreaTop = isStory ? 120 : 80;
+  const imgAreaH = isStory ? H * 0.40 : H * 0.45;
   if (imageUrl) {
     try {
       const img = await loadImage(imageUrl);
-      if (!isLight) {
+      const maxW = W - 160;
+      const maxH = imgAreaH - 40;
+      const scale = Math.min(maxW / img.width, maxH / img.height);
+      const dw = img.width * scale;
+      const dh = img.height * scale;
+      const dx = (W - dw) / 2;
+      const dy = imgAreaTop + (imgAreaH - dh) / 2;
+
+      if (bgStyle === "creative") {
+        // White card behind product for clean contrast
         ctx.save();
-        ctx.shadowColor = `${tpl.accent}66`;
-        ctx.shadowBlur = template === "bold" ? 80 : 50;
-        const scale = Math.min((W - 120) / img.width, (imgAreaH - 60) / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        ctx.drawImage(img, (W - dw) / 2, (imgAreaH - dh) / 2 + 20, dw, dh);
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.shadowColor = "rgba(0,0,0,0.3)";
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetY = 8;
+        roundRect(ctx, dx - 20, dy - 20, dw + 40, dh + 40, 16);
+        ctx.fill();
         ctx.restore();
-        // Gradient overlay
-        const overlayGrad = ctx.createLinearGradient(0, imgAreaH - 100, 0, imgAreaH + 30);
-        overlayGrad.addColorStop(0, `${tpl.colors[0]}00`);
-        overlayGrad.addColorStop(1, `${tpl.colors[0]}ff`);
-        ctx.fillStyle = overlayGrad;
-        ctx.fillRect(0, imgAreaH - 100, W, 130);
-      } else {
-        const scale = Math.min((W - 160) / img.width, (imgAreaH - 80) / img.height);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-        ctx.drawImage(img, (W - dw) / 2, (imgAreaH - dh) / 2 + 20, dw, dh);
-        ctx.strokeStyle = "#dddddd";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(60, imgAreaH + 10);
-        ctx.lineTo(W - 60, imgAreaH + 10);
-        ctx.stroke();
       }
+
+      // Draw product image as-is
+      ctx.drawImage(img, dx, dy, dw, dh);
     } catch { /* fallback */ }
   }
 
-  const textStartY = imgAreaH + 40;
+  // Text area starts after image
+  const textStartY = imgAreaTop + imgAreaH + 30;
 
-  // ── Flash Sale: Price banner ──
-  if (template === "flash_sale" && price) {
-    const priceY = textStartY - 20;
-    ctx.fillStyle = tpl.accent;
-    ctx.fillRect(0, priceY, W, 80);
-    ctx.fillStyle = "#000000";
-    ctx.font = `bold 52px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "center";
+  // ── Price display ──
+  if (price) {
+    const priceY = textStartY;
     if (originalPrice && originalPrice > price) {
-      ctx.font = `28px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillStyle = "#333333";
+      // Old price (strikethrough)
+      ctx.fillStyle = bgStyle === "white" ? "#999999" : "#888888";
+      ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "left";
       const oldText = `De R$ ${originalPrice.toFixed(2)}`;
-      ctx.fillText(oldText, W / 2, priceY + 30);
-      // Strikethrough
+      ctx.fillText(oldText, 60, priceY);
       const tw = ctx.measureText(oldText).width;
-      ctx.strokeStyle = "#333333";
+      ctx.strokeStyle = ctx.fillStyle;
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - tw / 2, priceY + 25);
-      ctx.lineTo(W / 2 + tw / 2, priceY + 25);
-      ctx.stroke();
-      ctx.fillStyle = "#000000";
+      ctx.beginPath(); ctx.moveTo(60, priceY - 4); ctx.lineTo(60 + tw, priceY - 4); ctx.stroke();
+
+      // New price
+      ctx.fillStyle = accent;
       ctx.font = `bold 48px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`POR R$ ${price.toFixed(2)}`, W / 2, priceY + 70);
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 50);
     } else {
-      ctx.fillText(`R$ ${price.toFixed(2)}`, W / 2, priceY + 55);
+      ctx.fillStyle = accent;
+      ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 10);
     }
-    ctx.textAlign = "left";
   }
 
-  const headlineY = template === "flash_sale" && price ? textStartY + 80 : textStartY;
+  const headlineY = textStartY + (price ? (originalPrice && originalPrice > price ? 80 : 40) : 0);
 
   // ── Headline ──
   if (text?.headline) {
-    ctx.fillStyle = isLight ? "#1a1a1a" : "#ffffff";
-    if (template === "elegant") {
-      ctx.fillStyle = tpl.accent;
-    }
-    const fontSize = template === "bold" ? (isStory ? 60 : 52) : (isStory ? 52 : 46);
+    ctx.fillStyle = bgStyle === "white" ? "#1a1a1a" : "#ffffff";
+    const fontSize = isStory ? 50 : 44;
     ctx.font = `bold ${fontSize}px 'Segoe UI', Arial, sans-serif`;
-    wrapText(ctx, text.headline.toUpperCase(), 60, headlineY, W - 120, fontSize + 8);
+    ctx.textAlign = "left";
+    wrapText(ctx, text.headline.toUpperCase(), 60, headlineY + 40, W - 120, fontSize + 8);
   }
 
   // ── Body ──
-  const bodyY = headlineY + (text?.headline ? 130 : 0);
+  const bodyY = headlineY + (text?.headline ? 140 : 40);
   if (text?.body_text) {
-    ctx.fillStyle = isLight ? "#444444" : "#c0c8d8";
-    ctx.font = `${isStory ? 30 : 26}px 'Segoe UI', Arial, sans-serif`;
-    const shortBody = text.body_text.length > 160 ? text.body_text.slice(0, 160) + "…" : text.body_text;
-    wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 40 : 34);
+    ctx.fillStyle = bgStyle === "white" ? "#444444" : "#c0c8d8";
+    ctx.font = `${isStory ? 28 : 24}px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "left";
+    const shortBody = text.body_text.length > 180 ? text.body_text.slice(0, 180) + "…" : text.body_text;
+    wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 38 : 32);
   }
 
   // ── CTA button ──
@@ -302,11 +290,10 @@ const generateCompositeImage = async (
     const ctaW = 420;
     const ctaH = 60;
     const ctaX = (W - ctaW) / 2;
-    ctx.fillStyle = tpl.accent;
-    roundRect(ctx, ctaX, ctaY, ctaW, ctaH, template === "bold" ? 8 : 30);
+    ctx.fillStyle = accent;
+    roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30);
     ctx.fill();
-    const ctaTextColor = template === "flash_sale" || template === "bold" ? "#000000" : "#ffffff";
-    ctx.fillStyle = ctaTextColor;
+    ctx.fillStyle = "#ffffff";
     ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText(text.cta.toUpperCase(), W / 2, ctaY + 40);
@@ -316,7 +303,7 @@ const generateCompositeImage = async (
   // ── Product link ──
   if (productUrl) {
     const linkY = H - (isStory ? 200 : 100);
-    ctx.fillStyle = isLight ? "#666666" : "#8899aa";
+    ctx.fillStyle = bgStyle === "white" ? "#666666" : "#8899aa";
     ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
     ctx.textAlign = "center";
     ctx.fillText(`🔗 ${productUrl}`, W / 2, linkY);
@@ -325,13 +312,14 @@ const generateCompositeImage = async (
 
   // ── Hashtags ──
   if (text?.hashtags) {
-    ctx.fillStyle = isLight ? tpl.accent : tpl.accent;
+    ctx.fillStyle = accent;
     ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "left";
     const hashY = H - (isStory ? 150 : 45);
     ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
   }
 
-  // ── Logo (top-left) ──
+  // ── Logo Grundemann (top-left, ALWAYS) ──
   try {
     const logo = await loadImage(logoGrundemann);
     const logoH = isStory ? 65 : 55;
@@ -339,32 +327,22 @@ const generateCompositeImage = async (
     const logoX = 28;
     const logoY = 18;
     ctx.save();
-    ctx.fillStyle = isLight ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.55)";
+    ctx.fillStyle = bgStyle === "white" ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.6)";
     roundRect(ctx, logoX - 10, logoY - 8, logoW + 20, logoH + 16, 10);
     ctx.fill();
     ctx.restore();
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
   } catch {
     ctx.save();
-    ctx.fillStyle = isLight ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)";
+    ctx.fillStyle = bgStyle === "white" ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)";
     ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
     ctx.fillText("GRÜNDEMANN", 30, 50);
     ctx.restore();
   }
 
-  // ── Template badge (bottom-right) ──
-  if (template === "elegant") {
-    ctx.save();
-    ctx.fillStyle = `${tpl.accent}33`;
-    roundRect(ctx, W - 200, H - 50, 180, 35, 8);
-    ctx.fill();
-    ctx.fillStyle = tpl.accent;
-    ctx.font = `14px 'Segoe UI', Arial, sans-serif`;
-    ctx.textAlign = "right";
-    ctx.fillText("GRÜNDEMANN ®", W - 30, H - 27);
-    ctx.textAlign = "left";
-    ctx.restore();
-  }
+  // ── Bottom accent bar ──
+  ctx.fillStyle = accent;
+  ctx.fillRect(0, H - 6, W, 6);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
@@ -402,6 +380,12 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
+// ─── Calendar helpers ───
+const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+const MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const WEEKDAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
 const MarketingCenter = () => {
   const { toast } = useToast();
   const [tab, setTab] = useState<MarketingTab>("dashboard");
@@ -421,10 +405,7 @@ const MarketingCenter = () => {
   const [genInstructions, setGenInstructions] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generatedText, setGeneratedText] = useState<any>(null);
-  const [generatingImage, setGeneratingImage] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>("creative");
-  const [templateStyle, setTemplateStyle] = useState<TemplateStyle>("modern");
   const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
@@ -446,27 +427,31 @@ const MarketingCenter = () => {
   // Automation
   const [autoGenerating, setAutoGenerating] = useState<string | null>(null);
 
+  // Calendar
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [draggedPostId, setDraggedPostId] = useState<string | null>(null);
+
   useEffect(() => { loadAll(); }, []);
 
   const selectedProducts = products.filter(p => selectedProductIds.has(p.id));
 
-  // Generate composite whenever text or image changes
+  // Generate composite whenever text changes
   useEffect(() => {
-    if (generatedText && wizardStep >= 4) {
+    if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, generatedImageUrl, wizardStep, backgroundStyle, templateStyle]);
+  }, [generatedText, wizardStep, backgroundStyle]);
 
   const buildComposite = async () => {
     if (!generatedText) return;
     setGeneratingComposite(true);
     try {
       const product = selectedProducts[0];
-      const imgSrc = generatedImageUrl || product?.image_url || null;
+      const imgSrc = product?.image_url || null;
       const productUrl = product ? getProductUrl(product.id) : undefined;
       const blob = await generateCompositeImage(
-        imgSrc, generatedText, genFormat, backgroundStyle, templateStyle,
-        productUrl, product?.price, product?.original_price,
+        imgSrc, generatedText, genFormat, backgroundStyle,
+        productUrl, product?.price, product?.original_price, product?.name,
       );
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
@@ -576,34 +561,7 @@ const MarketingCenter = () => {
     }
   };
 
-  // Generate promotional image
-  const generatePromotionalImage = async () => {
-    if (selectedProducts.length === 0) return;
-    const product = selectedProducts[0];
-    setGeneratingImage(true);
-    try {
-      const bgDesc = backgroundStyle === "white"
-        ? "Clean professional product photo on a pure white background, studio lighting, e-commerce style."
-        : `Creative promotional scene for ${product.name}. Show the product in a professional workshop/garage environment with tools, engines, and industrial atmosphere. Dramatic lighting, warm tones. Professional commercial photography style.`;
-
-      const { data, error } = await supabase.functions.invoke("generate-product-image", {
-        body: { productName: product.name, imageDescription: bgDesc, sku: product.sku },
-      });
-      if (error) throw error;
-      if (data?.imageUrl) {
-        setGeneratedImageUrl(data.imageUrl);
-        toast({ title: "Imagem promocional gerada!" });
-      } else {
-        throw new Error("Não foi possível gerar a imagem");
-      }
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    } finally {
-      setGeneratingImage(false);
-    }
-  };
-
-  // Build full text for copy/download, including product link
+  // Build full text for copy/download
   const buildFullText = (text: any = generatedText, product?: Product | null) => {
     if (!text) return "";
     const parts: string[] = [];
@@ -611,8 +569,6 @@ const MarketingCenter = () => {
     if (text.short_description) parts.push(text.short_description);
     if (text.body_text) parts.push("", text.body_text);
     if (text.cta) parts.push("", `👉 ${text.cta}`);
-
-    // Add product link
     const p = product || selectedProducts[0];
     if (p) {
       const url = getProductUrl(p.id);
@@ -620,7 +576,6 @@ const MarketingCenter = () => {
         parts.push("", `🛒 Compre agora: ${url}`);
       }
     }
-
     if (text.hashtags) parts.push("", text.hashtags);
     return parts.join("\n");
   };
@@ -636,9 +591,7 @@ const MarketingCenter = () => {
       return;
     }
     try {
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": compositeBlob })
-      ]);
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": compositeBlob })]);
       toast({ title: "✅ Imagem do anúncio copiada!", description: "Cole diretamente no Instagram, Facebook ou qualquer rede social." });
     } catch {
       downloadBlob(compositeBlob, `anuncio-completo-${Date.now()}.png`);
@@ -653,10 +606,10 @@ const MarketingCenter = () => {
       setTimeout(async () => {
         try {
           await navigator.clipboard.write([new ClipboardItem({ "image/png": compositeBlob })]);
-          toast({ title: "✅ Pronto para publicar!", description: "Imagem copiada! O texto também foi copiado. Cole no seu editor/rede social." });
+          toast({ title: "✅ Pronto para publicar!", description: "Imagem copiada! O texto também foi copiado." });
         } catch {
           downloadBlob(compositeBlob, `anuncio-completo-${Date.now()}.png`);
-          toast({ title: "Texto copiado e imagem baixada!", description: "Cole o texto e anexe a imagem na publicação." });
+          toast({ title: "Texto copiado e imagem baixada!" });
         }
       }, 100);
     } else {
@@ -707,7 +660,7 @@ const MarketingCenter = () => {
         body_text: generatedText.body_text || null,
         hashtags: generatedText.hashtags || null,
         cta: generatedText.cta || null,
-        image_url: generatedImageUrl || product?.image_url || null,
+        image_url: product?.image_url || null,
         status: publishMode === "save" ? "draft" : "published",
       };
 
@@ -744,7 +697,6 @@ const MarketingCenter = () => {
     setWizardStep(0);
     setSelectedProductIds(new Set());
     setGeneratedText(null);
-    setGeneratedImageUrl(null);
     setCompositeBlob(null);
     setCompositeUrl(null);
     setGenInstructions("");
@@ -752,7 +704,6 @@ const MarketingCenter = () => {
     setScheduleDate("");
     setPublishMode("save");
     setBackgroundStyle("creative");
-    setTemplateStyle("modern");
   };
 
   const deleteCreative = async (id: string) => {
@@ -771,13 +722,12 @@ const MarketingCenter = () => {
     setSelectedProductIds(new Set([productId]));
     setWizardStep(0);
     setGeneratedText(null);
-    setGeneratedImageUrl(null);
     setCompositeBlob(null);
     setCompositeUrl(null);
     setTab("wizard");
   };
 
-  // Auto-generate ad for a product (from Automation tab)
+  // Auto-generate ad
   const autoGenerateAd = async (product: Product) => {
     setAutoGenerating(product.id);
     try {
@@ -795,7 +745,6 @@ const MarketingCenter = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Save creative directly
       await supabase.from("marketing_creatives").insert({
         title: data.headline || `Anúncio - ${product.name}`,
         format: "post_instagram",
@@ -808,7 +757,7 @@ const MarketingCenter = () => {
         status: "draft",
       });
 
-      toast({ title: `✅ Anúncio de "${product.name}" criado!`, description: "Salvo na biblioteca de criativos." });
+      toast({ title: `✅ Anúncio de "${product.name}" criado!`, description: "Salvo na biblioteca." });
       loadAll();
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -817,11 +766,50 @@ const MarketingCenter = () => {
     }
   };
 
+  // ─── Calendar drag-and-drop ───
+  const handleDragStart = (postId: string) => {
+    setDraggedPostId(postId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, day: number) => {
+    e.preventDefault();
+    if (!draggedPostId) return;
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const newDate = new Date(year, month, day, 10, 0, 0);
+    await supabase.from("marketing_posts").update({
+      scheduled_at: newDate.toISOString(),
+      status: "scheduled",
+    }).eq("id", draggedPostId);
+    setDraggedPostId(null);
+    toast({ title: "📅 Post reagendado!" });
+    loadAll();
+  };
+
+  const calendarYear = calendarDate.getFullYear();
+  const calendarMonth = calendarDate.getMonth();
+  const daysInMonth = getDaysInMonth(calendarYear, calendarMonth);
+  const firstDay = getFirstDayOfMonth(calendarYear, calendarMonth);
+
+  const getPostsForDay = (day: number) => {
+    return posts.filter(p => {
+      const d = p.scheduled_at || p.published_at;
+      if (!d) return false;
+      const pd = new Date(d);
+      return pd.getFullYear() === calendarYear && pd.getMonth() === calendarMonth && pd.getDate() === day;
+    });
+  };
+
   const subTabs = [
     { key: "dashboard" as const, label: "Dashboard", icon: BarChart3 },
     { key: "wizard" as const, label: "Criar Anúncio", icon: Sparkles },
     { key: "campaigns" as const, label: "Campanhas", icon: Target },
     { key: "library" as const, label: "Biblioteca", icon: Layers },
+    { key: "calendar" as const, label: "Calendário", icon: CalendarDays },
     { key: "history" as const, label: "Histórico", icon: Clock },
     { key: "automation" as const, label: "Automação", icon: Zap },
   ];
@@ -876,18 +864,15 @@ const MarketingCenter = () => {
           </div>
         </div>
         <div className="aspect-square bg-muted relative overflow-hidden">
-          {imageUrl ? (
+          {compositeUrl ? (
+            <img src={compositeUrl} alt="Preview" className="w-full h-full object-contain" />
+          ) : imageUrl ? (
             <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
           ) : selectedProducts[0]?.image_url ? (
             <img src={selectedProducts[0].image_url} alt="Preview" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <ImageIcon className="w-16 h-16 text-muted-foreground/30" />
-            </div>
-          )}
-          {text?.headline && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <p className="text-white font-bold text-sm leading-tight">{text.headline}</p>
             </div>
           )}
         </div>
@@ -923,7 +908,7 @@ const MarketingCenter = () => {
         {subTabs.map(s => {
           const Icon = s.icon;
           return (
-            <button key={s.key} onClick={() => { setTab(s.key); if (s.key === "wizard") { setWizardStep(0); } }}
+            <button key={s.key} onClick={() => { setTab(s.key); if (s.key === "wizard") setWizardStep(0); }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 tab === s.key ? "bg-primary text-primary-foreground shadow-md" : "bg-muted/50 text-muted-foreground hover:bg-muted"
               }`}>
@@ -961,9 +946,9 @@ const MarketingCenter = () => {
           <Card>
             <CardHeader><CardTitle className="text-lg">Ações Rápidas</CardTitle></CardHeader>
             <CardContent className="flex flex-wrap gap-3">
-              <Button onClick={() => { setTab("wizard"); setWizardStep(0); }} className="gap-2"><Sparkles className="h-4 w-4" /> Criar Anúncio Completo</Button>
+              <Button onClick={() => { setTab("wizard"); setWizardStep(0); }} className="gap-2"><Sparkles className="h-4 w-4" /> Criar Anúncio</Button>
               <Button onClick={() => setTab("campaigns")} variant="secondary" className="gap-2"><Plus className="h-4 w-4" /> Nova Campanha</Button>
-              <Button onClick={() => setTab("library")} variant="outline" className="gap-2"><Layers className="h-4 w-4" /> Ver Biblioteca</Button>
+              <Button onClick={() => setTab("calendar")} variant="outline" className="gap-2"><CalendarDays className="h-4 w-4" /> Calendário</Button>
               <Button onClick={() => setTab("automation")} variant="outline" className="gap-2"><Zap className="h-4 w-4" /> Automação</Button>
             </CardContent>
           </Card>
@@ -1059,7 +1044,7 @@ const MarketingCenter = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5 text-primary" /> Configure o Anúncio</CardTitle>
-                <CardDescription>Defina o formato, tipo de campanha e estilo de fundo.</CardDescription>
+                <CardDescription>Defina o formato, tipo de campanha e estilo visual.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1103,15 +1088,15 @@ const MarketingCenter = () => {
                           <div className="w-10 h-10 rounded bg-white border shrink-0 flex items-center justify-center"><Package className="h-5 w-5 text-muted-foreground" /></div>
                           <div>
                             <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Fundo Branco</p>
-                            <p className="text-xs text-muted-foreground">Estilo catálogo limpo</p>
+                            <p className="text-xs text-muted-foreground">Estilo catálogo limpo e profissional</p>
                           </div>
                         </button>
                         <button onClick={() => setBackgroundStyle("creative")}
                           className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
                           <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-700 to-slate-800 shrink-0 flex items-center justify-center"><Sparkles className="h-5 w-5 text-amber-200" /></div>
                           <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Fundo Criativo</p>
-                            <p className="text-xs text-muted-foreground">Cenário temático com arte</p>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Arte Criativa</p>
+                            <p className="text-xs text-muted-foreground">Fundo temático relacionado ao produto com cores dinâmicas</p>
                           </div>
                         </button>
                       </div>
@@ -1125,299 +1110,131 @@ const MarketingCenter = () => {
                 </div>
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setWizardStep(0)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
-                  <Button onClick={() => setWizardStep(2)} className="gap-2">Escolher Template <ArrowRight className="h-4 w-4" /></Button>
+                  <Button onClick={() => setWizardStep(2)} className="gap-2">Gerar Conteúdo <ArrowRight className="h-4 w-4" /></Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Step 3: Template Selection (NEW) */}
+          {/* Step 3: Generate Content */}
           {wizardStep === 2 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><LayoutTemplate className="h-5 w-5 text-primary" /> Escolha o Template da Arte</CardTitle>
-                <CardDescription>Selecione um layout profissional pré-definido para seu anúncio. Cada template tem um estilo visual único.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Gerar Conteúdo com IA</CardTitle>
+                <CardDescription>A IA vai criar o texto publicitário e a arte será gerada automaticamente com a imagem original do produto.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {templateOptions.map(t => (
-                    <button key={t.key} onClick={() => setTemplateStyle(t.key)}
-                      className={`relative flex flex-col rounded-xl border-2 overflow-hidden transition-all ${templateStyle === t.key ? "border-primary shadow-lg ring-2 ring-primary/30" : "border-border hover:border-primary/50"}`}>
-                      {/* Template preview */}
-                      <div className="h-32 relative" style={{ background: `linear-gradient(135deg, ${t.colors[0]}, ${t.colors[1]})` }}>
-                        {/* Accent bar */}
-                        <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: t.accent }} />
-                        {/* Mock layout */}
-                        <div className="absolute inset-0 flex items-center justify-center p-4">
-                          <div className="w-full max-w-[180px] space-y-2">
-                            <div className="w-12 h-12 rounded-lg mx-auto opacity-60" style={{ backgroundColor: `${t.accent}33` }}>
-                              <div className="w-full h-full flex items-center justify-center">
-                                <ImageIcon className="h-5 w-5" style={{ color: t.accent }} />
-                              </div>
-                            </div>
-                            <div className="h-2 rounded-full w-3/4 mx-auto" style={{ backgroundColor: t.key === "minimal" ? "#333" : "#fff", opacity: 0.6 }} />
-                            <div className="h-1.5 rounded-full w-1/2 mx-auto" style={{ backgroundColor: t.key === "minimal" ? "#666" : "#fff", opacity: 0.3 }} />
-                            <div className="h-5 rounded-full w-2/3 mx-auto" style={{ backgroundColor: t.accent, opacity: 0.8 }} />
-                          </div>
-                        </div>
-                        {templateStyle === t.key && (
-                          <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                            <Check className="h-3 w-3" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3 bg-background">
-                        <p className={`text-sm font-semibold ${templateStyle === t.key ? "text-primary" : ""}`}>{t.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
-                      </div>
-                    </button>
-                  ))}
+                <div className="p-4 bg-muted/30 rounded-lg space-y-2">
+                  <p className="text-sm"><strong>Resumo da configuração:</strong></p>
+                  <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
+                  <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
+                  <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : "Arte Criativa (cores automáticas)"}</p>
+                  <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
 
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-sm"><strong>Template selecionado:</strong> {templateOptions.find(t => t.key === templateStyle)?.label}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{templateOptions.find(t => t.key === templateStyle)?.desc}</p>
+                <div className="flex flex-col items-center gap-4">
+                  <Button onClick={generateText} disabled={generating} size="lg" className="gap-2 h-14 px-8 text-lg">
+                    {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                    {generating ? "Gerando texto e arte..." : "🚀 Gerar Anúncio Completo"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">A IA gerará o texto publicitário e a arte será montada automaticamente com a imagem original do produto</p>
                 </div>
+
+                {generatedText && (
+                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 space-y-3">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Check className="h-5 w-5" />
+                      <span className="font-semibold">Conteúdo gerado com sucesso!</span>
+                    </div>
+                    {generatedText.headline && <p className="text-lg font-bold">{generatedText.headline}</p>}
+                    {generatedText.body_text && <p className="text-sm">{generatedText.body_text}</p>}
+                    {generatedText.cta && <Badge variant="secondary">{generatedText.cta}</Badge>}
+                    {generatedText.hashtags && <p className="text-xs text-primary">{generatedText.hashtags}</p>}
+                  </div>
+                )}
 
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setWizardStep(1)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
-                  <Button onClick={() => setWizardStep(3)} className="gap-2">Gerar Conteúdo <ArrowRight className="h-4 w-4" /></Button>
+                  <Button onClick={() => setWizardStep(3)} disabled={!generatedText} className="gap-2">
+                    Ver Pré-visualização <ArrowRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Step 4: Generate */}
+          {/* Step 4: Preview */}
           {wizardStep === 3 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Gerar Conteúdo com IA</CardTitle>
-                  <CardDescription>Gere o texto publicitário e a imagem do produto com IA.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted/30 rounded-lg space-y-2">
-                    <p className="text-sm"><strong>Formato:</strong> {formatLabels[genFormat]}</p>
-                    <p className="text-sm"><strong>Campanha:</strong> {campaignTypeLabels[genCampaignType]}</p>
-                    <p className="text-sm"><strong>Fundo:</strong> {backgroundStyle === "white" ? "🤍 Branco" : "🎨 Criativo"}</p>
-                    <p className="text-sm"><strong>Template:</strong> {templateOptions.find(t => t.key === templateStyle)?.label}</p>
-                    <p className="text-sm"><strong>Produtos:</strong> {selectedProducts.map(p => p.name).join(", ")}</p>
-                    <p className="text-sm flex items-center gap-1"><Link2 className="h-3.5 w-3.5 text-primary" /> <strong>Link direto:</strong> Incluído automaticamente</p>
-                  </div>
-
-                  <div className="flex flex-col gap-3">
-                    <Button onClick={generateText} disabled={generating} className="gap-2 w-full h-12 text-base">
-                      {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                      {generating ? "Gerando texto..." : "🔤 Gerar Texto com IA"}
-                    </Button>
-                    <Button onClick={generatePromotionalImage} disabled={generatingImage} variant="secondary" className="gap-2 w-full h-12">
-                      {generatingImage ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
-                      {generatingImage ? "Gerando imagem..." : `🖼️ Gerar Imagem (${backgroundStyle === "white" ? "Fundo Branco" : "Fundo Criativo"})`}
-                    </Button>
-                  </div>
-
-                  {generatedText && (
-                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                      <p className="text-sm font-medium text-primary flex items-center gap-1"><Check className="h-4 w-4" /> Texto gerado!</p>
-                      <Button size="sm" variant="outline" onClick={generateText} disabled={generating} className="gap-1">
-                        <RefreshCw className="h-3 w-3" /> Regenerar texto
-                      </Button>
-                    </div>
-                  )}
-                  {generatedImageUrl && (
-                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                      <p className="text-sm font-medium text-primary flex items-center gap-1"><Check className="h-4 w-4" /> Imagem gerada!</p>
-                      <img src={generatedImageUrl} alt="Preview" className="w-full rounded-lg" />
-                      <Button size="sm" variant="outline" onClick={generatePromotionalImage} disabled={generatingImage} className="gap-1">
-                        <RefreshCw className="h-3 w-3" /> Regenerar imagem
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Live preview */}
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader><CardTitle className="text-lg">Pré-visualização ao Vivo</CardTitle></CardHeader>
-                  <CardContent>
-                    {generatedText ? (
-                      <PhoneMockup text={generatedText} imageUrl={generatedImageUrl} />
-                    ) : (
-                      <div className="text-center py-16 text-muted-foreground">
-                        <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                        <p>Clique em "Gerar Texto" para ver a pré-visualização</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={() => setWizardStep(2)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
-                  <Button onClick={() => setWizardStep(4)} disabled={!generatedText} className="gap-2">
-                    Ver Resultado Final <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Full Preview + Composite */}
-          {wizardStep === 4 && (
             <div className="space-y-6">
-              <Card className="border-2 border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Image className="h-5 w-5 text-primary" />
-                    Anúncio Completo para Publicação
-                  </CardTitle>
-                  <CardDescription>
-                    Arte final gerada com template "{templateOptions.find(t => t.key === templateStyle)?.label}". Copie, baixe ou compartilhe.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {generatingComposite ? (
-                    <div className="flex items-center justify-center py-12 bg-muted/20 rounded-xl">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <span className="ml-3 text-muted-foreground">Gerando arte final...</span>
-                    </div>
-                  ) : compositeUrl ? (
-                    <div className="rounded-xl overflow-hidden border-2 border-border shadow-lg bg-muted/10">
-                      <img src={compositeUrl} alt="Anúncio Completo" className="w-full max-h-[600px] object-contain" />
-                    </div>
-                  ) : null}
-
-                  {/* One-click actions */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <Button onClick={copyAllForPublication} disabled={!compositeBlob}
-                      className="gap-2 h-14 text-base bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                      <Send className="h-5 w-5" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold">Copiar Tudo</p>
-                        <p className="text-[10px] opacity-80">Imagem + texto + link</p>
-                      </div>
-                    </Button>
-                    <Button onClick={copyCompositeToClipboard} disabled={!compositeBlob} variant="secondary" className="gap-2 h-14">
-                      <Copy className="h-5 w-5" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold">Copiar Imagem</p>
-                        <p className="text-[10px] opacity-80">Cole nas redes sociais</p>
-                      </div>
-                    </Button>
-                    <Button onClick={() => copyToClipboard(buildFullText())} disabled={!generatedText} variant="outline" className="gap-2 h-14">
-                      <FileText className="h-5 w-5" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold">Copiar Texto</p>
-                        <p className="text-[10px] opacity-80">Legenda + link</p>
-                      </div>
-                    </Button>
-                    <Button onClick={downloadComposite} disabled={!compositeBlob} variant="outline" className="gap-2 h-14">
-                      <Download className="h-5 w-5" />
-                      <div className="text-left">
-                        <p className="text-sm font-bold">Baixar Arte</p>
-                        <p className="text-[10px] opacity-80">PNG alta qualidade</p>
-                      </div>
-                    </Button>
-                  </div>
-
-                  {/* Product link info */}
-                  {selectedProducts[0] && (
-                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg flex items-center gap-3">
-                      <Link2 className="h-5 w-5 text-primary shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">Link direto do produto incluído:</p>
-                        <p className="text-xs text-primary truncate">{getProductUrl(selectedProducts[0].id)}</p>
-                      </div>
-                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(getProductUrl(selectedProducts[0].id))} className="shrink-0">
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Quick share */}
-                  <div className="flex flex-wrap gap-2 pt-2 border-t">
-                    <p className="text-sm text-muted-foreground w-full mb-1">Compartilhar:</p>
-                    <Button size="sm" variant="outline" className="gap-2"
-                      onClick={() => {
-                        const text = buildFullText();
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
-                      }}>
-                      <MessageCircle className="h-4 w-4" /> WhatsApp
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-2"
-                      onClick={async () => {
-                        if (compositeBlob && navigator.share) {
-                          try {
-                            const file = new File([compositeBlob], "anuncio.png", { type: "image/png" });
-                            await navigator.share({ text: buildFullText(), files: [file] });
-                          } catch { /* cancelled */ }
-                        } else {
-                          copyToClipboard(buildFullText());
-                        }
-                      }}>
-                      <Share2 className="h-4 w-4" /> Compartilhar
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-2" onClick={buildComposite} disabled={generatingComposite}>
-                      <RefreshCw className="h-4 w-4" /> Regenerar Arte
-                    </Button>
-                    <Button size="sm" variant="outline" className="gap-2" onClick={() => downloadAsText(buildFullText(), `legenda-${genFormat}-${Date.now()}.txt`)}>
-                      <Download className="h-4 w-4" /> Baixar Texto
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Editable text fields */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2"><PenTool className="h-4 w-4" /> Editar Texto</CardTitle>
-                    <CardDescription>Edite os textos e clique em "Regenerar Arte" para atualizar.</CardDescription>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Image className="h-5 w-5 text-primary" /> Arte Final
+                    </CardTitle>
+                    <CardDescription>A imagem do produto está preservada sem alterações. O fundo é gerado automaticamente baseado no tipo de produto.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    {generatedText?.headline && (
-                      <div>
-                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Headline</Label>
-                        <Textarea value={generatedText.headline} onChange={e => setGeneratedText((prev: any) => ({ ...prev, headline: e.target.value }))} rows={2} className="mt-1 font-bold" />
+                  <CardContent className="space-y-4">
+                    {generatingComposite ? (
+                      <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Montando arte final...</p>
+                      </div>
+                    ) : compositeUrl ? (
+                      <div className="space-y-3">
+                        <img src={compositeUrl} alt="Arte final" className="w-full rounded-lg border shadow-md" />
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <Button variant="outline" size="sm" className="gap-1" onClick={copyCompositeToClipboard}>
+                            <Copy className="h-3 w-3" /> Copiar
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={downloadComposite}>
+                            <Download className="h-3 w-3" /> Baixar
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={() => copyToClipboard(buildFullText())}>
+                            <FileText className="h-3 w-3" /> Texto
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-1" onClick={copyAllForPublication}>
+                            <Share2 className="h-3 w-3" /> Tudo
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-muted-foreground">Gerando arte...</p>
+                        <Button onClick={buildComposite} className="mt-3 gap-2"><RefreshCw className="h-4 w-4" /> Gerar Novamente</Button>
                       </div>
                     )}
-                    {generatedText?.body_text && (
-                      <div>
-                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Texto Principal</Label>
-                        <Textarea value={generatedText.body_text} onChange={e => setGeneratedText((prev: any) => ({ ...prev, body_text: e.target.value }))} rows={4} className="mt-1" />
-                      </div>
-                    )}
-                    {generatedText?.hashtags && (
-                      <div>
-                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Hashtags</Label>
-                        <Input value={generatedText.hashtags} onChange={e => setGeneratedText((prev: any) => ({ ...prev, hashtags: e.target.value }))} className="mt-1 text-primary" />
-                      </div>
-                    )}
-                    {generatedText?.cta && (
-                      <div>
-                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">CTA</Label>
-                        <Input value={generatedText.cta} onChange={e => setGeneratedText((prev: any) => ({ ...prev, cta: e.target.value }))} className="mt-1" />
-                      </div>
-                    )}
+
+                    {/* Style toggle */}
+                    <div className="flex gap-2">
+                      <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1">
+                        <Sparkles className="h-3 w-3" /> Criativo
+                      </Button>
+                      <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1">
+                        <Package className="h-3 w-3" /> Branco
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader><CardTitle className="text-lg">Preview no Celular</CardTitle></CardHeader>
                   <CardContent>
-                    <PhoneMockup text={generatedText} imageUrl={generatedImageUrl} />
+                    <PhoneMockup text={generatedText} imageUrl={null} />
                   </CardContent>
                 </Card>
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setWizardStep(3)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
-                <Button onClick={() => setWizardStep(5)} className="gap-2">Salvar / Publicar <ArrowRight className="h-4 w-4" /></Button>
+                <Button variant="outline" onClick={() => setWizardStep(2)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
+                <Button onClick={() => setWizardStep(4)} className="gap-2">Salvar / Publicar <ArrowRight className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
 
-          {/* Step 6: Publish */}
-          {wizardStep === 5 && (
+          {/* Step 5: Publish */}
+          {wizardStep === 4 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> Publicar ou Salvar</CardTitle>
@@ -1467,7 +1284,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Template: {templateOptions.find(t => t.key === templateStyle)?.label}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : "Arte Criativa"}</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
@@ -1475,7 +1292,7 @@ const MarketingCenter = () => {
                 </div>
 
                 <div className="flex justify-between">
-                  <Button variant="outline" onClick={() => setWizardStep(4)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
+                  <Button variant="outline" onClick={() => setWizardStep(3)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
                   <Button onClick={finalizeWizard} disabled={loading || (publishMode === "schedule" && !scheduleDate) || (publishMode !== "save" && publishPlatforms.size === 0)} className="gap-2 h-12 px-8 text-base">
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
                     {publishMode === "save" ? "Salvar Anúncio" : publishMode === "now" ? "Publicar Agora" : "Agendar Publicação"}
@@ -1609,6 +1426,117 @@ const MarketingCenter = () => {
         </div>
       )}
 
+      {/* ═══════════════ CALENDAR ═══════════════ */}
+      {tab === "calendar" && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Calendário de Marketing</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setCalendarDate(new Date(calendarYear, calendarMonth - 1, 1))}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-semibold min-w-[160px] text-center">
+                    {MONTH_NAMES[calendarMonth]} {calendarYear}
+                  </span>
+                  <Button size="sm" variant="outline" onClick={() => setCalendarDate(new Date(calendarYear, calendarMonth + 1, 1))}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setCalendarDate(new Date())}>Hoje</Button>
+                </div>
+              </div>
+              <CardDescription>Arraste publicações entre dias para reagendar. Os posts agendados e publicados aparecem automaticamente.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Weekday headers */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {WEEKDAY_NAMES.map(d => (
+                  <div key={d} className="text-center text-xs font-semibold text-muted-foreground py-2">{d}</div>
+                ))}
+              </div>
+              {/* Day cells */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Empty cells before first day */}
+                {Array.from({ length: firstDay }).map((_, i) => (
+                  <div key={`empty-${i}`} className="min-h-[100px] bg-muted/20 rounded-lg" />
+                ))}
+                {/* Day cells */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dayPosts = getPostsForDay(day);
+                  const isToday = new Date().getFullYear() === calendarYear && new Date().getMonth() === calendarMonth && new Date().getDate() === day;
+                  return (
+                    <div
+                      key={day}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, day)}
+                      className={`min-h-[100px] rounded-lg border p-1.5 transition-colors ${
+                        isToday ? "border-primary bg-primary/5" : "border-border bg-background hover:bg-muted/30"
+                      } ${draggedPostId ? "border-dashed border-primary/50" : ""}`}
+                    >
+                      <div className={`text-xs font-medium mb-1 ${isToday ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                        {day}
+                      </div>
+                      <div className="space-y-1">
+                        {dayPosts.map(p => {
+                          const PIcon = platformIcons[p.platform] || Send;
+                          const creative = creatives.find(c => c.id === p.creative_id);
+                          return (
+                            <div
+                              key={p.id}
+                              draggable
+                              onDragStart={() => handleDragStart(p.id)}
+                              className={`text-[10px] px-1.5 py-1 rounded cursor-grab active:cursor-grabbing flex items-center gap-1 truncate ${
+                                p.status === "published" ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"
+                              }`}
+                              title={creative?.title || p.content?.slice(0, 50) || p.platform}
+                            >
+                              <PIcon className="h-2.5 w-2.5 shrink-0" />
+                              <span className="truncate">{creative?.title?.slice(0, 15) || platformLabels[p.platform]}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Unscheduled posts - drag source */}
+          {posts.filter(p => !p.scheduled_at && !p.published_at).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Posts Não Agendados</CardTitle>
+                <CardDescription>Arraste para um dia no calendário para agendar.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {posts.filter(p => !p.scheduled_at && !p.published_at).map(p => {
+                    const PIcon = platformIcons[p.platform] || Send;
+                    const creative = creatives.find(c => c.id === p.creative_id);
+                    return (
+                      <div
+                        key={p.id}
+                        draggable
+                        onDragStart={() => handleDragStart(p.id)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30 cursor-grab active:cursor-grabbing hover:bg-muted/60 transition-colors"
+                      >
+                        <PIcon className="h-4 w-4 text-primary shrink-0" />
+                        <span className="text-sm truncate max-w-[200px]">{creative?.title || platformLabels[p.platform]}</span>
+                        <GripVertical className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* ═══════════════ HISTORY ═══════════════ */}
       {tab === "history" && (
         <div className="space-y-4">
@@ -1672,12 +1600,12 @@ const MarketingCenter = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5 text-primary" /> Automação de Marketing</CardTitle>
-              <CardDescription>Gere anúncios automaticamente com um clique para cada sugestão abaixo.</CardDescription>
+              <CardDescription>Gere anúncios automaticamente com um clique.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
                 { icon: Package, title: "Novo produto sem anúncio", desc: "Cria anúncio automático para produtos sem criativo.", filter: (p: Product) => !creatives.some(c => c.product_id === p.id) },
-                { icon: TrendingUp, title: "Produtos com preço promocional", desc: "Anúncio focado em desconto.", filter: (p: Product) => p.original_price && p.original_price > p.price },
+                { icon: TrendingUp, title: "Produtos com preço promocional", desc: "Anúncio focado em desconto.", filter: (p: Product) => p.original_price !== null && p.original_price !== undefined && p.original_price > p.price },
                 { icon: Archive, title: "Estoque alto (>20 unid.)", desc: "Campanha de queima de estoque.", filter: (p: Product) => p.stock_quantity > 20 },
               ].map((rule, i) => {
                 const matching = products.filter(rule.filter);
