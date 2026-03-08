@@ -31,6 +31,12 @@ interface Order {
 }
 interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; }
 interface FavProduct { id: string; name: string; price: number; image_url: string | null; sku: string | null; }
+interface Payment {
+  id: string; order_id: string; amount: number; status: string;
+  payment_method: string | null; mp_payment_id: string | null;
+  mp_status_detail: string | null; paid_at: string | null;
+  created_at: string; updated_at: string;
+}
 
 const statusLabel: Record<string, string> = {
   pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
