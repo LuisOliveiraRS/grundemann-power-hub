@@ -918,13 +918,19 @@ const MarketingCenter = () => {
                     {/* AI Creative Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" /> Estilo do Criativo
+                        <Palette className="h-4 w-4 text-primary" /> Estilo Visual da Arte
                       </Label>
-                      <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
-                        <p className="text-sm font-semibold text-primary">🤖 Arte Gerada por IA Profissional</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          A IA criará uma arte publicitária profissional com fundo industrial dramático, iluminação cinematográfica, preços em destaque dourado e a foto original do produto em alta qualidade. Estilo inspirado em anúncios premium de peças industriais.
-                        </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {(Object.entries(creativeStyleLabels) as [CreativeStyle, typeof creativeStyleLabels[CreativeStyle]][]).map(([key, style]) => (
+                          <button key={key} onClick={() => setCreativeStyle(key)}
+                            className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left ${creativeStyle === key ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/50"}`}>
+                            <span className="text-xl mt-0.5">{style.emoji}</span>
+                            <div>
+                              <p className={`text-sm font-semibold ${creativeStyle === key ? "text-primary" : ""}`}>{style.label}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{style.description}</p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
