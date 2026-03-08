@@ -125,7 +125,7 @@ const MarketingCenter = () => {
   const [genInstructions, setGenInstructions] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generatedText, setGeneratedText] = useState<any>(null);
-  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>("creative");
+  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>("ai_pro");
   const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
