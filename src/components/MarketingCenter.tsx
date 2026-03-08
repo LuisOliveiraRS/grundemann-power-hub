@@ -46,7 +46,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
-type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium";
+type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica";
 type LogoSize = "small" | "medium" | "large";
 
 const formatLabels: Record<string, string> = {
@@ -100,12 +100,21 @@ import bgOficinaStory from "@/assets/bg-oficina-story.jpg";
 import bgGeradoresStory from "@/assets/bg-geradores-story.jpg";
 import bgPecasStory from "@/assets/bg-pecas-story.jpg";
 import bgPremiumStory from "@/assets/bg-premium-story.jpg";
+import bgManutencao from "@/assets/bg-manutencao.jpg";
+import bgManutencaoStory from "@/assets/bg-manutencao-story.jpg";
+import bgFerramentas from "@/assets/bg-ferramentas.jpg";
+import bgFerramentasStory from "@/assets/bg-ferramentas-story.jpg";
+import bgFabrica from "@/assets/bg-fabrica.jpg";
+import bgFabricaStory from "@/assets/bg-fabrica-story.jpg";
 
 const bgPhotoMap: Record<string, { landscape: string; story: string; label: string; emoji: string }> = {
   oficina: { landscape: bgOficina, story: bgOficinaStory, label: "Oficina", emoji: "🔧" },
   geradores: { landscape: bgGeradores, story: bgGeradoresStory, label: "Geradores", emoji: "⚡" },
   pecas: { landscape: bgPecas, story: bgPecasStory, label: "Peças", emoji: "⚙️" },
   premium: { landscape: bgPremium, story: bgPremiumStory, label: "Premium", emoji: "✨" },
+  manutencao: { landscape: bgManutencao, story: bgManutencaoStory, label: "Manutenção", emoji: "🚗" },
+  ferramentas: { landscape: bgFerramentas, story: bgFerramentasStory, label: "Ferramentas", emoji: "🔨" },
+  fabrica: { landscape: bgFabrica, story: bgFabricaStory, label: "Fábrica", emoji: "🏭" },
 };
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
@@ -955,11 +964,34 @@ const MarketingCenter = () => {
   };
 
   // Save creative + optionally publish
+  const uploadCompositeToStorage = async (blob: Blob, filename: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .upload(`marketing/${filename}`, blob, { contentType: "image/png", upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data.path);
+      return urlData.publicUrl;
+    } catch (err) {
+      console.error("Upload error:", err);
+      return null;
+    }
+  };
+
   const finalizeWizard = async () => {
     if (!generatedText) return;
     setLoading(true);
     try {
       const product = selectedProducts[0];
+
+      // Upload composite image to storage
+      let creativeImageUrl = product?.image_url || null;
+      if (compositeBlob) {
+        const filename = `creative-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+        const uploadedUrl = await uploadCompositeToStorage(compositeBlob, filename);
+        if (uploadedUrl) creativeImageUrl = uploadedUrl;
+      }
+
       const creativeData: any = {
         title: generatedText.headline || `Criativo - ${product?.name || "Geral"}`,
         format: genFormat,
@@ -968,7 +1000,7 @@ const MarketingCenter = () => {
         body_text: generatedText.body_text || null,
         hashtags: generatedText.hashtags || null,
         cta: generatedText.cta || null,
-        image_url: product?.image_url || null,
+        image_url: creativeImageUrl,
         status: publishMode === "save" ? "draft" : "published",
       };
 
@@ -1055,6 +1087,20 @@ const MarketingCenter = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      // Generate composite image for the auto-generated ad
+      let creativeImageUrl = product.image_url || null;
+      try {
+        const compositeBlob = await generateCompositeImage(
+          product.image_url, data, "post_instagram", "creative",
+          getProductUrl(product.id), product.price, product.original_price, product.name, "medium",
+        );
+        const filename = `creative-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+        const uploadedUrl = await uploadCompositeToStorage(compositeBlob, filename);
+        if (uploadedUrl) creativeImageUrl = uploadedUrl;
+      } catch (compErr) {
+        console.error("Auto composite error:", compErr);
+      }
+
       await supabase.from("marketing_creatives").insert({
         title: data.headline || `Anúncio - ${product.name}`,
         format: "post_instagram",
@@ -1063,7 +1109,7 @@ const MarketingCenter = () => {
         body_text: data.body_text || null,
         hashtags: data.hashtags || null,
         cta: data.cta || null,
-        image_url: product.image_url || null,
+        image_url: creativeImageUrl,
         status: "draft",
       });
 
