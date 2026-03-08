@@ -1357,6 +1357,24 @@ const AdminDashboard = () => {
                         {c.description && <p className="text-sm text-muted-foreground mt-2">{c.description}</p>}
                       </div>
                       <div className="flex items-center gap-1">
+                        <select
+                          className="h-8 text-[10px] border border-input rounded-md px-1.5 bg-background text-muted-foreground w-auto"
+                          defaultValue=""
+                          onChange={async (e) => {
+                            if (e.target.value) {
+                              if (confirm(`Converter "${c.name}" em subcategoria de "${categories.find(cat => cat.id === e.target.value)?.name}"?`)) {
+                                await convertCategoryToSubcategory(c.id, e.target.value);
+                              }
+                              e.target.value = "";
+                            }
+                          }}
+                          title="Converter para subcategoria"
+                        >
+                          <option value="">→ Subcat.</option>
+                          {categories.filter(cat => cat.id !== c.id).map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
                         <Button
                           variant="ghost" size="icon" className="h-8 w-8"
                           title={c.is_visible !== false ? "Ocultar do menu" : "Mostrar no menu"}
