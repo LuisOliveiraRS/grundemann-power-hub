@@ -1106,7 +1106,9 @@ const MarketingCenter = () => {
     setPublishMode("save");
     setBackgroundStyle("creative");
     setCustomCta("");
+    setCustomSlogan("");
     setLogoSize("medium");
+    setAiBgUrl(null);
   };
 
   const deleteCreative = async (id: string) => {
