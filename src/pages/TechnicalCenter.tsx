@@ -35,8 +35,8 @@ const TechnicalCenter = () => {
   const [search, setSearch] = useState("");
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [allArticles, setAllArticles] = useState<Article[]>([]);
+  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -45,22 +45,33 @@ const TechnicalCenter = () => {
         .select("*")
         .eq("is_published", true)
         .order("created_at", { ascending: false });
-      setArticles((data as Article[]) || []);
+      setAllArticles((data as Article[]) || []);
       setLoading(false);
     };
     fetchArticles();
   }, []);
 
+  // Full-text search with debounce
+  useEffect(() => {
+    if (!search || search.length < 2) {
+      setSearchResults(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase.rpc("search_articles", { search_query: search });
+      setSearchResults((data as Article[]) || []);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const articles = searchResults !== null ? searchResults : allArticles;
+  
   const filteredArticles = articles.filter(a => {
     if (categoryFilter && a.category !== categoryFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      return a.title.toLowerCase().includes(s) || a.excerpt.toLowerCase().includes(s) || a.tags.some(t => t.includes(s));
-    }
     return true;
   });
 
-  const categories = [...new Set(articles.map(a => a.category))];
+  const categories = [...new Set(allArticles.map(a => a.category))];
 
   if (selectedArticle) {
     return (
