@@ -11,6 +11,14 @@ const Terms = () => (
       <meta property="og:title" content="Termos de Uso | Grundemann Power Hub" />
       <meta property="og:description" content="Condições de compra, pagamento, entrega e garantia de peças para motores e geradores." />
       <link rel="canonical" href="https://grundemann-power-hub.lovable.app/termos" />
+      <script type="application/ld+json">{JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Termos de Uso | Grundemann Power Hub",
+        "description": "Condições de compra, pagamento, entrega e garantia de peças para motores e geradores.",
+        "url": "https://grundemann-power-hub.lovable.app/termos",
+        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+      })}</script>
     </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
