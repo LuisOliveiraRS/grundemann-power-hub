@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { BookOpen, Wrench } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
