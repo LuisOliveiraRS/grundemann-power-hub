@@ -129,7 +129,9 @@ const HeroSection = () => {
                 onClick={() => navigate(`/produto/${current.id}`)}
               >
                 {/* Product card */}
-                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-4 lg:p-6 overflow-hidden">
+                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-4 lg:p-6 overflow-hidden transition-all duration-500 group-hover:border-primary/40 group-hover:bg-background/10 group-hover:shadow-[0_0_30px_rgba(34,197,94,0.15),0_0_60px_rgba(34,197,94,0.05)] group-hover:scale-[1.02]">
+                  {/* Shine sweep effect */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-30" />
                   {/* Discount badge */}
                   {current.original_price && current.original_price > current.price && (
                     <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-accent text-accent-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
