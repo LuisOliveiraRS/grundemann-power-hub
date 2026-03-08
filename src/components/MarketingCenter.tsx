@@ -1618,7 +1618,8 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : backgroundStyle === "ai" ? "🤖 Fundo IA" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  {customSlogan && <p className="text-sm">📢 Slogan: {customSlogan}</p>}
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
 
