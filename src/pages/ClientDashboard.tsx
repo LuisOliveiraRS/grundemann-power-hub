@@ -203,6 +203,7 @@ const ClientDashboard = () => {
   const tabs = [
     { id: "profile" as const, label: "Meus Dados", icon: User },
     { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
+    { id: "payments" as const, label: "Pagamentos", icon: CreditCard, count: payments.length },
     { id: "quotes" as const, label: "Orçamentos", icon: FileText, count: quotes.length },
     { id: "favorites" as const, label: "Favoritos", icon: Heart, count: favoriteIds.size },
     { id: "loyalty" as const, label: "Fidelidade", icon: Gift },
