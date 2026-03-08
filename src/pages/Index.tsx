@@ -89,7 +89,6 @@ const Index = () => {
       <FirstVisitPopup />
       <AbandonedCartReminder />
       <Footer />
-      <Footer />
     </div>
   );
 };

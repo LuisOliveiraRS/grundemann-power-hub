@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
@@ -7,6 +8,21 @@ import { MapPin, Phone, Mail, MessageCircle, Clock, Award, Users, Wrench } from 
 const About = () => {
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>Quem Somos | Grundemann Power Hub</title>
+        <meta name="description" content="Conheça a Grundemann Power Hub. Há mais de 15 anos oferecendo peças para motores estacionários e geradores de energia para todo o Brasil." />
+        <meta property="og:title" content="Quem Somos | Grundemann Power Hub" />
+        <meta property="og:description" content="Há mais de 15 anos oferecendo soluções em geradores de energia para todo o Brasil." />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://grundemann-power-hub.lovable.app/quem-somos" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "name": "Sobre a Grundemann Power Hub",
+          "description": "Há mais de 15 anos oferecendo soluções em geradores de energia",
+          "url": "https://grundemann-power-hub.lovable.app/quem-somos"
+        })}</script>
+      </Helmet>
       <TopBar />
       <Header />
       <CategoryNav />
