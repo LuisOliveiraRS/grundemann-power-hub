@@ -89,112 +89,187 @@ const WIZARD_STEPS = [
   { key: "publish", label: "Publicar", icon: Send },
 ];
 
+// ─── Load logo once ───
+import logoGrundemann from "@/assets/logo-grundemann.png";
+
+const loadImage = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+
 // ─── Canvas composite generator ───
-const generateCompositeImage = (
+const generateCompositeImage = async (
   imageUrl: string | null,
   text: any,
   format: string,
+  bgStyle: BackgroundStyle = "creative",
 ): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
-    const isStory = format === "story_instagram";
-    const W = isStory ? 1080 : 1080;
-    const H = isStory ? 1920 : 1080;
-    const canvas = document.createElement("canvas");
-    canvas.width = W;
-    canvas.height = H;
-    const ctx = canvas.getContext("2d")!;
+  const isStory = format === "story_instagram";
+  const W = 1080;
+  const H = isStory ? 1920 : 1080;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
 
-    // Background
+  // ── Background ──
+  if (bgStyle === "white") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+    // Subtle bottom band for text readability
+    const band = ctx.createLinearGradient(0, H * 0.55, 0, H);
+    band.addColorStop(0, "#f5f5f5");
+    band.addColorStop(1, "#e8e8e8");
+    ctx.fillStyle = band;
+    ctx.fillRect(0, H * 0.55, W, H * 0.45);
+  } else {
+    // Creative industrial gradient
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, "#1a1a2e");
-    grad.addColorStop(0.5, "#16213e");
+    grad.addColorStop(0, "#0d1117");
+    grad.addColorStop(0.3, "#1a1a2e");
+    grad.addColorStop(0.6, "#16213e");
     grad.addColorStop(1, "#0f3460");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Decorative accent bar
-    ctx.fillStyle = "#e94560";
-    ctx.fillRect(0, 0, W, 6);
+    // Decorative geometric elements
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    for (let i = 0; i < 8; i++) {
+      ctx.strokeStyle = "#4da8da";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(W * 0.85, H * 0.2, 60 + i * 40, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // Diagonal lines
+    ctx.strokeStyle = "#e94560";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.5 + i * 30);
+      ctx.lineTo(W * 0.15, H * 0.45 + i * 30);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
-    const drawContent = () => {
-      const imgAreaH = isStory ? H * 0.45 : H * 0.55;
-      const textStartY = imgAreaH + 30;
+  // Accent bar top
+  ctx.fillStyle = bgStyle === "white" ? "#cc0000" : "#e94560";
+  ctx.fillRect(0, 0, W, 8);
 
-      // Headline
-      if (text?.headline) {
-        ctx.fillStyle = "#ffffff";
-        ctx.font = `bold ${isStory ? 52 : 46}px 'Segoe UI', Arial, sans-serif`;
-        wrapText(ctx, text.headline, 60, textStartY, W - 120, isStory ? 60 : 54);
-      }
-
-      // Body (short)
-      const bodyY = textStartY + (text?.headline ? 130 : 0);
-      if (text?.body_text) {
-        ctx.fillStyle = "#cccccc";
-        ctx.font = `${isStory ? 32 : 28}px 'Segoe UI', Arial, sans-serif`;
-        const shortBody = text.body_text.length > 200 ? text.body_text.slice(0, 200) + "…" : text.body_text;
-        wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 40 : 36);
-      }
-
-      // CTA button
-      if (text?.cta) {
-        const ctaY = H - (isStory ? 220 : 130);
-        const ctaW = 380;
-        const ctaH = 56;
-        const ctaX = (W - ctaW) / 2;
-        // Button bg
-        ctx.fillStyle = "#e94560";
-        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 28);
-        ctx.fill();
-        // Button text
-        ctx.fillStyle = "#ffffff";
-        ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(text.cta, W / 2, ctaY + 38);
-        ctx.textAlign = "left";
-      }
-
-      // Hashtags
-      if (text?.hashtags) {
-        ctx.fillStyle = "#4da8da";
-        ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
-        const hashY = H - (isStory ? 140 : 50);
-        ctx.fillText(text.hashtags.slice(0, 80), 60, hashY);
-      }
-
-      // Brand watermark
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      ctx.font = `bold 20px 'Segoe UI', Arial, sans-serif`;
-      ctx.textAlign = "right";
-      ctx.fillText("GRÜNDEMANN", W - 40, H - 20);
-      ctx.textAlign = "left";
-
-      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
-    };
-
-    if (imageUrl) {
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const imgAreaH = isStory ? H * 0.45 : H * 0.55;
-        // Draw product image centered
-        const scale = Math.min(W / img.width, imgAreaH / img.height);
+  // ── Load and draw product image ──
+  const imgAreaH = isStory ? H * 0.45 : H * 0.5;
+  if (imageUrl) {
+    try {
+      const img = await loadImage(imageUrl);
+      if (bgStyle === "creative") {
+        // Draw product larger, with glow effect
+        ctx.save();
+        ctx.shadowColor = "rgba(73, 168, 218, 0.4)";
+        ctx.shadowBlur = 60;
+        const scale = Math.min((W - 120) / img.width, (imgAreaH - 60) / img.height);
         const dw = img.width * scale;
         const dh = img.height * scale;
-        ctx.drawImage(img, (W - dw) / 2, (imgAreaH - dh) / 2 + 6, dw, dh);
-        // Gradient overlay at bottom of image
-        const overlayGrad = ctx.createLinearGradient(0, imgAreaH - 80, 0, imgAreaH + 20);
-        overlayGrad.addColorStop(0, "rgba(22,33,62,0)");
-        overlayGrad.addColorStop(1, "rgba(22,33,62,1)");
+        ctx.drawImage(img, (W - dw) / 2, (imgAreaH - dh) / 2 + 20, dw, dh);
+        ctx.restore();
+        // Gradient overlay for text area
+        const overlayGrad = ctx.createLinearGradient(0, imgAreaH - 100, 0, imgAreaH + 30);
+        overlayGrad.addColorStop(0, "rgba(13,17,23,0)");
+        overlayGrad.addColorStop(1, "rgba(13,17,23,1)");
         ctx.fillStyle = overlayGrad;
-        ctx.fillRect(0, imgAreaH - 80, W, 100);
-        drawContent();
-      };
-      img.onerror = () => drawContent();
-      img.src = imageUrl;
-    } else {
-      drawContent();
+        ctx.fillRect(0, imgAreaH - 100, W, 130);
+      } else {
+        // White bg: product centered cleanly
+        const scale = Math.min((W - 160) / img.width, (imgAreaH - 80) / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        ctx.drawImage(img, (W - dw) / 2, (imgAreaH - dh) / 2 + 20, dw, dh);
+        // Subtle separator line
+        ctx.strokeStyle = "#dddddd";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(60, imgAreaH + 10);
+        ctx.lineTo(W - 60, imgAreaH + 10);
+        ctx.stroke();
+      }
+    } catch {
+      // Image load failed, continue
     }
+  }
+
+  const textStartY = imgAreaH + 40;
+  const isDark = bgStyle === "creative";
+
+  // ── Headline ──
+  if (text?.headline) {
+    ctx.fillStyle = isDark ? "#ffffff" : "#1a1a1a";
+    ctx.font = `bold ${isStory ? 54 : 48}px 'Segoe UI', Arial, sans-serif`;
+    wrapText(ctx, text.headline.toUpperCase(), 60, textStartY, W - 120, isStory ? 62 : 56);
+  }
+
+  // ── Body ──
+  const bodyY = textStartY + (text?.headline ? 140 : 0);
+  if (text?.body_text) {
+    ctx.fillStyle = isDark ? "#c0c8d8" : "#444444";
+    ctx.font = `${isStory ? 32 : 28}px 'Segoe UI', Arial, sans-serif`;
+    const shortBody = text.body_text.length > 180 ? text.body_text.slice(0, 180) + "…" : text.body_text;
+    wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 42 : 36);
+  }
+
+  // ── CTA button ──
+  if (text?.cta) {
+    const ctaY = H - (isStory ? 240 : 140);
+    const ctaW = 400;
+    const ctaH = 60;
+    const ctaX = (W - ctaW) / 2;
+    ctx.fillStyle = bgStyle === "white" ? "#cc0000" : "#e94560";
+    roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold 28px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(text.cta.toUpperCase(), W / 2, ctaY + 40);
+    ctx.textAlign = "left";
+  }
+
+  // ── Hashtags ──
+  if (text?.hashtags) {
+    ctx.fillStyle = isDark ? "#4da8da" : "#0066cc";
+    ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+    const hashY = H - (isStory ? 150 : 55);
+    ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
+  }
+
+  // ── Logo (top-left) ──
+  try {
+    const logo = await loadImage(logoGrundemann);
+    const logoH = isStory ? 70 : 60;
+    const logoW = (logo.width / logo.height) * logoH;
+    const logoX = 30;
+    const logoY = 20;
+    // Semi-transparent background behind logo for readability
+    ctx.save();
+    ctx.fillStyle = isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.85)";
+    roundRect(ctx, logoX - 10, logoY - 8, logoW + 20, logoH + 16, 10);
+    ctx.fill();
+    ctx.restore();
+    ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+  } catch {
+    // Fallback: text logo
+    ctx.save();
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.8)";
+    ctx.font = `bold 28px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("GRÜNDEMANN", 30, 55);
+    ctx.restore();
+  }
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
   });
 };
 
@@ -276,14 +351,14 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, generatedImageUrl, wizardStep]);
+  }, [generatedText, generatedImageUrl, wizardStep, backgroundStyle]);
 
   const buildComposite = async () => {
     if (!generatedText) return;
     setGeneratingComposite(true);
     try {
       const imgSrc = generatedImageUrl || selectedProducts[0]?.image_url || null;
-      const blob = await generateCompositeImage(imgSrc, generatedText, genFormat);
+      const blob = await generateCompositeImage(imgSrc, generatedText, genFormat, backgroundStyle);
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
       setCompositeUrl(URL.createObjectURL(blob));
