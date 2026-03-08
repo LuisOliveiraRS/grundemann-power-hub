@@ -371,6 +371,38 @@ const AdminDashboard = () => {
     toast({ title: "Subcategoria excluída!" }); loadAll();
   };
 
+  // Convert category to subcategory
+  const convertCategoryToSubcategory = async (catId: string, parentCatId: string) => {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    // Create subcategory under parent
+    const { error: subErr } = await supabase.from("subcategories").insert({
+      name: cat.name, slug: cat.slug, description: cat.description || null, category_id: parentCatId,
+    });
+    if (subErr) { toast({ title: "Erro", description: subErr.message, variant: "destructive" }); return; }
+    // Move products from old category to parent
+    await supabase.from("products").update({ category_id: parentCatId } as any).eq("category_id", catId);
+    // Delete old category
+    await supabase.from("categories").delete().eq("id", catId);
+    toast({ title: `"${cat.name}" convertida para subcategoria!` }); loadAll();
+  };
+
+  // Convert subcategory to category
+  const convertSubcategoryToCategory = async (subId: string) => {
+    const sub = subcategories.find(s => s.id === subId);
+    if (!sub) return;
+    // Create new category
+    const { data: newCat, error: catErr } = await supabase.from("categories").insert({
+      name: sub.name, slug: sub.slug, description: sub.description || null,
+    }).select("id").single();
+    if (catErr || !newCat) { toast({ title: "Erro", description: catErr?.message, variant: "destructive" }); return; }
+    // Move products that had this subcategory to the new category
+    await supabase.from("products").update({ category_id: newCat.id, subcategory_id: null } as any).eq("subcategory_id", subId);
+    // Delete old subcategory
+    await supabase.from("subcategories").delete().eq("id", subId);
+    toast({ title: `"${sub.name}" promovida para categoria!` }); loadAll();
+  };
+
   const updateOrderStatus = async (id: string, status: string) => {
     await supabase.from("orders").update({ status: status as any }).eq("id", id);
     await supabase.from("order_status_history").insert({ order_id: id, status: status as any });
