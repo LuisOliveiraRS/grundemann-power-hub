@@ -228,6 +228,7 @@ const Checkout = () => {
     const orderNotes = [
       shipping.notes,
       appliedCoupon ? `Cupom: ${appliedCoupon.code} (desconto: R$ ${discount.toFixed(2)})` : null,
+      selectedShipping ? `Frete: ${selectedShipping.service} - R$ ${isFreeShipping ? "0,00 (grátis)" : selectedShipping.price.toFixed(2)} (${selectedShipping.days} dias)` : null,
     ].filter(Boolean).join(" | ");
 
     const { data: order, error } = await supabase.from("orders").insert({
