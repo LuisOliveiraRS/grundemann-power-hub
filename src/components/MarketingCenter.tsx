@@ -163,19 +163,33 @@ const generateCompositeImage = async (
   if (bgStyle === "white") {
     ctx.fillStyle = "#f2f2f2";
     ctx.fillRect(0, 0, W, H);
-    // Subtle gradient overlay
     const wg = ctx.createLinearGradient(0, 0, W, H);
     wg.addColorStop(0, "rgba(255,255,255,0.9)");
     wg.addColorStop(1, "rgba(230,230,230,0.9)");
     ctx.fillStyle = wg;
     ctx.fillRect(0, 0, W, H);
-    // Double border
     ctx.strokeStyle = BRAND_GREEN;
     ctx.lineWidth = 5;
     ctx.strokeRect(8, 8, W - 16, H - 16);
     ctx.strokeStyle = BRAND_GOLD;
     ctx.lineWidth = 2;
     ctx.strokeRect(14, 14, W - 28, H - 28);
+  } else if (bgStyle === "ai" && aiBgDataUrl) {
+    // ── AI-GENERATED BACKGROUND ──
+    try {
+      const bgImg = await loadImage(aiBgDataUrl);
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      // Subtle overlay for text readability
+      const overlay = ctx.createLinearGradient(0, 0, W * 0.5, H);
+      overlay.addColorStop(0, "rgba(0,0,0,0.65)");
+      overlay.addColorStop(0.5, "rgba(0,0,0,0.40)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.25)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, W, H);
+    } catch {
+      ctx.fillStyle = "#0d0d0d";
+      ctx.fillRect(0, 0, W, H);
+    }
   } else if (bgPhotoMap[bgStyle]) {
     // ── PHOTO BACKGROUND ──
     try {
