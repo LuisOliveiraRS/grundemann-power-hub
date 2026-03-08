@@ -91,7 +91,7 @@ const WIZARD_STEPS = [
   { key: "publish", label: "Publicar", icon: Send },
 ];
 
-import logoGrundemann from "@/assets/logo-grundemann-banner.png";
+import logoGrundemann from "@/assets/logo-grundemann.png";
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
