@@ -38,7 +38,7 @@ const TechnicalCenter = () => {
   const [allArticles, setAllArticles] = useState<Article[]>([]);
   const [searchResults, setSearchResults] = useState<Article[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchArticles = async () => {
