@@ -484,6 +484,7 @@ const MarketingCenter = () => {
     setCustomSlogan("");
     setLogoSize("medium");
     setAiBgUrl(null);
+    setCreativeStyle("dark_industrial");
   };
 
   const deleteCreative = async (id: string) => {
