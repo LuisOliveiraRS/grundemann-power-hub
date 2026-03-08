@@ -23,6 +23,8 @@ import EmailSubscriberManagement from "@/components/EmailSubscriberManagement";
 import RewardsManagement from "@/components/RewardsManagement";
 import ArticleManagement from "@/components/ArticleManagement";
 import SEOBatchGenerator from "@/components/SEOBatchGenerator";
+import ShippingManagement from "@/components/ShippingManagement";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -72,7 +74,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo" | "shipping" | "analytics">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -623,9 +625,11 @@ const AdminDashboard = () => {
     { key: "marketing", label: "Marketing", icon: Megaphone },
     { key: "articles", label: "Central Técnica", icon: BookOpen },
     { key: "seo", label: "SEO", icon: Globe },
+    { key: "shipping", label: "Frete", icon: Truck },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
     { key: "subscribers", label: "Leads & Cupons", icon: Mail },
     { key: "rewards", label: "Fidelidade", icon: Gift },
+    { key: "analytics", label: "Analytics", icon: TrendingUp },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
@@ -1926,6 +1930,31 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Ferramentas para otimizar a presença nos motores de busca</p>
             </div>
             <SEOBatchGenerator />
+          </div>
+        )}
+        {/* SHIPPING TAB */}
+        {tab === "shipping" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Truck className="h-8 w-8 text-primary" /> Gestão de Frete
+              </h1>
+              <p className="text-muted-foreground mt-1">Configure valores de PAC e SEDEX por região</p>
+            </div>
+            <ShippingManagement />
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {tab === "analytics" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <TrendingUp className="h-8 w-8 text-primary" /> Analytics
+              </h1>
+              <p className="text-muted-foreground mt-1">Métricas de vendas, produtos mais vendidos e desempenho</p>
+            </div>
+            <AnalyticsDashboard />
           </div>
         )}
       </main>

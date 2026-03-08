@@ -464,11 +464,12 @@ const Checkout = () => {
                             setShippingCepInput(formatted);
                             const clean = formatted.replace(/\D/g, "");
                             if (clean.length === 8) {
-                              const options = calculateShipping(clean);
-                              setShippingOptions(options);
-                              if (options && options.length > 0 && !selectedShipping) {
-                                setSelectedShipping(options[0]);
-                              }
+                              calculateShipping(clean).then(options => {
+                                setShippingOptions(options);
+                                if (options && options.length > 0 && !selectedShipping) {
+                                  setSelectedShipping(options[0]);
+                                }
+                              });
                             } else {
                               setShippingOptions(null);
                             }
@@ -560,11 +561,12 @@ const Checkout = () => {
                       setShippingCepInput(formatted);
                       const clean = formatted.replace(/\D/g, "");
                       if (clean.length === 8) {
-                        const options = calculateShipping(clean);
-                        setShippingOptions(options);
-                        if (options && options.length > 0 && !selectedShipping) {
-                          setSelectedShipping(options[0]);
-                        }
+                        calculateShipping(clean).then(options => {
+                          setShippingOptions(options);
+                          if (options && options.length > 0 && !selectedShipping) {
+                            setSelectedShipping(options[0]);
+                          }
+                        });
                       }
                     }}
                     placeholder="00000-000"
