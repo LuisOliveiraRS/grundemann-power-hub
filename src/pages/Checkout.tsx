@@ -514,7 +514,7 @@ const Checkout = () => {
           {step === 3 && (
             <div className="bg-card rounded-xl border border-border shadow-sm">
               <div className="p-6 border-b border-border">
-                <h2 className="font-heading text-xl font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" /> Resumo do Pedido</h2>
+                <h2 className="font-heading text-xl font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" /> Resumo e Pagamento</h2>
               </div>
               <div className="p-6 space-y-6">
                 {/* Address summary */}
@@ -546,6 +546,34 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* Payment Methods Info */}
+                <div>
+                  <h3 className="font-heading font-bold text-sm mb-3">Formas de Pagamento Aceitas</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                      <QrCode className="h-8 w-8 text-primary shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold">PIX</p>
+                        <p className="text-xs text-muted-foreground">Aprovação instantânea</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                      <CreditCard className="h-8 w-8 text-primary shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold">Cartão de Crédito</p>
+                        <p className="text-xs text-muted-foreground">Até 3x sem juros</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                      <Banknote className="h-8 w-8 text-primary shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold">Boleto</p>
+                        <p className="text-xs text-muted-foreground">Vencimento em 3 dias</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Totals */}
                 <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
                   <div className="space-y-2">
@@ -568,11 +596,19 @@ const Checkout = () => {
                     ou até 3x de R$ {(total / 3).toFixed(2).replace(".", ",")} sem juros
                   </p>
                 </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  Ao confirmar, você será redirecionado ao Mercado Pago para concluir o pagamento com segurança.
+                </p>
               </div>
               <div className="p-6 border-t border-border flex justify-between">
                 <Button variant="outline" onClick={() => setStep(2)}>Voltar</Button>
-                <Button onClick={placeOrder} disabled={loading} className="px-8">
-                  {loading ? "Processando..." : "Confirmar Pedido"}
+                <Button onClick={placeOrder} disabled={loading || paymentLoading} className="px-8">
+                  {loading || paymentLoading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
+                  ) : (
+                    "Pagar com Mercado Pago"
+                  )}
                 </Button>
               </div>
             </div>
@@ -584,11 +620,29 @@ const Checkout = () => {
               <div className="bg-primary/10 rounded-full p-6 inline-flex mb-6">
                 <CheckCircle className="h-16 w-16 text-primary" />
               </div>
-              <h2 className="font-heading text-2xl font-bold mb-2">Pedido Realizado com Sucesso!</h2>
-              <p className="text-muted-foreground mb-6">Obrigado pela sua compra! Você pode acompanhar o status do pedido na sua conta.</p>
+              <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Confirmado!</h2>
+              <p className="text-muted-foreground mb-6">Obrigado pela sua compra! Seu pagamento foi aprovado e o pedido está sendo processado.</p>
               <div className="flex gap-3 justify-center">
                 <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
                 <Button onClick={() => navigate("/minha-conta")}>Meus Pedidos</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Pending Payment (PIX/Boleto) */}
+          {step === 5 && (
+            <div className="bg-card rounded-xl border border-border shadow-sm p-12 text-center">
+              <div className="bg-yellow-100 rounded-full p-6 inline-flex mb-6">
+                <AlertCircle className="h-16 w-16 text-yellow-600" />
+              </div>
+              <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Pendente</h2>
+              <p className="text-muted-foreground mb-2">Seu pedido foi criado! O pagamento está sendo processado.</p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Se você pagou via PIX ou Boleto, aguarde a confirmação. Você receberá uma notificação quando o pagamento for aprovado.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
+                <Button onClick={() => navigate("/minha-conta")}>Acompanhar Pedido</Button>
               </div>
             </div>
           )}
