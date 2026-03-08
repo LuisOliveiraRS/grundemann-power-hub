@@ -384,6 +384,7 @@ const LoyaltyProgram = () => {
         </div>
       )}
     </div>
+  );
 };
 
 export default LoyaltyProgram;
