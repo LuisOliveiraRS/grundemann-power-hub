@@ -358,7 +358,7 @@ const MarketingCenter = () => {
     setGeneratingComposite(true);
     try {
       const imgSrc = generatedImageUrl || selectedProducts[0]?.image_url || null;
-      const blob = await generateCompositeImage(imgSrc, generatedText, genFormat);
+      const blob = await generateCompositeImage(imgSrc, generatedText, genFormat, backgroundStyle);
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
       setCompositeUrl(URL.createObjectURL(blob));
