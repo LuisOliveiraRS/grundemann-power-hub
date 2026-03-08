@@ -125,63 +125,59 @@ const generateCompositeImage = async (
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // ── Dynamic color palette based on product category keywords ──
-  const name = (productName || "").toLowerCase();
-  let accent = "#e94560";
-  let gradA = "#0d1117";
-  let gradB = "#1e3a5f";
-
-  if (name.includes("filtro") || name.includes("ar")) {
-    accent = "#00b4d8"; gradA = "#0a0e27"; gradB = "#003566";
-  } else if (name.includes("carburador") || name.includes("motor")) {
-    accent = "#ff6b35"; gradA = "#1a0a00"; gradB = "#4a1a00";
-  } else if (name.includes("bomba") || name.includes("óleo") || name.includes("oleo")) {
-    accent = "#ffd60a"; gradA = "#1a1a00"; gradB = "#3d3d00";
-  } else if (name.includes("ignição") || name.includes("vela") || name.includes("bobina")) {
-    accent = "#e63946"; gradA = "#1a0000"; gradB = "#4a0000";
-  } else if (name.includes("pistão") || name.includes("cilindro") || name.includes("biela")) {
-    accent = "#adb5bd"; gradA = "#0d0d0d"; gradB = "#2d2d2d";
-  }
+  // ── Brand colors: Verde e Azul Bandeira do Brasil ──
+  const BRAND_GREEN = "#009739";
+  const BRAND_BLUE = "#002776";
+  const BRAND_GOLD = "#FFDF00";
+  const accent = BRAND_GREEN;
 
   if (bgStyle === "white") {
     // Clean white/light gray
     ctx.fillStyle = "#f8f9fa";
     ctx.fillRect(0, 0, W, H);
-    // Subtle border
-    ctx.strokeStyle = "#dee2e6";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(20, 20, W - 40, H - 40);
-    // Accent bar top
-    ctx.fillStyle = accent;
-    ctx.fillRect(20, 20, W - 40, 6);
+    // Green + blue border
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(18, 18, W - 36, H - 36);
+    ctx.strokeStyle = BRAND_BLUE;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(26, 26, W - 52, H - 52);
+    // Green accent bar top
+    ctx.fillStyle = BRAND_GREEN;
+    ctx.fillRect(18, 18, W - 36, 8);
+    // Blue accent bar below
+    ctx.fillStyle = BRAND_BLUE;
+    ctx.fillRect(18, 26, W - 36, 4);
   } else {
-    // Creative dynamic background
+    // Creative background with brand colors
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, gradA);
-    grad.addColorStop(0.5, gradB);
-    grad.addColorStop(1, gradA);
+    grad.addColorStop(0, "#001a3a");
+    grad.addColorStop(0.35, BRAND_BLUE);
+    grad.addColorStop(0.65, "#003d1a");
+    grad.addColorStop(1, "#001a0d");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Decorative elements related to industrial/mechanical theme
+    // Decorative elements with brand colors
     ctx.save();
-    ctx.globalAlpha = 0.04;
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 1.5;
     // Gear-like circles
     for (let i = 0; i < 6; i++) {
       ctx.beginPath();
       ctx.arc(W * 0.88, H * 0.15, 50 + i * 35, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.strokeStyle = BRAND_BLUE;
     for (let i = 0; i < 4; i++) {
       ctx.beginPath();
       ctx.arc(W * 0.08, H * 0.85, 40 + i * 30, 0, Math.PI * 2);
       ctx.stroke();
     }
-    // Subtle grid pattern
+    // Subtle grid
     ctx.globalAlpha = 0.02;
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = BRAND_GOLD;
     for (let x = 0; x < W; x += 60) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
@@ -190,13 +186,15 @@ const generateCompositeImage = async (
     }
     ctx.restore();
 
-    // Accent bar top
-    ctx.fillStyle = accent;
-    ctx.fillRect(0, 0, W, 8);
+    // Top accent bars: green then blue
+    ctx.fillStyle = BRAND_GREEN;
+    ctx.fillRect(0, 0, W, 6);
+    ctx.fillStyle = BRAND_BLUE;
+    ctx.fillRect(0, 6, W, 4);
 
-    // Subtle glow behind product area
+    // Subtle glow behind product area with green
     const glowGrad = ctx.createRadialGradient(W / 2, H * 0.3, 50, W / 2, H * 0.3, 350);
-    glowGrad.addColorStop(0, `${accent}22`);
+    glowGrad.addColorStop(0, `${BRAND_GREEN}22`);
     glowGrad.addColorStop(1, "transparent");
     ctx.fillStyle = glowGrad;
     ctx.fillRect(0, 0, W, H * 0.6);
