@@ -24,6 +24,7 @@ const Footer = () => {
               <li><Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link></li>
               <li><Link to="/termos" className="hover:text-primary transition-colors">Termos de Uso</Link></li>
               <li><Link to="/trocas-e-devolucoes" className="hover:text-primary transition-colors">Trocas e Devoluções</Link></li>
+              <li><Link to="/mecanico" className="hover:text-primary transition-colors">Área do Mecânico</Link></li>
             </ul>
           </div>
 

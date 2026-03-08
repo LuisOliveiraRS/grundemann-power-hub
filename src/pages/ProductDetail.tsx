@@ -259,6 +259,22 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {/* Motor Compatibility */}
+              {product.compatible_motors && product.compatible_motors.length > 0 && (
+                <div className="mt-6 border-t border-border pt-6">
+                  <h3 className="font-heading font-bold text-lg mb-3 flex items-center gap-2">
+                    <Cpu className="h-5 w-5 text-primary" /> Compatível Com
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.compatible_motors.map((motor, idx) => (
+                      <Badge key={idx} variant="outline" className="text-sm px-3 py-1.5 border-primary/30 bg-primary/5 text-primary font-semibold">
+                        {motor}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Documents */}
               {product.documents && product.documents.length > 0 && (
                 <div className="mt-6 border-t border-border pt-6">
