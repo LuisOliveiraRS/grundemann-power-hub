@@ -396,6 +396,80 @@ const ClientDashboard = () => {
                 </div>
               )}
 
+              {/* PAYMENTS TAB */}
+              {tab === "payments" && (
+                <div>
+                  <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-primary/10 rounded-lg p-2"><CreditCard className="h-5 w-5 text-primary" /></div>
+                    Meus Pagamentos
+                  </h2>
+                  {payments.length === 0 ? (
+                    <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center">
+                      <Banknote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-heading font-bold text-lg mb-2">Nenhum pagamento</h3>
+                      <p className="text-muted-foreground mb-4">Seus pagamentos aparecerão aqui após finalizar uma compra.</p>
+                      <Button onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {payments.map(payment => {
+                        const PIcon = paymentStatusIcon[payment.status] || Clock;
+                        return (
+                          <div key={payment.id} className="bg-card rounded-xl shadow-sm border border-border p-5 hover:shadow-md transition-shadow">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-4">
+                                <div className={`rounded-lg p-2.5 ${payment.status === "approved" ? "bg-primary/10" : payment.status === "rejected" ? "bg-destructive/10" : "bg-muted"}`}>
+                                  <PIcon className={`h-5 w-5 ${payment.status === "approved" ? "text-primary" : payment.status === "rejected" ? "text-destructive" : "text-muted-foreground"}`} />
+                                </div>
+                                <div>
+                                  <p className="font-heading font-bold">Pedido #{payment.order_id.slice(0, 8)}</p>
+                                  <p className="text-xs text-muted-foreground">{new Date(payment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${paymentStatusColor[payment.status] || "bg-muted text-muted-foreground border-border"}`}>
+                                  {paymentStatusLabel[payment.status] || payment.status}
+                                </span>
+                                <p className="font-heading font-bold text-lg text-price">R$ {Number(payment.amount).toFixed(2).replace(".", ",")}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-4 text-xs text-muted-foreground">
+                              {payment.payment_method && (
+                                <span className="flex items-center gap-1">
+                                  <CreditCard className="h-3 w-3" />
+                                  {paymentMethodLabel[payment.payment_method] || payment.payment_method}
+                                </span>
+                              )}
+                              {payment.mp_payment_id && (
+                                <span className="flex items-center gap-1">ID MP: {payment.mp_payment_id}</span>
+                              )}
+                              {payment.paid_at && (
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3 text-primary" />
+                                  Pago em {new Date(payment.paid_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
+                            </div>
+                            {payment.mp_status_detail && (
+                              <div className={`mt-2 flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${payment.status === "rejected" ? "bg-destructive/5 text-destructive" : payment.status === "pending" ? "bg-accent/10 text-accent-foreground" : "bg-primary/5 text-primary"}`}>
+                                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                                {mpStatusDetailLabel[payment.mp_status_detail] || payment.mp_status_detail}
+                              </div>
+                            )}
+                            {payment.status === "pending" && (
+                              <div className="mt-2 flex items-center gap-2 text-xs bg-accent/10 text-accent-foreground rounded-lg px-3 py-2">
+                                <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                                Aguardando confirmação do pagamento — atualiza automaticamente
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* LOYALTY TAB */}
               {tab === "loyalty" && <LoyaltyProgram />}
 
