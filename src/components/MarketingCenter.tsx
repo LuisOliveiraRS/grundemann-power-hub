@@ -1010,13 +1010,14 @@ const MarketingCenter = () => {
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Image className="h-5 w-5 text-primary" /> Arte Final
                     </CardTitle>
-                    <CardDescription>A imagem do produto está preservada sem alterações. O fundo é gerado automaticamente baseado no tipo de produto.</CardDescription>
+                    <CardDescription>A IA cria uma arte publicitária profissional com fundo dramático, iluminação cinematográfica e a foto do produto em destaque.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {generatingComposite ? (
-                      <div className="flex flex-col items-center justify-center py-16 gap-3">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">Montando arte final...</p>
+                      <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                        <p className="text-sm font-medium text-foreground">🤖 Gerando arte profissional com IA...</p>
+                        <p className="text-xs text-muted-foreground text-center max-w-xs">A IA está criando um design exclusivo com fundo industrial, tipografia premium e a foto do seu produto. Isso pode levar alguns segundos.</p>
                       </div>
                     ) : compositeUrl ? (
                       <div className="space-y-3">
