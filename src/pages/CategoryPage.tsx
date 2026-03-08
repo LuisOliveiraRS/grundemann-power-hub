@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import { ArrowLeft } from "lucide-react";
 
 interface Product {
