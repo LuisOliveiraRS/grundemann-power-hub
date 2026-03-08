@@ -180,7 +180,7 @@ const HeroSection = () => {
                           R$ {current.price.toFixed(2).replace(".", ",")}
                         </span>
                       </div>
-                      <span className="inline-block mt-3 text-xs text-primary font-bold uppercase tracking-wider group-hover:underline">
+                      <span className="inline-block mt-3 text-xs text-primary-foreground/90 font-bold uppercase tracking-wider group-hover:underline">
                         Ver produto →
                       </span>
                     </motion.div>
