@@ -6,9 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2 } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -25,46 +26,83 @@ interface MechanicProfile {
   is_approved: boolean;
 }
 
+interface UserProfile {
+  full_name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  address_number: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  neighborhood: string | null;
+}
+
 const MechanicArea = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mechanic, setMechanic] = useState<MechanicProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador">("perfil");
 
-  // Form state
+  // Mechanic form
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [specialty, setSpecialty] = useState("");
 
+  // Profile form
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [addressNumber, setAddressNumber] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    loadMechanic();
+    loadData();
   }, [user]);
 
-  const loadMechanic = async () => {
+  const loadData = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("mechanics")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const [mechRes, profRes] = await Promise.all([
+      supabase.from("mechanics").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+    ]);
 
-    if (data) {
-      setMechanic(data as MechanicProfile);
-      setCompanyName(data.company_name || "");
-      setCnpj(data.cnpj || "");
-      setSpecialty(data.specialty || "");
+    if (profRes.data) {
+      const p = profRes.data;
+      setProfile(p as UserProfile);
+      setFullName(p.full_name || "");
+      setEmail(p.email || "");
+      setPhone(p.phone || "");
+      setAddress(p.address || "");
+      setAddressNumber(p.address_number || "");
+      setCity(p.city || "");
+      setState(p.state || "");
+      setZipCode(p.zip_code || "");
+      setNeighborhood(p.neighborhood || "");
+    }
 
-      // Load orders
+    if (mechRes.data) {
+      setMechanic(mechRes.data as MechanicProfile);
+      setCompanyName(mechRes.data.company_name || "");
+      setCnpj(mechRes.data.cnpj || "");
+      setSpecialty(mechRes.data.specialty || "");
+
       const { data: orderData } = await supabase
         .from("orders")
         .select("id, total_amount, status, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(20);
       setOrders(orderData || []);
     }
     setLoading(false);
@@ -73,8 +111,16 @@ const MechanicArea = () => {
   const register = async () => {
     if (!user) { navigate("/auth"); return; }
     if (!companyName.trim()) { toast({ title: "Informe o nome da oficina", variant: "destructive" }); return; }
-    
+    if (!fullName.trim()) { toast({ title: "Informe seu nome completo", variant: "destructive" }); return; }
+
     setSaving(true);
+
+    // Update profile first
+    await supabase.from("profiles").update({
+      full_name: fullName, phone, address, address_number: addressNumber,
+      city, state, zip_code: zipCode, neighborhood,
+    }).eq("user_id", user.id);
+
     const { error } = await supabase.from("mechanics").insert({
       user_id: user.id,
       company_name: companyName,
@@ -86,37 +132,115 @@ const MechanicArea = () => {
       toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Cadastro realizado! Aguarde aprovação." });
-      loadMechanic();
+      loadData();
     }
     setSaving(false);
   };
 
   const updateProfile = async () => {
-    if (!mechanic) return;
+    if (!mechanic || !user) return;
     setSaving(true);
-    const { error } = await supabase.from("mechanics").update({
-      company_name: companyName,
-      cnpj,
-      specialty,
-    }).eq("id", mechanic.id);
 
-    if (error) {
-      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+    const [mechErr, profErr] = await Promise.all([
+      supabase.from("mechanics").update({ company_name: companyName, cnpj, specialty }).eq("id", mechanic.id),
+      supabase.from("profiles").update({
+        full_name: fullName, phone, address, address_number: addressNumber,
+        city, state, zip_code: zipCode, neighborhood,
+      }).eq("user_id", user.id),
+    ]);
+
+    if (mechErr.error || profErr.error) {
+      toast({ title: "Erro ao atualizar", variant: "destructive" });
     } else {
-      toast({ title: "Perfil atualizado!" });
-      loadMechanic();
+      toast({ title: "Perfil atualizado com sucesso!" });
+      loadData();
     }
     setSaving(false);
   };
 
   const statusMap: Record<string, string> = {
-    pending: "Pendente",
-    confirmed: "Confirmado",
-    processing: "Em Processamento",
-    shipped: "Enviado",
-    delivered: "Entregue",
-    cancelled: "Cancelado",
+    pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
+    shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
   };
+
+  const ProfileForm = () => (
+    <div className="space-y-6">
+      {/* Personal info */}
+      <div>
+        <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+          <User className="h-4 w-4 text-primary" /> Dados Pessoais
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label>Nome Completo *</Label>
+            <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Seu nome completo" />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <Input value={email} disabled className="bg-muted" />
+          </div>
+          <div>
+            <Label>Telefone / WhatsApp</Label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
+          </div>
+        </div>
+      </div>
+
+      {/* Company info */}
+      <div>
+        <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-primary" /> Dados da Oficina
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label>Nome da Oficina / Empresa *</Label>
+            <Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Ex: Oficina do João" />
+          </div>
+          <div>
+            <Label>CNPJ (opcional)</Label>
+            <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Especialidade</Label>
+            <Input value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Ex: Motores estacionários, geradores, bombas d'água" />
+          </div>
+        </div>
+      </div>
+
+      {/* Address */}
+      <div>
+        <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-primary" /> Endereço
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <Label>Endereço</Label>
+            <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Rua, Avenida..." />
+          </div>
+          <div>
+            <Label>Número</Label>
+            <Input value={addressNumber} onChange={e => setAddressNumber(e.target.value)} placeholder="123" />
+          </div>
+          <div>
+            <Label>Bairro</Label>
+            <Input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="Bairro" />
+          </div>
+          <div>
+            <Label>Cidade</Label>
+            <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Cidade" />
+          </div>
+          <div>
+            <Label>Estado</Label>
+            <Input value={state} onChange={e => setState(e.target.value)} placeholder="SP" />
+          </div>
+          <div>
+            <Label>CEP</Label>
+            <Input value={zipCode} onChange={e => setZipCode(e.target.value)} placeholder="00000-000" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -144,7 +268,6 @@ const MechanicArea = () => {
           {loading ? (
             <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : !user ? (
-            /* Not logged in */
             <div className="max-w-md mx-auto text-center">
               <Card>
                 <CardHeader>
@@ -158,36 +281,25 @@ const MechanicArea = () => {
             </div>
           ) : !mechanic ? (
             /* Registration form */
-            <div className="max-w-lg mx-auto">
+            <div className="max-w-2xl mx-auto">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" /> Cadastro de Mecânico</CardTitle>
-                  <CardDescription>Preencha seus dados profissionais para acessar benefícios exclusivos.</CardDescription>
+                  <CardDescription>Preencha seus dados pessoais e profissionais para acessar benefícios exclusivos.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Nome da Oficina / Empresa *</Label>
-                    <Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Ex: Oficina do João" />
-                  </div>
-                  <div>
-                    <Label>CNPJ (opcional)</Label>
-                    <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
-                  </div>
-                  <div>
-                    <Label>Especialidade</Label>
-                    <Input value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Ex: Motores estacionários, geradores" />
-                  </div>
-                  <Button onClick={register} disabled={saving} className="w-full">
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Solicitar Cadastro
+                <CardContent className="space-y-6">
+                  <ProfileForm />
+                  <Button onClick={register} disabled={saving} className="w-full" size="lg">
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wrench className="h-4 w-4 mr-2" />}
+                    Solicitar Cadastro de Mecânico
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Benefits preview */}
+              {/* Benefits */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
                 {[
-                  { icon: ShieldCheck, title: "Descontos Especiais", desc: "Até 5% de desconto em todos os produtos" },
+                  { icon: ShieldCheck, title: "Descontos Especiais", desc: "Até 15% de desconto em todos os produtos" },
                   { icon: FileText, title: "Manuais Técnicos", desc: "Acesso a documentação exclusiva" },
                   { icon: ShoppingCart, title: "Histórico Completo", desc: "Acompanhe todas suas compras" },
                 ].map(b => (
@@ -200,8 +312,8 @@ const MechanicArea = () => {
               </div>
             </div>
           ) : (
-            /* Mechanic dashboard */
-            <div className="space-y-8">
+            /* Dashboard */
+            <div className="space-y-6">
               {/* Status banner */}
               <div className={`rounded-xl p-5 border flex items-center gap-4 ${mechanic.is_approved ? "bg-primary/5 border-primary/20" : "bg-accent/10 border-accent/30"}`}>
                 {mechanic.is_approved ? (
@@ -216,44 +328,56 @@ const MechanicArea = () => {
                   <p className="text-sm text-muted-foreground">
                     {mechanic.is_approved
                       ? `Desconto de ${mechanic.discount_rate}% aplicado automaticamente nas compras.`
-                      : "Seu cadastro está sendo analisado pela equipe. Em breve você terá acesso aos descontos."}
+                      : "Seu cadastro está sendo analisado. Em breve você terá acesso aos descontos."}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Profile */}
-                <Card className="lg:col-span-1">
+              {/* Tabs */}
+              <div className="flex gap-2 border-b border-border pb-2">
+                {[
+                  { key: "perfil" as const, label: "Meu Perfil", icon: User },
+                  { key: "compras" as const, label: "Histórico de Compras", icon: ShoppingCart },
+                  { key: "identificador" as const, label: "Identificar Peça", icon: Wrench },
+                ].map(t => (
+                  <button
+                    key={t.key}
+                    onClick={() => setActiveTab(t.key)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
+                      activeTab === t.key
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <t.icon className="h-4 w-4" />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === "perfil" && (
+                <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Meu Perfil</CardTitle>
+                    <CardTitle className="text-lg">Meu Perfil Profissional</CardTitle>
+                    <CardDescription>Atualize seus dados pessoais e da oficina</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>Oficina</Label>
-                      <Input value={companyName} onChange={e => setCompanyName(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>CNPJ</Label>
-                      <Input value={cnpj} onChange={e => setCnpj(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Especialidade</Label>
-                      <Input value={specialty} onChange={e => setSpecialty(e.target.value)} />
-                    </div>
-                    <Button onClick={updateProfile} disabled={saving} variant="outline" className="w-full">
-                      {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      Salvar Alterações
-                    </Button>
-                    <div className="pt-2 border-t border-border">
+                  <CardContent className="space-y-6">
+                    <ProfileForm />
+                    <div className="flex items-center gap-4">
+                      <Button onClick={updateProfile} disabled={saving}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Salvar Alterações
+                      </Button>
                       <Badge variant={mechanic.is_approved ? "default" : "secondary"}>
-                        {mechanic.is_approved ? `Desconto: ${mechanic.discount_rate}%` : "Pendente"}
+                        {mechanic.is_approved ? `Desconto: ${mechanic.discount_rate}%` : "Aprovação Pendente"}
                       </Badge>
                     </div>
                   </CardContent>
                 </Card>
+              )}
 
-                {/* Orders */}
-                <Card className="lg:col-span-2">
+              {activeTab === "compras" && (
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Clock className="h-5 w-5 text-primary" /> Histórico de Compras
@@ -265,7 +389,7 @@ const MechanicArea = () => {
                     ) : (
                       <div className="space-y-3">
                         {orders.map(o => (
-                          <div key={o.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                          <div key={o.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
                             <div>
                               <p className="text-sm font-medium">Pedido #{o.id.slice(0, 8)}</p>
                               <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("pt-BR")}</p>
@@ -280,13 +404,12 @@ const MechanicArea = () => {
                     )}
                   </CardContent>
                 </Card>
-              </div>
+              )}
+
+              {activeTab === "identificador" && <PartIdentifier />}
             </div>
           )}
         </div>
-
-        {/* Part Identifier Tool */}
-        <PartIdentifier />
       </div>
 
       <WhatsAppButton />
