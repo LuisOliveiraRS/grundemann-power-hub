@@ -146,7 +146,7 @@ const HeroSection = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.5 }}
-                      className="flex items-center justify-center h-56 mb-4"
+                      className="flex items-center justify-center h-40 lg:h-56 mb-3 lg:mb-4"
                     >
                       <img
                         src={current.image_url || "/placeholder.svg"}
