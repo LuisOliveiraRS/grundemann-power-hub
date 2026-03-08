@@ -342,10 +342,11 @@ const generateCompositeImage = async (
     ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
   }
 
-  // ── Logo Grundemann (top-left, LARGE & PROMINENT) ──
+  // ── Logo Grundemann (configurable size) ──
   try {
     const logo = await loadImage(logoGrundemann);
-    const logoH = isStory ? 100 : 85;
+    const sizeMap = { small: isStory ? 70 : 60, medium: isStory ? 100 : 85, large: isStory ? 140 : 120 };
+    const logoH = sizeMap[logoSize];
     const logoW = (logo.width / logo.height) * logoH;
     const logoX = 35;
     const logoY = isStory ? 22 : 18;
@@ -367,15 +368,18 @@ const generateCompositeImage = async (
   } catch {
     ctx.save();
     ctx.fillStyle = "rgba(0,39,118,0.9)";
-    roundRect(ctx, 20, 10, 320, 70, 14);
+    const fallbackW = logoSize === "large" ? 400 : logoSize === "medium" ? 320 : 240;
+    const fallbackH = logoSize === "large" ? 90 : logoSize === "medium" ? 70 : 55;
+    const fallbackFont = logoSize === "large" ? 42 : logoSize === "medium" ? 34 : 26;
+    roundRect(ctx, 20, 10, fallbackW, fallbackH, 14);
     ctx.fill();
     ctx.strokeStyle = BRAND_GREEN;
     ctx.lineWidth = 3;
-    roundRect(ctx, 20, 10, 320, 70, 14);
+    roundRect(ctx, 20, 10, fallbackW, fallbackH, 14);
     ctx.stroke();
     ctx.fillStyle = "#ffffff";
-    ctx.font = `bold 34px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("GRÜNDEMANN", 35, 55);
+    ctx.font = `bold ${fallbackFont}px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("GRÜNDEMANN", 35, 10 + fallbackH * 0.65);
     ctx.restore();
   }
 
