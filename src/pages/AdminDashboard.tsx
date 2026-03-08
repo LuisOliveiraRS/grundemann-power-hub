@@ -1420,6 +1420,9 @@ const AdminDashboard = () => {
                                 <span className="text-xs text-muted-foreground ml-2">/{sub.slug}</span>
                               </div>
                               <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" title="Promover para categoria" onClick={() => { if (confirm(`Promover "${sub.name}" para categoria principal?`)) convertSubcategoryToCategory(sub.id); }}>
+                                  <TrendingUp className="h-3 w-3 text-primary" />
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingSubcategory(sub); setSubForm({ name: sub.name, slug: sub.slug, description: sub.description || "", category_id: sub.category_id }); }}><Edit className="h-3 w-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteSubcategory(sub.id)}><Trash2 className="h-3 w-3" /></Button>
                               </div>
