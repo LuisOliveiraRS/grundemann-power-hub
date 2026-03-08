@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket, QrCode, Banknote, Loader2, AlertCircle } from "lucide-react";
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket, QrCode, Banknote, Loader2, AlertCircle, Truck } from "lucide-react";
+import { calculateShipping, formatCep, type ShippingOption } from "@/lib/shippingCalculator";
 
 interface CartItem {
   id: string;
