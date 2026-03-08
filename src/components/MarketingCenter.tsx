@@ -214,27 +214,18 @@ const generateCompositeImage = async (
   ctx.fillText("Oficina Geradores — peças: Diesel, gasolina, geradores e oficina", W / 2, logoEndY + 20);
   ctx.restore();
 
-  // Address line
-  const addrY = logoEndY + 50;
-  ctx.save();
-  ctx.fillStyle = TEXT_DARK;
-  ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, addrY);
-  ctx.textAlign = "left";
-  ctx.restore();
-
   // Separator line
+  const sepY = logoEndY + 38;
   ctx.strokeStyle = BRAND_GREEN;
   ctx.globalAlpha = 0.3;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(60, addrY + 18);
-  ctx.lineTo(W - 60, addrY + 18);
+  ctx.moveTo(60, sepY);
+  ctx.lineTo(W - 60, sepY);
   ctx.stroke();
   ctx.globalAlpha = 1;
 
-  const contentStartY = addrY + 35;
+  const contentStartY = sepY + 15;
   const footerH = 65;
   const contentEndY = H - footerH - 10;
   const contentH = contentEndY - contentStartY;
