@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -5,6 +6,13 @@ import { ArrowLeftRight, Clock, CheckCircle, Phone } from "lucide-react";
 
 const Returns = () => (
   <div className="min-h-screen flex flex-col">
+    <Helmet>
+      <title>Trocas e Devoluções | Grundemann Power Hub</title>
+      <meta name="description" content="Política de trocas e devoluções da Grundemann Power Hub. Direito de arrependimento em 7 dias, troca por defeito em 30 dias para peças e geradores de energia." />
+      <meta property="og:title" content="Trocas e Devoluções | Grundemann Power Hub" />
+      <meta property="og:description" content="Política de trocas e devoluções para peças de motores estacionários e geradores." />
+      <link rel="canonical" href="https://grundemann-power-hub.lovable.app/trocas-e-devolucoes" />
+    </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
       <h1 className="font-heading text-3xl font-bold mb-8">Trocas e Devoluções</h1>

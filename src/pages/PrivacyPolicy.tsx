@@ -1,9 +1,17 @@
+import { Helmet } from "react-helmet-async";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const PrivacyPolicy = () => (
   <div className="min-h-screen flex flex-col">
+    <Helmet>
+      <title>Política de Privacidade | Grundemann Power Hub</title>
+      <meta name="description" content="Política de privacidade da Grundemann Power Hub. Saiba como protegemos seus dados pessoais conforme a LGPD em compras de peças e geradores de energia." />
+      <meta property="og:title" content="Política de Privacidade | Grundemann Power Hub" />
+      <meta property="og:description" content="Como protegemos seus dados pessoais conforme a LGPD na compra de peças e geradores." />
+      <link rel="canonical" href="https://grundemann-power-hub.lovable.app/privacidade" />
+    </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
       <h1 className="font-heading text-3xl font-bold mb-8">Política de Privacidade</h1>
