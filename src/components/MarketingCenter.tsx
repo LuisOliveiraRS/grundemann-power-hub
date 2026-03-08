@@ -46,7 +46,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
-type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica";
+type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica" | "ai";
 type LogoSize = "small" | "medium" | "large";
 
 const formatLabels: Record<string, string> = {
