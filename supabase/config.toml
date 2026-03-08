@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-marketing-text]
 verify_jwt = false
+
+[functions.generate-ai-background]
+verify_jwt = false
