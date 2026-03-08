@@ -48,6 +48,7 @@ interface MarketingPost {
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
 type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica" | "ai";
 type LogoSize = "small" | "medium" | "large";
+type LayoutMode = "single" | "grid2x2";
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
@@ -213,27 +214,18 @@ const generateCompositeImage = async (
   ctx.fillText("Oficina Geradores — peças: Diesel, gasolina, geradores e oficina", W / 2, logoEndY + 20);
   ctx.restore();
 
-  // Address line
-  const addrY = logoEndY + 50;
-  ctx.save();
-  ctx.fillStyle = TEXT_DARK;
-  ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, addrY);
-  ctx.textAlign = "left";
-  ctx.restore();
-
   // Separator line
+  const sepY = logoEndY + 38;
   ctx.strokeStyle = BRAND_GREEN;
   ctx.globalAlpha = 0.3;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(60, addrY + 18);
-  ctx.lineTo(W - 60, addrY + 18);
+  ctx.moveTo(60, sepY);
+  ctx.lineTo(W - 60, sepY);
   ctx.stroke();
   ctx.globalAlpha = 1;
 
-  const contentStartY = addrY + 35;
+  const contentStartY = sepY + 15;
   const footerH = 65;
   const contentEndY = H - footerH - 10;
   const contentH = contentEndY - contentStartY;
@@ -596,6 +588,299 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
+// ─── Multi-product 2x2 grid composite ───
+const CARD_STYLES = [
+  { headerColor: "#006B3F", headerColorEnd: "#004D2C", accent: "#009739", label: "A" },
+  { headerColor: "#002776", headerColorEnd: "#001A52", accent: "#0044CC", label: "B" },
+  { headerColor: "#B8860B", headerColorEnd: "#8B6508", accent: "#DAA520", label: "C" },
+  { headerColor: "#8B0000", headerColorEnd: "#5C0000", accent: "#CC0000", label: "D" },
+];
+
+const generateMultiProductComposite = async (
+  products: { name: string; price: number; originalPrice?: number | null; imageUrl: string | null; id: string }[],
+  text: any,
+  format: string,
+  logoSize: LogoSize = "medium",
+  customSlogan?: string,
+): Promise<Blob> => {
+  const isStory = format === "story_instagram";
+  const W = 1080;
+  const H = isStory ? 1920 : 1080;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+
+  const BRAND_GREEN = "#006B3F";
+  const BRAND_GREEN_DARK = "#004D2C";
+  const WHITE = "#ffffff";
+  const TEXT_DARK = "#1a1a1a";
+  const TEXT_GRAY = "#555555";
+
+  // ── Background ──
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0, "#f0f2f5");
+  bgGrad.addColorStop(0.5, "#e8edf2");
+  bgGrad.addColorStop(1, "#eaecf0");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle wave decorations
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = BRAND_GREEN;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-50 + i * 90, 0);
+    ctx.bezierCurveTo(W * 0.3 + i * 30, H * 0.12, W * 0.6 - i * 20, H * 0.2, W + 50, H * 0.08 + i * 50);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Top accent line
+  ctx.fillStyle = BRAND_GREEN;
+  ctx.fillRect(0, 0, W, 6);
+
+  // ── Header: Logo + Contact ──
+  let logoEndY = 80;
+  try {
+    const logo = await loadImage(logoGrundemann);
+    const sizeMap = { small: 80, medium: 100, large: 130 };
+    const logoH = sizeMap[logoSize];
+    const logoW = (logo.width / logo.height) * logoH;
+    ctx.drawImage(logo, 35, 18, logoW, logoH);
+    logoEndY = 18 + logoH;
+  } catch {
+    ctx.fillStyle = BRAND_GREEN;
+    ctx.font = `bold 38px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("Gründemann", 35, 60);
+  }
+
+  ctx.save();
+  ctx.fillStyle = BRAND_GREEN_DARK;
+  ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "right";
+  ctx.fillText("51-981825748", W - 35, 45);
+  ctx.fillStyle = TEXT_GRAY;
+  ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
+  ctx.fillText("adair.grundemann@gmail.com", W - 35, 72);
+  ctx.textAlign = "left";
+  ctx.restore();
+
+  // Subtitle
+  ctx.save();
+  ctx.fillStyle = TEXT_GRAY;
+  ctx.font = `italic 20px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Oficina Geradores — peças: Diesel, gasolina, geradores e oficina", W / 2, logoEndY + 16);
+  ctx.textAlign = "left";
+  ctx.restore();
+
+  // Separator
+  const sepY = logoEndY + 30;
+  ctx.strokeStyle = BRAND_GREEN;
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(50, sepY); ctx.lineTo(W - 50, sepY); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Custom slogan
+  let sloganEndY = sepY + 10;
+  if (customSlogan) {
+    const sloganY = sepY + 8;
+    ctx.save();
+    ctx.fillStyle = "#002776";
+    ctx.globalAlpha = 0.85;
+    roundRect(ctx, 60, sloganY, W - 120, 40, 8);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#FFDF00";
+    ctx.font = `bold italic 22px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(customSlogan, W / 2, sloganY + 28);
+    ctx.textAlign = "left";
+    ctx.restore();
+    sloganEndY = sloganY + 52;
+  }
+
+  // ── Footer ──
+  const footerH = 60;
+  ctx.save();
+  ctx.fillStyle = BRAND_GREEN;
+  ctx.fillRect(0, H - footerH, W, footerH);
+  ctx.fillStyle = WHITE;
+  ctx.font = `bold 20px 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Luiz Bernardo da Silva, 190 - Pinheiro - São Leopoldo - R.S", W / 2, H - footerH + 24);
+  ctx.font = `18px 'Segoe UI', Arial, sans-serif`;
+  ctx.fillText("📞 (51) 98182-5748   •   ✉ adair.grundemann@gmail.com", W / 2, H - footerH + 48);
+  ctx.textAlign = "left";
+  ctx.restore();
+  ctx.fillStyle = BRAND_GREEN_DARK;
+  ctx.fillRect(0, H - 4, W, 4);
+
+  // ── 2x2 Grid area ──
+  const gridTop = sloganEndY + 8;
+  const gridBottom = H - footerH - 12;
+  const gridH = gridBottom - gridTop;
+  const gridW = W - 80;
+  const gridX = 40;
+  const gap = isStory ? 16 : 14;
+
+  const cols = 2;
+  const rows = 2;
+  const cellW = (gridW - gap) / cols;
+  const cellH = (gridH - gap) / rows;
+
+  const prods = products.slice(0, 4);
+  for (let i = 0; i < Math.min(prods.length, 4); i++) {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const cx = gridX + col * (cellW + gap);
+    const cy = gridTop + row * (cellH + gap);
+    const style = CARD_STYLES[i % CARD_STYLES.length];
+    const p = prods[i];
+
+    // Card shadow
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.12)";
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = "#e0e3e8";
+    roundRect(ctx, cx, cy, cellW, cellH, 14);
+    ctx.fill();
+    ctx.restore();
+
+    // Card white body
+    ctx.fillStyle = WHITE;
+    roundRect(ctx, cx + 2, cy + 2, cellW - 4, cellH - 4, 12);
+    ctx.fill();
+
+    // Colored header bar
+    const barH = isStory ? 48 : 42;
+    ctx.save();
+    const barGrad = ctx.createLinearGradient(cx, cy, cx + cellW, cy);
+    barGrad.addColorStop(0, style.headerColorEnd);
+    barGrad.addColorStop(0.5, style.headerColor);
+    barGrad.addColorStop(1, style.headerColorEnd);
+    ctx.fillStyle = barGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx + 12, cy);
+    ctx.lineTo(cx + cellW - 12, cy);
+    ctx.quadraticCurveTo(cx + cellW, cy, cx + cellW, cy + 12);
+    ctx.lineTo(cx + cellW, cy + barH);
+    ctx.lineTo(cx, cy + barH);
+    ctx.lineTo(cx, cy + 12);
+    ctx.quadraticCurveTo(cx, cy, cx + 12, cy);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Product name in bar
+    ctx.save();
+    ctx.fillStyle = WHITE;
+    const nameFontSize = isStory ? 20 : 18;
+    ctx.font = `bold ${nameFontSize}px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    const displayName = p.name.length > 28 ? p.name.slice(0, 25) + "..." : p.name;
+    ctx.fillText(displayName, cx + cellW / 2, cy + barH - (isStory ? 14 : 12));
+    ctx.textAlign = "left";
+    ctx.restore();
+
+    // Product image
+    const imgAreaTop = cy + barH + 8;
+    const imgAreaH = cellH - barH - (isStory ? 130 : 110);
+    if (p.imageUrl) {
+      try {
+        const img = await loadImage(p.imageUrl);
+        const maxW = cellW - 30;
+        const maxH = imgAreaH;
+        const scale = Math.min(maxW / img.width, maxH / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const dx = cx + (cellW - dw) / 2;
+        const dy = imgAreaTop + (imgAreaH - dh) / 2;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.08)";
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 3;
+        ctx.drawImage(img, dx, dy, dw, dh);
+        ctx.restore();
+      } catch { /* skip */ }
+    }
+
+    // Price area
+    const priceY = cy + cellH - (isStory ? 85 : 70);
+
+    if (p.originalPrice && p.originalPrice > p.price) {
+      ctx.save();
+      ctx.fillStyle = "#999";
+      ctx.font = `${isStory ? 16 : 14}px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "center";
+      const oldStr = `De R$ ${p.originalPrice.toFixed(2)}`;
+      ctx.fillText(oldStr, cx + cellW / 2, priceY - 4);
+      const tw = ctx.measureText(oldStr).width;
+      ctx.strokeStyle = "#999";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx + cellW / 2 - tw / 2, priceY - 8);
+      ctx.lineTo(cx + cellW / 2 + tw / 2, priceY - 8);
+      ctx.stroke();
+      ctx.textAlign = "left";
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.fillStyle = TEXT_DARK;
+    ctx.font = `bold ${isStory ? 38 : 34}px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(`R$${p.price.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, cx + cellW / 2, priceY + 28);
+    ctx.restore();
+
+    // Installments
+    ctx.save();
+    ctx.fillStyle = TEXT_GRAY;
+    ctx.font = `${isStory ? 14 : 13}px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(`3x R$ ${(p.price / 3).toFixed(2)} s/ juros`, cx + cellW / 2, priceY + 50);
+    ctx.textAlign = "left";
+    ctx.restore();
+
+    // Mini CTA strip at bottom of card
+    const ctaH = isStory ? 28 : 24;
+    const ctaY = cy + cellH - ctaH - 2;
+    ctx.save();
+    const ctaGrad = ctx.createLinearGradient(cx, ctaY, cx + cellW, ctaY);
+    ctaGrad.addColorStop(0, style.headerColorEnd);
+    ctaGrad.addColorStop(0.5, style.accent);
+    ctaGrad.addColorStop(1, style.headerColorEnd);
+    ctx.fillStyle = ctaGrad;
+    ctx.beginPath();
+    ctx.moveTo(cx, ctaY);
+    ctx.lineTo(cx + cellW, ctaY);
+    ctx.lineTo(cx + cellW, cy + cellH - 12);
+    ctx.quadraticCurveTo(cx + cellW, cy + cellH, cx + cellW - 12, cy + cellH);
+    ctx.lineTo(cx + 12, cy + cellH);
+    ctx.quadraticCurveTo(cx, cy + cellH, cx, cy + cellH - 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = WHITE;
+    ctx.font = `bold ${isStory ? 14 : 13}px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText("☎ COMPRAR", cx + cellW / 2, ctaY + (isStory ? 19 : 17));
+    ctx.textAlign = "left";
+    ctx.restore();
+  }
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
+  });
+};
+
 // ─── Calendar helpers ───
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
@@ -630,6 +915,7 @@ const MarketingCenter = () => {
   const [logoSize, setLogoSize] = useState<LogoSize>("medium");
   const [aiBgUrl, setAiBgUrl] = useState<string | null>(null);
   const [generatingAiBg, setGeneratingAiBg] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>("single");
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
@@ -661,7 +947,7 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta, customSlogan, aiBgUrl]);
+  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta, customSlogan, aiBgUrl, layoutMode]);
 
   const generateAiBackground = async () => {
     setGeneratingAiBg(true);
@@ -692,15 +978,24 @@ const MarketingCenter = () => {
     if (backgroundStyle === "ai" && !aiBgUrl) return;
     setGeneratingComposite(true);
     try {
-      const product = selectedProducts[0];
-      const imgSrc = product?.image_url || null;
-      const productUrl = product ? getProductUrl(product.id) : undefined;
-      const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
-      const blob = await generateCompositeImage(
-        imgSrc, textWithCta, genFormat, backgroundStyle,
-        productUrl, product?.price, product?.original_price, product?.name, logoSize,
-        customSlogan, aiBgUrl,
-      );
+      let blob: Blob;
+      if (layoutMode === "grid2x2" && selectedProducts.length >= 2) {
+        const prods = selectedProducts.slice(0, 4).map(p => ({
+          name: p.name, price: p.price, originalPrice: p.original_price,
+          imageUrl: p.image_url, id: p.id,
+        }));
+        blob = await generateMultiProductComposite(prods, generatedText, genFormat, logoSize, customSlogan);
+      } else {
+        const product = selectedProducts[0];
+        const imgSrc = product?.image_url || null;
+        const productUrl = product ? getProductUrl(product.id) : undefined;
+        const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
+        blob = await generateCompositeImage(
+          imgSrc, textWithCta, genFormat, backgroundStyle,
+          productUrl, product?.price, product?.original_price, product?.name, logoSize,
+          customSlogan, aiBgUrl,
+        );
+      }
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
       setCompositeUrl(URL.createObjectURL(blob));
@@ -1367,6 +1662,40 @@ const MarketingCenter = () => {
                       </div>
                     </div>
 
+                    {/* Layout Mode */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-primary" /> Layout do Criativo
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button onClick={() => setLayoutMode("single")}
+                          className={`p-4 rounded-lg border-2 text-center transition-all ${layoutMode === "single" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          <div className="flex justify-center mb-2">
+                            <div className="w-12 h-12 bg-muted rounded border flex items-center justify-center">
+                              <Package className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          </div>
+                          <p className={`text-sm font-semibold ${layoutMode === "single" ? "text-primary" : ""}`}>Produto Único</p>
+                          <p className="text-xs text-muted-foreground mt-1">1 produto em destaque</p>
+                        </button>
+                        <button onClick={() => setLayoutMode("grid2x2")}
+                          className={`p-4 rounded-lg border-2 text-center transition-all ${layoutMode === "grid2x2" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          <div className="flex justify-center mb-2">
+                            <div className="grid grid-cols-2 gap-0.5 w-12 h-12">
+                              {[0,1,2,3].map(i => (
+                                <div key={i} className={`rounded-sm ${["bg-primary", "bg-secondary", "bg-accent", "bg-destructive"][i]} opacity-70`} />
+                              ))}
+                            </div>
+                          </div>
+                          <p className={`text-sm font-semibold ${layoutMode === "grid2x2" ? "text-primary" : ""}`}>Grid 2×2</p>
+                          <p className="text-xs text-muted-foreground mt-1">4 produtos em cards coloridos</p>
+                        </button>
+                      </div>
+                      {layoutMode === "grid2x2" && selectedProductIds.size < 2 && (
+                        <p className="text-xs text-destructive">⚠ Selecione pelo menos 2 produtos (máx 4) para o layout grid.</p>
+                      )}
+                    </div>
+
                     {/* Background Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
@@ -1374,7 +1703,11 @@ const MarketingCenter = () => {
                       </Label>
                       <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
                         <p className="text-sm font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
-                        <p className="text-xs text-muted-foreground mt-1">Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca.</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {layoutMode === "grid2x2"
+                            ? "Grid com 4 cards coloridos (verde, azul, dourado, vermelho), cada um com foto, preço e botão COMPRAR."
+                            : "Layout com fundo claro, cards com barra verde, foto do produto, preço em destaque e botão COMPRAR no estilo da marca."}
+                        </p>
                       </div>
                     </div>
 
@@ -1444,7 +1777,7 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: Grundemann Profissional</p>
+                  <p className="text-sm">🎨 Estilo: Grundemann Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
                   {customSlogan && <p className="text-sm">📢 Slogan: {customSlogan}</p>}
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
@@ -1619,7 +1952,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Estilo: Grundemann Profissional</p>
+                  <p className="text-sm">🎨 Estilo: Grundemann Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
