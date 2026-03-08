@@ -147,6 +147,11 @@ const ClientDashboard = () => {
     if (data) setQuotes(data as Quote[]);
   };
 
+  const loadPayments = async () => {
+    const { data } = await supabase.from("payments").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+    if (data) setPayments(data as Payment[]);
+  };
+
   const loadFavoriteProducts = async () => {
     const ids = Array.from(favoriteIds);
     if (ids.length === 0) { setFavProducts([]); return; }
