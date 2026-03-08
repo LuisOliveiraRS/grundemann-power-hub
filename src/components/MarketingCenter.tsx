@@ -928,9 +928,9 @@ const MarketingCenter = () => {
           )}
         </div>
         <div className="p-3 space-y-2">
-          {text?.cta && (
+          {(customCta || text?.cta) && (
             <button className="w-full bg-primary text-primary-foreground text-xs font-semibold py-2 rounded">
-              {text.cta}
+              {customCta || text.cta}
             </button>
           )}
           {text?.body_text && (
