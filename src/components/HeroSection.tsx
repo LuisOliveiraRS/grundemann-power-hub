@@ -1,10 +1,45 @@
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { MessageCircle, ArrowRight } from "lucide-react";
-import logo from "@/assets/logo-grundemann.png";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageCircle, ArrowRight, Tag } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface FeaturedProduct {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  image_url: string | null;
+}
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const [products, setProducts] = useState<FeaturedProduct[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("id, name, price, original_price, image_url")
+      .eq("is_active", true)
+      .eq("is_featured", true)
+      .not("image_url", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (data && data.length > 0) setProducts(data as FeaturedProduct[]);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (products.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % products.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [products.length]);
+
+  const current = products[currentIndex];
 
   return (
     <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[520px] flex items-center">
@@ -78,21 +113,96 @@ const HeroSection = () => {
             </div>
           </motion.div>
 
-          {/* Right: Logo + visual element */}
+          {/* Right: Featured Product Showcase */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.3 }}
             className="hidden lg:flex items-center justify-center relative"
           >
-            {/* Glow ring */}
+            {/* Glow effect */}
             <div className="absolute w-80 h-80 rounded-full bg-primary/10 blur-3xl" />
-            <div className="absolute w-60 h-60 rounded-full border-2 border-primary/20 animate-pulse" />
-            <img
-              src={logo}
-              alt="Gründemann Geradores"
-              className="relative z-10 w-72 h-auto drop-shadow-[0_20px_60px_rgba(0,151,57,0.3)]"
-            />
+
+            {current ? (
+              <div
+                className="relative z-10 w-80 cursor-pointer group"
+                onClick={() => navigate(`/produto/${current.id}`)}
+              >
+                {/* Product card */}
+                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-6 overflow-hidden">
+                  {/* Discount badge */}
+                  {current.original_price && current.original_price > current.price && (
+                    <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-accent text-accent-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
+                      <Tag className="h-3 w-3" />
+                      -{Math.round(((current.original_price - current.price) / current.original_price) * 100)}%
+                    </div>
+                  )}
+
+                  {/* Product image */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={current.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.5 }}
+                      className="flex items-center justify-center h-56 mb-4"
+                    >
+                      <img
+                        src={current.image_url || "/placeholder.svg"}
+                        alt={current.name}
+                        className="max-h-full max-w-full object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.3)] group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Product info */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`info-${current.id}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4, delay: 0.1 }}
+                      className="text-center"
+                    >
+                      <h3 className="text-background font-heading font-bold text-sm leading-tight line-clamp-2 mb-3">
+                        {current.name}
+                      </h3>
+                      <div className="flex items-center justify-center gap-3">
+                        {current.original_price && current.original_price > current.price && (
+                          <span className="text-background/40 line-through text-sm">
+                            R$ {current.original_price.toFixed(2).replace(".", ",")}
+                          </span>
+                        )}
+                        <span className="text-primary font-black text-2xl">
+                          R$ {current.price.toFixed(2).replace(".", ",")}
+                        </span>
+                      </div>
+                      <span className="inline-block mt-3 text-xs text-primary font-bold uppercase tracking-wider group-hover:underline">
+                        Ver produto →
+                      </span>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Dots indicator */}
+                {products.length > 1 && (
+                  <div className="flex justify-center gap-1.5 mt-4">
+                    {products.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "w-6 bg-primary" : "w-1.5 bg-background/30"}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-60 h-60 rounded-full border-2 border-primary/20 animate-pulse" />
+            )}
           </motion.div>
         </div>
       </div>
