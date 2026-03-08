@@ -7,7 +7,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download } from "lucide-react";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download, Cpu } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -24,6 +24,7 @@ interface Product {
   brand: string | null; hp: string | null; engine_model: string | null;
   specifications: any; documents: string[] | null;
   meta_title: string | null; meta_description: string | null;
+  compatible_motors: string[] | null;
 }
 
 const ProductDetail = () => {
@@ -253,6 +254,22 @@ const ProductDetail = () => {
                         <span className="font-medium text-muted-foreground">{key}</span>
                         <span className="font-semibold">{String(value)}</span>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Motor Compatibility */}
+              {product.compatible_motors && product.compatible_motors.length > 0 && (
+                <div className="mt-6 border-t border-border pt-6">
+                  <h3 className="font-heading font-bold text-lg mb-3 flex items-center gap-2">
+                    <Cpu className="h-5 w-5 text-primary" /> Compatível Com
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.compatible_motors.map((motor, idx) => (
+                      <Badge key={idx} variant="outline" className="text-sm px-3 py-1.5 border-primary/30 bg-primary/5 text-primary font-semibold">
+                        {motor}
+                      </Badge>
                     ))}
                   </div>
                 </div>

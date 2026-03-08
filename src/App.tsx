@@ -24,6 +24,7 @@ import ProductImport from "./pages/ProductImport";
 import MLExport from "./pages/MLExport";
 import SellerDashboard from "./pages/SellerDashboard";
 import QuoteRequest from "./pages/QuoteRequest";
+import MechanicArea from "./pages/MechanicArea";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,8 @@ const App = () => (
               <Route path="/admin/exportar-ml" element={<ProtectedRoute adminOnly><MLExport /></ProtectedRoute>} />
               <Route path="/vendedor" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
               <Route path="/orcamento" element={<QuoteRequest />} />
+              <Route path="/mecanico" element={<MechanicArea />} />
+              <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

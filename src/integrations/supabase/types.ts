@@ -321,6 +321,42 @@ export type Database = {
           },
         ]
       }
+      mechanics: {
+        Row: {
+          cnpj: string | null
+          company_name: string | null
+          created_at: string
+          discount_rate: number
+          id: string
+          is_approved: boolean
+          specialty: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cnpj?: string | null
+          company_name?: string | null
+          created_at?: string
+          discount_rate?: number
+          id?: string
+          is_approved?: boolean
+          specialty?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cnpj?: string | null
+          company_name?: string | null
+          created_at?: string
+          discount_rate?: number
+          id?: string
+          is_approved?: boolean
+          specialty?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -450,6 +486,7 @@ export type Database = {
           additional_images: string[] | null
           brand: string | null
           category_id: string | null
+          compatible_motors: string[] | null
           created_at: string
           description: string | null
           documents: string[] | null
@@ -475,6 +512,7 @@ export type Database = {
           additional_images?: string[] | null
           brand?: string | null
           category_id?: string | null
+          compatible_motors?: string[] | null
           created_at?: string
           description?: string | null
           documents?: string[] | null
@@ -500,6 +538,7 @@ export type Database = {
           additional_images?: string[] | null
           brand?: string | null
           category_id?: string | null
+          compatible_motors?: string[] | null
           created_at?: string
           description?: string | null
           documents?: string[] | null
