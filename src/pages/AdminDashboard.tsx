@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift, BookOpen, Globe
 } from "lucide-react";
 import { BarChart3 as BarChart3Icon, Boxes } from "lucide-react";
 import MarketingCenter from "@/components/MarketingCenter";
@@ -21,6 +21,8 @@ import MechanicManagement from "@/components/MechanicManagement";
 import StockManagement from "@/components/StockManagement";
 import EmailSubscriberManagement from "@/components/EmailSubscriberManagement";
 import RewardsManagement from "@/components/RewardsManagement";
+import ArticleManagement from "@/components/ArticleManagement";
+import SEOBatchGenerator from "@/components/SEOBatchGenerator";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -70,7 +72,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -619,6 +621,8 @@ const AdminDashboard = () => {
     { key: "mechanics", label: "Mecânicos", icon: Wrench },
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
+    { key: "articles", label: "Central Técnica", icon: BookOpen },
+    { key: "seo", label: "SEO", icon: Globe },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
     { key: "subscribers", label: "Leads & Cupons", icon: Mail },
     { key: "rewards", label: "Fidelidade", icon: Gift },
@@ -1897,6 +1901,31 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Gerencie recompensas, aprove resgates e credite pontos manualmente. Pontos são creditados automaticamente na entrega.</p>
             </div>
             <RewardsManagement />
+          </div>
+        )}
+        {/* ARTICLES TAB */}
+        {tab === "articles" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <BookOpen className="h-8 w-8 text-primary" /> Central Técnica
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie artigos técnicos, guias de manutenção e conteúdo educacional</p>
+            </div>
+            <ArticleManagement />
+          </div>
+        )}
+
+        {/* SEO TAB */}
+        {tab === "seo" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Globe className="h-8 w-8 text-primary" /> Otimização SEO
+              </h1>
+              <p className="text-muted-foreground mt-1">Ferramentas para otimizar a presença nos motores de busca</p>
+            </div>
+            <SEOBatchGenerator />
           </div>
         )}
       </main>
