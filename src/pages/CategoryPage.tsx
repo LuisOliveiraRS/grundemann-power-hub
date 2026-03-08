@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
 import TopBar from "@/components/TopBar";
@@ -92,6 +93,24 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {category && (
+        <Helmet>
+          <title>{`${title} | Grundemann Power Hub`}</title>
+          <meta name="description" content={description || `Compre ${title} na Grundemann Power Hub. Peças para motores estacionários com qualidade e garantia.`} />
+          <meta property="og:title" content={`${title} | Grundemann Power Hub`} />
+          <meta property="og:description" content={description || `Peças e equipamentos da categoria ${title}`} />
+          <meta property="og:type" content="website" />
+          <link rel="canonical" href={`https://grundemann-power-hub.lovable.app/categoria/${slug}${subSlug ? `/${subSlug}` : ''}`} />
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": title,
+            "description": description || `Categoria ${title}`,
+            "numberOfItems": products.length,
+            "url": `https://grundemann-power-hub.lovable.app/categoria/${slug}${subSlug ? `/${subSlug}` : ''}`
+          })}</script>
+        </Helmet>
+      )}
       <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-8">
