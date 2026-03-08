@@ -26,7 +26,7 @@ const TechnicalCenterTeaser = () => (
   <section className="py-14 bg-muted/30">
     <div className="container">
       <div className="text-center mb-8">
-        <h2 className="font-heading text-2xl md:text-3xl font-black text-foreground">CENTRAL TÉCNICA</h2>
+        <h2 className="font-heading text-2xl md:text-3xl font-black text-foreground">CENTRAL TÉCNICA DE MOTORES ESTACIONÁRIOS</h2>
         <p className="text-muted-foreground mt-2">Artigos, guias e ferramentas para mecânicos e proprietários de motores</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
