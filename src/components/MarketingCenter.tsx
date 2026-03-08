@@ -92,6 +92,21 @@ const WIZARD_STEPS = [
 ];
 
 import logoGrundemann from "@/assets/logo-grundemann.png";
+import bgOficina from "@/assets/bg-oficina.jpg";
+import bgGeradores from "@/assets/bg-geradores.jpg";
+import bgPecas from "@/assets/bg-pecas.jpg";
+import bgPremium from "@/assets/bg-premium.jpg";
+import bgOficinaStory from "@/assets/bg-oficina-story.jpg";
+import bgGeradoresStory from "@/assets/bg-geradores-story.jpg";
+import bgPecasStory from "@/assets/bg-pecas-story.jpg";
+import bgPremiumStory from "@/assets/bg-premium-story.jpg";
+
+const bgPhotoMap: Record<string, { landscape: string; story: string; label: string; emoji: string }> = {
+  oficina: { landscape: bgOficina, story: bgOficinaStory, label: "Oficina", emoji: "🔧" },
+  geradores: { landscape: bgGeradores, story: bgGeradoresStory, label: "Geradores", emoji: "⚡" },
+  pecas: { landscape: bgPecas, story: bgPecasStory, label: "Peças", emoji: "⚙️" },
+  premium: { landscape: bgPremium, story: bgPremiumStory, label: "Premium", emoji: "✨" },
+};
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
