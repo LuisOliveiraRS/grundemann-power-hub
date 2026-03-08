@@ -1558,13 +1558,21 @@ const MarketingCenter = () => {
                     )}
 
                     {/* Style toggle */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1">
-                        <Sparkles className="h-3 w-3" /> Criativo
-                      </Button>
-                      <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1">
-                        <Package className="h-3 w-3" /> Branco
-                      </Button>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Estilo do Fundo</Label>
+                      <div className="flex gap-1.5 flex-wrap">
+                        <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1 text-xs h-8">
+                          <Sparkles className="h-3 w-3" /> Criativo
+                        </Button>
+                        <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1 text-xs h-8">
+                          <Package className="h-3 w-3" /> Branco
+                        </Button>
+                        {Object.entries(bgPhotoMap).map(([key, info]) => (
+                          <Button key={key} size="sm" variant={backgroundStyle === key ? "default" : "outline"} onClick={() => setBackgroundStyle(key as BackgroundStyle)} className="gap-1 text-xs h-8">
+                            {info.emoji} {info.label}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Logo size in preview */}
