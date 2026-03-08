@@ -516,16 +516,25 @@ const MarketingCenter = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Generate composite image for the auto-generated ad
+      // Generate AI creative image for the auto-generated ad
       let creativeImageUrl = product.image_url || null;
       try {
-        const compositeBlob = await generateCompositeImage(
-          product.image_url, data, "post_instagram", "creative",
-          getProductUrl(product.id), product.price, product.original_price, product.name, "medium",
-        );
-        const filename = `creative-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
-        const uploadedUrl = await uploadCompositeToStorage(compositeBlob, filename);
-        if (uploadedUrl) creativeImageUrl = uploadedUrl;
+        const { data: imgData, error: imgError } = await supabase.functions.invoke("generate-creative-image", {
+          body: {
+            products: [{ name: product.name, price: product.price, originalPrice: product.original_price, imageUrl: product.image_url, description: product.description, id: product.id }],
+            format: "post_instagram",
+            campaignType: product.stock_quantity > 20 ? "high_stock" : "promotion",
+            customCta: data.cta || "CONFIRA JÁ",
+            layoutMode: "single",
+          },
+        });
+        if (!imgError && imgData?.image_url) {
+          const resp = await fetch(imgData.image_url);
+          const blob = await resp.blob();
+          const filename = `creative-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+          const uploadedUrl = await uploadCompositeToStorage(blob, filename);
+          if (uploadedUrl) creativeImageUrl = uploadedUrl;
+        }
       } catch (compErr) {
         console.error("Auto composite error:", compErr);
       }
