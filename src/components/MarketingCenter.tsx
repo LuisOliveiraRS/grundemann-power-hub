@@ -790,20 +790,45 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta]);
+  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta, customSlogan, aiBgUrl]);
+
+  const generateAiBackground = async () => {
+    setGeneratingAiBg(true);
+    try {
+      const product = selectedProducts[0];
+      const { data, error } = await supabase.functions.invoke("generate-ai-background", {
+        body: {
+          productName: product?.name || "peças industriais",
+          category: product?.category_id ? getCategoryName(product.category_id) : "motores",
+          format: genFormat,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.image_url) {
+        setAiBgUrl(data.image_url);
+        toast({ title: "🎨 Fundo IA gerado!", description: "O fundo personalizado foi criado com sucesso." });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar fundo IA", description: err.message, variant: "destructive" });
+    } finally {
+      setGeneratingAiBg(false);
+    }
+  };
 
   const buildComposite = async () => {
     if (!generatedText) return;
+    if (backgroundStyle === "ai" && !aiBgUrl) return;
     setGeneratingComposite(true);
     try {
       const product = selectedProducts[0];
       const imgSrc = product?.image_url || null;
       const productUrl = product ? getProductUrl(product.id) : undefined;
-      // Override CTA if custom text provided
       const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
       const blob = await generateCompositeImage(
         imgSrc, textWithCta, genFormat, backgroundStyle,
         productUrl, product?.price, product?.original_price, product?.name, logoSize,
+        customSlogan, aiBgUrl,
       );
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
