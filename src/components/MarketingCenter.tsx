@@ -648,7 +648,24 @@ const generateCompositeImage = async (
   if (text?.hashtags && !isLandscape) {
     ctx.fillStyle = BRAND_GREEN;
     ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText(text.hashtags.slice(0, 90), 50, H - 90);
+    ctx.fillText(text.hashtags.slice(0, 90), 50, H - 120);
+  }
+
+  // ── Custom Slogan ──
+  if (customSlogan) {
+    ctx.save();
+    const sloganY = H - 85;
+    // Slogan background strip
+    ctx.fillStyle = "rgba(0,39,118,0.7)";
+    ctx.fillRect(0, sloganY - 28, W, 40);
+    ctx.fillStyle = BRAND_GOLD;
+    ctx.font = `bold italic 24px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 8;
+    ctx.fillText(customSlogan.toUpperCase(), W / 2, sloganY);
+    ctx.textAlign = "left";
+    ctx.restore();
   }
 
   // ── Bottom contact bar ──
