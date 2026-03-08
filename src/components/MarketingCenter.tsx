@@ -13,7 +13,7 @@ import {
   Loader2, Copy, Download, Eye, CheckSquare, Square, Sparkles, Send, Clock,
   Instagram, Facebook, MessageCircle, Mail, FileText, TrendingUp, Package,
   Target, Zap, PenTool, Layers, Archive, ArrowRight, ArrowLeft, Check,
-  Share2, ExternalLink, RefreshCw, ChevronRight, Printer, Globe
+  Share2, ExternalLink, RefreshCw, ChevronRight, Printer, Globe, Palette, Image
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -45,6 +45,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation";
+type BackgroundStyle = "white" | "creative";
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
@@ -64,19 +65,11 @@ const campaignTypeLabels: Record<string, string> = {
 };
 
 const platformIcons: Record<string, any> = {
-  instagram: Instagram,
-  facebook: Facebook,
-  whatsapp: MessageCircle,
-  email: Mail,
-  google: Globe,
+  instagram: Instagram, facebook: Facebook, whatsapp: MessageCircle, email: Mail, google: Globe,
 };
 
 const platformLabels: Record<string, string> = {
-  instagram: "Instagram",
-  facebook: "Facebook",
-  whatsapp: "WhatsApp",
-  email: "E-mail",
-  google: "Google",
+  instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp", email: "E-mail", google: "Google",
 };
 
 const statusColors: Record<string, string> = {
@@ -95,6 +88,146 @@ const WIZARD_STEPS = [
   { key: "preview", label: "Pré-visualização", icon: Eye },
   { key: "publish", label: "Publicar", icon: Send },
 ];
+
+// ─── Canvas composite generator ───
+const generateCompositeImage = (
+  imageUrl: string | null,
+  text: any,
+  format: string,
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const isStory = format === "story_instagram";
+    const W = isStory ? 1080 : 1080;
+    const H = isStory ? 1920 : 1080;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d")!;
+
+    // Background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#1a1a2e");
+    grad.addColorStop(0.5, "#16213e");
+    grad.addColorStop(1, "#0f3460");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Decorative accent bar
+    ctx.fillStyle = "#e94560";
+    ctx.fillRect(0, 0, W, 6);
+
+    const drawContent = () => {
+      const imgAreaH = isStory ? H * 0.45 : H * 0.55;
+      const textStartY = imgAreaH + 30;
+
+      // Headline
+      if (text?.headline) {
+        ctx.fillStyle = "#ffffff";
+        ctx.font = `bold ${isStory ? 52 : 46}px 'Segoe UI', Arial, sans-serif`;
+        wrapText(ctx, text.headline, 60, textStartY, W - 120, isStory ? 60 : 54);
+      }
+
+      // Body (short)
+      const bodyY = textStartY + (text?.headline ? 130 : 0);
+      if (text?.body_text) {
+        ctx.fillStyle = "#cccccc";
+        ctx.font = `${isStory ? 32 : 28}px 'Segoe UI', Arial, sans-serif`;
+        const shortBody = text.body_text.length > 200 ? text.body_text.slice(0, 200) + "…" : text.body_text;
+        wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 40 : 36);
+      }
+
+      // CTA button
+      if (text?.cta) {
+        const ctaY = H - (isStory ? 220 : 130);
+        const ctaW = 380;
+        const ctaH = 56;
+        const ctaX = (W - ctaW) / 2;
+        // Button bg
+        ctx.fillStyle = "#e94560";
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 28);
+        ctx.fill();
+        // Button text
+        ctx.fillStyle = "#ffffff";
+        ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(text.cta, W / 2, ctaY + 38);
+        ctx.textAlign = "left";
+      }
+
+      // Hashtags
+      if (text?.hashtags) {
+        ctx.fillStyle = "#4da8da";
+        ctx.font = `22px 'Segoe UI', Arial, sans-serif`;
+        const hashY = H - (isStory ? 140 : 50);
+        ctx.fillText(text.hashtags.slice(0, 80), 60, hashY);
+      }
+
+      // Brand watermark
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.font = `bold 20px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "right";
+      ctx.fillText("GRÜNDEMANN", W - 40, H - 20);
+      ctx.textAlign = "left";
+
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
+    };
+
+    if (imageUrl) {
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const imgAreaH = isStory ? H * 0.45 : H * 0.55;
+        // Draw product image centered
+        const scale = Math.min(W / img.width, imgAreaH / img.height);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        ctx.drawImage(img, (W - dw) / 2, (imgAreaH - dh) / 2 + 6, dw, dh);
+        // Gradient overlay at bottom of image
+        const overlayGrad = ctx.createLinearGradient(0, imgAreaH - 80, 0, imgAreaH + 20);
+        overlayGrad.addColorStop(0, "rgba(22,33,62,0)");
+        overlayGrad.addColorStop(1, "rgba(22,33,62,1)");
+        ctx.fillStyle = overlayGrad;
+        ctx.fillRect(0, imgAreaH - 80, W, 100);
+        drawContent();
+      };
+      img.onerror = () => drawContent();
+      img.src = imageUrl;
+    } else {
+      drawContent();
+    }
+  });
+};
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lineH: number) {
+  const words = text.split(" ");
+  let line = "";
+  let cy = y;
+  for (const w of words) {
+    const test = line + w + " ";
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line.trim(), x, cy);
+      line = w + " ";
+      cy += lineH;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line.trim(), x, cy);
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
 const MarketingCenter = () => {
   const { toast } = useToast();
@@ -117,6 +250,10 @@ const MarketingCenter = () => {
   const [generatedText, setGeneratedText] = useState<any>(null);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>("white");
+  const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
+  const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
+  const [generatingComposite, setGeneratingComposite] = useState(false);
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
@@ -131,9 +268,31 @@ const MarketingCenter = () => {
 
   // Preview dialog
   const [previewCreative, setPreviewCreative] = useState<Creative | null>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadAll(); }, []);
+
+  // Generate composite whenever text or image changes
+  useEffect(() => {
+    if (generatedText && wizardStep >= 3) {
+      buildComposite();
+    }
+  }, [generatedText, generatedImageUrl, wizardStep]);
+
+  const buildComposite = async () => {
+    if (!generatedText) return;
+    setGeneratingComposite(true);
+    try {
+      const imgSrc = generatedImageUrl || selectedProducts[0]?.image_url || null;
+      const blob = await generateCompositeImage(imgSrc, generatedText, genFormat);
+      setCompositeBlob(blob);
+      if (compositeUrl) URL.revokeObjectURL(compositeUrl);
+      setCompositeUrl(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error("Composite error:", err);
+    } finally {
+      setGeneratingComposite(false);
+    }
+  };
 
   const loadAll = async () => {
     const [prodRes, catRes, campRes, creRes, postRes] = await Promise.all([
@@ -229,16 +388,20 @@ const MarketingCenter = () => {
     }
   };
 
-  // Generate promotional image
+  // Generate promotional image with background style
   const generatePromotionalImage = async () => {
     if (selectedProducts.length === 0) return;
     const product = selectedProducts[0];
     setGeneratingImage(true);
     try {
+      const bgDesc = backgroundStyle === "white"
+        ? "Clean professional product photo on a pure white background, studio lighting, e-commerce style."
+        : `Creative promotional scene for ${product.name}. Show the product in a professional workshop/garage environment with tools, engines, and industrial atmosphere. Dramatic lighting, warm tones. Professional commercial photography style.`;
+
       const { data, error } = await supabase.functions.invoke("generate-product-image", {
         body: {
           productName: product.name,
-          imageDescription: `Promotional banner for ${product.name}. Price R$ ${product.price.toFixed(2)}. Professional e-commerce promotional style.`,
+          imageDescription: bgDesc,
           sku: product.sku,
         },
       });
@@ -270,27 +433,77 @@ const MarketingCenter = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Copiado para a área de transferência!" });
+    toast({ title: "Texto copiado!" });
   };
 
-  const downloadAsText = (text: string, filename: string) => {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  // Copy composite image to clipboard
+  const copyCompositeToClipboard = async () => {
+    if (!compositeBlob) {
+      toast({ title: "Gere o anúncio primeiro", variant: "destructive" });
+      return;
+    }
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": compositeBlob })
+      ]);
+      toast({ title: "✅ Imagem do anúncio copiada!", description: "Cole diretamente no Instagram, Facebook ou qualquer rede social." });
+    } catch {
+      // Fallback: download
+      downloadBlob(compositeBlob, `anuncio-completo-${Date.now()}.png`);
+      toast({ title: "Imagem baixada!", description: "Seu navegador não suporta copiar imagens. O arquivo foi baixado." });
+    }
+  };
+
+  // Copy text + trigger image copy
+  const copyAllForPublication = async () => {
+    const text = buildFullText();
+    if (text) {
+      await navigator.clipboard.writeText(text);
+    }
+    if (compositeBlob) {
+      // Small delay so the text copy completes first, then copy the image
+      setTimeout(async () => {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": compositeBlob })
+          ]);
+          toast({ title: "✅ Pronto para publicar!", description: "Imagem copiada! O texto também foi copiado. Cole no seu editor/rede social." });
+        } catch {
+          downloadBlob(compositeBlob, `anuncio-completo-${Date.now()}.png`);
+          toast({ title: "Texto copiado e imagem baixada!", description: "Cole o texto e anexe a imagem na publicação." });
+        }
+      }, 100);
+    } else {
+      toast({ title: "Texto copiado!" });
+    }
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
   };
 
+  const downloadAsText = (text: string, filename: string) => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    downloadBlob(blob, filename);
+  };
+
   const downloadImage = async (url: string, filename: string) => {
     try {
       const response = await fetch(url);
       const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl; a.download = filename; a.click();
-      URL.revokeObjectURL(blobUrl);
+      downloadBlob(blob, filename);
     } catch {
       window.open(url, "_blank");
+    }
+  };
+
+  const downloadComposite = () => {
+    if (compositeBlob) {
+      downloadBlob(compositeBlob, `anuncio-completo-${genFormat}-${Date.now()}.png`);
+      toast({ title: "Anúncio completo baixado!" });
     }
   };
 
@@ -336,10 +549,13 @@ const MarketingCenter = () => {
       setSelectedProductIds(new Set());
       setGeneratedText(null);
       setGeneratedImageUrl(null);
+      setCompositeBlob(null);
+      setCompositeUrl(null);
       setGenInstructions("");
       setPublishPlatforms(new Set(["instagram"]));
       setScheduleDate("");
       setPublishMode("save");
+      setBackgroundStyle("white");
       loadAll();
       setTab("library");
     } catch (err: any) {
@@ -347,17 +563,6 @@ const MarketingCenter = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Schedule post from library
-  const schedulePost = async (creativeId: string, platform: string, date: string) => {
-    if (!date) { toast({ title: "Defina a data", variant: "destructive" }); return; }
-    const creative = creatives.find(c => c.id === creativeId);
-    await supabase.from("marketing_posts").insert({
-      creative_id: creativeId, platform, scheduled_at: date,
-      status: "scheduled", content: buildFullText({ headline: creative?.headline, body_text: creative?.body_text, hashtags: creative?.hashtags, cta: creative?.cta }),
-    });
-    toast({ title: "Post agendado!" }); loadAll();
   };
 
   const deleteCreative = async (id: string) => {
@@ -377,6 +582,8 @@ const MarketingCenter = () => {
     setWizardStep(0);
     setGeneratedText(null);
     setGeneratedImageUrl(null);
+    setCompositeBlob(null);
+    setCompositeUrl(null);
     setTab("wizard");
   };
 
@@ -426,11 +633,9 @@ const MarketingCenter = () => {
   const PhoneMockup = ({ text, imageUrl }: { text: any; imageUrl: string | null }) => (
     <div className="mx-auto w-[320px] bg-background border-2 border-border rounded-[2rem] p-2 shadow-2xl">
       <div className="rounded-[1.5rem] overflow-hidden bg-muted/20">
-        {/* Status bar */}
         <div className="h-6 bg-foreground/5 flex items-center justify-center">
           <div className="w-16 h-1 bg-foreground/20 rounded-full" />
         </div>
-        {/* Header */}
         <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
             <Instagram className="w-4 h-4 text-primary" />
@@ -440,7 +645,6 @@ const MarketingCenter = () => {
             <p className="text-[10px] text-muted-foreground">Patrocinado</p>
           </div>
         </div>
-        {/* Image */}
         <div className="aspect-square bg-muted relative overflow-hidden">
           {imageUrl ? (
             <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -457,7 +661,6 @@ const MarketingCenter = () => {
             </div>
           )}
         </div>
-        {/* Content */}
         <div className="p-3 space-y-2">
           {text?.cta && (
             <button className="w-full bg-primary text-primary-foreground text-xs font-semibold py-2 rounded">
@@ -602,7 +805,7 @@ const MarketingCenter = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Selecione os Produtos</CardTitle>
-                <CardDescription>Escolha os produtos que farão parte do seu anúncio. A IA usará as informações deles para gerar o conteúdo.</CardDescription>
+                <CardDescription>Escolha os produtos que farão parte do seu anúncio.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ProductSelector />
@@ -636,7 +839,7 @@ const MarketingCenter = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5 text-primary" /> Configure o Anúncio</CardTitle>
-                <CardDescription>Defina o formato, tipo de campanha e instruções especiais para a IA.</CardDescription>
+                <CardDescription>Defina o formato, tipo de campanha, estilo de fundo e instruções especiais.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -656,15 +859,46 @@ const MarketingCenter = () => {
                       })}
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <Label className="font-semibold">Tipo de Campanha</Label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {Object.entries(campaignTypeLabels).map(([k, v]) => (
-                        <button key={k} onClick={() => setGenCampaignType(k)}
-                          className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${genCampaignType === k ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/50"}`}>
-                          <span className={`text-sm font-medium ${genCampaignType === k ? "text-primary" : ""}`}>{v}</span>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <Label className="font-semibold">Tipo de Campanha</Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {Object.entries(campaignTypeLabels).map(([k, v]) => (
+                          <button key={k} onClick={() => setGenCampaignType(k)}
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${genCampaignType === k ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/50"}`}>
+                            <span className={`text-sm font-medium ${genCampaignType === k ? "text-primary" : ""}`}>{v}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Background Style Selection */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <Palette className="h-4 w-4 text-primary" /> Estilo do Fundo da Imagem
+                      </Label>
+                      <div className="grid grid-cols-1 gap-2">
+                        <button onClick={() => setBackgroundStyle("white")}
+                          className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/50"}`}>
+                          <div className="w-14 h-14 rounded-lg bg-white border border-border flex items-center justify-center shrink-0 shadow-sm">
+                            <Package className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Fundo Branco</p>
+                            <p className="text-xs text-muted-foreground">Produto limpo em fundo branco profissional, estilo catálogo</p>
+                          </div>
                         </button>
-                      ))}
+                        <button onClick={() => setBackgroundStyle("creative")}
+                          className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/50"}`}>
+                          <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-700 to-slate-800 flex items-center justify-center shrink-0 shadow-sm">
+                            <Sparkles className="h-6 w-6 text-amber-200" />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Fundo Criativo</p>
+                            <p className="text-xs text-muted-foreground">Cenário temático com ambiente de oficina, ferramentas e atmosfera industrial</p>
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -687,12 +921,13 @@ const MarketingCenter = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Gerar Conteúdo com IA</CardTitle>
-                  <CardDescription>Clique para gerar o texto e opcionalmente uma imagem promocional.</CardDescription>
+                  <CardDescription>Gere o texto publicitário e a imagem do produto com IA.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 bg-muted/30 rounded-lg space-y-2">
                     <p className="text-sm"><strong>Formato:</strong> {formatLabels[genFormat]}</p>
                     <p className="text-sm"><strong>Campanha:</strong> {campaignTypeLabels[genCampaignType]}</p>
+                    <p className="text-sm"><strong>Fundo:</strong> {backgroundStyle === "white" ? "🤍 Branco profissional" : "🎨 Criativo temático"}</p>
                     <p className="text-sm"><strong>Produtos:</strong> {selectedProducts.map(p => p.name).join(", ")}</p>
                     {genInstructions && <p className="text-sm"><strong>Instruções:</strong> {genInstructions}</p>}
                   </div>
@@ -700,11 +935,11 @@ const MarketingCenter = () => {
                   <div className="flex flex-col gap-3">
                     <Button onClick={generateText} disabled={generating} className="gap-2 w-full h-12 text-base">
                       {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                      {generating ? "Gerando texto..." : "Gerar Texto com IA"}
+                      {generating ? "Gerando texto..." : "🔤 Gerar Texto com IA"}
                     </Button>
-                    <Button onClick={generatePromotionalImage} disabled={generatingImage} variant="secondary" className="gap-2 w-full">
-                      {generatingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-                      {generatingImage ? "Gerando imagem..." : "Gerar Imagem Promocional"}
+                    <Button onClick={generatePromotionalImage} disabled={generatingImage} variant="secondary" className="gap-2 w-full h-12">
+                      {generatingImage ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
+                      {generatingImage ? "Gerando imagem..." : `🖼️ Gerar Imagem (${backgroundStyle === "white" ? "Fundo Branco" : "Fundo Criativo"})`}
                     </Button>
                   </div>
 
@@ -720,6 +955,9 @@ const MarketingCenter = () => {
                     <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
                       <p className="text-sm font-medium text-primary flex items-center gap-1"><Check className="h-4 w-4" /> Imagem gerada!</p>
                       <img src={generatedImageUrl} alt="Preview" className="w-full rounded-lg" />
+                      <Button size="sm" variant="outline" onClick={generatePromotionalImage} disabled={generatingImage} className="gap-1">
+                        <RefreshCw className="h-3 w-3" /> Regenerar imagem
+                      </Button>
                     </div>
                   )}
                 </CardContent>
@@ -750,68 +988,171 @@ const MarketingCenter = () => {
             </div>
           )}
 
-          {/* Step 4: Full Preview */}
+          {/* Step 4: Full Preview + Composite */}
           {wizardStep === 3 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
+            <div className="space-y-6">
+              {/* Composite Ad Preview */}
+              <Card className="border-2 border-primary/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Eye className="h-5 w-5 text-primary" /> Anúncio Completo</CardTitle>
-                  <CardDescription>Revise e edite o conteúdo final antes de publicar.</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="h-5 w-5 text-primary" />
+                    Anúncio Completo para Publicação
+                  </CardTitle>
+                  <CardDescription>
+                    Esta é a arte final gerada automaticamente. Copie ou baixe o anúncio completo com um clique.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4" ref={previewRef}>
-                  {(generatedImageUrl || selectedProducts[0]?.image_url) && (
-                    <div className="rounded-lg overflow-hidden border">
-                      <img src={generatedImageUrl || selectedProducts[0]?.image_url || ""} alt="Anúncio" className="w-full object-contain max-h-80" />
+                <CardContent className="space-y-6">
+                  {/* Composite image preview */}
+                  {generatingComposite ? (
+                    <div className="flex items-center justify-center py-12 bg-muted/20 rounded-xl">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="ml-3 text-muted-foreground">Gerando arte final...</span>
                     </div>
-                  )}
-                  {generatedText?.headline && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">Headline</Label>
-                      <Textarea value={generatedText.headline} onChange={e => setGeneratedText((prev: any) => ({ ...prev, headline: e.target.value }))} rows={2} className="mt-1 font-bold text-lg" />
+                  ) : compositeUrl ? (
+                    <div className="rounded-xl overflow-hidden border-2 border-border shadow-lg bg-muted/10">
+                      <img src={compositeUrl} alt="Anúncio Completo" className="w-full max-h-[600px] object-contain" />
                     </div>
-                  )}
-                  {generatedText?.body_text && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">Texto Principal</Label>
-                      <Textarea value={generatedText.body_text} onChange={e => setGeneratedText((prev: any) => ({ ...prev, body_text: e.target.value }))} rows={5} className="mt-1" />
-                    </div>
-                  )}
-                  {generatedText?.hashtags && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">Hashtags</Label>
-                      <Input value={generatedText.hashtags} onChange={e => setGeneratedText((prev: any) => ({ ...prev, hashtags: e.target.value }))} className="mt-1 text-primary" />
-                    </div>
-                  )}
-                  {generatedText?.cta && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground uppercase tracking-wider">CTA (Chamada para Ação)</Label>
-                      <Input value={generatedText.cta} onChange={e => setGeneratedText((prev: any) => ({ ...prev, cta: e.target.value }))} className="mt-1" />
-                    </div>
-                  )}
+                  ) : null}
 
-                  {/* Action buttons */}
-                  <div className="grid grid-cols-2 gap-2 pt-4 border-t">
-                    <Button variant="outline" className="gap-2" onClick={() => copyToClipboard(buildFullText())}>
-                      <Copy className="h-4 w-4" /> Copiar Texto
+                  {/* One-click publication actions */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <Button
+                      onClick={copyCompositeToClipboard}
+                      disabled={!compositeBlob}
+                      className="gap-2 h-14 text-base bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    >
+                      <Copy className="h-5 w-5" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Copiar Imagem</p>
+                        <p className="text-[10px] opacity-80">Cole nas redes sociais</p>
+                      </div>
                     </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => downloadAsText(buildFullText(), `anuncio-${genFormat}-${Date.now()}.txt`)}>
-                      <Download className="h-4 w-4" /> Baixar Texto
+                    <Button
+                      onClick={() => { copyToClipboard(buildFullText()); }}
+                      disabled={!generatedText}
+                      variant="secondary"
+                      className="gap-2 h-14"
+                    >
+                      <FileText className="h-5 w-5" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Copiar Texto</p>
+                        <p className="text-[10px] opacity-80">Legenda do post</p>
+                      </div>
                     </Button>
-                    {(generatedImageUrl || selectedProducts[0]?.image_url) && (
-                      <Button variant="outline" className="gap-2 col-span-2" onClick={() => downloadImage(generatedImageUrl || selectedProducts[0]?.image_url || "", `anuncio-imagem-${Date.now()}.jpg`)}>
-                        <Download className="h-4 w-4" /> Baixar Imagem
-                      </Button>
-                    )}
+                    <Button
+                      onClick={downloadComposite}
+                      disabled={!compositeBlob}
+                      variant="outline"
+                      className="gap-2 h-14"
+                    >
+                      <Download className="h-5 w-5" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Baixar Imagem</p>
+                        <p className="text-[10px] opacity-80">PNG alta qualidade</p>
+                      </div>
+                    </Button>
+                    <Button
+                      onClick={() => downloadAsText(buildFullText(), `legenda-${genFormat}-${Date.now()}.txt`)}
+                      disabled={!generatedText}
+                      variant="outline"
+                      className="gap-2 h-14"
+                    >
+                      <Download className="h-5 w-5" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Baixar Texto</p>
+                        <p className="text-[10px] opacity-80">Arquivo .txt</p>
+                      </div>
+                    </Button>
+                  </div>
+
+                  {/* Quick share */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    <p className="text-sm text-muted-foreground w-full mb-1">Compartilhar rapidamente:</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        const text = buildFullText();
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4" /> WhatsApp
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={async () => {
+                        if (compositeBlob && navigator.share) {
+                          try {
+                            const file = new File([compositeBlob], "anuncio.png", { type: "image/png" });
+                            await navigator.share({ text: buildFullText(), files: [file] });
+                          } catch { /* user cancelled */ }
+                        } else {
+                          copyToClipboard(buildFullText());
+                        }
+                      }}
+                    >
+                      <Share2 className="h-4 w-4" /> Compartilhar
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-2" onClick={buildComposite} disabled={generatingComposite}>
+                      <RefreshCw className="h-4 w-4" /> Regenerar Arte
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
 
-              <div className="space-y-4">
-                <PhoneMockup text={generatedText} imageUrl={generatedImageUrl} />
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={() => setWizardStep(2)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
-                  <Button onClick={() => setWizardStep(4)} className="gap-2">Publicar / Salvar <ArrowRight className="h-4 w-4" /></Button>
+              {/* Editable text fields */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><PenTool className="h-4 w-4" /> Editar Texto</CardTitle>
+                    <CardDescription>Edite os textos e clique em "Regenerar Arte" para atualizar a imagem.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {generatedText?.headline && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Headline</Label>
+                        <Textarea value={generatedText.headline} onChange={e => setGeneratedText((prev: any) => ({ ...prev, headline: e.target.value }))} rows={2} className="mt-1 font-bold" />
+                      </div>
+                    )}
+                    {generatedText?.body_text && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Texto Principal</Label>
+                        <Textarea value={generatedText.body_text} onChange={e => setGeneratedText((prev: any) => ({ ...prev, body_text: e.target.value }))} rows={4} className="mt-1" />
+                      </div>
+                    )}
+                    {generatedText?.hashtags && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">Hashtags</Label>
+                        <Input value={generatedText.hashtags} onChange={e => setGeneratedText((prev: any) => ({ ...prev, hashtags: e.target.value }))} className="mt-1 text-primary" />
+                      </div>
+                    )}
+                    {generatedText?.cta && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wider">CTA</Label>
+                        <Input value={generatedText.cta} onChange={e => setGeneratedText((prev: any) => ({ ...prev, cta: e.target.value }))} className="mt-1" />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg">Preview no Celular</CardTitle></CardHeader>
+                    <CardContent>
+                      <PhoneMockup text={generatedText} imageUrl={generatedImageUrl} />
+                    </CardContent>
+                  </Card>
                 </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setWizardStep(2)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
+                <Button onClick={() => setWizardStep(4)} className="gap-2">Salvar / Publicar <ArrowRight className="h-4 w-4" /></Button>
               </div>
             </div>
           )}
@@ -824,7 +1165,6 @@ const MarketingCenter = () => {
                 <CardDescription>Escolha como deseja finalizar seu anúncio.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Mode selection */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
                     { mode: "save" as const, icon: Archive, label: "Salvar na Biblioteca", desc: "Salvar para usar depois" },
@@ -840,7 +1180,6 @@ const MarketingCenter = () => {
                   ))}
                 </div>
 
-                {/* Platform selection */}
                 {publishMode !== "save" && (
                   <div className="space-y-3">
                     <Label className="font-semibold">Plataformas</Label>
@@ -859,7 +1198,6 @@ const MarketingCenter = () => {
                   </div>
                 )}
 
-                {/* Schedule date */}
                 {publishMode === "schedule" && (
                   <div>
                     <Label className="font-semibold">Data e Hora do Agendamento</Label>
@@ -867,11 +1205,11 @@ const MarketingCenter = () => {
                   </div>
                 )}
 
-                {/* Summary */}
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
+                  <p className="text-sm">🖼️ Fundo: {backgroundStyle === "white" ? "Branco" : "Criativo"}</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
                   {publishMode === "schedule" && scheduleDate && <p className="text-sm">📅 Agendado: {new Date(scheduleDate).toLocaleString("pt-BR")}</p>}
                 </div>
@@ -1167,8 +1505,7 @@ const MarketingCenter = () => {
                 )}
                 <Button variant="outline" className="gap-2" onClick={() => {
                   const text = buildFullText({ headline: previewCreative.headline, body_text: previewCreative.body_text, hashtags: previewCreative.hashtags, cta: previewCreative.cta });
-                  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-                  window.open(whatsappUrl, "_blank");
+                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
                 }}>
                   <MessageCircle className="h-4 w-4" /> WhatsApp
                 </Button>
