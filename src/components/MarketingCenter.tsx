@@ -239,13 +239,15 @@ const generateCompositeImage = async (
   // ── Price display (LARGE & PROMINENT) ──
   if (price) {
     const priceY = textStartY;
-    // Price background highlight
-    const priceBoxH = originalPrice && originalPrice > price ? 120 : 80;
+    // Price background highlight - dark box for yellow contrast
+    const priceBoxH = originalPrice && originalPrice > price ? 130 : 90;
     ctx.save();
-    ctx.fillStyle = bgStyle === "white" ? "rgba(0,151,57,0.08)" : "rgba(0,151,57,0.2)";
+    ctx.fillStyle = bgStyle === "white" ? "rgba(0,39,118,0.1)" : "rgba(0,0,0,0.5)";
+    ctx.shadowColor = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur = 15;
     roundRect(ctx, 40, priceY - 30, W - 80, priceBoxH, 16);
     ctx.fill();
-    ctx.strokeStyle = BRAND_GREEN;
+    ctx.strokeStyle = BRAND_GOLD;
     ctx.lineWidth = 3;
     roundRect(ctx, 40, priceY - 30, W - 80, priceBoxH, 16);
     ctx.stroke();
