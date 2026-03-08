@@ -356,9 +356,24 @@ const ClientDashboard = () => {
                                 </table>
                                 {order.tracking_code && (
                                   <div className="mt-4 pt-3 border-t border-border">
-                                    <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-                                      <Truck className="h-4 w-4 text-primary flex-shrink-0" />
-                                      <div><p className="text-xs font-semibold text-primary">Código de Rastreamento</p><p className="text-sm font-mono font-bold text-card-foreground">{order.tracking_code}</p></div>
+                                    <div className="flex items-center justify-between gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+                                      <div className="flex items-center gap-2">
+                                        <Truck className="h-4 w-4 text-primary flex-shrink-0" />
+                                        <div>
+                                          <p className="text-xs font-semibold text-primary">Código de Rastreamento</p>
+                                          <p className="text-sm font-mono font-bold text-card-foreground">{order.tracking_code}</p>
+                                        </div>
+                                      </div>
+                                      <a
+                                        href={`https://www.linkcorreios.com.br/?id=${order.tracking_code}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={e => e.stopPropagation()}
+                                        className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors"
+                                      >
+                                        <Truck className="h-3.5 w-3.5" />
+                                        Rastrear nos Correios
+                                      </a>
                                     </div>
                                   </div>
                                 )}

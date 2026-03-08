@@ -416,9 +416,36 @@ const AdminDashboard = () => {
   };
 
   const updateTrackingCode = async (id: string, code: string) => {
-    await supabase.from("orders").update({ tracking_code: code } as any).eq("id", id);
+    const order = orders.find(o => o.id === id);
+    const updates: any = { tracking_code: code };
+    // Auto-update status to shipped when tracking code is added
+    if (code && order && !["shipped", "delivered"].includes(order.status)) {
+      updates.status = "shipped";
+    }
+    await supabase.from("orders").update(updates).eq("id", id);
+
+    // Add status history entry
+    if (code && order && !["shipped", "delivered"].includes(order.status)) {
+      await supabase.from("order_status_history").insert({
+        order_id: id,
+        status: "shipped" as any,
+        notes: `Código de rastreio adicionado: ${code}`,
+      });
+    }
+
+    // Send notification to customer
+    if (code && order) {
+      await supabase.from("notifications").insert({
+        user_id: order.user_id,
+        title: "Pedido enviado! 🚚",
+        message: `Seu pedido #${id.substring(0, 8)} foi enviado! Rastreie: ${code}`,
+        type: "order",
+        link: "/minha-conta",
+      });
+    }
+
     toast({ title: "Código de rastreio atualizado!" });
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, tracking_code: code } : o));
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, tracking_code: code, ...(code && !["shipped", "delivered"].includes(o.status) ? { status: "shipped" } : {}) } : o));
   };
 
   // Testimonial CRUD
