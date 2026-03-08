@@ -968,7 +968,6 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
-                </div>
                 <div className="flex gap-3 mt-6 pt-5 border-t border-border">
                   <Button onClick={saveProduct} className="shadow-md">{editingProduct.id ? "Atualizar" : "Cadastrar"} Produto</Button>
                   <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
