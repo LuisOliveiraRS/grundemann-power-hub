@@ -46,7 +46,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
-type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica";
+type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium" | "manutencao" | "ferramentas" | "fabrica" | "ai";
 type LogoSize = "small" | "medium" | "large";
 
 const formatLabels: Record<string, string> = {
@@ -142,6 +142,8 @@ const generateCompositeImage = async (
   originalPrice?: number | null,
   productName?: string,
   logoSize: LogoSize = "medium",
+  customSlogan?: string,
+  aiBgDataUrl?: string | null,
 ): Promise<Blob> => {
   const isStory = format === "story_instagram";
   const W = 1080;
@@ -161,19 +163,33 @@ const generateCompositeImage = async (
   if (bgStyle === "white") {
     ctx.fillStyle = "#f2f2f2";
     ctx.fillRect(0, 0, W, H);
-    // Subtle gradient overlay
     const wg = ctx.createLinearGradient(0, 0, W, H);
     wg.addColorStop(0, "rgba(255,255,255,0.9)");
     wg.addColorStop(1, "rgba(230,230,230,0.9)");
     ctx.fillStyle = wg;
     ctx.fillRect(0, 0, W, H);
-    // Double border
     ctx.strokeStyle = BRAND_GREEN;
     ctx.lineWidth = 5;
     ctx.strokeRect(8, 8, W - 16, H - 16);
     ctx.strokeStyle = BRAND_GOLD;
     ctx.lineWidth = 2;
     ctx.strokeRect(14, 14, W - 28, H - 28);
+  } else if (bgStyle === "ai" && aiBgDataUrl) {
+    // ── AI-GENERATED BACKGROUND ──
+    try {
+      const bgImg = await loadImage(aiBgDataUrl);
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      // Subtle overlay for text readability
+      const overlay = ctx.createLinearGradient(0, 0, W * 0.5, H);
+      overlay.addColorStop(0, "rgba(0,0,0,0.65)");
+      overlay.addColorStop(0.5, "rgba(0,0,0,0.40)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.25)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, W, H);
+    } catch {
+      ctx.fillStyle = "#0d0d0d";
+      ctx.fillRect(0, 0, W, H);
+    }
   } else if (bgPhotoMap[bgStyle]) {
     // ── PHOTO BACKGROUND ──
     try {
@@ -632,7 +648,24 @@ const generateCompositeImage = async (
   if (text?.hashtags && !isLandscape) {
     ctx.fillStyle = BRAND_GREEN;
     ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText(text.hashtags.slice(0, 90), 50, H - 90);
+    ctx.fillText(text.hashtags.slice(0, 90), 50, H - 120);
+  }
+
+  // ── Custom Slogan ──
+  if (customSlogan) {
+    ctx.save();
+    const sloganY = H - 85;
+    // Slogan background strip
+    ctx.fillStyle = "rgba(0,39,118,0.7)";
+    ctx.fillRect(0, sloganY - 28, W, 40);
+    ctx.fillStyle = BRAND_GOLD;
+    ctx.font = `bold italic 24px 'Segoe UI', Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 8;
+    ctx.fillText(customSlogan.toUpperCase(), W / 2, sloganY);
+    ctx.textAlign = "left";
+    ctx.restore();
   }
 
   // ── Bottom contact bar ──
@@ -722,7 +755,10 @@ const MarketingCenter = () => {
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null);
   const [generatingComposite, setGeneratingComposite] = useState(false);
   const [customCta, setCustomCta] = useState("");
+  const [customSlogan, setCustomSlogan] = useState("");
   const [logoSize, setLogoSize] = useState<LogoSize>("medium");
+  const [aiBgUrl, setAiBgUrl] = useState<string | null>(null);
+  const [generatingAiBg, setGeneratingAiBg] = useState(false);
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
@@ -754,20 +790,45 @@ const MarketingCenter = () => {
     if (generatedText && wizardStep >= 3) {
       buildComposite();
     }
-  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta]);
+  }, [generatedText, wizardStep, backgroundStyle, logoSize, customCta, customSlogan, aiBgUrl]);
+
+  const generateAiBackground = async () => {
+    setGeneratingAiBg(true);
+    try {
+      const product = selectedProducts[0];
+      const { data, error } = await supabase.functions.invoke("generate-ai-background", {
+        body: {
+          productName: product?.name || "peças industriais",
+          category: product?.category_id ? getCategoryName(product.category_id) : "motores",
+          format: genFormat,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.image_url) {
+        setAiBgUrl(data.image_url);
+        toast({ title: "🎨 Fundo IA gerado!", description: "O fundo personalizado foi criado com sucesso." });
+      }
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar fundo IA", description: err.message, variant: "destructive" });
+    } finally {
+      setGeneratingAiBg(false);
+    }
+  };
 
   const buildComposite = async () => {
     if (!generatedText) return;
+    if (backgroundStyle === "ai" && !aiBgUrl) return;
     setGeneratingComposite(true);
     try {
       const product = selectedProducts[0];
       const imgSrc = product?.image_url || null;
       const productUrl = product ? getProductUrl(product.id) : undefined;
-      // Override CTA if custom text provided
       const textWithCta = customCta ? { ...generatedText, cta: customCta } : generatedText;
       const blob = await generateCompositeImage(
         imgSrc, textWithCta, genFormat, backgroundStyle,
         productUrl, product?.price, product?.original_price, product?.name, logoSize,
+        customSlogan, aiBgUrl,
       );
       setCompositeBlob(blob);
       if (compositeUrl) URL.revokeObjectURL(compositeUrl);
@@ -1045,7 +1106,9 @@ const MarketingCenter = () => {
     setPublishMode("save");
     setBackgroundStyle("creative");
     setCustomCta("");
+    setCustomSlogan("");
     setLogoSize("medium");
+    setAiBgUrl(null);
   };
 
   const deleteCreative = async (id: string) => {
@@ -1467,7 +1530,26 @@ const MarketingCenter = () => {
                             </div>
                           </button>
                         ))}
+                        <button onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }}
+                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "ai" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          <div className="w-10 h-10 rounded bg-gradient-to-br from-violet-600 to-indigo-900 shrink-0 flex items-center justify-center">
+                            {generatingAiBg ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <Wand2 className="h-5 w-5 text-white" />}
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "ai" ? "text-primary" : ""}`}>🤖 Fundo IA</p>
+                            <p className="text-xs text-muted-foreground">{generatingAiBg ? "Gerando..." : aiBgUrl ? "Gerado ✓" : "Gerado por IA"}</p>
+                          </div>
+                        </button>
                       </div>
+                      {backgroundStyle === "ai" && (
+                        <div className="flex gap-2 mt-2">
+                          <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs">
+                            {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                            {generatingAiBg ? "Gerando..." : "Gerar Novo Fundo IA"}
+                          </Button>
+                          {aiBgUrl && <Badge variant="secondary" className="text-xs">✓ Fundo pronto</Badge>}
+                        </div>
+                      )}
                     </div>
 
                     {/* Logo Size */}
@@ -1487,6 +1569,16 @@ const MarketingCenter = () => {
                           </button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Custom Slogan */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <Megaphone className="h-4 w-4 text-primary" /> Slogan / Mensagem Promocional
+                      </Label>
+                      <Input value={customSlogan} onChange={e => setCustomSlogan(e.target.value)}
+                        placeholder="Ex: Qualidade que move o Brasil!, Preço imbatível!, Entrega rápida..." />
+                      <p className="text-xs text-muted-foreground">Aparece como faixa destacada na arte. Deixe vazio para não incluir.</p>
                     </div>
 
                     {/* Custom CTA */}
@@ -1526,7 +1618,8 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : backgroundStyle === "ai" ? "🤖 Fundo IA" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  {customSlogan && <p className="text-sm">📢 Slogan: {customSlogan}</p>}
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
 
@@ -1618,7 +1711,16 @@ const MarketingCenter = () => {
                             {info.emoji} {info.label}
                           </Button>
                         ))}
+                        <Button size="sm" variant={backgroundStyle === "ai" ? "default" : "outline"} onClick={() => { setBackgroundStyle("ai"); if (!aiBgUrl) generateAiBackground(); }} className="gap-1 text-xs h-8" disabled={generatingAiBg}>
+                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Fundo IA
+                        </Button>
                       </div>
+                      {backgroundStyle === "ai" && (
+                        <Button size="sm" variant="outline" onClick={generateAiBackground} disabled={generatingAiBg} className="gap-1 text-xs mt-1">
+                          {generatingAiBg ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                          {generatingAiBg ? "Gerando..." : "Novo Fundo IA"}
+                        </Button>
+                      )}
                     </div>
 
                     {/* Logo size in preview */}
@@ -1631,6 +1733,12 @@ const MarketingCenter = () => {
                           </Button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Custom Slogan in preview */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Slogan / Mensagem</Label>
+                      <Input size={1} value={customSlogan} onChange={e => setCustomSlogan(e.target.value)} placeholder="Ex: Qualidade que move o Brasil!" className="h-8 text-xs" />
                     </div>
 
                     {/* Custom CTA in preview */}
@@ -1707,7 +1815,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : backgroundStyle === "ai" ? "🤖 Fundo IA" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
