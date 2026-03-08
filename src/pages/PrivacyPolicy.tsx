@@ -11,6 +11,14 @@ const PrivacyPolicy = () => (
       <meta property="og:title" content="Política de Privacidade | Grundemann Power Hub" />
       <meta property="og:description" content="Como protegemos seus dados pessoais conforme a LGPD na compra de peças e geradores." />
       <link rel="canonical" href="https://grundemann-power-hub.lovable.app/privacidade" />
+      <script type="application/ld+json">{JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Política de Privacidade | Grundemann Power Hub",
+        "description": "Como protegemos seus dados pessoais conforme a LGPD na compra de peças e geradores.",
+        "url": "https://grundemann-power-hub.lovable.app/privacidade",
+        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+      })}</script>
     </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">

@@ -12,6 +12,14 @@ const Returns = () => (
       <meta property="og:title" content="Trocas e Devoluções | Grundemann Power Hub" />
       <meta property="og:description" content="Política de trocas e devoluções para peças de motores estacionários e geradores." />
       <link rel="canonical" href="https://grundemann-power-hub.lovable.app/trocas-e-devolucoes" />
+      <script type="application/ld+json">{JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Trocas e Devoluções | Grundemann Power Hub",
+        "description": "Política de trocas e devoluções para peças de motores estacionários e geradores de energia.",
+        "url": "https://grundemann-power-hub.lovable.app/trocas-e-devolucoes",
+        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+      })}</script>
     </Helmet>
     <TopBar /><Header />
     <div className="flex-1 container py-12 max-w-3xl">
