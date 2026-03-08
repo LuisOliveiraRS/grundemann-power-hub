@@ -253,20 +253,55 @@ const Checkout = () => {
 
     // Mark coupon as used
     if (appliedCoupon) {
-      // Check if it's from discount_coupons table
       const isRewardCoupon = availableCoupons.some(c => c.id === appliedCoupon.id);
       if (isRewardCoupon) {
         await supabase.from("discount_coupons").update({ is_used: true, order_id: order.id }).eq("id", appliedCoupon.id);
       } else {
-        // Email subscriber coupon
         await supabase.from("email_subscribers").update({ is_used: true }).eq("id", appliedCoupon.id);
       }
     }
 
     await supabase.from("cart_items").delete().eq("user_id", user!.id);
 
+    setCreatedOrderId(order.id);
     setLoading(false);
-    setStep(4);
+
+    // Redirect to Mercado Pago
+    await initiatePayment(order.id);
+  };
+
+  const initiatePayment = async (orderId: string) => {
+    setPaymentLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { order_id: orderId },
+      });
+
+      if (error || !data) {
+        throw new Error(error?.message || "Failed to create payment");
+      }
+
+      // Use sandbox_init_point for testing, init_point for production
+      const paymentUrl = data.sandbox_init_point || data.init_point;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+      } else {
+        throw new Error("No payment URL returned");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast({
+        title: "Erro ao processar pagamento",
+        description: "O pedido foi criado. Tente pagar novamente na sua conta.",
+        variant: "destructive",
+      });
+      setStep(4);
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const steps = [
