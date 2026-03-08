@@ -214,6 +214,7 @@ const MarketingCenter = () => {
           customCta: customCta || generatedText?.cta || "CONFIRA JÁ",
           layoutMode,
           creativeStyle,
+          ...(creativeStyle === "custom" ? { customColors } : {}),
         },
       });
       if (error) throw error;
