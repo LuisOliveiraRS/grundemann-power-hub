@@ -171,6 +171,156 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          product_ids: string[] | null
+          start_date: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          product_ids?: string[] | null
+          start_date?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          product_ids?: string[] | null
+          start_date?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_creatives: {
+        Row: {
+          body_text: string | null
+          campaign_id: string | null
+          created_at: string
+          cta: string | null
+          format: string
+          hashtags: string | null
+          headline: string | null
+          id: string
+          image_url: string | null
+          product_id: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          body_text?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          cta?: string | null
+          format?: string
+          hashtags?: string | null
+          headline?: string | null
+          id?: string
+          image_url?: string | null
+          product_id?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          body_text?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          cta?: string | null
+          format?: string
+          hashtags?: string | null
+          headline?: string | null
+          id?: string
+          image_url?: string | null
+          product_id?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_creatives_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_creatives_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_posts: {
+        Row: {
+          campaign_id: string | null
+          content: string | null
+          created_at: string
+          creative_id: string | null
+          id: string
+          platform: string
+          published_at: string | null
+          scheduled_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          content?: string | null
+          created_at?: string
+          creative_id?: string | null
+          id?: string
+          platform?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          content?: string | null
+          created_at?: string
+          creative_id?: string | null
+          id?: string
+          platform?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_posts_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_creatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
