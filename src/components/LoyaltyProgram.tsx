@@ -33,6 +33,16 @@ interface Redemption {
   reward_id: string;
 }
 
+interface Coupon {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  is_used: boolean;
+  expires_at: string | null;
+  created_at: string;
+}
+
 const tierConfig = [
   { name: "Bronze", min: 0, max: 499, color: "text-amber-700", bg: "bg-amber-100", icon: Star },
   { name: "Prata", min: 500, max: 1499, color: "text-muted-foreground", bg: "bg-muted", icon: Award },
