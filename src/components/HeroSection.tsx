@@ -172,7 +172,7 @@ const HeroSection = () => {
                       </h3>
                       <div className="flex items-center justify-center gap-3">
                         {current.original_price && current.original_price > current.price && (
-                          <span className="text-background/40 line-through text-sm">
+                          <span className="text-background/60 line-through text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
                             R$ {current.original_price.toFixed(2).replace(".", ",")}
                           </span>
                         )}
