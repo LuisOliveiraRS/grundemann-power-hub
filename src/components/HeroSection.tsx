@@ -129,7 +129,7 @@ const HeroSection = () => {
                 onClick={() => navigate(`/produto/${current.id}`)}
               >
                 {/* Product card */}
-                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-6 overflow-hidden">
+                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-4 lg:p-6 overflow-hidden">
                   {/* Discount badge */}
                   {current.original_price && current.original_price > current.price && (
                     <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-accent text-accent-foreground text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
