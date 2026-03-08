@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
@@ -45,6 +46,9 @@ const Contact = () => {
       <Header />
       <CategoryNav />
       <div className="flex-1">
+        <div className="container pt-8">
+          <SEOBreadcrumb items={[{ label: "Contato" }]} />
+        </div>
         <div className="bg-gradient-brand py-16">
           <div className="container text-center">
             <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-primary-foreground mb-4">Fale Conosco</h1>

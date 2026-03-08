@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import { ArrowLeft } from "lucide-react";
 
 interface Product {
@@ -117,6 +118,12 @@ const CategoryPage = () => {
           <button onClick={() => navigate(subcategory ? `/categoria/${slug}` : "/")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
             <ArrowLeft className="h-4 w-4" /> {subcategory ? `Voltar para ${category?.name}` : "Voltar"}
           </button>
+          {category && (
+            <SEOBreadcrumb items={[
+              ...(subcategory ? [{ label: category.name, href: `/categoria/${slug}` }] : []),
+              { label: (subcategory?.name || category.name) },
+            ]} />
+          )}
           {loading ? (
             <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
           ) : !category ? (
