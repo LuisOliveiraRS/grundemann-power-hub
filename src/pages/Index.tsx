@@ -65,6 +65,9 @@ const Index = () => {
       </Suspense>
       <WhatsAppButton />
       <AIAssistant />
+      <FirstVisitPopup />
+      <AbandonedCartReminder />
+      <Footer />
       <Footer />
     </div>
   );
