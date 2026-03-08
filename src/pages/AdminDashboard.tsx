@@ -1932,6 +1932,31 @@ const AdminDashboard = () => {
             <SEOBatchGenerator />
           </div>
         )}
+        {/* SHIPPING TAB */}
+        {tab === "shipping" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Truck className="h-8 w-8 text-primary" /> Gestão de Frete
+              </h1>
+              <p className="text-muted-foreground mt-1">Configure valores de PAC e SEDEX por região</p>
+            </div>
+            <ShippingManagement />
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {tab === "analytics" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <TrendingUp className="h-8 w-8 text-primary" /> Analytics
+              </h1>
+              <p className="text-muted-foreground mt-1">Métricas de vendas, produtos mais vendidos e desempenho</p>
+            </div>
+            <AnalyticsDashboard />
+          </div>
+        )}
       </main>
     </div>
   );
