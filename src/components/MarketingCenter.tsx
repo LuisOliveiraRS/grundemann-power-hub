@@ -1150,12 +1150,42 @@ const MarketingCenter = () => {
                         </button>
                       </div>
                     </div>
+
+                    {/* Logo Size */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <Image className="h-4 w-4 text-primary" /> Tamanho do Logo
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { key: "small" as LogoSize, label: "Pequeno" },
+                          { key: "medium" as LogoSize, label: "Médio" },
+                          { key: "large" as LogoSize, label: "Grande" },
+                        ]).map(s => (
+                          <button key={s.key} onClick={() => setLogoSize(s.key)}
+                            className={`p-3 rounded-lg border-2 text-center transition-all ${logoSize === s.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                            <p className={`text-sm font-semibold ${logoSize === s.key ? "text-primary" : ""}`}>{s.label}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom CTA */}
+                    <div className="space-y-3">
+                      <Label className="font-semibold flex items-center gap-2">
+                        <PenTool className="h-4 w-4 text-primary" /> Texto do CTA (botão)
+                      </Label>
+                      <Input value={customCta} onChange={e => setCustomCta(e.target.value)}
+                        placeholder="Ex: COMPRE AGORA, PEÇA JÁ, GARANTA O SEU... (deixe vazio para IA gerar)" />
+                      <p className="text-xs text-muted-foreground">Se deixar vazio, a IA criará automaticamente</p>
+                    </div>
                   </div>
                 </div>
                 <div>
                   <Label className="font-semibold">Instruções Adicionais (opcional)</Label>
                   <Textarea value={genInstructions} onChange={e => setGenInstructions(e.target.value)}
                     placeholder="Ex: Usar tom urgente, mencionar frete grátis, destacar garantia de 1 ano..." rows={3} className="mt-2" />
+                </div>
                 </div>
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setWizardStep(0)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Voltar</Button>
