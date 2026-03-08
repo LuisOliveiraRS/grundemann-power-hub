@@ -204,6 +204,7 @@ const LoyaltyProgram = () => {
       <div className="flex gap-2 border-b border-border pb-1">
         {[
           { id: "rewards" as const, label: "Recompensas", icon: Gift },
+          { id: "coupons" as const, label: `Cupons${coupons.filter(c => !c.is_used).length > 0 ? ` (${coupons.filter(c => !c.is_used).length})` : ""}`, icon: Ticket },
           { id: "history" as const, label: "Histórico", icon: Clock },
           { id: "redemptions" as const, label: "Meus Resgates", icon: CheckCircle },
         ].map(t => (
