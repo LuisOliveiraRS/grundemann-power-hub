@@ -282,13 +282,13 @@ const generateCompositeImage = async (
     wrapText(ctx, shortBody, 60, bodyY, W - 120, isStory ? 38 : 32);
   }
 
-  // ── CTA button ──
+  // ── CTA button (brand green) ──
   if (text?.cta) {
     const ctaY = H - (isStory ? 280 : 160);
     const ctaW = 420;
     const ctaH = 60;
     const ctaX = (W - ctaW) / 2;
-    ctx.fillStyle = accent;
+    ctx.fillStyle = BRAND_GREEN;
     roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30);
     ctx.fill();
     ctx.fillStyle = "#ffffff";
