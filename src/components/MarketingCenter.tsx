@@ -249,12 +249,12 @@ const generateCompositeImage = async (
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(60, priceY - 4); ctx.lineTo(60 + tw, priceY - 4); ctx.stroke();
 
-      // New price
-      ctx.fillStyle = accent;
+      // New price (brand green)
+      ctx.fillStyle = BRAND_GREEN;
       ctx.font = `bold 48px 'Segoe UI', Arial, sans-serif`;
       ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 50);
     } else {
-      ctx.fillStyle = accent;
+      ctx.fillStyle = BRAND_GREEN;
       ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
       ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 10);
