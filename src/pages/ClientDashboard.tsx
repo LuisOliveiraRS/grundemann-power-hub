@@ -119,8 +119,19 @@ const ClientDashboard = () => {
     if (!user) return;
     const channel = supabase
       .channel('user-payments')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
-        () => { loadPayments(); }
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          loadPayments();
+          const newStatus = (payload.new as any)?.status;
+          const oldStatus = (payload.old as any)?.status;
+          if (newStatus === 'approved' && oldStatus !== 'approved') {
+            toast({ title: "Pagamento aprovado! ✅", description: "Seu pagamento foi confirmado com sucesso. Obrigado pela compra!" });
+          } else if (newStatus === 'rejected' && oldStatus !== 'rejected') {
+            toast({ title: "Pagamento recusado ❌", description: "Seu pagamento foi recusado. Tente novamente ou use outro método.", variant: "destructive" });
+          } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
+            toast({ title: "Reembolso processado 💰", description: "Seu pagamento foi reembolsado com sucesso." });
+          }
+        }
       ).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
