@@ -125,7 +125,7 @@ const HeroSection = () => {
 
             {current ? (
               <div
-                className="relative z-10 w-80 cursor-pointer group"
+                className="relative z-10 w-full max-w-[280px] lg:max-w-[320px] cursor-pointer group"
                 onClick={() => navigate(`/produto/${current.id}`)}
               >
                 {/* Product card */}
