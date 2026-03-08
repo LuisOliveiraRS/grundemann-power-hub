@@ -41,7 +41,7 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
   return (
     <div className="group rounded-lg border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => id && navigate(`/produto/${id}`)}>
       <div className="relative aspect-square overflow-hidden bg-muted">
-        <img src={image} alt={name} className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
+        <img src={image} alt={name} loading="lazy" className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
         {oldPrice && (
           <span className="absolute top-2 left-2 rounded bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">OFERTA</span>
         )}
