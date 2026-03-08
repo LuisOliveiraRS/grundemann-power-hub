@@ -49,6 +49,13 @@ type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history"
 type BackgroundStyle = "ai_pro";
 type LogoSize = "small" | "medium" | "large";
 type LayoutMode = "single" | "grid2x2";
+type CreativeStyle = "dark_industrial" | "clean_modern" | "colorful_vibrant";
+
+const creativeStyleLabels: Record<CreativeStyle, { label: string; emoji: string; description: string }> = {
+  dark_industrial: { label: "Escuro Industrial", emoji: "🏭", description: "Fundo escuro com iluminação dramática, tons âmbar/dourado e atmosfera de oficina" },
+  clean_modern: { label: "Clean Moderno", emoji: "✨", description: "Fundo claro/branco, design limpo e minimalista, tipografia elegante" },
+  colorful_vibrant: { label: "Colorido Vibrante", emoji: "🎨", description: "Cores vivas, gradientes ousados, estilo energético e chamativo" },
+};
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
