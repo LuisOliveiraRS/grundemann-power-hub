@@ -317,30 +317,48 @@ const generateCompositeImage = async (
     ctx.fillText(text.hashtags.slice(0, 90), 60, hashY);
   }
 
-  // ── Logo Grundemann (top-left, ALWAYS) ──
+  // ── Logo Grundemann (top-left, LARGE & PROMINENT) ──
   try {
     const logo = await loadImage(logoGrundemann);
-    const logoH = isStory ? 65 : 55;
+    const logoH = isStory ? 100 : 85;
     const logoW = (logo.width / logo.height) * logoH;
-    const logoX = 28;
-    const logoY = 18;
+    const logoX = 35;
+    const logoY = isStory ? 22 : 18;
+    // Prominent backing with brand blue
     ctx.save();
-    ctx.fillStyle = bgStyle === "white" ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.6)";
-    roundRect(ctx, logoX - 10, logoY - 8, logoW + 20, logoH + 16, 10);
+    ctx.fillStyle = bgStyle === "white" ? "rgba(0,39,118,0.9)" : "rgba(0,39,118,0.85)";
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 4;
+    roundRect(ctx, logoX - 16, logoY - 12, logoW + 32, logoH + 24, 14);
     ctx.fill();
+    // Green border on logo card
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 3;
+    roundRect(ctx, logoX - 16, logoY - 12, logoW + 32, logoH + 24, 14);
+    ctx.stroke();
     ctx.restore();
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
   } catch {
     ctx.save();
-    ctx.fillStyle = bgStyle === "white" ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)";
-    ctx.font = `bold 26px 'Segoe UI', Arial, sans-serif`;
-    ctx.fillText("GRÜNDEMANN", 30, 50);
+    ctx.fillStyle = "rgba(0,39,118,0.9)";
+    roundRect(ctx, 20, 10, 320, 70, 14);
+    ctx.fill();
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 3;
+    roundRect(ctx, 20, 10, 320, 70, 14);
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold 34px 'Segoe UI', Arial, sans-serif`;
+    ctx.fillText("GRÜNDEMANN", 35, 55);
     ctx.restore();
   }
 
-  // ── Bottom accent bar ──
-  ctx.fillStyle = accent;
-  ctx.fillRect(0, H - 6, W, 6);
+  // ── Bottom accent bars: green + blue ──
+  ctx.fillStyle = BRAND_BLUE;
+  ctx.fillRect(0, H - 10, W, 10);
+  ctx.fillStyle = BRAND_GREEN;
+  ctx.fillRect(0, H - 10, W, 5);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")), "image/png");
