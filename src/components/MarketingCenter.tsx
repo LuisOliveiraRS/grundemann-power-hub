@@ -46,7 +46,7 @@ interface MarketingPost {
 }
 
 type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history" | "automation" | "calendar";
-type BackgroundStyle = "white" | "creative";
+type BackgroundStyle = "white" | "creative" | "oficina" | "geradores" | "pecas" | "premium";
 type LogoSize = "small" | "medium" | "large";
 
 const formatLabels: Record<string, string> = {
@@ -92,6 +92,21 @@ const WIZARD_STEPS = [
 ];
 
 import logoGrundemann from "@/assets/logo-grundemann.png";
+import bgOficina from "@/assets/bg-oficina.jpg";
+import bgGeradores from "@/assets/bg-geradores.jpg";
+import bgPecas from "@/assets/bg-pecas.jpg";
+import bgPremium from "@/assets/bg-premium.jpg";
+import bgOficinaStory from "@/assets/bg-oficina-story.jpg";
+import bgGeradoresStory from "@/assets/bg-geradores-story.jpg";
+import bgPecasStory from "@/assets/bg-pecas-story.jpg";
+import bgPremiumStory from "@/assets/bg-premium-story.jpg";
+
+const bgPhotoMap: Record<string, { landscape: string; story: string; label: string; emoji: string }> = {
+  oficina: { landscape: bgOficina, story: bgOficinaStory, label: "Oficina", emoji: "🔧" },
+  geradores: { landscape: bgGeradores, story: bgGeradoresStory, label: "Geradores", emoji: "⚡" },
+  pecas: { landscape: bgPecas, story: bgPecasStory, label: "Peças", emoji: "⚙️" },
+  premium: { landscape: bgPremium, story: bgPremiumStory, label: "Premium", emoji: "✨" },
+};
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -150,6 +165,25 @@ const generateCompositeImage = async (
     ctx.strokeStyle = BRAND_GOLD;
     ctx.lineWidth = 2;
     ctx.strokeRect(14, 14, W - 28, H - 28);
+  } else if (bgPhotoMap[bgStyle]) {
+    // ── PHOTO BACKGROUND ──
+    try {
+      const bgInfo = bgPhotoMap[bgStyle];
+      const bgSrc = isStory ? bgInfo.story : bgInfo.landscape;
+      const bgImg = await loadImage(bgSrc);
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      // Dark overlay for text readability
+      const overlay = ctx.createLinearGradient(0, 0, W * 0.6, H);
+      overlay.addColorStop(0, "rgba(0,0,0,0.75)");
+      overlay.addColorStop(0.5, "rgba(0,0,0,0.55)");
+      overlay.addColorStop(1, "rgba(0,0,0,0.35)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, W, H);
+    } catch {
+      // Fallback to dark gradient
+      ctx.fillStyle = "#0d0d0d";
+      ctx.fillRect(0, 0, W, H);
+    }
   } else {
     // Rich dark industrial background like reference images
     const grad = ctx.createLinearGradient(0, 0, W * 0.4, H);
@@ -1358,23 +1392,35 @@ const MarketingCenter = () => {
                       <Label className="font-semibold flex items-center gap-2">
                         <Palette className="h-4 w-4 text-primary" /> Estilo do Fundo
                       </Label>
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setBackgroundStyle("white")}
-                          className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "white" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
                           <div className="w-10 h-10 rounded bg-white border shrink-0 flex items-center justify-center"><Package className="h-5 w-5 text-muted-foreground" /></div>
                           <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Fundo Branco</p>
-                            <p className="text-xs text-muted-foreground">Estilo catálogo limpo e profissional</p>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "white" ? "text-primary" : ""}`}>Branco</p>
+                            <p className="text-xs text-muted-foreground">Catálogo limpo</p>
                           </div>
                         </button>
                         <button onClick={() => setBackgroundStyle("creative")}
-                          className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                          className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === "creative" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
                           <div className="w-10 h-10 rounded bg-gradient-to-br from-amber-700 to-slate-800 shrink-0 flex items-center justify-center"><Sparkles className="h-5 w-5 text-amber-200" /></div>
                           <div>
-                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Arte Criativa</p>
-                            <p className="text-xs text-muted-foreground">Fundo temático relacionado ao produto com cores dinâmicas</p>
+                            <p className={`text-sm font-semibold ${backgroundStyle === "creative" ? "text-primary" : ""}`}>Criativo</p>
+                            <p className="text-xs text-muted-foreground">Gradiente industrial</p>
                           </div>
                         </button>
+                        {Object.entries(bgPhotoMap).map(([key, info]) => (
+                          <button key={key} onClick={() => setBackgroundStyle(key as BackgroundStyle)}
+                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${backgroundStyle === key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                            <div className="w-10 h-10 rounded shrink-0 overflow-hidden border">
+                              <img src={info.landscape} alt={info.label} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <p className={`text-sm font-semibold ${backgroundStyle === key ? "text-primary" : ""}`}>{info.emoji} {info.label}</p>
+                              <p className="text-xs text-muted-foreground">Foto industrial</p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
@@ -1434,7 +1480,7 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : "Arte Criativa (cores automáticas)"}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
 
@@ -1512,13 +1558,21 @@ const MarketingCenter = () => {
                     )}
 
                     {/* Style toggle */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1">
-                        <Sparkles className="h-3 w-3" /> Criativo
-                      </Button>
-                      <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1">
-                        <Package className="h-3 w-3" /> Branco
-                      </Button>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Estilo do Fundo</Label>
+                      <div className="flex gap-1.5 flex-wrap">
+                        <Button size="sm" variant={backgroundStyle === "creative" ? "default" : "outline"} onClick={() => setBackgroundStyle("creative")} className="gap-1 text-xs h-8">
+                          <Sparkles className="h-3 w-3" /> Criativo
+                        </Button>
+                        <Button size="sm" variant={backgroundStyle === "white" ? "default" : "outline"} onClick={() => setBackgroundStyle("white")} className="gap-1 text-xs h-8">
+                          <Package className="h-3 w-3" /> Branco
+                        </Button>
+                        {Object.entries(bgPhotoMap).map(([key, info]) => (
+                          <Button key={key} size="sm" variant={backgroundStyle === key ? "default" : "outline"} onClick={() => setBackgroundStyle(key as BackgroundStyle)} className="gap-1 text-xs h-8">
+                            {info.emoji} {info.label}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Logo size in preview */}
@@ -1607,7 +1661,7 @@ const MarketingCenter = () => {
                 <div className="p-4 bg-muted/30 rounded-lg space-y-1">
                   <p className="text-sm font-semibold">Resumo:</p>
                   <p className="text-sm">📝 Formato: {formatLabels[genFormat]}</p>
-                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : "Arte Criativa"}</p>
+                  <p className="text-sm">🎨 Estilo: {backgroundStyle === "white" ? "Fundo Branco" : bgPhotoMap[backgroundStyle] ? `📷 ${bgPhotoMap[backgroundStyle].label}` : "Arte Criativa"}</p>
                   <p className="text-sm">📦 {selectedProducts.length} produto(s)</p>
                   <p className="text-sm">🔗 Link direto: incluído</p>
                   {publishMode !== "save" && <p className="text-sm">📱 Plataformas: {Array.from(publishPlatforms).map(p => platformLabels[p]).join(", ")}</p>}
