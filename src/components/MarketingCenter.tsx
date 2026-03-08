@@ -310,7 +310,7 @@ const generateCompositeImage = async (
 
   // ── Hashtags ──
   if (text?.hashtags) {
-    ctx.fillStyle = accent;
+    ctx.fillStyle = BRAND_GREEN;
     ctx.font = `20px 'Segoe UI', Arial, sans-serif`;
     ctx.textAlign = "left";
     const hashY = H - (isStory ? 150 : 45);
