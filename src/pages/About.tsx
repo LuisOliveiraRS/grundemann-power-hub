@@ -38,6 +38,7 @@ const About = () => {
         </div>
 
         <div className="container py-12">
+          <SEOBreadcrumb items={[{ label: "Quem Somos" }]} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
             <div>
               <h2 className="font-heading text-2xl font-bold mb-4">Nossa História</h2>
