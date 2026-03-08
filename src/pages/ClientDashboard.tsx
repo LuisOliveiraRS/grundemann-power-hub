@@ -342,6 +342,9 @@ const ClientDashboard = () => {
               {/* LOYALTY TAB */}
               {tab === "loyalty" && <LoyaltyProgram />}
 
+              {/* REFERRAL TAB */}
+              {tab === "referral" && <ReferralProgram />}
+
               {/* FAVORITES TAB */}
               {tab === "favorites" && (
                 <div>
