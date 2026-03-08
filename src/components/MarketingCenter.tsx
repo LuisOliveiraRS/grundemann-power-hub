@@ -49,6 +49,13 @@ type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history"
 type BackgroundStyle = "ai_pro";
 type LogoSize = "small" | "medium" | "large";
 type LayoutMode = "single" | "grid2x2";
+type CreativeStyle = "dark_industrial" | "clean_modern" | "colorful_vibrant";
+
+const creativeStyleLabels: Record<CreativeStyle, { label: string; emoji: string; description: string }> = {
+  dark_industrial: { label: "Escuro Industrial", emoji: "🏭", description: "Fundo escuro com iluminação dramática, tons âmbar/dourado e atmosfera de oficina" },
+  clean_modern: { label: "Clean Moderno", emoji: "✨", description: "Fundo claro/branco, design limpo e minimalista, tipografia elegante" },
+  colorful_vibrant: { label: "Colorido Vibrante", emoji: "🎨", description: "Cores vivas, gradientes ousados, estilo energético e chamativo" },
+};
 
 const formatLabels: Record<string, string> = {
   post_instagram: "Post Instagram",
@@ -92,7 +99,7 @@ const WIZARD_STEPS = [
   { key: "publish", label: "Publicar", icon: Send },
 ];
 
-import logoGrundemann from "@/assets/logo-grundemann.png";
+import logoGrundemann from "@/assets/logo-grundemann-banner.png";
 
 const getProductUrl = (productId: string) => {
   const base = window.location.origin;
@@ -135,6 +142,7 @@ const MarketingCenter = () => {
   const [aiBgUrl, setAiBgUrl] = useState<string | null>(null);
   const [generatingAiBg, setGeneratingAiBg] = useState(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("single");
+  const [creativeStyle, setCreativeStyle] = useState<CreativeStyle>("dark_industrial");
 
   // Publish state
   const [publishPlatforms, setPublishPlatforms] = useState<Set<string>>(new Set(["instagram"]));
@@ -187,6 +195,7 @@ const MarketingCenter = () => {
           customSlogan,
           customCta: customCta || generatedText?.cta || "CONFIRA JÁ",
           layoutMode,
+          creativeStyle,
         },
       });
       if (error) throw error;
@@ -475,6 +484,7 @@ const MarketingCenter = () => {
     setCustomSlogan("");
     setLogoSize("medium");
     setAiBgUrl(null);
+    setCreativeStyle("dark_industrial");
   };
 
   const deleteCreative = async (id: string) => {
@@ -526,6 +536,7 @@ const MarketingCenter = () => {
             campaignType: product.stock_quantity > 20 ? "high_stock" : "promotion",
             customCta: data.cta || "CONFIRA JÁ",
             layoutMode: "single",
+            creativeStyle: "dark_industrial",
           },
         });
         if (!imgError && imgData?.image_url) {
@@ -908,13 +919,19 @@ const MarketingCenter = () => {
                     {/* AI Creative Style */}
                     <div className="space-y-3">
                       <Label className="font-semibold flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" /> Estilo do Criativo
+                        <Palette className="h-4 w-4 text-primary" /> Estilo Visual da Arte
                       </Label>
-                      <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
-                        <p className="text-sm font-semibold text-primary">🤖 Arte Gerada por IA Profissional</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          A IA criará uma arte publicitária profissional com fundo industrial dramático, iluminação cinematográfica, preços em destaque dourado e a foto original do produto em alta qualidade. Estilo inspirado em anúncios premium de peças industriais.
-                        </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {(Object.entries(creativeStyleLabels) as [CreativeStyle, typeof creativeStyleLabels[CreativeStyle]][]).map(([key, style]) => (
+                          <button key={key} onClick={() => setCreativeStyle(key)}
+                            className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left ${creativeStyle === key ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/50"}`}>
+                            <span className="text-xl mt-0.5">{style.emoji}</span>
+                            <div>
+                              <p className={`text-sm font-semibold ${creativeStyle === key ? "text-primary" : ""}`}>{style.label}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{style.description}</p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
@@ -965,7 +982,7 @@ const MarketingCenter = () => {
                   <p className="text-sm">📦 {selectedProducts.length} produto(s): {selectedProducts.map(p => p.name).join(", ")}</p>
                   <p className="text-sm">📐 Formato: {formatLabels[genFormat]}</p>
                   <p className="text-sm">🎯 Campanha: {campaignTypeLabels[genCampaignType]}</p>
-                  <p className="text-sm">🎨 Estilo: Arte IA Profissional ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
+                  <p className="text-sm">🎨 Estilo: {creativeStyleLabels[creativeStyle]?.label} ({layoutMode === "grid2x2" ? "Grid 2×2" : "Produto Único"})</p>
                   {customSlogan && <p className="text-sm">📢 Slogan: {customSlogan}</p>}
                   <p className="text-sm">🔗 Link direto: incluído automaticamente</p>
                 </div>
