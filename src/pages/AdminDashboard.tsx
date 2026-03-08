@@ -1808,6 +1808,9 @@ const AdminDashboard = () => {
         {/* QUOTES TAB */}
         {tab === "quotes" && <QuoteManagement />}
 
+        {/* MECHANICS TAB */}
+        {tab === "mechanics" && <MechanicManagement />}
+
         {/* ROLES TAB */}
         {tab === "roles" && <UserRoleManagement />}
 
