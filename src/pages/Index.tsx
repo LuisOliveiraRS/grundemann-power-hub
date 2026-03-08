@@ -21,6 +21,7 @@ const Index = () => {
       <CategoriesSection />
       <TestimonialsSection />
       <WhatsAppButton />
+      <AIAssistant />
       <Footer />
     </div>
   );
