@@ -585,12 +585,48 @@ const Checkout = () => {
                   </select>
                 </div>
                 <div className="md:col-span-2"><Label>Observações do Pedido</Label><Textarea rows={2} value={shipping.notes} onChange={(e) => setShipping({ ...shipping, notes: e.target.value })} placeholder="Instruções especiais para entrega..." /></div>
+
+                {/* Shipping Options in Address Step */}
+                {shippingOptions && shippingOptions.length > 0 && (
+                  <div className="md:col-span-2">
+                    <Label className="mb-2 block">Escolha o Frete *</Label>
+                    <div className="space-y-2">
+                      {shippingOptions.map(opt => (
+                        <button
+                          key={opt.service}
+                          type="button"
+                          onClick={() => setSelectedShipping(opt)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                            selectedShipping?.service === opt.service
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Truck className="h-5 w-5 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-semibold">{opt.label}</p>
+                              <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                            </div>
+                          </div>
+                          <p className="font-bold text-sm text-price">
+                            {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="p-6 border-t border-border flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
                 <Button onClick={() => {
                   if (!shipping.full_name || !shipping.address || !shipping.city || !shipping.state) {
                     toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+                    return;
+                  }
+                  if (!selectedShipping) {
+                    toast({ title: "Selecione uma opção de frete", description: "Informe seu CEP para calcular o frete.", variant: "destructive" });
                     return;
                   }
                   setStep(3);
