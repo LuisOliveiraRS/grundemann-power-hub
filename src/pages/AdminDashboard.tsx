@@ -19,6 +19,7 @@ import QuoteManagement from "@/components/QuoteManagement";
 import UserRoleManagement from "@/components/UserRoleManagement";
 import MechanicManagement from "@/components/MechanicManagement";
 import StockManagement from "@/components/StockManagement";
+import EmailSubscriberManagement from "@/components/EmailSubscriberManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
