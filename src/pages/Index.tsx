@@ -13,6 +13,8 @@ import CategoriesSection from "@/components/CategoriesSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import AIAssistant from "@/components/AIAssistant";
+import FirstVisitPopup from "@/components/FirstVisitPopup";
+import AbandonedCartReminder from "@/components/AbandonedCartReminder";
 
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
