@@ -236,34 +236,57 @@ const generateCompositeImage = async (
   // Text area starts after image
   const textStartY = imgAreaTop + imgAreaH + 30;
 
-  // ── Price display ──
+  // ── Price display (LARGE & PROMINENT) ──
   if (price) {
     const priceY = textStartY;
+    // Price background highlight
+    const priceBoxH = originalPrice && originalPrice > price ? 120 : 80;
+    ctx.save();
+    ctx.fillStyle = bgStyle === "white" ? "rgba(0,151,57,0.08)" : "rgba(0,151,57,0.2)";
+    roundRect(ctx, 40, priceY - 30, W - 80, priceBoxH, 16);
+    ctx.fill();
+    ctx.strokeStyle = BRAND_GREEN;
+    ctx.lineWidth = 3;
+    roundRect(ctx, 40, priceY - 30, W - 80, priceBoxH, 16);
+    ctx.stroke();
+    ctx.restore();
+
     if (originalPrice && originalPrice > price) {
       // Old price (strikethrough)
-      ctx.fillStyle = bgStyle === "white" ? "#999999" : "#888888";
-      ctx.font = `24px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillStyle = bgStyle === "white" ? "#999999" : "#aaaaaa";
+      ctx.font = `28px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
       const oldText = `De R$ ${originalPrice.toFixed(2)}`;
-      ctx.fillText(oldText, 60, priceY);
+      ctx.fillText(oldText, 70, priceY);
       const tw = ctx.measureText(oldText).width;
       ctx.strokeStyle = ctx.fillStyle;
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(60, priceY - 4); ctx.lineTo(60 + tw, priceY - 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(70, priceY - 5); ctx.lineTo(70 + tw, priceY - 5); ctx.stroke();
 
-      // New price (brand green)
+      // Discount badge
+      const discount = Math.round((1 - price / originalPrice) * 100);
+      ctx.fillStyle = "#ff0000";
+      roundRect(ctx, W - 220, priceY - 28, 160, 40, 20);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold 22px 'Segoe UI', Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`-${discount}% OFF`, W - 140, priceY + 1);
+      ctx.textAlign = "left";
+
+      // New price (HUGE)
       ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 48px 'Segoe UI', Arial, sans-serif`;
-      ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 50);
+      ctx.font = `bold 72px 'Segoe UI', Arial, sans-serif`;
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 70);
     } else {
       ctx.fillStyle = BRAND_GREEN;
-      ctx.font = `bold 44px 'Segoe UI', Arial, sans-serif`;
+      ctx.font = `bold 68px 'Segoe UI', Arial, sans-serif`;
       ctx.textAlign = "left";
-      ctx.fillText(`R$ ${price.toFixed(2)}`, 60, priceY + 10);
+      ctx.fillText(`R$ ${price.toFixed(2)}`, 70, priceY + 30);
     }
   }
 
-  const headlineY = textStartY + (price ? (originalPrice && originalPrice > price ? 80 : 40) : 0);
+  const headlineY = textStartY + (price ? (originalPrice && originalPrice > price ? 130 : 90) : 0);
 
   // ── Headline ──
   if (text?.headline) {
