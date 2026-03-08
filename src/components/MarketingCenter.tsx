@@ -49,12 +49,29 @@ type MarketingTab = "dashboard" | "campaigns" | "wizard" | "library" | "history"
 type BackgroundStyle = "ai_pro";
 type LogoSize = "small" | "medium" | "large";
 type LayoutMode = "single" | "grid2x2";
-type CreativeStyle = "dark_industrial" | "clean_modern" | "colorful_vibrant";
+type CreativeStyle = "dark_industrial" | "clean_modern" | "colorful_vibrant" | "custom";
+
+interface CustomColors {
+  background: string;
+  accent: string;
+  priceColor: string;
+  textColor: string;
+  cardBg: string;
+}
+
+const defaultCustomColors: CustomColors = {
+  background: "#1a1a2e",
+  accent: "#009739",
+  priceColor: "#FFDF00",
+  textColor: "#ffffff",
+  cardBg: "#2a2a3e",
+};
 
 const creativeStyleLabels: Record<CreativeStyle, { label: string; emoji: string; description: string }> = {
   dark_industrial: { label: "Escuro Industrial", emoji: "🏭", description: "Fundo escuro com iluminação dramática, tons âmbar/dourado e atmosfera de oficina" },
   clean_modern: { label: "Clean Moderno", emoji: "✨", description: "Fundo claro/branco, design limpo e minimalista, tipografia elegante" },
   colorful_vibrant: { label: "Colorido Vibrante", emoji: "🎨", description: "Cores vivas, gradientes ousados, estilo energético e chamativo" },
+  custom: { label: "Personalizado", emoji: "🎯", description: "Escolha suas próprias cores para fundo, destaque, preço e texto" },
 };
 
 const formatLabels: Record<string, string> = {
