@@ -1043,34 +1043,15 @@ const MarketingCenter = () => {
                       </div>
                     )}
 
-                    {/* Style info */}
+                    {/* AI info */}
                     <div className="p-3 rounded-lg border bg-primary/5">
-                      <p className="text-xs font-semibold text-primary">✅ Estilo Grundemann Profissional</p>
+                      <p className="text-xs font-semibold text-primary">🤖 Arte gerada por IA profissional</p>
+                      <p className="text-xs text-muted-foreground mt-1">Clique em "Gerar Novamente" para criar uma nova variação da arte.</p>
                     </div>
 
-                    {/* Logo size in preview */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Tamanho do Logo</Label>
-                      <div className="flex gap-2">
-                        {(["small", "medium", "large"] as LogoSize[]).map(s => (
-                          <Button key={s} size="sm" variant={logoSize === s ? "default" : "outline"} onClick={() => setLogoSize(s)}>
-                            {s === "small" ? "P" : s === "medium" ? "M" : "G"}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Custom Slogan in preview */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Slogan / Mensagem</Label>
-                      <Input size={1} value={customSlogan} onChange={e => setCustomSlogan(e.target.value)} placeholder="Ex: Qualidade que move o Brasil!" className="h-8 text-xs" />
-                    </div>
-
-                    {/* Custom CTA in preview */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Texto do CTA</Label>
-                      <Input size={1} value={customCta} onChange={e => setCustomCta(e.target.value)} placeholder={generatedText?.cta || "COMPRE AGORA"} className="h-8 text-xs" />
-                    </div>
+                    <Button onClick={buildComposite} disabled={generatingComposite} variant="outline" className="w-full gap-2">
+                      <RefreshCw className={`h-4 w-4 ${generatingComposite ? "animate-spin" : ""}`} /> Gerar Nova Variação
+                    </Button>
                   </CardContent>
                 </Card>
 
