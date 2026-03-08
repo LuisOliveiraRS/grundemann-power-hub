@@ -7,7 +7,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download } from "lucide-react";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download, Cpu } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
