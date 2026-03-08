@@ -100,12 +100,21 @@ import bgOficinaStory from "@/assets/bg-oficina-story.jpg";
 import bgGeradoresStory from "@/assets/bg-geradores-story.jpg";
 import bgPecasStory from "@/assets/bg-pecas-story.jpg";
 import bgPremiumStory from "@/assets/bg-premium-story.jpg";
+import bgManutencao from "@/assets/bg-manutencao.jpg";
+import bgManutencaoStory from "@/assets/bg-manutencao-story.jpg";
+import bgFerramentas from "@/assets/bg-ferramentas.jpg";
+import bgFerramentasStory from "@/assets/bg-ferramentas-story.jpg";
+import bgFabrica from "@/assets/bg-fabrica.jpg";
+import bgFabricaStory from "@/assets/bg-fabrica-story.jpg";
 
 const bgPhotoMap: Record<string, { landscape: string; story: string; label: string; emoji: string }> = {
   oficina: { landscape: bgOficina, story: bgOficinaStory, label: "Oficina", emoji: "🔧" },
   geradores: { landscape: bgGeradores, story: bgGeradoresStory, label: "Geradores", emoji: "⚡" },
   pecas: { landscape: bgPecas, story: bgPecasStory, label: "Peças", emoji: "⚙️" },
   premium: { landscape: bgPremium, story: bgPremiumStory, label: "Premium", emoji: "✨" },
+  manutencao: { landscape: bgManutencao, story: bgManutencaoStory, label: "Manutenção", emoji: "🚗" },
+  ferramentas: { landscape: bgFerramentas, story: bgFerramentasStory, label: "Ferramentas", emoji: "🔨" },
+  fabrica: { landscape: bgFabrica, story: bgFabricaStory, label: "Fábrica", emoji: "🏭" },
 };
 
 const loadImage = (src: string): Promise<HTMLImageElement> =>
