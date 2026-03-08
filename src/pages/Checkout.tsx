@@ -450,6 +450,61 @@ const Checkout = () => {
                       )}
                     </div>
 
+                    {/* Shipping Calculator in Cart */}
+                    <div className="p-6 border-t border-border">
+                      <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-primary" /> Calcular Frete
+                      </h3>
+                      <div className="flex gap-2 mb-3">
+                        <Input
+                          value={shippingCepInput}
+                          onChange={e => {
+                            const formatted = formatCep(e.target.value);
+                            setShippingCepInput(formatted);
+                            const clean = formatted.replace(/\D/g, "");
+                            if (clean.length === 8) {
+                              const options = calculateShipping(clean);
+                              setShippingOptions(options);
+                              if (options && options.length > 0 && !selectedShipping) {
+                                setSelectedShipping(options[0]);
+                              }
+                            } else {
+                              setShippingOptions(null);
+                            }
+                          }}
+                          placeholder="00000-000"
+                          className="flex-1 max-w-[180px]"
+                          maxLength={9}
+                        />
+                        {shippingOptions === null && shippingCepInput.replace(/\D/g, "").length === 8 && (
+                          <p className="text-xs text-destructive self-center">CEP não encontrado</p>
+                        )}
+                      </div>
+                      {shippingOptions && (
+                        <div className="space-y-2">
+                          {shippingOptions.map(opt => (
+                            <button
+                              key={opt.service}
+                              onClick={() => setSelectedShipping(opt)}
+                              className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                                selectedShipping?.service === opt.service
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                  : "border-border hover:border-primary/40"
+                              }`}
+                            >
+                              <div>
+                                <p className="text-sm font-semibold">{opt.label}</p>
+                                <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                              </div>
+                              <p className="font-bold text-sm text-price">
+                                {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Totals */}
                     <div className="p-6 border-t border-border">
                       <div className="space-y-2">
@@ -463,6 +518,12 @@ const Checkout = () => {
                             <span>- R$ {discount.toFixed(2).replace(".", ",")}</span>
                           </div>
                         )}
+                        {selectedShipping && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Frete ({selectedShipping.service})</span>
+                            <span>{isFreeShipping ? <span className="text-primary font-semibold">Grátis</span> : `R$ ${selectedShipping.price.toFixed(2).replace(".", ",")}`}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between pt-2 border-t border-border">
                           <span className="font-heading font-bold text-lg">Total</span>
                           <span className="font-heading text-2xl font-bold text-price">R$ {total.toFixed(2).replace(".", ",")}</span>
@@ -470,7 +531,7 @@ const Checkout = () => {
                       </div>
                       <div className="flex gap-3 mt-4 justify-end">
                         <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
-                        <Button onClick={() => setStep(2)}>Próximo: Endereço</Button>
+                        <Button onClick={() => setStep(2)} disabled={items.length === 0}>Próximo: Endereço</Button>
                       </div>
                     </div>
                   </>
