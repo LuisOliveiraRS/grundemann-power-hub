@@ -1161,6 +1161,42 @@ export type Database = {
         }
         Relationships: []
       }
+      shipping_rates: {
+        Row: {
+          id: string
+          is_active: boolean
+          pac_days: string
+          pac_price: number
+          region_code: string
+          region_label: string
+          sedex_days: string
+          sedex_price: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          pac_days?: string
+          pac_price?: number
+          region_code: string
+          region_label: string
+          sedex_days?: string
+          sedex_price?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          pac_days?: string
+          pac_price?: number
+          region_code?: string
+          region_label?: string
+          sedex_days?: string
+          sedex_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subcategories: {
         Row: {
           category_id: string
@@ -1209,6 +1245,7 @@ export type Database = {
           image_url: string | null
           is_published: boolean
           read_time: string
+          search_vector: unknown
           slug: string
           tags: string[]
           title: string
@@ -1223,6 +1260,7 @@ export type Database = {
           image_url?: string | null
           is_published?: boolean
           read_time?: string
+          search_vector?: unknown
           slug: string
           tags?: string[]
           title: string
@@ -1237,6 +1275,7 @@ export type Database = {
           image_url?: string | null
           is_published?: boolean
           read_time?: string
+          search_vector?: unknown
           slug?: string
           tags?: string[]
           title?: string
@@ -1309,6 +1348,30 @@ export type Database = {
       process_referral: {
         Args: { p_referral_code: string; p_referred_id: string }
         Returns: boolean
+      }
+      search_articles: {
+        Args: { search_query: string }
+        Returns: {
+          category: string
+          content: string
+          created_at: string
+          excerpt: string
+          id: string
+          image_url: string | null
+          is_published: boolean
+          read_time: string
+          search_vector: unknown
+          slug: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "technical_articles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
     }
     Enums: {
