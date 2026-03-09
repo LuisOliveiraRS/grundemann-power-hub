@@ -31,6 +31,7 @@ interface ImportProduct {
   image_file?: File;
   image_source?: "spreadsheet" | "zip" | "pdf" | "manual" | "ai" | "placeholder";
   image_description?: string;
+  page_number?: number;
   status: "ready" | "error" | "duplicate" | "editing";
   generatingImage?: boolean;
   errorMsg?: string;
@@ -69,6 +70,7 @@ const ProductImport = () => {
   const [updateDuplicates, setUpdateDuplicates] = useState(false);
   const [autoGenerateImages, setAutoGenerateImages] = useState(true);
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [pdfBase64Data, setPdfBase64Data] = useState<string | null>(null);
 
   const genId = () => crypto.randomUUID();
   const generateSlug = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -240,6 +242,9 @@ const ProductImport = () => {
       if (ext === "pdf") {
         setProgressMessage("Convertendo PDF para análise...");
         pdfBase64 = await parsePDFAsBase64(file);
+        setPdfBase64Data(pdfBase64);
+      } else {
+        setPdfBase64Data(null);
       }
 
       setProgressMessage("IA analisando o documento...");
@@ -264,6 +269,7 @@ const ProductImport = () => {
           image_url: "",
           image_source: undefined,
           image_description: p.image_description || "",
+          page_number: p.page_number || undefined,
           status: p.name ? "ready" as const : "error" as const,
           errorMsg: p.name ? undefined : "Nome do produto não identificado",
         };
@@ -331,7 +337,31 @@ const ProductImport = () => {
     ));
   };
 
+  const extractPdfImage = async (product: ImportProduct): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-product-image", {
+        body: {
+          pdfBase64: pdfBase64Data,
+          productName: product.name,
+          imageDescription: product.image_description || product.description,
+          pageNumber: product.page_number,
+          sku: product.sku,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.imageUrl || null;
+    } catch (err: any) {
+      console.error("PDF image extraction error:", err);
+      return null;
+    }
+  };
+
   const generateAIImage = async (product: ImportProduct): Promise<string | null> => {
+    // If we have PDF data, use the faithful extraction function
+    if (pdfBase64Data) {
+      return extractPdfImage(product);
+    }
     try {
       const { data, error } = await supabase.functions.invoke("generate-product-image", {
         body: {
@@ -440,7 +470,7 @@ const ProductImport = () => {
           finalImageUrl = p.image_url;
           imagesImported++;
         } else if (autoGenerateImages && !p.image_url) {
-          setProgressMessage(`Gerando imagem IA para "${p.name}" (${i + 1}/${total})...`);
+          setProgressMessage(`${pdfBase64Data ? "Extraindo" : "Gerando"} imagem para "${p.name}" (${i + 1}/${total})...`);
           const aiUrl = await generateAIImage(p);
           if (aiUrl) {
             finalImageUrl = aiUrl;
