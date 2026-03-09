@@ -203,6 +203,32 @@ const ClientDashboard = () => {
   };
 
   const canCancel = (status: string) => ["pending", "confirmed"].includes(status);
+  const canPay = (orderId: string, status: string) => {
+    if (status !== "pending") return false;
+    const payment = payments.find(p => p.order_id === orderId);
+    return !payment || payment.status === "pending" || payment.status === "rejected";
+  };
+
+  const initiatePayment = async (orderId: string) => {
+    setPayingOrderId(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { order_id: orderId },
+      });
+      if (error || !data) throw new Error(error?.message || "Falha ao criar pagamento");
+      const paymentUrl = data.init_point || data.sandbox_init_point;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+      } else {
+        throw new Error("URL de pagamento não retornada");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast({ title: "Erro ao processar pagamento", description: err.message, variant: "destructive" });
+    } finally {
+      setPayingOrderId(null);
+    }
+  };
 
   const filteredOrders = orders.filter(o => {
     if (orderStatusFilter && o.status !== orderStatusFilter) return false;
