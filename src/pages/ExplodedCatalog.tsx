@@ -166,6 +166,7 @@ const ExplodedCatalog = () => {
                   <ZoomableImage
                     src={selectedSection.image}
                     alt={`Vista Explodida — ${selectedSection.name}`}
+                    parts={selectedSection.parts}
                   />
                 </motion.div>
               )}
