@@ -424,6 +424,10 @@ const MechanicArea = () => {
 
               {activeTab === "identificador" && <PartIdentifier />}
 
+              {activeTab === "vistas" && <ExplodedCatalogContent />}
+
+              {activeTab === "artigos" && <TechnicalArticlesContent />}
+
               {activeTab === "catalogos" && (
                 <Card>
                   <CardHeader>
