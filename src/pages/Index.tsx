@@ -96,9 +96,11 @@ const Index = () => {
       <BenefitsBar />
       <PartsFinder />
       <TabbedProducts />
-      <Suspense fallback={<SectionLoader />}>
-        <HeroBanner />
-      </Suspense>
+      {heroMode !== "rotating_banner" && (
+        <Suspense fallback={<SectionLoader />}>
+          <HeroBanner />
+        </Suspense>
+      )}
       <SocialProof />
       <TechnicalCenterTeaser />
       <CategoriesSection />
