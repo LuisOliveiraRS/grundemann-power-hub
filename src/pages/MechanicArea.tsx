@@ -350,14 +350,16 @@ const MechanicArea = () => {
               <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
                 {[
                   { key: "perfil" as const, label: "Meu Perfil", icon: User },
-                  { key: "catalogos" as const, label: "Catálogos Técnicos", icon: BookOpen },
+                  { key: "vistas" as const, label: "Vistas Explodidas", icon: Search },
+                  { key: "artigos" as const, label: "Artigos Técnicos", icon: BookOpen },
+                  { key: "catalogos" as const, label: "Catálogos PDF", icon: FileText },
                   { key: "compras" as const, label: "Histórico de Compras", icon: ShoppingCart },
                   { key: "identificador" as const, label: "Identificar Peça", icon: Wrench },
                 ].map(t => (
                   <button
                     key={t.key}
                     onClick={() => setActiveTab(t.key)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors whitespace-nowrap ${
                       activeTab === t.key
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-muted"
