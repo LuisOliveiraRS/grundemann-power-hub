@@ -11,6 +11,13 @@ import gasAcelerador from "@/assets/exploded/gas-11-acelerador.jpg";
 import gasTanque from "@/assets/exploded/gas-12-tanque.jpg";
 import gasCarenagem from "@/assets/exploded/gas-13-carenagem.jpg";
 
+export interface PartOverlay {
+  name: string;
+  code: string;
+  x: number; // % from left
+  y: number; // % from top
+}
+
 export interface CatalogSection {
   id: string;
   label: string;
@@ -18,6 +25,7 @@ export interface CatalogSection {
   description: string;
   searchTerm: string;
   image: string;
+  parts?: PartOverlay[];
 }
 
 export const gasolineSections: CatalogSection[] = [
