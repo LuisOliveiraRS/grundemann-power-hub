@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2 } from "lucide-react";
+import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -47,7 +47,9 @@ const MechanicArea = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador">("perfil");
+  const [catalogs, setCatalogs] = useState<any[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos">("perfil");
 
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
@@ -97,13 +99,22 @@ const MechanicArea = () => {
       setCnpj(mechRes.data.cnpj || "");
       setSpecialty(mechRes.data.specialty || "");
 
-      const { data: orderData } = await supabase
-        .from("orders")
-        .select("id, total_amount, status, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setOrders(orderData || []);
+      const [orderRes, catalogRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("id, total_amount, status, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("technical_catalogs")
+          .select("*")
+          .eq("is_active", true)
+          .order("category")
+          .order("title"),
+      ]);
+      setOrders(orderRes.data || []);
+      setCatalogs(catalogRes.data || []);
     }
     setLoading(false);
   };
@@ -334,9 +345,10 @@ const MechanicArea = () => {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-2 border-b border-border pb-2">
+              <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
                 {[
                   { key: "perfil" as const, label: "Meu Perfil", icon: User },
+                  { key: "catalogos" as const, label: "Catálogos Técnicos", icon: BookOpen },
                   { key: "compras" as const, label: "Histórico de Compras", icon: ShoppingCart },
                   { key: "identificador" as const, label: "Identificar Peça", icon: Wrench },
                 ].map(t => (
@@ -407,6 +419,70 @@ const MechanicArea = () => {
               )}
 
               {activeTab === "identificador" && <PartIdentifier />}
+
+              {activeTab === "catalogos" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-primary" /> Catálogos Técnicos
+                    </CardTitle>
+                    <CardDescription>
+                      Manuais e catálogos exclusivos para mecânicos cadastrados
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {catalogs.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">Nenhum catálogo disponível no momento.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {(() => {
+                          const grouped = catalogs.reduce((acc: Record<string, any[]>, c: any) => {
+                            if (!acc[c.category]) acc[c.category] = [];
+                            acc[c.category].push(c);
+                            return acc;
+                          }, {});
+                          return Object.entries(grouped).map(([category, items]) => (
+                            <div key={category} className="space-y-2">
+                              <h3 className="font-heading font-bold text-sm text-foreground mt-4 first:mt-0">{category}</h3>
+                              {(items as any[]).map((catalog: any) => (
+                                <div key={catalog.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                                  <div className="rounded-lg bg-primary/10 p-2 flex-shrink-0">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm">{catalog.title}</p>
+                                    {catalog.description && <p className="text-xs text-muted-foreground line-clamp-1">{catalog.description}</p>}
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={downloadingId === catalog.id}
+                                    onClick={async () => {
+                                      setDownloadingId(catalog.id);
+                                      const { data, error } = await supabase.storage
+                                        .from("technical-catalogs")
+                                        .createSignedUrl(catalog.file_url, 300);
+                                      if (data?.signedUrl) {
+                                        window.open(data.signedUrl, "_blank");
+                                      } else {
+                                        toast({ title: "Erro ao baixar", description: "Tente novamente.", variant: "destructive" });
+                                      }
+                                      setDownloadingId(null);
+                                    }}
+                                  >
+                                    {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+                                    Baixar
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </div>
