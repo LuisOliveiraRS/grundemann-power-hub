@@ -114,12 +114,12 @@ const ExplodedCatalog = () => {
                     }`}
                   >
                     {/* Background image */}
-                    <div className="relative h-20 overflow-hidden bg-muted">
+                    <div className="relative h-28 overflow-hidden bg-background">
                       <img
                         src={section.image}
                         alt={section.name}
-                        className={`w-full h-full object-contain transition-all duration-300 ${
-                          isSelected ? "scale-110 opacity-100" : "opacity-70 group-hover:opacity-100 group-hover:scale-105"
+                        className={`w-full h-full object-contain p-1 transition-all duration-300 ${
+                          isSelected ? "scale-105 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
                         }`}
                         loading="lazy"
                       />
