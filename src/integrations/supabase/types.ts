@@ -683,6 +683,62 @@ export type Database = {
           },
         ]
       }
+      price_research: {
+        Row: {
+          ai_analysis: string | null
+          competitor_name: string
+          competitor_price: number | null
+          competitor_url: string | null
+          created_at: string
+          id: string
+          our_price: number
+          price_difference: number | null
+          price_difference_pct: number | null
+          product_id: string
+          raw_results: Json | null
+          search_query: string | null
+          suggested_price: number | null
+        }
+        Insert: {
+          ai_analysis?: string | null
+          competitor_name: string
+          competitor_price?: number | null
+          competitor_url?: string | null
+          created_at?: string
+          id?: string
+          our_price: number
+          price_difference?: number | null
+          price_difference_pct?: number | null
+          product_id: string
+          raw_results?: Json | null
+          search_query?: string | null
+          suggested_price?: number | null
+        }
+        Update: {
+          ai_analysis?: string | null
+          competitor_name?: string
+          competitor_price?: number | null
+          competitor_url?: string | null
+          created_at?: string
+          id?: string
+          our_price?: number
+          price_difference?: number | null
+          price_difference_pct?: number | null
+          product_id?: string
+          raw_results?: Json | null
+          search_query?: string | null
+          suggested_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_research_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           comment: string
