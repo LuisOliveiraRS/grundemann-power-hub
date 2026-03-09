@@ -70,6 +70,7 @@ const ProductImport = () => {
   const [updateDuplicates, setUpdateDuplicates] = useState(false);
   const [autoGenerateImages, setAutoGenerateImages] = useState(true);
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [pdfBase64Data, setPdfBase64Data] = useState<string | null>(null);
 
   const genId = () => crypto.randomUUID();
   const generateSlug = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
