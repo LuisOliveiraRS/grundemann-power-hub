@@ -17,7 +17,7 @@ const TopBar = () => {
         <div className="flex items-center gap-6">
           <a href="/mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Wrench className="h-3.5 w-3.5" />
-            <span>Mecânico Virtual</span>
+            <span>Área do Mecânico</span>
           </a>
           <a href="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Package className="h-3.5 w-3.5" />
