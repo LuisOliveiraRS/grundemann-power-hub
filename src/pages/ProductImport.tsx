@@ -244,8 +244,14 @@ const ProductImport = () => {
         setProgressMessage("Convertendo PDF para análise...");
         pdfBase64 = await parsePDFAsBase64(file);
         setPdfBase64Data(pdfBase64);
+        
+        // Upload PDF to storage for image extraction later
+        setProgressMessage("Enviando PDF para armazenamento...");
+        const storagePath = await uploadPdfToStorage(pdfBase64, file.name);
+        setPdfStoragePath(storagePath);
       } else {
         setPdfBase64Data(null);
+        setPdfStoragePath(null);
       }
 
       setProgressMessage("IA analisando o documento...");
