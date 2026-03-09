@@ -269,6 +269,7 @@ const ProductImport = () => {
           image_url: "",
           image_source: undefined,
           image_description: p.image_description || "",
+          page_number: p.page_number || undefined,
           status: p.name ? "ready" as const : "error" as const,
           errorMsg: p.name ? undefined : "Nome do produto não identificado",
         };
