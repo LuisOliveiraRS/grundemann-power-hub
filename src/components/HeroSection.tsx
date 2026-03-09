@@ -51,8 +51,8 @@ const HeroSection = () => {
       {/* Green accent bar on top */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
 
-      <div className="container relative z-10 py-16 md:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="container relative z-10 py-10 md:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left: Text content */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
