@@ -855,6 +855,17 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
+                            {p.image_url && pdfBase64Data && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                title="Comparar com catálogo"
+                                onClick={() => setCompareProduct(p)}
+                              >
+                                <Columns className="h-3.5 w-3.5 text-accent-foreground" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
