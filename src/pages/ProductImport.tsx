@@ -242,6 +242,9 @@ const ProductImport = () => {
       if (ext === "pdf") {
         setProgressMessage("Convertendo PDF para análise...");
         pdfBase64 = await parsePDFAsBase64(file);
+        setPdfBase64Data(pdfBase64);
+      } else {
+        setPdfBase64Data(null);
       }
 
       setProgressMessage("IA analisando o documento...");
