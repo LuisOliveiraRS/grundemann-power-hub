@@ -902,6 +902,86 @@ const ProductImport = () => {
                 </table>
               </div>
             </div>
+
+            {/* Side-by-side comparison dialog */}
+            <Dialog open={!!compareProduct} onOpenChange={(open) => !open && setCompareProduct(null)}>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Columns className="h-5 w-5 text-primary" />
+                    Comparação: {compareProduct?.name}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  {/* Catalog page (PDF) */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground text-center uppercase tracking-wider">Página do Catálogo</h4>
+                    <div className="border border-border rounded-xl overflow-hidden bg-muted/30 flex items-center justify-center min-h-[300px]">
+                      {pdfBase64Data ? (
+                        <iframe
+                          src={`data:application/pdf;base64,${pdfBase64Data}${compareProduct?.page_number ? `#page=${compareProduct.page_number}` : ""}`}
+                          className="w-full h-[400px] rounded-xl"
+                          title="Página do catálogo"
+                        />
+                      ) : (
+                        <p className="text-muted-foreground text-sm">PDF não disponível</p>
+                      )}
+                    </div>
+                    {compareProduct?.page_number && (
+                      <p className="text-xs text-muted-foreground text-center">Página {compareProduct.page_number}</p>
+                    )}
+                  </div>
+                  {/* Generated image */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground text-center uppercase tracking-wider">Imagem Gerada (IA)</h4>
+                    <div className="border border-border rounded-xl overflow-hidden bg-muted/30 flex items-center justify-center min-h-[300px]">
+                      {compareProduct?.image_url ? (
+                        <img
+                          src={compareProduct.image_url}
+                          alt={compareProduct.name}
+                          className="max-w-full max-h-[400px] object-contain p-4"
+                        />
+                      ) : (
+                        <p className="text-muted-foreground text-sm">Imagem não gerada</p>
+                      )}
+                    </div>
+                    {compareProduct?.image_source && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Fonte: {compareProduct.image_source === "ai" ? "IA (Gemini)" : compareProduct.image_source === "zip" ? "ZIP" : compareProduct.image_source}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={compareProduct?.generatingImage}
+                    onClick={async () => {
+                      if (!compareProduct) return;
+                      setProducts(prev => prev.map(pr => pr.id === compareProduct.id ? { ...pr, generatingImage: true } : pr));
+                      setCompareProduct(prev => prev ? { ...prev, generatingImage: true } : null);
+                      const url = await generateAIImage(compareProduct);
+                      if (url) {
+                        setProducts(prev => prev.map(pr =>
+                          pr.id === compareProduct.id ? { ...pr, image_url: url, image_source: "ai" as const, generatingImage: false } : pr
+                        ));
+                        setCompareProduct(prev => prev ? { ...prev, image_url: url, image_source: "ai" as const, generatingImage: false } : null);
+                        toast({ title: "Imagem regenerada!" });
+                      } else {
+                        setProducts(prev => prev.map(pr => pr.id === compareProduct.id ? { ...pr, generatingImage: false } : pr));
+                        setCompareProduct(prev => prev ? { ...prev, generatingImage: false } : null);
+                        toast({ title: "Erro ao regenerar", variant: "destructive" });
+                      }
+                    }}
+                  >
+                    {compareProduct?.generatingImage ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                    Regenerar Imagem
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setCompareProduct(null)}>Fechar</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
