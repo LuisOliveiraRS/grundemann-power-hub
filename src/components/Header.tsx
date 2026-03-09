@@ -30,7 +30,10 @@ const Header = () => {
       }, () => loadCartCount())
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
+    window.addEventListener("open-cart-drawer", handleOpenCart);
+
+    return () => { supabase.removeChannel(channel); window.removeEventListener("open-cart-drawer", handleOpenCart); };
   }, [user]);
 
   const loadCartCount = async () => {

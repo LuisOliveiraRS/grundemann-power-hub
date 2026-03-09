@@ -35,7 +35,10 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
       ({ error } = await supabase.from("cart_items").insert({ user_id: user.id, product_id: id, quantity: 1 }));
     }
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else toast({ title: "Adicionado ao carrinho!" });
+    else {
+      toast({ title: "Adicionado ao carrinho!" });
+      window.dispatchEvent(new CustomEvent("open-cart-drawer"));
+    }
   };
 
   return (

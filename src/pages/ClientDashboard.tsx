@@ -105,6 +105,7 @@ const ClientDashboard = () => {
   const [favProducts, setFavProducts] = useState<FavProduct[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -202,6 +203,32 @@ const ClientDashboard = () => {
   };
 
   const canCancel = (status: string) => ["pending", "confirmed"].includes(status);
+  const canPay = (orderId: string, status: string) => {
+    if (status !== "pending") return false;
+    const payment = payments.find(p => p.order_id === orderId);
+    return !payment || payment.status === "pending" || payment.status === "rejected";
+  };
+
+  const initiatePayment = async (orderId: string) => {
+    setPayingOrderId(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { order_id: orderId },
+      });
+      if (error || !data) throw new Error(error?.message || "Falha ao criar pagamento");
+      const paymentUrl = data.init_point || data.sandbox_init_point;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+      } else {
+        throw new Error("URL de pagamento não retornada");
+      }
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast({ title: "Erro ao processar pagamento", description: err.message, variant: "destructive" });
+    } finally {
+      setPayingOrderId(null);
+    }
+  };
 
   const filteredOrders = orders.filter(o => {
     if (orderStatusFilter && o.status !== orderStatusFilter) return false;
@@ -340,6 +367,11 @@ const ClientDashboard = () => {
                               <div className="flex items-center gap-3 flex-wrap">
                                 <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${statusColor[order.status] || ""}`}>{statusLabel[order.status] || order.status}</span>
                                 <p className="font-heading font-bold text-lg text-price">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
+                                {canPay(order.id, order.status) && (
+                                  <Button size="sm" className="bg-primary text-primary-foreground" disabled={payingOrderId === order.id} onClick={e => { e.stopPropagation(); initiatePayment(order.id); }}>
+                                    {payingOrderId === order.id ? <><RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" /> Processando...</> : <><CreditCard className="h-3.5 w-3.5 mr-1" /> Pagar</>}
+                                  </Button>
+                                )}
                                 {canCancel(order.status) && <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={e => { e.stopPropagation(); cancelOrder(order.id); }}><XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar</Button>}
                                 {expandedOrder === order.id ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                               </div>
