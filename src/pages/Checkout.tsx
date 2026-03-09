@@ -360,31 +360,33 @@ const Checkout = () => {
                   <>
                     <div className="divide-y divide-border">
                       {items.map((item) => (
-                        <div key={item.id} className="p-4 flex items-center gap-4">
-                          <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                        <div key={item.id} className="p-3 md:p-4 flex flex-wrap md:flex-nowrap items-center gap-3 md:gap-4">
+                          <div className="h-14 w-14 md:h-16 md:w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
                             {item.product?.image_url && (
                               <img src={item.product.image_url} alt="" className="h-full w-full object-contain p-1" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate">{item.product?.name}</p>
-                            <p className="text-price font-bold">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
+                            <p className="text-price font-bold text-sm">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
                           </div>
-                          <div className="flex items-center gap-1 border border-border rounded-lg">
-                            <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-2 hover:bg-muted transition-colors">
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                            <button onClick={() => updateQty(item.id, item.quantity + 1)} className="p-2 hover:bg-muted transition-colors">
-                              <Plus className="h-3 w-3" />
+                          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                            <div className="flex items-center gap-1 border border-border rounded-lg">
+                              <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-2 hover:bg-muted transition-colors">
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
+                              <button onClick={() => updateQty(item.id, item.quantity + 1)} className="p-2 hover:bg-muted transition-colors">
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <p className="font-bold text-price text-right">
+                              R$ {((item.product?.price || 0) * item.quantity).toFixed(2).replace(".", ",")}
+                            </p>
+                            <button onClick={() => removeItem(item.id)} className="text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
-                          <p className="font-bold text-price w-24 text-right">
-                            R$ {((item.product?.price || 0) * item.quantity).toFixed(2).replace(".", ",")}
-                          </p>
-                          <button onClick={() => removeItem(item.id)} className="text-destructive p-2 hover:bg-destructive/10 rounded-lg transition-colors">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
                         </div>
                       ))}
                     </div>

@@ -193,7 +193,7 @@ const ProductDetail = () => {
                   <Badge variant="destructive">{discount}% OFF</Badge>
                 </div>
               )}
-              <p className="font-heading text-4xl font-extrabold text-price mb-1">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
+              <p className="font-heading text-3xl md:text-4xl font-extrabold text-price mb-1">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
               <p className="text-sm text-muted-foreground mb-6">ou 3x de R$ {(product.price / 3).toFixed(2).replace(".",",")} sem juros</p>
 
               <div className="mb-6">

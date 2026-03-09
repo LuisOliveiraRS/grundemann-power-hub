@@ -106,7 +106,7 @@ const HeroSection = () => {
             </div>
 
             {/* Quick trust signals */}
-            <div className="mt-8 flex gap-6 text-background/50 text-xs font-medium">
+            <div className="mt-6 md:mt-8 flex flex-wrap gap-3 md:gap-6 text-background/50 text-xs font-medium">
               <span>✓ Envio para todo Brasil</span>
               <span>✓ Garantia de qualidade</span>
               <span>✓ Suporte técnico</span>
