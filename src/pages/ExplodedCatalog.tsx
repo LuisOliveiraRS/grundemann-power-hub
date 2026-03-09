@@ -163,15 +163,9 @@ const ExplodedCatalog = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="mt-4 rounded-xl border border-border overflow-hidden bg-background"
                 >
-                  <div className="p-2 bg-muted/50 border-b border-border">
-                    <p className="text-xs font-bold text-muted-foreground text-center">
-                      Vista Explodida — {selectedSection.name}
-                    </p>
-                  </div>
-                  <img
+                  <ZoomableImage
                     src={selectedSection.image}
-                    alt={`Vista explodida - ${selectedSection.name}`}
-                    className="w-full object-contain max-h-[400px]"
+                    alt={`Vista Explodida — ${selectedSection.name}`}
                   />
                 </motion.div>
               )}
