@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 
     // Create Mercado Pago preference
-    const mpResponse = await fetch("https://api.mercadopago.com/checkout/pro/preferences", {
+    const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
