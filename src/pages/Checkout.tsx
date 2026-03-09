@@ -224,6 +224,7 @@ const Checkout = () => {
       neighborhood: shipping.neighborhood || null,
       city: shipping.city || null,
       state: shipping.state || null,
+      cpf_cnpj: shipping.cpf_cnpj || null,
     }).eq("user_id", user!.id);
 
     const orderNotes = [
