@@ -53,7 +53,8 @@ const Auth = () => {
             p_referral_code: refCode,
           });
         }
-        toast({ title: "Cadastro realizado!", description: "Verifique seu email para confirmar a conta." });
+        toast({ title: "Cadastro realizado!", description: "Bem-vindo à Gründemann!" });
+        navigate("/");
       }
     }
     setLoading(false);
