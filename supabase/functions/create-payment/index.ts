@@ -72,13 +72,27 @@ Deno.serve(async (req) => {
       .eq("user_id", userId)
       .single();
 
-    // Build MP preference items
+    // Build MP preference items - ensure valid prices
     const items = (orderItems || []).map((item: any) => ({
       title: item.product_name.substring(0, 256),
       quantity: item.quantity,
-      unit_price: Number(item.price_at_purchase),
+      unit_price: Math.max(0.01, Number(item.price_at_purchase)),
       currency_id: "BRL",
     }));
+
+    // Add shipping as item if included in total but not in items
+    const itemsTotal = items.reduce((sum: number, i: any) => sum + i.unit_price * i.quantity, 0);
+    if (Number(order.total_amount) > itemsTotal + 0.01) {
+      const shippingAmount = Number(order.total_amount) - itemsTotal;
+      if (shippingAmount > 0) {
+        items.push({
+          title: "Frete",
+          quantity: 1,
+          unit_price: Math.round(shippingAmount * 100) / 100,
+          currency_id: "BRL",
+        });
+      }
+    }
 
     // Determine the origin for back_urls
     const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/[^/]*$/, "") || "https://grundemann-power-hub.lovable.app";
@@ -113,10 +127,6 @@ Deno.serve(async (req) => {
         auto_return: "approved",
         external_reference: order_id,
         notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
-        payment_methods: {
-          excluded_payment_types: [],
-          installments: 3,
-        },
         statement_descriptor: "GRUNDEMANN",
       }),
     });
