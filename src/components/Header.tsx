@@ -1,15 +1,17 @@
-import { User, ShoppingCart } from "lucide-react";
+import { User, ShoppingCart, Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import CartDrawer from "@/components/CartDrawer";
 import SmartSearch from "@/components/SmartSearch";
 import NotificationBell from "@/components/NotificationBell";
+import MobileMenu from "@/components/MobileMenu";
 import logo from "@/assets/logo-grundemann.png";
 import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const { user, isAdmin, isSeller } = useAuth();
   const navigate = useNavigate();
@@ -44,31 +46,40 @@ const Header = () => {
   return (
     <>
       <header className="border-b border-border bg-background sticky top-0 z-40">
-        <div className="container flex items-center justify-between py-3 gap-8">
+        <div className="container flex items-center justify-between py-3 gap-3 md:gap-8">
+          {/* Hamburger - mobile only */}
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="md:hidden flex-shrink-0 p-1.5 -ml-1.5 text-foreground hover:text-primary transition-colors"
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
           <a href="/" className="flex-shrink-0">
-            <img src={logo} alt="Gründemann Geradores" className="h-24 md:h-36 w-auto" />
+            <img src={logo} alt="Gründemann Geradores" className="h-10 md:h-36 w-auto" />
           </a>
 
           <SmartSearch />
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             <NotificationBell />
             {isAdmin && (
-              <button onClick={() => navigate("/admin")} className="text-xs font-bold text-primary hover:underline">
+              <button onClick={() => navigate("/admin")} className="hidden md:block text-xs font-bold text-primary hover:underline">
                 Admin
               </button>
             )}
             {isSeller && !isAdmin && (
-              <button onClick={() => navigate("/vendedor")} className="text-xs font-bold text-primary hover:underline">
+              <button onClick={() => navigate("/vendedor")} className="hidden md:block text-xs font-bold text-primary hover:underline">
                 Vendedor
               </button>
             )}
             <button
               onClick={() => user ? navigate("/minha-conta") : navigate("/auth")}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden md:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <User className="h-5 w-5" />
-              <span className="hidden md:inline">{user ? "Minha Conta" : "Entrar"}</span>
+              <span>{user ? "Minha Conta" : "Entrar"}</span>
             </button>
             <button
               onClick={() => setCartOpen(true)}
@@ -84,6 +95,7 @@ const Header = () => {
           </div>
         </div>
       </header>
+      <MobileMenu open={menuOpen} onOpenChange={setMenuOpen} />
       <CartDrawer open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) loadCartCount(); }} />
     </>
   );
