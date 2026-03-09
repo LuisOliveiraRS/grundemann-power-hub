@@ -49,7 +49,7 @@ const Checkout = () => {
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingInfo>({
     full_name: "", phone: "", zip_code: "", address: "", address_number: "",
-    address_complement: "", neighborhood: "", city: "", state: "", notes: "",
+    address_complement: "", neighborhood: "", city: "", state: "", notes: "", cpf_cnpj: "",
   });
 
   // Coupon state
