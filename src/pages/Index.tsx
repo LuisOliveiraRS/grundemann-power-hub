@@ -48,6 +48,19 @@ const TechnicalCenterTeaser = () => (
 );
 
 const Index = () => {
+  const [heroMode, setHeroMode] = useState<string>("product_showcase");
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "hero_mode")
+      .single()
+      .then(({ data }) => {
+        if (data) setHeroMode(data.value);
+      });
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
@@ -73,7 +86,13 @@ const Index = () => {
       <TopBar />
       <Header />
       <CategoryNav />
-      <HeroSection />
+      {heroMode === "rotating_banner" ? (
+        <Suspense fallback={<SectionLoader />}>
+          <HeroBanner />
+        </Suspense>
+      ) : (
+        <HeroSection />
+      )}
       <BenefitsBar />
       <PartsFinder />
       <TabbedProducts />
