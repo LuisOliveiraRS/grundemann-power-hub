@@ -4,7 +4,7 @@ import logo from "@/assets/logo-grundemann.png";
 
 const Footer = () => {
   return (
-    <footer className="bg-foreground text-background/80">
+    <footer className="bg-foreground text-background/80 pb-14 md:pb-0">
       <div className="container py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
