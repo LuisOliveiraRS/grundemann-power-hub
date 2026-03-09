@@ -1975,6 +1975,19 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* CATALOGS TAB */}
+        {tab === "catalogs" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-2xl font-black text-foreground flex items-center gap-3">
+                <FileText className="h-7 w-7 text-primary" /> Catálogos Técnicos
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie os catálogos PDF disponíveis para mecânicos cadastrados</p>
+            </div>
+            <CatalogManagement />
+          </div>
+        )}
+
         {/* APPEARANCE TAB */}
         {tab === "appearance" && (
           <div>
