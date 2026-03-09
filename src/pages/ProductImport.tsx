@@ -244,8 +244,15 @@ const ProductImport = () => {
         setProgressMessage("Convertendo PDF para análise...");
         pdfBase64 = await parsePDFAsBase64(file);
         setPdfBase64Data(pdfBase64);
+        
+        setProgressMessage("Enviando PDF para armazenamento...");
+        const storagePath = await uploadPdfToStorage(pdfBase64, file.name);
+        setPdfStoragePath(storagePath);
+        // Free memory - we don't need the full base64 in state anymore
+        setPdfBase64Data(null);
       } else {
         setPdfBase64Data(null);
+        setPdfStoragePath(null);
       }
 
       setProgressMessage("IA analisando o documento...");
@@ -338,11 +345,32 @@ const ProductImport = () => {
     ));
   };
 
+  const [pdfStoragePath, setPdfStoragePath] = useState<string | null>(null);
+
+  const uploadPdfToStorage = async (base64: string, fileName: string): Promise<string | null> => {
+    try {
+      const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const path = `catalogs/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, bytes, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      if (error) {
+        console.error("PDF upload error:", error);
+        return null;
+      }
+      return path;
+    } catch (err) {
+      console.error("PDF upload error:", err);
+      return null;
+    }
+  };
+
   const extractPdfImage = async (product: ImportProduct): Promise<string | null> => {
     try {
       const { data, error } = await supabase.functions.invoke("extract-product-image", {
         body: {
-          pdfBase64: pdfBase64Data,
+          pdfStoragePath: pdfStoragePath,
           productName: product.name,
           imageDescription: product.image_description || product.description,
           pageNumber: product.page_number,
@@ -359,8 +387,8 @@ const ProductImport = () => {
   };
 
   const generateAIImage = async (product: ImportProduct): Promise<string | null> => {
-    // If we have PDF data, use the faithful extraction function
-    if (pdfBase64Data) {
+    // If we have PDF stored, use the faithful extraction function
+    if (pdfStoragePath) {
       return extractPdfImage(product);
     }
     try {
@@ -471,7 +499,7 @@ const ProductImport = () => {
           finalImageUrl = p.image_url;
           imagesImported++;
         } else if (autoGenerateImages && !p.image_url) {
-          setProgressMessage(`${pdfBase64Data ? "Extraindo" : "Gerando"} imagem para "${p.name}" (${i + 1}/${total})...`);
+          setProgressMessage(`${pdfStoragePath ? "Extraindo" : "Gerando"} imagem para "${p.name}" (${i + 1}/${total})...`);
           const aiUrl = await generateAIImage(p);
           if (aiUrl) {
             finalImageUrl = aiUrl;
@@ -855,7 +883,7 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            {p.image_url && pdfBase64Data && (
+                            {p.image_url && pdfStoragePath && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -917,12 +945,20 @@ const ProductImport = () => {
                   <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-muted-foreground text-center uppercase tracking-wider">Página do Catálogo</h4>
                     <div className="border border-border rounded-xl overflow-hidden bg-muted/30 flex items-center justify-center min-h-[300px]">
-                      {pdfBase64Data ? (
-                        <iframe
-                          src={`data:application/pdf;base64,${pdfBase64Data}${compareProduct?.page_number ? `#page=${compareProduct.page_number}` : ""}`}
-                          className="w-full h-[400px] rounded-xl"
-                          title="Página do catálogo"
-                        />
+                      {pdfStoragePath ? (
+                        <div className="flex flex-col items-center gap-3 p-6 text-center">
+                          <FileText className="h-16 w-16 text-primary" />
+                          <p className="text-sm font-medium">Catálogo PDF</p>
+                          <p className="text-xs text-muted-foreground">{fileName}</p>
+                          {compareProduct?.page_number && (
+                            <Badge variant="secondary">Página {compareProduct.page_number}</Badge>
+                          )}
+                          {compareProduct?.image_description && (
+                            <p className="text-xs text-muted-foreground mt-2 italic">
+                              "{compareProduct.image_description}"
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <p className="text-muted-foreground text-sm">PDF não disponível</p>
                       )}
