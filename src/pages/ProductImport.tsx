@@ -498,7 +498,7 @@ const ProductImport = () => {
           finalImageUrl = p.image_url;
           imagesImported++;
         } else if (autoGenerateImages && !p.image_url) {
-          setProgressMessage(`${pdfBase64Data ? "Extraindo" : "Gerando"} imagem para "${p.name}" (${i + 1}/${total})...`);
+          setProgressMessage(`${pdfStoragePath ? "Extraindo" : "Gerando"} imagem para "${p.name}" (${i + 1}/${total})...`);
           const aiUrl = await generateAIImage(p);
           if (aiUrl) {
             finalImageUrl = aiUrl;
