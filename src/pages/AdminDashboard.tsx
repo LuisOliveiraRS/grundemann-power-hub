@@ -1959,6 +1959,17 @@ const AdminDashboard = () => {
             <AnalyticsDashboard />
           </div>
         )}
+
+        {/* PRICE RESEARCH TAB */}
+        {tab === "price-research" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-3xl font-heading font-bold">Pesquisa de Preços da Concorrência</h1>
+              <p className="text-muted-foreground mt-1">Busca real em Mercado Livre, Shopee e lojas via Firecrawl + análise por IA</p>
+            </div>
+            <PriceResearch />
+          </div>
+        )}
       </main>
     </div>
   );
