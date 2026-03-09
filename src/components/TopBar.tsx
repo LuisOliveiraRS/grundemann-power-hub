@@ -1,4 +1,4 @@
-import { Phone, MessageCircle, Package, ShoppingCart } from "lucide-react";
+import { Phone, MessageCircle, Package, ShoppingCart, Wrench } from "lucide-react";
 
 const TopBar = () => {
   return (
@@ -15,6 +15,10 @@ const TopBar = () => {
           </a>
         </div>
         <div className="flex items-center gap-6">
+          <a href="/mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+            <Wrench className="h-3.5 w-3.5" />
+            <span>Mecânico Virtual</span>
+          </a>
           <a href="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Package className="h-3.5 w-3.5" />
             <span>Rastrear Pedido</span>
