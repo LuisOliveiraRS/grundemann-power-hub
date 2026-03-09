@@ -114,12 +114,12 @@ const ExplodedCatalog = () => {
                     }`}
                   >
                     {/* Background image */}
-                    <div className="relative aspect-square overflow-hidden bg-muted/30" style={{ backgroundImage: 'radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)', backgroundSize: '8px 8px' }}>
+                    <div className="relative aspect-square overflow-hidden bg-white border-b border-border">
                       <img
                         src={section.image}
                         alt={section.name}
                         className={`w-full h-full object-contain p-2 transition-all duration-300 ${
-                          isSelected ? "scale-105 opacity-100" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
+                          isSelected ? "scale-105" : "group-hover:scale-105"
                         }`}
                         loading="lazy"
                       />
