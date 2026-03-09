@@ -49,28 +49,44 @@ const AIAssistant = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("ai-mechanic", {
-        body: {
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          userQuestion: question,
-          sessionId,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-mechanic`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+            userQuestion: question,
+            sessionId,
+          }),
+        }
+      );
 
-      if (error) throw error;
+      const data = await response.json();
 
-      const assistantMsg: Message = {
-        role: "assistant",
-        content: data?.response || "Desculpe, não consegui processar sua pergunta. Tente novamente.",
-        products: data?.products || [],
-      };
-
-      setMessages(prev => [...prev, assistantMsg]);
+      if (!response.ok) {
+        const errorMsg = response.status === 429
+          ? "⚠️ Muitas perguntas em pouco tempo. Aguarde um momento e tente novamente."
+          : response.status === 402
+          ? "⚠️ O serviço de IA está temporariamente indisponível. Por favor, entre em contato via WhatsApp para diagnóstico."
+          : data?.error || "⚠️ Ocorreu um erro. Tente novamente.";
+        
+        setMessages(prev => [...prev, { role: "assistant", content: errorMsg }]);
+      } else {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: data?.response || "Desculpe, não consegui processar sua pergunta.",
+          products: data?.products || [],
+        }]);
+      }
     } catch (err: any) {
       console.error("AI error:", err);
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "⚠️ Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente em alguns instantes.",
+        content: "⚠️ Erro de conexão. Verifique sua internet e tente novamente.",
       }]);
     }
     setLoading(false);
