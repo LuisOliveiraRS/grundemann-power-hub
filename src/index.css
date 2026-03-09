@@ -116,4 +116,7 @@
     background-color: hsl(var(--nav-bg));
     color: hsl(var(--nav-foreground));
   }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
