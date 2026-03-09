@@ -47,7 +47,9 @@ const MechanicArea = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador">("perfil");
+  const [catalogs, setCatalogs] = useState<any[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos">("perfil");
 
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
