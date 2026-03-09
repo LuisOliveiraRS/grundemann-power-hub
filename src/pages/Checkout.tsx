@@ -327,17 +327,17 @@ const Checkout = () => {
       <div className="flex-1 bg-muted/50">
         <div className="container py-8 max-w-4xl">
           {/* Steps indicator */}
-          <div className="flex items-center justify-center mb-8 gap-0">
+          <div className="flex items-center justify-center mb-6 md:mb-8 gap-0 overflow-x-auto scrollbar-none">
             {steps.map((s, i) => (
-              <div key={s.num} className="flex items-center">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              <div key={s.num} className="flex items-center flex-shrink-0">
+                <div className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
                   step >= s.num ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                 }`}>
                   <s.icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{s.label}</span>
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`w-8 h-0.5 ${step > s.num ? "bg-primary" : "bg-border"}`} />
+                  <div className={`w-4 md:w-8 h-0.5 ${step > s.num ? "bg-primary" : "bg-border"}`} />
                 )}
               </div>
             ))}
