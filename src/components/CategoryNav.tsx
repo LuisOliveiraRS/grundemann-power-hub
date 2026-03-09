@@ -60,8 +60,8 @@ const CategoryNav = () => {
 
   return (
     <nav className="bg-nav relative z-50" ref={navRef}>
-      <div className="container overflow-x-auto scrollbar-none">
-        <ul className="flex items-center justify-start md:justify-between min-w-max md:min-w-0">
+      <div className="container">
+        <ul className="flex flex-wrap items-center justify-center md:justify-between">
           {items.map((cat) => {
             const subs = getSubcats(cat.id);
             const hasSubcats = subs.length > 0;
