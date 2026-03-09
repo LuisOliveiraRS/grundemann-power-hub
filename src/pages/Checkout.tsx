@@ -25,6 +25,7 @@ interface ShippingInfo {
   full_name: string; phone: string; zip_code: string;
   address: string; address_number: string; address_complement: string;
   neighborhood: string; city: string; state: string; notes: string;
+  cpf_cnpj: string;
 }
 
 interface Coupon {

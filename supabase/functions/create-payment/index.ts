@@ -16,7 +16,8 @@ Deno.serve(async (req) => {
       throw new Error("MERCADOPAGO_ACCESS_TOKEN is not configured");
     }
 
-    const isTestToken = MERCADOPAGO_ACCESS_TOKEN.startsWith("TEST-") || MERCADOPAGO_ACCESS_TOKEN.startsWith("APP_USR-");
+    // Only TEST- prefix means sandbox; APP_USR- is production
+    const isTestToken = MERCADOPAGO_ACCESS_TOKEN.startsWith("TEST-");
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
