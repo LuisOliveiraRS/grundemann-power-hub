@@ -90,6 +90,7 @@ const Index = () => {
       <FirstVisitPopup />
       <AbandonedCartReminder />
       <Footer />
+      <MobileContactBar />
     </div>
   );
 };
