@@ -31,16 +31,16 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    // Use getUser for reliable auth verification
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = userData.user.id;
 
     const { order_id } = await req.json();
     if (!order_id) {
@@ -74,12 +74,14 @@ Deno.serve(async (req) => {
 
     // Build MP preference items
     const items = (orderItems || []).map((item: any) => ({
-      title: item.product_name,
+      title: item.product_name.substring(0, 256),
       quantity: item.quantity,
       unit_price: Number(item.price_at_purchase),
       currency_id: "BRL",
     }));
 
+    // Determine the origin for back_urls
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/[^/]*$/, "") || "https://grundemann-power-hub.lovable.app";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 
     // Create Mercado Pago preference
@@ -93,7 +95,7 @@ Deno.serve(async (req) => {
         items,
         payer: {
           name: profile?.full_name || "",
-          email: profile?.email || "",
+          email: profile?.email || userData.user.email || "",
           phone: {
             number: profile?.phone || "",
           },
@@ -104,9 +106,9 @@ Deno.serve(async (req) => {
           },
         },
         back_urls: {
-          success: `${req.headers.get("origin") || "https://grundemann-power-hub.lovable.app"}/checkout?payment=success&order_id=${order_id}`,
-          failure: `${req.headers.get("origin") || "https://grundemann-power-hub.lovable.app"}/checkout?payment=failure&order_id=${order_id}`,
-          pending: `${req.headers.get("origin") || "https://grundemann-power-hub.lovable.app"}/checkout?payment=pending&order_id=${order_id}`,
+          success: `${origin}/checkout?payment=success&order_id=${order_id}`,
+          failure: `${origin}/checkout?payment=failure&order_id=${order_id}`,
+          pending: `${origin}/checkout?payment=pending&order_id=${order_id}`,
         },
         auto_return: "approved",
         external_reference: order_id,

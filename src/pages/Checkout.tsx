@@ -293,8 +293,8 @@ const Checkout = () => {
         throw new Error(error?.message || "Failed to create payment");
       }
 
-      // Use sandbox_init_point for testing, init_point for production
-      const paymentUrl = data.sandbox_init_point || data.init_point;
+      // Use init_point for production
+      const paymentUrl = data.init_point || data.sandbox_init_point;
       if (paymentUrl) {
         window.location.href = paymentUrl;
       } else {
