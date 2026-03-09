@@ -16,6 +16,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import AIAssistant from "@/components/AIAssistant";
 import FirstVisitPopup from "@/components/FirstVisitPopup";
 import AbandonedCartReminder from "@/components/AbandonedCartReminder";
+import MobileContactBar from "@/components/MobileContactBar";
 
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
