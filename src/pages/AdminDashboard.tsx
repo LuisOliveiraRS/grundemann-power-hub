@@ -627,6 +627,7 @@ const AdminDashboard = () => {
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
     { key: "articles", label: "Central Técnica", icon: BookOpen },
+    { key: "catalogs", label: "Catálogos Técnicos", icon: FileText },
     { key: "seo", label: "SEO", icon: Globe },
     { key: "shipping", label: "Frete", icon: Truck },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
