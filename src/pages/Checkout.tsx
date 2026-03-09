@@ -101,7 +101,7 @@ const Checkout = () => {
         zip_code: data.zip_code || "", address: data.address || "",
         address_number: data.address_number || "", address_complement: data.address_complement || "",
         neighborhood: data.neighborhood || "", city: data.city || "",
-        state: data.state || "", notes: "",
+        state: data.state || "", notes: "", cpf_cnpj: data.cpf_cnpj || "",
       });
     }
   };
