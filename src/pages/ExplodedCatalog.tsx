@@ -106,24 +106,40 @@ const ExplodedCatalog = () => {
                       setSelectedSection(section);
                       setHpFilter("");
                     }}
-                    className={`relative group text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                    className={`relative group text-left rounded-xl border-2 transition-all duration-200 overflow-hidden ${
                       isSelected
-                        ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
-                        : "border-border bg-card hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
+                        ? "border-primary shadow-lg shadow-primary/10"
+                        : "border-border hover:border-primary/40 hover:shadow-md"
                     }`}
                   >
-                    <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-xs font-black mb-2 transition-colors ${
-                      isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
-                    }`}>
-                      {section.label}
+                    {/* Background image */}
+                    <div className="relative h-20 overflow-hidden bg-muted">
+                      <img
+                        src={section.image}
+                        alt={section.name}
+                        className={`w-full h-full object-contain transition-all duration-300 ${
+                          isSelected ? "scale-110 opacity-100" : "opacity-70 group-hover:opacity-100 group-hover:scale-105"
+                        }`}
+                        loading="lazy"
+                      />
+                      <div className={`absolute inset-0 transition-opacity ${
+                        isSelected ? "bg-primary/10" : "bg-foreground/5 group-hover:bg-transparent"
+                      }`} />
+                      <div className={`absolute top-2 left-2 inline-flex items-center justify-center w-7 h-7 rounded-lg text-[10px] font-black transition-colors ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-foreground/80 text-background group-hover:bg-primary group-hover:text-primary-foreground"
+                      }`}>
+                        {section.label}
+                      </div>
                     </div>
-                    <p className={`font-heading font-bold text-sm leading-tight transition-colors ${
-                      isSelected ? "text-primary" : "text-foreground group-hover:text-primary"
-                    }`}>
-                      {section.name}
-                    </p>
+                    <div className="p-2.5">
+                      <p className={`font-heading font-bold text-xs leading-tight transition-colors ${
+                        isSelected ? "text-primary" : "text-foreground group-hover:text-primary"
+                      }`}>
+                        {section.name}
+                      </p>
+                    </div>
                     {isSelected && (
                       <motion.div
                         layoutId="section-indicator"
@@ -135,6 +151,30 @@ const ExplodedCatalog = () => {
                 );
               })}
             </div>
+
+            {/* Selected section large image */}
+            <AnimatePresence mode="wait">
+              {selectedSection && (
+                <motion.div
+                  key={`img-${engineType}-${selectedSection.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-4 rounded-xl border border-border overflow-hidden bg-background"
+                >
+                  <div className="p-2 bg-muted/50 border-b border-border">
+                    <p className="text-xs font-bold text-muted-foreground text-center">
+                      Vista Explodida — {selectedSection.name}
+                    </p>
+                  </div>
+                  <img
+                    src={selectedSection.image}
+                    alt={`Vista explodida - ${selectedSection.name}`}
+                    className="w-full object-contain max-h-[400px]"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Products panel */}
