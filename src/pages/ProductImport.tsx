@@ -8,10 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Upload, FileText, FileSpreadsheet, Loader2, Check, X, Trash2, Edit,
   ArrowLeft, AlertTriangle, CheckCircle, Download, Eye, ImageIcon,
-  FolderArchive, RefreshCw, Search, Package, Wand2, Sparkles
+  FolderArchive, RefreshCw, Search, Package, Wand2, Sparkles, Columns
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
