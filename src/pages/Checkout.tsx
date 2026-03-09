@@ -553,6 +553,24 @@ const Checkout = () => {
               </div>
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2"><Label>Nome Completo *</Label><Input value={shipping.full_name} onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })} /></div>
+                <div>
+                  <Label>CPF/CNPJ *</Label>
+                  <Input 
+                    value={shipping.cpf_cnpj} 
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/\D/g, "");
+                      if (v.length <= 11) {
+                        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                      } else {
+                        v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+                      }
+                      setShipping({ ...shipping, cpf_cnpj: v });
+                    }}
+                    placeholder="000.000.000-00"
+                    maxLength={18}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Obrigatório para pagamento via PIX e Boleto</p>
+                </div>
                 <div><Label>Telefone *</Label><Input value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
                 <div>
                   <Label>CEP *</Label>
