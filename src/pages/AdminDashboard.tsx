@@ -25,6 +25,7 @@ import ArticleManagement from "@/components/ArticleManagement";
 import SEOBatchGenerator from "@/components/SEOBatchGenerator";
 import ShippingManagement from "@/components/ShippingManagement";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import PriceResearch from "@/components/PriceResearch";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -74,7 +75,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo" | "shipping" | "analytics">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo" | "shipping" | "analytics" | "price-research">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -630,6 +631,7 @@ const AdminDashboard = () => {
     { key: "subscribers", label: "Leads & Cupons", icon: Mail },
     { key: "rewards", label: "Fidelidade", icon: Gift },
     { key: "analytics", label: "Analytics", icon: TrendingUp },
+    { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
@@ -1955,6 +1957,17 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Métricas de vendas, produtos mais vendidos e desempenho</p>
             </div>
             <AnalyticsDashboard />
+          </div>
+        )}
+
+        {/* PRICE RESEARCH TAB */}
+        {tab === "price-research" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-3xl font-heading font-bold">Pesquisa de Preços da Concorrência</h1>
+              <p className="text-muted-foreground mt-1">Busca real em Mercado Livre, Shopee e lojas via Firecrawl + análise por IA</p>
+            </div>
+            <PriceResearch />
           </div>
         )}
       </main>
