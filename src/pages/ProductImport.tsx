@@ -386,8 +386,8 @@ const ProductImport = () => {
   };
 
   const generateAIImage = async (product: ImportProduct): Promise<string | null> => {
-    // If we have PDF data, use the faithful extraction function
-    if (pdfBase64Data) {
+    // If we have PDF stored, use the faithful extraction function
+    if (pdfStoragePath) {
       return extractPdfImage(product);
     }
     try {
