@@ -634,6 +634,7 @@ const AdminDashboard = () => {
     { key: "analytics", label: "Analytics", icon: TrendingUp },
     { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
+    { key: "appearance", label: "Aparência", icon: Paintbrush },
   ] as const;
 
   // Filtered data
