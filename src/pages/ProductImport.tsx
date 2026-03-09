@@ -31,6 +31,7 @@ interface ImportProduct {
   image_file?: File;
   image_source?: "spreadsheet" | "zip" | "pdf" | "manual" | "ai" | "placeholder";
   image_description?: string;
+  page_number?: number;
   status: "ready" | "error" | "duplicate" | "editing";
   generatingImage?: boolean;
   errorMsg?: string;
