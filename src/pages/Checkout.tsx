@@ -650,6 +650,11 @@ const Checkout = () => {
                     toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
                     return;
                   }
+                  const cpfClean = (shipping.cpf_cnpj || "").replace(/\D/g, "");
+                  if (cpfClean.length < 11) {
+                    toast({ title: "CPF/CNPJ obrigatório", description: "Informe seu CPF ou CNPJ para prosseguir com o pagamento.", variant: "destructive" });
+                    return;
+                  }
                   if (!selectedShipping) {
                     toast({ title: "Selecione uma opção de frete", description: "Informe seu CEP para calcular o frete.", variant: "destructive" });
                     return;
