@@ -1972,6 +1972,19 @@ const AdminDashboard = () => {
             <PriceResearch />
           </div>
         )}
+
+        {/* APPEARANCE TAB */}
+        {tab === "appearance" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-2xl font-black text-foreground flex items-center gap-3">
+                <Paintbrush className="h-7 w-7 text-primary" /> Aparência
+              </h1>
+              <p className="text-muted-foreground mt-1">Configure a aparência da página inicial do site</p>
+            </div>
+            <AppearanceSettings />
+          </div>
+        )}
       </main>
     </div>
   );
