@@ -105,6 +105,7 @@ const ClientDashboard = () => {
   const [favProducts, setFavProducts] = useState<FavProduct[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
