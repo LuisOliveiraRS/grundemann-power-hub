@@ -72,6 +72,7 @@ const ProductDetail = () => {
       await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
     }
     toast({ title: `${quantity}x ${product.name} adicionado ao carrinho!` });
+    window.dispatchEvent(new CustomEvent("open-cart-drawer"));
   };
 
   const allImages = product ? [product.image_url, ...(product.additional_images || [])].filter(Boolean) as string[] : [];
