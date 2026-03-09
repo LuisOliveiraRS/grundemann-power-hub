@@ -25,6 +25,7 @@ interface ShippingInfo {
   full_name: string; phone: string; zip_code: string;
   address: string; address_number: string; address_complement: string;
   neighborhood: string; city: string; state: string; notes: string;
+  cpf_cnpj: string;
 }
 
 interface Coupon {
@@ -48,7 +49,7 @@ const Checkout = () => {
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingInfo>({
     full_name: "", phone: "", zip_code: "", address: "", address_number: "",
-    address_complement: "", neighborhood: "", city: "", state: "", notes: "",
+    address_complement: "", neighborhood: "", city: "", state: "", notes: "", cpf_cnpj: "",
   });
 
   // Coupon state
@@ -100,7 +101,7 @@ const Checkout = () => {
         zip_code: data.zip_code || "", address: data.address || "",
         address_number: data.address_number || "", address_complement: data.address_complement || "",
         neighborhood: data.neighborhood || "", city: data.city || "",
-        state: data.state || "", notes: "",
+        state: data.state || "", notes: "", cpf_cnpj: data.cpf_cnpj || "",
       });
     }
   };
@@ -223,6 +224,7 @@ const Checkout = () => {
       neighborhood: shipping.neighborhood || null,
       city: shipping.city || null,
       state: shipping.state || null,
+      cpf_cnpj: shipping.cpf_cnpj || null,
     }).eq("user_id", user!.id);
 
     const orderNotes = [
@@ -552,6 +554,24 @@ const Checkout = () => {
               </div>
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2"><Label>Nome Completo *</Label><Input value={shipping.full_name} onChange={(e) => setShipping({ ...shipping, full_name: e.target.value })} /></div>
+                <div>
+                  <Label>CPF/CNPJ *</Label>
+                  <Input 
+                    value={shipping.cpf_cnpj} 
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/\D/g, "");
+                      if (v.length <= 11) {
+                        v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                      } else {
+                        v = v.substring(0, 14).replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
+                      }
+                      setShipping({ ...shipping, cpf_cnpj: v });
+                    }}
+                    placeholder="000.000.000-00"
+                    maxLength={18}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Obrigatório para pagamento via PIX e Boleto</p>
+                </div>
                 <div><Label>Telefone *</Label><Input value={shipping.phone} onChange={(e) => setShipping({ ...shipping, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
                 <div>
                   <Label>CEP *</Label>
@@ -628,6 +648,11 @@ const Checkout = () => {
                 <Button onClick={() => {
                   if (!shipping.full_name || !shipping.address || !shipping.city || !shipping.state) {
                     toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+                    return;
+                  }
+                  const cpfClean = (shipping.cpf_cnpj || "").replace(/\D/g, "");
+                  if (cpfClean.length < 11) {
+                    toast({ title: "CPF/CNPJ obrigatório", description: "Informe seu CPF ou CNPJ para prosseguir com o pagamento.", variant: "destructive" });
                     return;
                   }
                   if (!selectedShipping) {
