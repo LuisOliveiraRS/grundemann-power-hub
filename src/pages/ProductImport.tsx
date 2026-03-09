@@ -338,11 +338,32 @@ const ProductImport = () => {
     ));
   };
 
+  const [pdfStoragePath, setPdfStoragePath] = useState<string | null>(null);
+
+  const uploadPdfToStorage = async (base64: string, fileName: string): Promise<string | null> => {
+    try {
+      const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const path = `catalogs/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+      const { error } = await supabase.storage.from("product-images").upload(path, bytes, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      if (error) {
+        console.error("PDF upload error:", error);
+        return null;
+      }
+      return path;
+    } catch (err) {
+      console.error("PDF upload error:", err);
+      return null;
+    }
+  };
+
   const extractPdfImage = async (product: ImportProduct): Promise<string | null> => {
     try {
       const { data, error } = await supabase.functions.invoke("extract-product-image", {
         body: {
-          pdfBase64: pdfBase64Data,
+          pdfStoragePath: pdfStoragePath,
           productName: product.name,
           imageDescription: product.image_description || product.description,
           pageNumber: product.page_number,
