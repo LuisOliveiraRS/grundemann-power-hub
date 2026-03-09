@@ -631,6 +631,7 @@ const AdminDashboard = () => {
     { key: "subscribers", label: "Leads & Cupons", icon: Mail },
     { key: "rewards", label: "Fidelidade", icon: Gift },
     { key: "analytics", label: "Analytics", icon: TrendingUp },
+    { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
   ] as const;
 
