@@ -883,7 +883,7 @@ const ProductImport = () => {
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
-                            {p.image_url && (pdfBase64Data || pdfStoragePath) && (
+                            {p.image_url && pdfStoragePath && (
                               <Button
                                 variant="ghost"
                                 size="icon"
