@@ -72,7 +72,7 @@ const HeroSection = () => {
               </span>
             </motion.div>
 
-            <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
+            <h1 className="font-heading text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
               <span className="text-background">PEÇAS E MOTORES</span>
               <br />
               <span className="text-background">ESTACIONÁRIOS COM</span>
