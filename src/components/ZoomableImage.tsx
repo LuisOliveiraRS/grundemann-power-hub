@@ -1,17 +1,21 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ZoomIn, ZoomOut, Maximize2, X } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, X, Eye, EyeOff } from "lucide-react";
+import type { PartOverlay } from "@/data/gasolineEngineParts";
 
 interface ZoomableImageProps {
   src: string;
   alt: string;
+  parts?: PartOverlay[];
 }
 
-const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
+const ZoomableImage = ({ src, alt, parts }: ZoomableImageProps) => {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
+  const [hoveredPart, setHoveredPart] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const clampPosition = useCallback((x: number, y: number, s: number) => {
@@ -24,9 +28,7 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
     };
   }, []);
 
-  const handleZoomIn = () => {
-    setScale((s) => Math.min(s + 0.5, 5));
-  };
+  const handleZoomIn = () => setScale((s) => Math.min(s + 0.5, 5));
 
   const handleZoomOut = () => {
     const newScale = Math.max(scale - 0.5, 1);
@@ -62,11 +64,8 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
     setPosition(newPos);
   }, [isDragging, dragStart, scale, clampPosition]);
 
-  const handlePointerUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+  const handlePointerUp = useCallback(() => setIsDragging(false), []);
 
-  // Touch pinch-to-zoom
   const lastTouchDistance = useRef<number | null>(null);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
@@ -75,7 +74,6 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-
       if (lastTouchDistance.current !== null) {
         const delta = (distance - lastTouchDistance.current) * 0.01;
         const newScale = Math.max(1, Math.min(5, scale + delta));
@@ -91,10 +89,41 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
   }, []);
 
   useEffect(() => {
-    if (!isFullscreen) {
-      handleReset();
-    }
+    if (!isFullscreen) handleReset();
   }, [isFullscreen]);
+
+  const partOverlays = parts && showLabels ? (
+    <>
+      {parts.map((part, i) => (
+        <div
+          key={i}
+          className="absolute z-10 pointer-events-auto cursor-pointer group/part"
+          style={{ left: `${part.x}%`, top: `${part.y}%`, transform: "translate(-50%, -50%)" }}
+          onMouseEnter={() => setHoveredPart(part.code)}
+          onMouseLeave={() => setHoveredPart(null)}
+        >
+          {/* Dot marker */}
+          <div className={`w-3 h-3 rounded-full border-2 border-background shadow-md transition-all duration-200 ${
+            hoveredPart === part.code
+              ? "bg-primary scale-150 shadow-primary/40"
+              : "bg-primary/70 hover:bg-primary hover:scale-125"
+          }`} />
+          {/* Tooltip */}
+          <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap transition-all duration-200 ${
+            hoveredPart === part.code
+              ? "opacity-100 translate-y-0 scale-100"
+              : "opacity-0 translate-y-1 scale-95 pointer-events-none"
+          }`}>
+            <div className="bg-foreground text-background rounded-lg px-3 py-1.5 shadow-lg text-center">
+              <p className="text-xs font-bold leading-tight">{part.name}</p>
+              <p className="text-[10px] opacity-80 font-mono">{part.code}</p>
+            </div>
+            <div className="w-2 h-2 bg-foreground rotate-45 mx-auto -mt-1" />
+          </div>
+        </div>
+      ))}
+    </>
+  ) : null;
 
   const imageContent = (
     <div
@@ -108,22 +137,40 @@ const ZoomableImage = ({ src, alt }: ZoomableImageProps) => {
       onTouchEnd={handleTouchEnd}
       style={{ cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in", touchAction: "none" }}
     >
-      <img
-        src={src}
-        alt={alt}
-        className="w-full object-contain pointer-events-none"
+      <div
+        className="relative w-full"
         style={{
           transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
           transition: isDragging ? "none" : "transform 0.2s ease-out",
-          maxHeight: isFullscreen ? "calc(100vh - 120px)" : "400px",
         }}
-        draggable={false}
-      />
+      >
+        <img
+          src={src}
+          alt={alt}
+          className="w-full object-contain pointer-events-none"
+          style={{ maxHeight: isFullscreen ? "calc(100vh - 120px)" : "400px" }}
+          draggable={false}
+        />
+        {partOverlays}
+      </div>
     </div>
   );
 
   const controls = (
     <div className="flex items-center justify-center gap-1">
+      {parts && parts.length > 0 && (
+        <button
+          onClick={() => setShowLabels(!showLabels)}
+          className={`p-1.5 rounded-lg transition-colors mr-1 ${
+            showLabels
+              ? "bg-primary/15 text-primary hover:bg-primary/25"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+          title={showLabels ? "Ocultar peças" : "Mostrar peças"}
+        >
+          {showLabels ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+        </button>
+      )}
       <button
         onClick={handleZoomOut}
         disabled={scale <= 1}
