@@ -245,10 +245,11 @@ const ProductImport = () => {
         pdfBase64 = await parsePDFAsBase64(file);
         setPdfBase64Data(pdfBase64);
         
-        // Upload PDF to storage for image extraction later
         setProgressMessage("Enviando PDF para armazenamento...");
         const storagePath = await uploadPdfToStorage(pdfBase64, file.name);
         setPdfStoragePath(storagePath);
+        // Free memory - we don't need the full base64 in state anymore
+        setPdfBase64Data(null);
       } else {
         setPdfBase64Data(null);
         setPdfStoragePath(null);
