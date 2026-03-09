@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen } from "lucide-react";
+import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import AIAssistant from "@/components/AIAssistant";
 import PartIdentifier from "@/components/PartIdentifier";
+import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
+import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
 
 interface MechanicProfile {
   id: string;
