@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { BookOpen, Wrench } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
@@ -47,6 +48,19 @@ const TechnicalCenterTeaser = () => (
 );
 
 const Index = () => {
+  const [heroMode, setHeroMode] = useState<string>("product_showcase");
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "hero_mode")
+      .single()
+      .then(({ data }) => {
+        if (data) setHeroMode(data.value);
+      });
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
@@ -72,13 +86,21 @@ const Index = () => {
       <TopBar />
       <Header />
       <CategoryNav />
-      <HeroSection />
+      {heroMode === "rotating_banner" ? (
+        <Suspense fallback={<SectionLoader />}>
+          <HeroBanner />
+        </Suspense>
+      ) : (
+        <HeroSection />
+      )}
       <BenefitsBar />
       <PartsFinder />
       <TabbedProducts />
-      <Suspense fallback={<SectionLoader />}>
-        <HeroBanner />
-      </Suspense>
+      {heroMode !== "rotating_banner" && (
+        <Suspense fallback={<SectionLoader />}>
+          <HeroBanner />
+        </Suspense>
+      )}
       <SocialProof />
       <TechnicalCenterTeaser />
       <CategoriesSection />

@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift, BookOpen, Globe
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift, BookOpen, Globe, Paintbrush
 } from "lucide-react";
 import { BarChart3 as BarChart3Icon, Boxes } from "lucide-react";
 import MarketingCenter from "@/components/MarketingCenter";
@@ -25,6 +25,7 @@ import ArticleManagement from "@/components/ArticleManagement";
 import SEOBatchGenerator from "@/components/SEOBatchGenerator";
 import ShippingManagement from "@/components/ShippingManagement";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import AppearanceSettings from "@/components/AppearanceSettings";
 import PriceResearch from "@/components/PriceResearch";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -75,7 +76,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo" | "shipping" | "analytics" | "price-research">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo" | "shipping" | "analytics" | "price-research" | "appearance">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -633,6 +634,7 @@ const AdminDashboard = () => {
     { key: "analytics", label: "Analytics", icon: TrendingUp },
     { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
+    { key: "appearance", label: "Aparência", icon: Paintbrush },
   ] as const;
 
   // Filtered data
@@ -1968,6 +1970,19 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Busca real em Mercado Livre, Shopee e lojas via Firecrawl + análise por IA</p>
             </div>
             <PriceResearch />
+          </div>
+        )}
+
+        {/* APPEARANCE TAB */}
+        {tab === "appearance" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-2xl font-black text-foreground flex items-center gap-3">
+                <Paintbrush className="h-7 w-7 text-primary" /> Aparência
+              </h1>
+              <p className="text-muted-foreground mt-1">Configure a aparência da página inicial do site</p>
+            </div>
+            <AppearanceSettings />
           </div>
         )}
       </main>
