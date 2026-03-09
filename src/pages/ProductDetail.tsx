@@ -130,10 +130,10 @@ const ProductDetail = () => {
             { label: product.name },
           ]} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {/* Image gallery */}
             <div>
-              <div className="bg-card rounded-xl border border-border p-8 flex items-center justify-center aspect-square mb-3 relative">
+              <div className="bg-card rounded-xl border border-border p-4 md:p-8 flex items-center justify-center aspect-square mb-3 relative">
                 {showVideo && product.video_url ? (
                   (() => {
                     const embedUrl = getYouTubeEmbedUrl(product.video_url);
@@ -193,7 +193,7 @@ const ProductDetail = () => {
                   <Badge variant="destructive">{discount}% OFF</Badge>
                 </div>
               )}
-              <p className="font-heading text-4xl font-extrabold text-price mb-1">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
+              <p className="font-heading text-3xl md:text-4xl font-extrabold text-price mb-1">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
               <p className="text-sm text-muted-foreground mb-6">ou 3x de R$ {(product.price / 3).toFixed(2).replace(".",",")} sem juros</p>
 
               <div className="mb-6">

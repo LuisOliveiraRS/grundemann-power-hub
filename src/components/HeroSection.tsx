@@ -42,7 +42,7 @@ const HeroSection = () => {
   const current = products[currentIndex];
 
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[520px] flex items-center">
+    <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[400px] md:min-h-[520px] flex items-center">
       {/* Decorative grid pattern */}
       <div className="absolute inset-0 opacity-[0.04]" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -51,8 +51,8 @@ const HeroSection = () => {
       {/* Green accent bar on top */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
 
-      <div className="container relative z-10 py-16 md:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div className="container relative z-10 py-10 md:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left: Text content */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -72,7 +72,7 @@ const HeroSection = () => {
               </span>
             </motion.div>
 
-            <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
+            <h1 className="font-heading text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
               <span className="text-background">PEÇAS E MOTORES</span>
               <br />
               <span className="text-background">ESTACIONÁRIOS COM</span>
@@ -106,7 +106,7 @@ const HeroSection = () => {
             </div>
 
             {/* Quick trust signals */}
-            <div className="mt-8 flex gap-6 text-background/50 text-xs font-medium">
+            <div className="mt-6 md:mt-8 flex flex-wrap gap-3 md:gap-6 text-background/50 text-xs font-medium">
               <span>✓ Envio para todo Brasil</span>
               <span>✓ Garantia de qualidade</span>
               <span>✓ Suporte técnico</span>
