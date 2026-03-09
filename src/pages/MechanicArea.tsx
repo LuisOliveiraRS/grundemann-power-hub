@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen } from "lucide-react";
+import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import AIAssistant from "@/components/AIAssistant";
 import PartIdentifier from "@/components/PartIdentifier";
+import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
+import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
 
 interface MechanicProfile {
   id: string;
@@ -49,7 +51,7 @@ const MechanicArea = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos">("perfil");
+  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos" | "vistas" | "artigos">("perfil");
 
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
@@ -348,14 +350,16 @@ const MechanicArea = () => {
               <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
                 {[
                   { key: "perfil" as const, label: "Meu Perfil", icon: User },
-                  { key: "catalogos" as const, label: "Catálogos Técnicos", icon: BookOpen },
+                  { key: "vistas" as const, label: "Vistas Explodidas", icon: Search },
+                  { key: "artigos" as const, label: "Artigos Técnicos", icon: BookOpen },
+                  { key: "catalogos" as const, label: "Catálogos PDF", icon: FileText },
                   { key: "compras" as const, label: "Histórico de Compras", icon: ShoppingCart },
                   { key: "identificador" as const, label: "Identificar Peça", icon: Wrench },
                 ].map(t => (
                   <button
                     key={t.key}
                     onClick={() => setActiveTab(t.key)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors whitespace-nowrap ${
                       activeTab === t.key
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-muted"
@@ -419,6 +423,10 @@ const MechanicArea = () => {
               )}
 
               {activeTab === "identificador" && <PartIdentifier />}
+
+              {activeTab === "vistas" && <ExplodedCatalogContent />}
+
+              {activeTab === "artigos" && <TechnicalArticlesContent />}
 
               {activeTab === "catalogos" && (
                 <Card>
