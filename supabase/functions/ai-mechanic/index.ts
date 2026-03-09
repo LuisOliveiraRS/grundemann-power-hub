@@ -135,28 +135,29 @@ ${productContext}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages.slice(-12),
+          ...messages.slice(-8),
         ],
       }),
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("AI gateway error:", response.status, errorBody);
+      
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Muitas perguntas em pouco tempo. Aguarde um momento." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Limite de uso atingido." }), {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Acesse Settings → Workspace → Usage no Lovable para recarregar.", details: errorBody }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      throw new Error("AI gateway error");
+      throw new Error(`AI gateway error: ${response.status} - ${errorBody}`);
     }
 
     const aiData = await response.json();
