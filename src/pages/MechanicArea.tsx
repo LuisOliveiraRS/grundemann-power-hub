@@ -345,9 +345,10 @@ const MechanicArea = () => {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-2 border-b border-border pb-2">
+              <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
                 {[
                   { key: "perfil" as const, label: "Meu Perfil", icon: User },
+                  { key: "catalogos" as const, label: "Catálogos Técnicos", icon: BookOpen },
                   { key: "compras" as const, label: "Histórico de Compras", icon: ShoppingCart },
                   { key: "identificador" as const, label: "Identificar Peça", icon: Wrench },
                 ].map(t => (
