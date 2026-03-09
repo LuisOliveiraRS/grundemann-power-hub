@@ -337,7 +337,31 @@ const ProductImport = () => {
     ));
   };
 
+  const extractPdfImage = async (product: ImportProduct): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-product-image", {
+        body: {
+          pdfBase64: pdfBase64Data,
+          productName: product.name,
+          imageDescription: product.image_description || product.description,
+          pageNumber: product.page_number,
+          sku: product.sku,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.imageUrl || null;
+    } catch (err: any) {
+      console.error("PDF image extraction error:", err);
+      return null;
+    }
+  };
+
   const generateAIImage = async (product: ImportProduct): Promise<string | null> => {
+    // If we have PDF data, use the faithful extraction function
+    if (pdfBase64Data) {
+      return extractPdfImage(product);
+    }
     try {
       const { data, error } = await supabase.functions.invoke("generate-product-image", {
         body: {
