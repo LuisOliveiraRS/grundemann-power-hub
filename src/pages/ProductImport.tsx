@@ -944,12 +944,20 @@ const ProductImport = () => {
                   <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-muted-foreground text-center uppercase tracking-wider">Página do Catálogo</h4>
                     <div className="border border-border rounded-xl overflow-hidden bg-muted/30 flex items-center justify-center min-h-[300px]">
-                      {pdfBase64Data ? (
-                        <iframe
-                          src={`data:application/pdf;base64,${pdfBase64Data}${compareProduct?.page_number ? `#page=${compareProduct.page_number}` : ""}`}
-                          className="w-full h-[400px] rounded-xl"
-                          title="Página do catálogo"
-                        />
+                      {pdfStoragePath ? (
+                        <div className="flex flex-col items-center gap-3 p-6 text-center">
+                          <FileText className="h-16 w-16 text-primary" />
+                          <p className="text-sm font-medium">Catálogo PDF</p>
+                          <p className="text-xs text-muted-foreground">{fileName}</p>
+                          {compareProduct?.page_number && (
+                            <Badge variant="secondary">Página {compareProduct.page_number}</Badge>
+                          )}
+                          {compareProduct?.image_description && (
+                            <p className="text-xs text-muted-foreground mt-2 italic">
+                              "{compareProduct.image_description}"
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <p className="text-muted-foreground text-sm">PDF não disponível</p>
                       )}
