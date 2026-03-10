@@ -1859,7 +1859,12 @@ const AdminDashboard = () => {
         {tab === "quotes" && <QuoteManagement />}
 
         {/* MECHANICS TAB */}
-        {tab === "mechanics" && <MechanicManagement />}
+        {tab === "mechanics" && (
+          <div className="space-y-8">
+            <MechanicManagement />
+            <MechanicVideoManagement />
+          </div>
+        )}
 
         {/* ROLES TAB */}
         {tab === "roles" && <UserRoleManagement />}
