@@ -329,7 +329,7 @@ const AdminDashboard = () => {
       name: p.name, description: p.description || "", sku: p.sku || "",
       price: String(p.price), original_price: p.original_price ? String(p.original_price) : "",
       stock_quantity: String(p.stock_quantity), category_id: p.category_id || "",
-      subcategory_id: (p as any).subcategory_id || "", is_featured: p.is_featured,
+      subcategory_id: (p as any).subcategory_id || "", is_featured: p.is_featured, free_shipping: (p as any).free_shipping || false,
       is_active: p.is_active, image_url: p.image_url || "",
       additional_images: (p.additional_images || []) as string[],
       video_url: (p.video_url || "") as string,
