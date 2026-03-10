@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search } from "lucide-react";
+import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -51,7 +51,8 @@ const MechanicArea = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos" | "vistas" | "artigos">("perfil");
+  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos" | "vistas" | "artigos" | "videos">("perfil");
+  const [mechVideos, setMechVideos] = useState<any[]>([]);
 
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
@@ -101,7 +102,7 @@ const MechanicArea = () => {
       setCnpj(mechRes.data.cnpj || "");
       setSpecialty(mechRes.data.specialty || "");
 
-      const [orderRes, catalogRes] = await Promise.all([
+      const [orderRes, catalogRes, videoRes] = await Promise.all([
         supabase
           .from("orders")
           .select("id, total_amount, status, created_at")
@@ -114,9 +115,16 @@ const MechanicArea = () => {
           .eq("is_active", true)
           .order("category")
           .order("title"),
+        supabase
+          .from("mechanic_videos")
+          .select("*")
+          .eq("is_active", true)
+          .order("category")
+          .order("created_at", { ascending: false }),
       ]);
       setOrders(orderRes.data || []);
       setCatalogs(catalogRes.data || []);
+      setMechVideos(videoRes.data || []);
     }
     setLoading(false);
   };
@@ -350,6 +358,7 @@ const MechanicArea = () => {
               <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
                 {[
                   { key: "perfil" as const, label: "Meu Perfil", icon: User },
+                  { key: "videos" as const, label: "Vídeos", icon: Video },
                   { key: "vistas" as const, label: "Vistas Explodidas", icon: Search },
                   { key: "artigos" as const, label: "Artigos Técnicos", icon: BookOpen },
                   { key: "catalogos" as const, label: "Catálogos PDF", icon: FileText },
@@ -427,6 +436,59 @@ const MechanicArea = () => {
               {activeTab === "vistas" && <ExplodedCatalogContent />}
 
               {activeTab === "artigos" && <TechnicalArticlesContent />}
+
+              {activeTab === "videos" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Video className="h-5 w-5 text-primary" /> Vídeos Técnicos
+                    </CardTitle>
+                    <CardDescription>Vídeos exclusivos para mecânicos cadastrados</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {mechVideos.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">Nenhum vídeo disponível no momento.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {(() => {
+                          const grouped = mechVideos.reduce((acc: Record<string, any[]>, v: any) => {
+                            if (!acc[v.category]) acc[v.category] = [];
+                            acc[v.category].push(v);
+                            return acc;
+                          }, {});
+                          return Object.entries(grouped).map(([category, items]) => (
+                            <div key={category}>
+                              <h3 className="font-heading font-bold text-sm text-foreground mb-3">{category}</h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {(items as any[]).map((video: any) => (
+                                  <div key={video.id} className="rounded-xl border border-border overflow-hidden bg-card">
+                                    <div className="aspect-video">
+                                      {video.video_url.includes("youtube.com") || video.video_url.includes("youtu.be") ? (
+                                        <iframe
+                                          src={video.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
+                                          className="w-full h-full"
+                                          allowFullScreen
+                                          title={video.title}
+                                        />
+                                      ) : (
+                                        <video src={video.video_url} controls className="w-full h-full object-cover" />
+                                      )}
+                                    </div>
+                                    <div className="p-3">
+                                      <p className="font-heading font-bold text-sm">{video.title}</p>
+                                      {video.description && <p className="text-xs text-muted-foreground mt-1">{video.description}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {activeTab === "catalogos" && (
                 <Card>

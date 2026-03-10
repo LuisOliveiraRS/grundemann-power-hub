@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket, QrCode, Banknote, Loader2, AlertCircle, Truck } from "lucide-react";
-import { calculateShipping, formatCep, type ShippingOption } from "@/lib/shippingCalculator";
+import { ShoppingCart, MapPin, CreditCard, CheckCircle, Trash2, Minus, Plus, Tag, X, Ticket, QrCode, Banknote, Loader2, AlertCircle, Truck, Store } from "lucide-react";
+import { calculateShipping, formatCep, STORE_PICKUP_OPTION, type ShippingOption } from "@/lib/shippingCalculator";
 
 interface CartItem {
   id: string;
@@ -498,16 +498,39 @@ const Checkout = () => {
                                   : "border-border hover:border-primary/40"
                               }`}
                             >
-                              <div>
-                                <p className="text-sm font-semibold">{opt.label}</p>
-                                <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                              <div className="flex items-center gap-3">
+                                {opt.service === "RETIRADA" ? <Store className="h-5 w-5 text-primary" /> : <Truck className="h-5 w-5 text-muted-foreground" />}
+                                <div>
+                                  <p className="text-sm font-semibold">{opt.label}</p>
+                                  <p className="text-xs text-muted-foreground">{opt.service === "RETIRADA" ? "Retire na loja sem custo" : `${opt.days} dias úteis`}</p>
+                                </div>
                               </div>
                               <p className="font-bold text-sm text-price">
-                                {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                                {opt.price === 0 ? <span className="text-primary">Grátis</span> : isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
                               </p>
                             </button>
                           ))}
                         </div>
+                      )}
+                      {/* Always show store pickup even without CEP */}
+                      {!shippingOptions && (
+                        <button
+                          onClick={() => setSelectedShipping(STORE_PICKUP_OPTION)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                            selectedShipping?.service === "RETIRADA"
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Store className="h-5 w-5 text-primary" />
+                            <div>
+                              <p className="text-sm font-semibold">Retirada na Loja — São Leopoldo/RS</p>
+                              <p className="text-xs text-muted-foreground">Retire na loja sem custo</p>
+                            </div>
+                          </div>
+                          <p className="font-bold text-sm text-primary">Grátis</p>
+                        </button>
                       )}
                     </div>
 
@@ -628,17 +651,38 @@ const Checkout = () => {
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <Truck className="h-5 w-5 text-muted-foreground" />
+                            {opt.service === "RETIRADA" ? <Store className="h-5 w-5 text-primary" /> : <Truck className="h-5 w-5 text-muted-foreground" />}
                             <div>
                               <p className="text-sm font-semibold">{opt.label}</p>
-                              <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                              <p className="text-xs text-muted-foreground">{opt.service === "RETIRADA" ? "Retire na loja sem custo" : `${opt.days} dias úteis`}</p>
                             </div>
                           </div>
                           <p className="font-bold text-sm text-price">
-                            {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                            {opt.price === 0 ? <span className="text-primary">Grátis</span> : isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
                           </p>
                         </button>
                       ))}
+                      {/* Always show store pickup */}
+                      {!shippingOptions?.find(o => o.service === "RETIRADA") && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedShipping(STORE_PICKUP_OPTION)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                            selectedShipping?.service === "RETIRADA"
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Store className="h-5 w-5 text-primary" />
+                            <div>
+                              <p className="text-sm font-semibold">Retirada na Loja — São Leopoldo/RS</p>
+                              <p className="text-xs text-muted-foreground">Retire na loja sem custo</p>
+                            </div>
+                          </div>
+                          <p className="font-bold text-sm text-primary">Grátis</p>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -646,8 +690,13 @@ const Checkout = () => {
               <div className="p-6 border-t border-border flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
                 <Button onClick={() => {
-                  if (!shipping.full_name || !shipping.address || !shipping.city || !shipping.state) {
-                    toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+                  const isPickup = selectedShipping?.service === "RETIRADA";
+                  if (!shipping.full_name) {
+                    toast({ title: "Preencha o nome completo", variant: "destructive" });
+                    return;
+                  }
+                  if (!isPickup && (!shipping.address || !shipping.city || !shipping.state)) {
+                    toast({ title: "Preencha os campos de endereço obrigatórios", variant: "destructive" });
                     return;
                   }
                   const cpfClean = (shipping.cpf_cnpj || "").replace(/\D/g, "");
@@ -656,7 +705,7 @@ const Checkout = () => {
                     return;
                   }
                   if (!selectedShipping) {
-                    toast({ title: "Selecione uma opção de frete", description: "Informe seu CEP para calcular o frete.", variant: "destructive" });
+                    toast({ title: "Selecione uma opção de frete ou retirada", variant: "destructive" });
                     return;
                   }
                   setStep(3);

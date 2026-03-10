@@ -9,7 +9,7 @@ async function verifyWebhookSignature(req: Request, body: string): Promise<boole
   const secret = Deno.env.get("MERCADOPAGO_WEBHOOK_SECRET");
   if (!secret) {
     console.warn("MERCADOPAGO_WEBHOOK_SECRET not set — skipping signature verification");
-    return true; // Allow if secret not configured yet
+    return true;
   }
 
   const xSignature = req.headers.get("x-signature");
@@ -20,7 +20,6 @@ async function verifyWebhookSignature(req: Request, body: string): Promise<boole
     return false;
   }
 
-  // Parse x-signature header: "ts=...,v1=..."
   const parts: Record<string, string> = {};
   for (const part of xSignature.split(",")) {
     const [key, value] = part.split("=", 2);
@@ -34,14 +33,10 @@ async function verifyWebhookSignature(req: Request, body: string): Promise<boole
     return false;
   }
 
-  // Extract data.id from query params (MP sends it as query param for webhooks)
   const url = new URL(req.url);
   const dataId = url.searchParams.get("data.id") || "";
-
-  // Build the manifest string
   const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
 
-  // Compute HMAC SHA-256
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -75,7 +70,6 @@ Deno.serve(async (req) => {
 
     const bodyText = await req.text();
     
-    // Verify webhook signature
     const isValid = await verifyWebhookSignature(req, bodyText);
     if (!isValid) {
       console.error("Invalid webhook signature - rejecting request");
@@ -88,7 +82,6 @@ Deno.serve(async (req) => {
     const body = JSON.parse(bodyText);
     console.log("Webhook received:", JSON.stringify(body));
 
-    // MP sends different notification types
     if (body.type === "payment" || body.action === "payment.updated" || body.action === "payment.created") {
       const paymentId = body.data?.id;
       if (!paymentId) {
@@ -98,7 +91,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Fetch payment details from MP
       const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
         headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
       });
@@ -130,7 +122,6 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
-      // Map MP status to our status
       const statusMap: Record<string, string> = {
         approved: "approved",
         pending: "pending",
@@ -154,7 +145,7 @@ Deno.serve(async (req) => {
         paid_at: payment.status === "approved" ? new Date().toISOString() : null,
       }).eq("order_id", orderId);
 
-      // If approved, update order status to confirmed
+      // If approved, update order + stock + notifications + commission
       if (payment.status === "approved") {
         await supabase.from("orders").update({
           status: "confirmed",
@@ -166,24 +157,100 @@ Deno.serve(async (req) => {
           notes: `Pagamento aprovado via ${payment.payment_type_id || "Mercado Pago"} - ID: ${payment.id}`,
         });
 
-        // Get user_id from order to send notification
+        // Get order details
         const { data: order } = await supabase
           .from("orders")
-          .select("user_id")
+          .select("user_id, total_amount, seller_id")
           .eq("id", orderId)
           .single();
 
         if (order) {
+          // Notify customer
           await supabase.from("notifications").insert({
             user_id: order.user_id,
             title: "Pagamento confirmado! ✅",
-            message: `Seu pagamento do pedido #${orderId.substring(0, 8)} foi aprovado!`,
+            message: `Seu pagamento do pedido #${orderId.substring(0, 8)} foi aprovado! Seu pedido está sendo preparado.`,
             type: "order",
             link: "/minha-conta",
           });
+
+          // Notify ALL admins
+          const { data: adminRoles } = await supabase
+            .from("user_roles")
+            .select("user_id")
+            .eq("role", "admin");
+
+          if (adminRoles) {
+            for (const admin of adminRoles) {
+              await supabase.from("notifications").insert({
+                user_id: admin.user_id,
+                title: "💰 Novo pagamento confirmado!",
+                message: `Pedido #${orderId.substring(0, 8)} — R$ ${Number(order.total_amount).toFixed(2).replace(".", ",")} pago via ${payment.payment_type_id || "MP"}.`,
+                type: "order",
+                link: "/admin",
+              });
+            }
+          }
+
+          // Auto commission: find active seller (default seller gets all orders)
+          const { data: sellers } = await supabase
+            .from("sellers")
+            .select("id, user_id, commission_rate")
+            .eq("is_active", true)
+            .limit(1);
+
+          if (sellers && sellers.length > 0) {
+            const seller = sellers[0];
+            const commissionAmount = Number(order.total_amount) * (Number(seller.commission_rate) / 100);
+
+            // Check if commission already exists for this order
+            const { data: existingComm } = await supabase
+              .from("sale_commissions")
+              .select("id")
+              .eq("order_id", orderId)
+              .eq("seller_id", seller.id)
+              .maybeSingle();
+
+            if (!existingComm) {
+              await supabase.from("sale_commissions").insert({
+                order_id: orderId,
+                seller_id: seller.id,
+                order_total: order.total_amount,
+                commission_rate: seller.commission_rate,
+                commission_amount: Math.round(commissionAmount * 100) / 100,
+                status: "pending",
+              });
+
+              // Update seller totals
+              await supabase.rpc("update_seller_totals_not_exists" as any, {}).catch(() => {
+                // If RPC doesn't exist, update manually
+              });
+              const { data: currentSeller } = await supabase
+                .from("sellers")
+                .select("total_sales, total_commission")
+                .eq("id", seller.id)
+                .single();
+
+              if (currentSeller) {
+                await supabase.from("sellers").update({
+                  total_sales: Number(currentSeller.total_sales) + Number(order.total_amount),
+                  total_commission: Number(currentSeller.total_commission) + commissionAmount,
+                }).eq("id", seller.id);
+              }
+
+              // Notify seller
+              await supabase.from("notifications").insert({
+                user_id: seller.user_id,
+                title: "🎉 Nova comissão!",
+                message: `Comissão de R$ ${commissionAmount.toFixed(2).replace(".", ",")} do pedido #${orderId.substring(0, 8)}.`,
+                type: "order",
+                link: "/vendedor",
+              });
+            }
+          }
         }
 
-        // Decrease stock for each order item
+        // Decrease stock
         const { data: orderItemsList } = await supabase
           .from("order_items")
           .select("product_id, quantity")
@@ -209,7 +276,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // If rejected, update order status to cancelled
+      // If rejected/cancelled
       if (payment.status === "rejected" || payment.status === "cancelled") {
         await supabase.from("orders").update({
           status: "cancelled",
@@ -245,7 +312,6 @@ Deno.serve(async (req) => {
     });
   } catch (error: unknown) {
     console.error("Webhook error:", error);
-    // Always return 200 to MP to avoid retries on our errors
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

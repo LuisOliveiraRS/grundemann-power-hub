@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Wrench, Search, CheckCircle2, XCircle, Trash2, Eye, Loader2 } from "lucide-react";
+import { Wrench, Search, CheckCircle2, XCircle, Trash2, Eye, Loader2, Plus, UserPlus } from "lucide-react";
 
 interface MechanicRow {
   id: string;
@@ -24,6 +24,9 @@ const MechanicManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending">("all");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState({ email: "", full_name: "", phone: "", company_name: "", cnpj: "", specialty: "", discount_rate: "5" });
+  const [addingMechanic, setAddingMechanic] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -64,6 +67,55 @@ const MechanicManagement = () => {
     load();
   };
 
+  const addMechanicManual = async () => {
+    if (!addForm.email.trim()) { toast({ title: "Informe o email do usuário", variant: "destructive" }); return; }
+    setAddingMechanic(true);
+
+    // Find user by email in profiles
+    const { data: profile } = await supabase.from("profiles").select("user_id").eq("email", addForm.email.trim()).maybeSingle();
+    if (!profile) {
+      toast({ title: "Usuário não encontrado", description: "Nenhum usuário cadastrado com esse email.", variant: "destructive" });
+      setAddingMechanic(false);
+      return;
+    }
+
+    // Check if already a mechanic
+    const { data: existing } = await supabase.from("mechanics").select("id").eq("user_id", profile.user_id).maybeSingle();
+    if (existing) {
+      toast({ title: "Já cadastrado", description: "Este usuário já é mecânico.", variant: "destructive" });
+      setAddingMechanic(false);
+      return;
+    }
+
+    // Update profile info if provided
+    const profileUpdate: any = {};
+    if (addForm.full_name) profileUpdate.full_name = addForm.full_name;
+    if (addForm.phone) profileUpdate.phone = addForm.phone;
+    if (Object.keys(profileUpdate).length > 0) {
+      await supabase.from("profiles").update(profileUpdate).eq("user_id", profile.user_id);
+    }
+
+    // Create mechanic record (admin can set approved + discount)
+    const { error } = await supabase.from("mechanics").insert({
+      user_id: profile.user_id,
+      company_name: addForm.company_name || null,
+      cnpj: addForm.cnpj || null,
+      specialty: addForm.specialty || null,
+      is_approved: true,
+      discount_rate: Number(addForm.discount_rate) || 5,
+    });
+
+    if (error) {
+      toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Mecânico cadastrado e aprovado!" });
+      setShowAddForm(false);
+      setAddForm({ email: "", full_name: "", phone: "", company_name: "", cnpj: "", specialty: "", discount_rate: "5" });
+      load();
+    }
+    setAddingMechanic(false);
+  };
+
   const filtered = mechanics.filter(m => {
     if (statusFilter === "approved" && !m.is_approved) return false;
     if (statusFilter === "pending" && m.is_approved) return false;
@@ -84,12 +136,37 @@ const MechanicManagement = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
-          <Wrench className="h-8 w-8 text-primary" /> Gestão de Mecânicos
-        </h1>
-        <p className="text-muted-foreground mt-1">Aprove cadastros, defina descontos e gerencie mecânicos parceiros</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
+            <Wrench className="h-8 w-8 text-primary" /> Gestão de Mecânicos
+          </h1>
+          <p className="text-muted-foreground mt-1">Aprove cadastros, defina descontos e gerencie mecânicos parceiros</p>
+        </div>
+        <Button onClick={() => setShowAddForm(!showAddForm)}>
+          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Mecânico
+        </Button>
       </div>
+
+      {/* Manual Add Form */}
+      {showAddForm && (
+        <div className="bg-card rounded-xl border border-border p-5 mb-6">
+          <h3 className="font-heading font-bold text-sm mb-4">Cadastro Manual de Mecânico</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div><label className="text-xs text-muted-foreground">Email do Usuário *</label><Input value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} placeholder="usuario@email.com" /></div>
+            <div><label className="text-xs text-muted-foreground">Nome Completo</label><Input value={addForm.full_name} onChange={e => setAddForm({ ...addForm, full_name: e.target.value })} placeholder="Nome completo" /></div>
+            <div><label className="text-xs text-muted-foreground">Telefone</label><Input value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
+            <div><label className="text-xs text-muted-foreground">Oficina/Empresa</label><Input value={addForm.company_name} onChange={e => setAddForm({ ...addForm, company_name: e.target.value })} placeholder="Nome da oficina" /></div>
+            <div><label className="text-xs text-muted-foreground">CNPJ</label><Input value={addForm.cnpj} onChange={e => setAddForm({ ...addForm, cnpj: e.target.value })} placeholder="00.000.000/0000-00" /></div>
+            <div><label className="text-xs text-muted-foreground">Especialidade</label><Input value={addForm.specialty} onChange={e => setAddForm({ ...addForm, specialty: e.target.value })} placeholder="Ex: Motores diesel" /></div>
+            <div><label className="text-xs text-muted-foreground">Desconto %</label><Input type="number" min="0" max="50" value={addForm.discount_rate} onChange={e => setAddForm({ ...addForm, discount_rate: e.target.value })} /></div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button onClick={addMechanicManual} disabled={addingMechanic}>{addingMechanic ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}Cadastrar e Aprovar</Button>
+            <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancelar</Button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

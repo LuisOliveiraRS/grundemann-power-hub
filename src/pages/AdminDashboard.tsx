@@ -28,6 +28,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import AppearanceSettings from "@/components/AppearanceSettings";
 import PriceResearch from "@/components/PriceResearch";
 import CatalogManagement from "@/components/CatalogManagement";
+import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -35,7 +36,7 @@ import OrderPrintSheet from "@/components/OrderPrintSheet";
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
   price: number; original_price: number | null; stock_quantity: number;
-  is_active: boolean; is_featured: boolean; category_id: string | null;
+  is_active: boolean; is_featured: boolean; free_shipping?: boolean; category_id: string | null;
   subcategory_id?: string | null; image_url: string | null; created_at: string;
   additional_images?: string[] | null; video_url?: string | null;
 }
@@ -123,7 +124,7 @@ const AdminDashboard = () => {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
-    category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "",
+    category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "",
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
     specifications: "" as string, documents: [] as string[]
   });
@@ -222,6 +223,7 @@ const AdminDashboard = () => {
       category_id: productForm.category_id || null,
       subcategory_id: productForm.subcategory_id || null,
       is_featured: productForm.is_featured, is_active: productForm.is_active,
+      free_shipping: productForm.free_shipping,
       image_url: productForm.image_url || null,
       additional_images: productForm.additional_images.filter(Boolean),
       video_url: productForm.video_url || null,
@@ -243,7 +245,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [] });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [] });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -328,7 +330,7 @@ const AdminDashboard = () => {
       name: p.name, description: p.description || "", sku: p.sku || "",
       price: String(p.price), original_price: p.original_price ? String(p.original_price) : "",
       stock_quantity: String(p.stock_quantity), category_id: p.category_id || "",
-      subcategory_id: (p as any).subcategory_id || "", is_featured: p.is_featured,
+      subcategory_id: (p as any).subcategory_id || "", is_featured: p.is_featured, free_shipping: (p as any).free_shipping || false,
       is_active: p.is_active, image_url: p.image_url || "",
       additional_images: (p.additional_images || []) as string[],
       video_url: (p.video_url || "") as string,
@@ -927,9 +929,10 @@ const AdminDashboard = () => {
                     <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>
                     <div><Label>Estoque</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} /></div>
                     <div className="md:col-span-2"><Label>Descrição</Label><Textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} /></div>
-                    <div className="flex items-center gap-6 md:col-span-2">
+                    <div className="flex items-center gap-6 md:col-span-2 flex-wrap">
                       <div className="flex items-center gap-2"><Switch checked={productForm.is_featured} onCheckedChange={(v) => setProductForm({ ...productForm, is_featured: v })} /><Label>Destaque</Label></div>
                       <div className="flex items-center gap-2"><Switch checked={productForm.is_active} onCheckedChange={(v) => setProductForm({ ...productForm, is_active: v })} /><Label>Ativo</Label></div>
+                      <div className="flex items-center gap-2"><Switch checked={productForm.free_shipping} onCheckedChange={(v) => setProductForm({ ...productForm, free_shipping: v })} /><Label>Frete Grátis</Label></div>
                     </div>
                     {/* Additional images */}
                     <div className="md:col-span-2">
@@ -1857,7 +1860,12 @@ const AdminDashboard = () => {
         {tab === "quotes" && <QuoteManagement />}
 
         {/* MECHANICS TAB */}
-        {tab === "mechanics" && <MechanicManagement />}
+        {tab === "mechanics" && (
+          <div className="space-y-8">
+            <MechanicManagement />
+            <MechanicVideoManagement />
+          </div>
+        )}
 
         {/* ROLES TAB */}
         {tab === "roles" && <UserRoleManagement />}
