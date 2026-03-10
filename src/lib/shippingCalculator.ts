@@ -133,6 +133,7 @@ export const calculateShippingSync = (cep: string): ShippingOption[] | null => {
   return [
     { service: "PAC", label: "PAC - Encomenda Econômica", price: pacPrice, days: pacDays },
     { service: "SEDEX", label: "SEDEX - Encomenda Expressa", price: sedexPrice, days: sedexDays },
+    STORE_PICKUP_OPTION,
   ];
 };
 
