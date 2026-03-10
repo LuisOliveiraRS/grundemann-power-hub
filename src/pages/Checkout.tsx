@@ -498,16 +498,39 @@ const Checkout = () => {
                                   : "border-border hover:border-primary/40"
                               }`}
                             >
-                              <div>
-                                <p className="text-sm font-semibold">{opt.label}</p>
-                                <p className="text-xs text-muted-foreground">{opt.days} dias úteis</p>
+                              <div className="flex items-center gap-3">
+                                {opt.service === "RETIRADA" ? <Store className="h-5 w-5 text-primary" /> : <Truck className="h-5 w-5 text-muted-foreground" />}
+                                <div>
+                                  <p className="text-sm font-semibold">{opt.label}</p>
+                                  <p className="text-xs text-muted-foreground">{opt.service === "RETIRADA" ? "Retire na loja sem custo" : `${opt.days} dias úteis`}</p>
+                                </div>
                               </div>
                               <p className="font-bold text-sm text-price">
-                                {isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
+                                {opt.price === 0 ? <span className="text-primary">Grátis</span> : isFreeShipping ? <><s className="text-muted-foreground font-normal">R$ {opt.price.toFixed(2).replace(".", ",")}</s> <span className="text-primary ml-1">Grátis</span></> : `R$ ${opt.price.toFixed(2).replace(".", ",")}`}
                               </p>
                             </button>
                           ))}
                         </div>
+                      )}
+                      {/* Always show store pickup even without CEP */}
+                      {!shippingOptions && (
+                        <button
+                          onClick={() => setSelectedShipping(STORE_PICKUP_OPTION)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
+                            selectedShipping?.service === "RETIRADA"
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-border hover:border-primary/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Store className="h-5 w-5 text-primary" />
+                            <div>
+                              <p className="text-sm font-semibold">Retirada na Loja — São Leopoldo/RS</p>
+                              <p className="text-xs text-muted-foreground">Retire na loja sem custo</p>
+                            </div>
+                          </div>
+                          <p className="font-bold text-sm text-primary">Grátis</p>
+                        </button>
                       )}
                     </div>
 
