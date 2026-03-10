@@ -67,6 +67,55 @@ const MechanicManagement = () => {
     load();
   };
 
+  const addMechanicManual = async () => {
+    if (!addForm.email.trim()) { toast({ title: "Informe o email do usuário", variant: "destructive" }); return; }
+    setAddingMechanic(true);
+
+    // Find user by email in profiles
+    const { data: profile } = await supabase.from("profiles").select("user_id").eq("email", addForm.email.trim()).maybeSingle();
+    if (!profile) {
+      toast({ title: "Usuário não encontrado", description: "Nenhum usuário cadastrado com esse email.", variant: "destructive" });
+      setAddingMechanic(false);
+      return;
+    }
+
+    // Check if already a mechanic
+    const { data: existing } = await supabase.from("mechanics").select("id").eq("user_id", profile.user_id).maybeSingle();
+    if (existing) {
+      toast({ title: "Já cadastrado", description: "Este usuário já é mecânico.", variant: "destructive" });
+      setAddingMechanic(false);
+      return;
+    }
+
+    // Update profile info if provided
+    const profileUpdate: any = {};
+    if (addForm.full_name) profileUpdate.full_name = addForm.full_name;
+    if (addForm.phone) profileUpdate.phone = addForm.phone;
+    if (Object.keys(profileUpdate).length > 0) {
+      await supabase.from("profiles").update(profileUpdate).eq("user_id", profile.user_id);
+    }
+
+    // Create mechanic record (admin can set approved + discount)
+    const { error } = await supabase.from("mechanics").insert({
+      user_id: profile.user_id,
+      company_name: addForm.company_name || null,
+      cnpj: addForm.cnpj || null,
+      specialty: addForm.specialty || null,
+      is_approved: true,
+      discount_rate: Number(addForm.discount_rate) || 5,
+    });
+
+    if (error) {
+      toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Mecânico cadastrado e aprovado!" });
+      setShowAddForm(false);
+      setAddForm({ email: "", full_name: "", phone: "", company_name: "", cnpj: "", specialty: "", discount_rate: "5" });
+      load();
+    }
+    setAddingMechanic(false);
+  };
+
   const filtered = mechanics.filter(m => {
     if (statusFilter === "approved" && !m.is_approved) return false;
     if (statusFilter === "pending" && m.is_approved) return false;
