@@ -91,6 +91,13 @@ const fetchRatesFromDB = async (): Promise<Record<string, [number, string, numbe
   return fallbackTable;
 };
 
+export const STORE_PICKUP_OPTION: ShippingOption = {
+  service: "RETIRADA",
+  label: "Retirada na Loja — São Leopoldo/RS",
+  price: 0,
+  days: "0",
+};
+
 export const calculateShipping = async (cep: string): Promise<ShippingOption[] | null> => {
   const cleanCep = cep.replace(/\D/g, "");
   if (cleanCep.length !== 8) return null;
@@ -106,6 +113,7 @@ export const calculateShipping = async (cep: string): Promise<ShippingOption[] |
   return [
     { service: "PAC", label: "PAC - Encomenda Econômica", price: pacPrice, days: pacDays },
     { service: "SEDEX", label: "SEDEX - Encomenda Expressa", price: sedexPrice, days: sedexDays },
+    STORE_PICKUP_OPTION,
   ];
 };
 
