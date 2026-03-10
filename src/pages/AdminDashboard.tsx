@@ -222,6 +222,7 @@ const AdminDashboard = () => {
       category_id: productForm.category_id || null,
       subcategory_id: productForm.subcategory_id || null,
       is_featured: productForm.is_featured, is_active: productForm.is_active,
+      free_shipping: productForm.free_shipping,
       image_url: productForm.image_url || null,
       additional_images: productForm.additional_images.filter(Boolean),
       video_url: productForm.video_url || null,
