@@ -437,6 +437,59 @@ const MechanicArea = () => {
 
               {activeTab === "artigos" && <TechnicalArticlesContent />}
 
+              {activeTab === "videos" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Video className="h-5 w-5 text-primary" /> Vídeos Técnicos
+                    </CardTitle>
+                    <CardDescription>Vídeos exclusivos para mecânicos cadastrados</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {mechVideos.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">Nenhum vídeo disponível no momento.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {(() => {
+                          const grouped = mechVideos.reduce((acc: Record<string, any[]>, v: any) => {
+                            if (!acc[v.category]) acc[v.category] = [];
+                            acc[v.category].push(v);
+                            return acc;
+                          }, {});
+                          return Object.entries(grouped).map(([category, items]) => (
+                            <div key={category}>
+                              <h3 className="font-heading font-bold text-sm text-foreground mb-3">{category}</h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {(items as any[]).map((video: any) => (
+                                  <div key={video.id} className="rounded-xl border border-border overflow-hidden bg-card">
+                                    <div className="aspect-video">
+                                      {video.video_url.includes("youtube.com") || video.video_url.includes("youtu.be") ? (
+                                        <iframe
+                                          src={video.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
+                                          className="w-full h-full"
+                                          allowFullScreen
+                                          title={video.title}
+                                        />
+                                      ) : (
+                                        <video src={video.video_url} controls className="w-full h-full object-cover" />
+                                      )}
+                                    </div>
+                                    <div className="p-3">
+                                      <p className="font-heading font-bold text-sm">{video.title}</p>
+                                      {video.description && <p className="text-xs text-muted-foreground mt-1">{video.description}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {activeTab === "catalogos" && (
                 <Card>
                   <CardHeader>

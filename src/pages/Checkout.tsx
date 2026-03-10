@@ -690,8 +690,13 @@ const Checkout = () => {
               <div className="p-6 border-t border-border flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
                 <Button onClick={() => {
-                  if (!shipping.full_name || !shipping.address || !shipping.city || !shipping.state) {
-                    toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
+                  const isPickup = selectedShipping?.service === "RETIRADA";
+                  if (!shipping.full_name) {
+                    toast({ title: "Preencha o nome completo", variant: "destructive" });
+                    return;
+                  }
+                  if (!isPickup && (!shipping.address || !shipping.city || !shipping.state)) {
+                    toast({ title: "Preencha os campos de endereço obrigatórios", variant: "destructive" });
                     return;
                   }
                   const cpfClean = (shipping.cpf_cnpj || "").replace(/\D/g, "");
@@ -700,7 +705,7 @@ const Checkout = () => {
                     return;
                   }
                   if (!selectedShipping) {
-                    toast({ title: "Selecione uma opção de frete", description: "Informe seu CEP para calcular o frete.", variant: "destructive" });
+                    toast({ title: "Selecione uma opção de frete ou retirada", variant: "destructive" });
                     return;
                   }
                   setStep(3);
