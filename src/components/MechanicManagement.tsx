@@ -136,12 +136,37 @@ const MechanicManagement = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
-          <Wrench className="h-8 w-8 text-primary" /> Gestão de Mecânicos
-        </h1>
-        <p className="text-muted-foreground mt-1">Aprove cadastros, defina descontos e gerencie mecânicos parceiros</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
+            <Wrench className="h-8 w-8 text-primary" /> Gestão de Mecânicos
+          </h1>
+          <p className="text-muted-foreground mt-1">Aprove cadastros, defina descontos e gerencie mecânicos parceiros</p>
+        </div>
+        <Button onClick={() => setShowAddForm(!showAddForm)}>
+          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Mecânico
+        </Button>
       </div>
+
+      {/* Manual Add Form */}
+      {showAddForm && (
+        <div className="bg-card rounded-xl border border-border p-5 mb-6">
+          <h3 className="font-heading font-bold text-sm mb-4">Cadastro Manual de Mecânico</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div><label className="text-xs text-muted-foreground">Email do Usuário *</label><Input value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} placeholder="usuario@email.com" /></div>
+            <div><label className="text-xs text-muted-foreground">Nome Completo</label><Input value={addForm.full_name} onChange={e => setAddForm({ ...addForm, full_name: e.target.value })} placeholder="Nome completo" /></div>
+            <div><label className="text-xs text-muted-foreground">Telefone</label><Input value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
+            <div><label className="text-xs text-muted-foreground">Oficina/Empresa</label><Input value={addForm.company_name} onChange={e => setAddForm({ ...addForm, company_name: e.target.value })} placeholder="Nome da oficina" /></div>
+            <div><label className="text-xs text-muted-foreground">CNPJ</label><Input value={addForm.cnpj} onChange={e => setAddForm({ ...addForm, cnpj: e.target.value })} placeholder="00.000.000/0000-00" /></div>
+            <div><label className="text-xs text-muted-foreground">Especialidade</label><Input value={addForm.specialty} onChange={e => setAddForm({ ...addForm, specialty: e.target.value })} placeholder="Ex: Motores diesel" /></div>
+            <div><label className="text-xs text-muted-foreground">Desconto %</label><Input type="number" min="0" max="50" value={addForm.discount_rate} onChange={e => setAddForm({ ...addForm, discount_rate: e.target.value })} /></div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button onClick={addMechanicManual} disabled={addingMechanic}>{addingMechanic ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}Cadastrar e Aprovar</Button>
+            <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancelar</Button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
