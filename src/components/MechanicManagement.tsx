@@ -24,6 +24,9 @@ const MechanicManagement = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending">("all");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState({ email: "", full_name: "", phone: "", company_name: "", cnpj: "", specialty: "", discount_rate: "5" });
+  const [addingMechanic, setAddingMechanic] = useState(false);
 
   useEffect(() => { load(); }, []);
 
