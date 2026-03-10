@@ -358,6 +358,7 @@ const MechanicArea = () => {
               <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
                 {[
                   { key: "perfil" as const, label: "Meu Perfil", icon: User },
+                  { key: "videos" as const, label: "Vídeos", icon: Video },
                   { key: "vistas" as const, label: "Vistas Explodidas", icon: Search },
                   { key: "artigos" as const, label: "Artigos Técnicos", icon: BookOpen },
                   { key: "catalogos" as const, label: "Catálogos PDF", icon: FileText },
