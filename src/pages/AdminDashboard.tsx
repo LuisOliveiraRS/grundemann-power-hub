@@ -35,7 +35,7 @@ import OrderPrintSheet from "@/components/OrderPrintSheet";
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
   price: number; original_price: number | null; stock_quantity: number;
-  is_active: boolean; is_featured: boolean; category_id: string | null;
+  is_active: boolean; is_featured: boolean; free_shipping?: boolean; category_id: string | null;
   subcategory_id?: string | null; image_url: string | null; created_at: string;
   additional_images?: string[] | null; video_url?: string | null;
 }
