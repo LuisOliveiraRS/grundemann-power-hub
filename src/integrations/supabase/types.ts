@@ -437,6 +437,39 @@ export type Database = {
           },
         ]
       }
+      mechanic_videos: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       mechanics: {
         Row: {
           cnpj: string | null
@@ -793,6 +826,7 @@ export type Database = {
           description: string | null
           documents: string[] | null
           engine_model: string | null
+          free_shipping: boolean
           hp: string | null
           id: string
           image_url: string | null
@@ -819,6 +853,7 @@ export type Database = {
           description?: string | null
           documents?: string[] | null
           engine_model?: string | null
+          free_shipping?: boolean
           hp?: string | null
           id?: string
           image_url?: string | null
@@ -845,6 +880,7 @@ export type Database = {
           description?: string | null
           documents?: string[] | null
           engine_model?: string | null
+          free_shipping?: boolean
           hp?: string | null
           id?: string
           image_url?: string | null
