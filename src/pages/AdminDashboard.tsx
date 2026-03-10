@@ -244,7 +244,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [] });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [] });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
