@@ -15,6 +15,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
 import ReferralProgram from "@/components/ReferralProgram";
+import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface Profile {
   full_name: string; email: string; phone: string;
