@@ -308,7 +308,7 @@ const Checkout = () => {
         description: "O pedido foi criado. Tente pagar novamente na sua conta.",
         variant: "destructive",
       });
-      setStep(4);
+      navigate(`/pagamento-erro?order_id=${orderId}`);
     } finally {
       setPaymentLoading(false);
     }
