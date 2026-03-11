@@ -69,19 +69,18 @@ const Checkout = () => {
     loadProfile();
     loadCoupons();
 
-    // Handle payment return from Mercado Pago
+    // Handle legacy payment return from Mercado Pago (old back_urls)
     const paymentStatus = searchParams.get("payment");
     const returnOrderId = searchParams.get("order_id");
     if (paymentStatus && returnOrderId) {
-      setCreatedOrderId(returnOrderId);
       if (paymentStatus === "success") {
-        setStep(4);
+        navigate(`/pedido-confirmado?order_id=${returnOrderId}`, { replace: true });
       } else if (paymentStatus === "pending") {
-        setStep(5); // pending payment step
+        navigate(`/pagamento-pendente?order_id=${returnOrderId}`, { replace: true });
       } else {
-        toast({ title: "Pagamento não aprovado", description: "Tente novamente ou escolha outra forma de pagamento.", variant: "destructive" });
-        setStep(3);
+        navigate(`/pagamento-erro?order_id=${returnOrderId}`, { replace: true });
       }
+      return;
     }
   }, [user]);
 
@@ -309,7 +308,7 @@ const Checkout = () => {
         description: "O pedido foi criado. Tente pagar novamente na sua conta.",
         variant: "destructive",
       });
-      setStep(4);
+      navigate(`/pagamento-erro?order_id=${orderId}`);
     } finally {
       setPaymentLoading(false);
     }
