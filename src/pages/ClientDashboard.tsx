@@ -29,7 +29,7 @@ interface Order {
   shipping_address: string | null; notes: string | null; tracking_code?: string | null;
   items?: OrderItem[];
 }
-interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; }
+interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; admin_notes: string | null; }
 interface FavProduct { id: string; name: string; price: number; image_url: string | null; sku: string | null; }
 interface Payment {
   id: string; order_id: string; amount: number; status: string;
