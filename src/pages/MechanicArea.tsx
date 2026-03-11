@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video } from "lucide-react";
+import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video, Package, ChevronUp } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -51,8 +51,9 @@ const MechanicArea = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"perfil" | "compras" | "identificador" | "catalogos" | "vistas" | "artigos" | "videos">("perfil");
+  const [activeTab, setActiveTab] = useState<"hub" | "perfil" | "compras" | "identificador" | "catalogos" | "vistas" | "artigos" | "videos" | "orcamentos">("hub");
   const [mechVideos, setMechVideos] = useState<any[]>([]);
+  const [quotes, setQuotes] = useState<any[]>([]);
 
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
@@ -102,7 +103,7 @@ const MechanicArea = () => {
       setCnpj(mechRes.data.cnpj || "");
       setSpecialty(mechRes.data.specialty || "");
 
-      const [orderRes, catalogRes, videoRes] = await Promise.all([
+      const [orderRes, catalogRes, videoRes, quotesRes] = await Promise.all([
         supabase
           .from("orders")
           .select("id, total_amount, status, created_at")
@@ -121,10 +122,16 @@ const MechanicArea = () => {
           .eq("is_active", true)
           .order("category")
           .order("created_at", { ascending: false }),
+        supabase
+          .from("quotes")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
       ]);
       setOrders(orderRes.data || []);
       setCatalogs(catalogRes.data || []);
       setMechVideos(videoRes.data || []);
+      setQuotes(quotesRes.data || []);
     }
     setLoading(false);
   };
@@ -354,31 +361,45 @@ const MechanicArea = () => {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-2 border-b border-border pb-2 overflow-x-auto">
-                {[
-                  { key: "perfil" as const, label: "Meu Perfil", icon: User },
-                  { key: "videos" as const, label: "Vídeos", icon: Video },
-                  { key: "vistas" as const, label: "Vistas Explodidas", icon: Search },
-                  { key: "artigos" as const, label: "Artigos Técnicos", icon: BookOpen },
-                  { key: "catalogos" as const, label: "Catálogos PDF", icon: FileText },
-                  { key: "compras" as const, label: "Histórico de Compras", icon: ShoppingCart },
-                  { key: "identificador" as const, label: "Identificar Peça", icon: Wrench },
-                ].map(t => (
-                  <button
-                    key={t.key}
-                    onClick={() => setActiveTab(t.key)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                      activeTab === t.key
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <t.icon className="h-4 w-4" />
-                    {t.label}
-                  </button>
-                ))}
-              </div>
+              {/* Navigation Hub or Back button */}
+              {activeTab !== "hub" && (
+                <div className="mb-4">
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("hub")} className="gap-1.5">
+                    <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar ao Menu
+                  </Button>
+                </div>
+              )}
+
+              {activeTab === "hub" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {[
+                    { key: "perfil" as const, label: "Meu Perfil", desc: "Atualize seus dados pessoais e da oficina", icon: User, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                    { key: "videos" as const, label: "Vídeos Técnicos", desc: "Vídeos de instalação e manutenção exclusivos", icon: Video, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+                    { key: "vistas" as const, label: "Vistas Explodidas", desc: "Diagramas interativos dos motores", icon: Search, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
+                    { key: "artigos" as const, label: "Artigos Técnicos", desc: "Guias de manutenção e diagnóstico", icon: BookOpen, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                    { key: "catalogos" as const, label: "Catálogos PDF", desc: "Manuais e catálogos para download", icon: FileText, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+                    { key: "orcamentos" as const, label: "Meus Orçamentos", desc: "Acompanhe suas solicitações de orçamento", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
+                    { key: "compras" as const, label: "Histórico de Compras", desc: "Acompanhe todas as suas compras", icon: ShoppingCart, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                    { key: "identificador" as const, label: "Identificar Peça", desc: "Use IA para identificar peças por foto", icon: Wrench, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+                  ].map((card) => (
+                    <button
+                      key={card.key}
+                      onClick={() => setActiveTab(card.key)}
+                      className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden`}
+                    >
+                      <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
+                      <div className={`inline-flex items-center justify-center rounded-xl ${card.iconBg} p-3 mb-4 shadow-sm group-hover:shadow-md transition-shadow`}>
+                        <card.icon className={`h-7 w-7 ${card.iconColor}`} />
+                      </div>
+                      <h3 className="font-heading font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{card.label}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
+                      <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        Acessar →
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {activeTab === "perfil" && (
                 <Card>
@@ -548,6 +569,54 @@ const MechanicArea = () => {
                             </div>
                           ));
                         })()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* QUOTES TAB */}
+              {activeTab === "orcamentos" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Package className="h-5 w-5 text-primary" /> Meus Orçamentos
+                    </CardTitle>
+                    <CardDescription>Acompanhe suas solicitações de orçamento e respostas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {quotes.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground mb-4">Nenhum orçamento solicitado.</p>
+                        <Button onClick={() => navigate("/orcamento")}>Solicitar Orçamento</Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex justify-end mb-2">
+                          <Button size="sm" onClick={() => navigate("/orcamento")}>
+                            <Package className="h-4 w-4 mr-1" /> Novo Orçamento
+                          </Button>
+                        </div>
+                        {quotes.map((q: any) => (
+                          <div key={q.id} className="rounded-xl border border-border p-5 bg-card">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-heading font-bold">Orçamento #{q.id.slice(0, 8)}</p>
+                              <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
+                                {{ pending: "Pendente", reviewing: "Em Análise", quoted: "Orçado", accepted: "Aceito", rejected: "Rejeitado" }[q.status] || q.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                            {q.message && <p className="text-sm text-muted-foreground mt-2">{q.message}</p>}
+                            <p className="font-heading font-bold text-primary mt-2">R$ {Number(q.total_estimated || 0).toFixed(2).replace(".", ",")}</p>
+                            {q.admin_notes && (
+                              <div className="mt-3 pt-3 border-t border-border">
+                                <p className="text-xs font-semibold text-muted-foreground mb-1">Resposta do administrador:</p>
+                                <p className="text-sm bg-muted/50 rounded-lg p-3">{q.admin_notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </CardContent>
