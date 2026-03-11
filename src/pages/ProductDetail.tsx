@@ -65,7 +65,7 @@ const ProductDetail = () => {
       setProduct(p);
       setSelectedImage(p.image_url);
       
-      const promises: Promise<any>[] = [];
+      const promises: any[] = [];
       
       if (data.category_id) {
         promises.push(
