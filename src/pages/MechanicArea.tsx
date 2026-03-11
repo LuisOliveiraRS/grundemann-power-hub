@@ -574,6 +574,54 @@ const MechanicArea = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* QUOTES TAB */}
+              {activeTab === "orcamentos" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Package className="h-5 w-5 text-primary" /> Meus Orçamentos
+                    </CardTitle>
+                    <CardDescription>Acompanhe suas solicitações de orçamento e respostas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {quotes.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground mb-4">Nenhum orçamento solicitado.</p>
+                        <Button onClick={() => navigate("/orcamento")}>Solicitar Orçamento</Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex justify-end mb-2">
+                          <Button size="sm" onClick={() => navigate("/orcamento")}>
+                            <Package className="h-4 w-4 mr-1" /> Novo Orçamento
+                          </Button>
+                        </div>
+                        {quotes.map((q: any) => (
+                          <div key={q.id} className="rounded-xl border border-border p-5 bg-card">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-heading font-bold">Orçamento #{q.id.slice(0, 8)}</p>
+                              <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
+                                {{ pending: "Pendente", reviewing: "Em Análise", quoted: "Orçado", accepted: "Aceito", rejected: "Rejeitado" }[q.status] || q.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                            {q.message && <p className="text-sm text-muted-foreground mt-2">{q.message}</p>}
+                            <p className="font-heading font-bold text-primary mt-2">R$ {Number(q.total_estimated || 0).toFixed(2).replace(".", ",")}</p>
+                            {q.admin_notes && (
+                              <div className="mt-3 pt-3 border-t border-border">
+                                <p className="text-xs font-semibold text-muted-foreground mb-1">Resposta do administrador:</p>
+                                <p className="text-sm bg-muted/50 rounded-lg p-3">{q.admin_notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </div>
