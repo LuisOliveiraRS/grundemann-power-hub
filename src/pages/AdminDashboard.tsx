@@ -342,6 +342,10 @@ const AdminDashboard = () => {
       brand: (p as any).brand || "", hp: (p as any).hp || "", engine_model: (p as any).engine_model || "",
       specifications: (p as any).specifications ? JSON.stringify((p as any).specifications, null, 2) : "",
       documents: ((p as any).documents || []) as string[],
+      weight_kg: (p as any).weight_kg ? String((p as any).weight_kg) : "",
+      width_cm: (p as any).width_cm ? String((p as any).width_cm) : "",
+      height_cm: (p as any).height_cm ? String((p as any).height_cm) : "",
+      length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
     });
     setTab("products");
   };
