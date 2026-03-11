@@ -18,14 +18,6 @@ import AIAssistant from "@/components/AIAssistant";
 import PartIdentifier from "@/components/PartIdentifier";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
 import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
-import TopBar from "@/components/TopBar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
-import AIAssistant from "@/components/AIAssistant";
-import PartIdentifier from "@/components/PartIdentifier";
-import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
-import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
 
 interface MechanicProfile {
   id: string;
