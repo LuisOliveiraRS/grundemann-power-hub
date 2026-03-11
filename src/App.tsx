@@ -94,6 +94,9 @@ const App = () => (
                     <Route path="/catalogo-interativo" element={<ExplodedCatalog />} />
                     <Route path="/calculadora-de-carga" element={<GeneratorCalculator />} />
                     <Route path="/vistas-explodidas" element={<ExplodedViews />} />
+                    <Route path="/pedido-confirmado" element={<ProtectedRoute><OrderConfirmed /></ProtectedRoute>} />
+                    <Route path="/pagamento-pendente" element={<ProtectedRoute><PaymentPending /></ProtectedRoute>} />
+                    <Route path="/pagamento-erro" element={<ProtectedRoute><PaymentError /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>

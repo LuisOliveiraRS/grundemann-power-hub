@@ -143,9 +143,9 @@ Deno.serve(async (req) => {
       items,
       payer,
       back_urls: {
-        success: `${origin}/checkout?payment=success&order_id=${order_id}`,
-        failure: `${origin}/checkout?payment=failure&order_id=${order_id}`,
-        pending: `${origin}/checkout?payment=pending&order_id=${order_id}`,
+        success: `${origin}/pedido-confirmado?order_id=${order_id}`,
+        failure: `${origin}/pagamento-erro?order_id=${order_id}`,
+        pending: `${origin}/pagamento-pendente?order_id=${order_id}`,
       },
       auto_return: "approved",
       external_reference: order_id,
