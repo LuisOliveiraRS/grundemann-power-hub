@@ -271,11 +271,11 @@ const MechanicManagement = () => {
                     onChange={e => updateDiscount(m.id, Number(e.target.value))}
                   />
                 </div>
-                <Button
-                  size="sm"
-                  variant={m.is_approved ? "outline" : "default"}
-                  onClick={() => toggleApproval(m.id, m.is_approved)}
-                >
+                 <Button
+                   size="sm"
+                   variant={m.is_approved ? "outline" : "default"}
+                   onClick={() => toggleApproval(m)}
+                 >
                   {m.is_approved ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                   {m.is_approved ? "Revogar" : "Aprovar"}
                 </Button>
