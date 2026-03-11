@@ -878,6 +878,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           is_featured: boolean
+          is_launch: boolean
           length_cm: number | null
           meta_description: string | null
           meta_title: string | null
@@ -909,6 +910,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          is_launch?: boolean
           length_cm?: number | null
           meta_description?: string | null
           meta_title?: string | null
@@ -940,6 +942,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          is_launch?: boolean
           length_cm?: number | null
           meta_description?: string | null
           meta_title?: string | null
