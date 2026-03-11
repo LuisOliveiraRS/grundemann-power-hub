@@ -1896,7 +1896,22 @@ const AdminDashboard = () => {
         {tab === "sellers" && <SellerManagement />}
 
         {/* QUOTES TAB */}
-        {tab === "quotes" && <QuoteManagement />}
+        {tab === "quotes" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <FileUp className="h-7 w-7 text-primary" /> Orçamentos
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie solicitações de orçamento dos clientes</p>
+              </div>
+            </div>
+            <QuoteManagement />
+          </div>
+        )}
 
         {/* MECHANICS HUB TAB */}
         {tab === "mechanics" && (

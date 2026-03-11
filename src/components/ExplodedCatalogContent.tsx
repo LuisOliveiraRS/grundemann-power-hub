@@ -254,11 +254,26 @@ const ExplodedCatalogContent = () => {
                             {p.sku && <span className="text-[10px] text-muted-foreground">SKU: {p.sku}</span>}
                           </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          {p.original_price && Number(p.original_price) > p.price && (
-                            <p className="text-xs text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</p>
-                          )}
-                          <p className="font-heading font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                        <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+                          <div>
+                            {p.original_price && Number(p.original_price) > p.price && (
+                              <p className="text-xs text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</p>
+                            )}
+                            <p className="font-heading font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs"
+                            onClick={(e) => addToCart(e, p.id, p.name)}
+                            disabled={addingToCart === p.id}
+                          >
+                            {addingToCart === p.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Plus className="h-3 w-3" />
+                            )}
+                            Carrinho
+                          </Button>
                         </div>
                       </Link>
                     ))}
