@@ -616,6 +616,8 @@ const AdminDashboard = () => {
     cancelled: "bg-destructive/20 text-destructive",
   };
 
+  const [expandedSidebarGroup, setExpandedSidebarGroup] = useState<string | null>("mechanic-area");
+
   const sideItems = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "products", label: "Produtos", icon: Package },
@@ -624,12 +626,8 @@ const AdminDashboard = () => {
     { key: "clients", label: "Clientes", icon: Users },
     { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
     { key: "sellers", label: "Vendedores", icon: Users },
-    { key: "quotes", label: "Orçamentos", icon: FileUp },
-    { key: "mechanics", label: "Mecânicos", icon: Wrench },
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
-    { key: "articles", label: "Central Técnica", icon: BookOpen },
-    { key: "catalogs", label: "Catálogos Técnicos", icon: FileText },
     { key: "seo", label: "SEO", icon: Globe },
     { key: "shipping", label: "Frete", icon: Truck },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
@@ -639,6 +637,14 @@ const AdminDashboard = () => {
     { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
     { key: "appearance", label: "Aparência", icon: Paintbrush },
+  ] as const;
+
+  const mechanicSubItems = [
+    { key: "mechanics", label: "Mecânicos", icon: Users },
+    { key: "mechanic-videos", label: "Vídeos Técnicos", icon: Video },
+    { key: "articles", label: "Central Técnica", icon: BookOpen },
+    { key: "catalogs", label: "Catálogos Técnicos", icon: FileText },
+    { key: "quotes", label: "Orçamentos", icon: FileUp },
   ] as const;
 
   // Filtered data
