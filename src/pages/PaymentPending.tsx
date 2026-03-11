@@ -64,6 +64,22 @@ const PaymentPending = () => {
   useEffect(() => {
     if (!orderId || !user) return;
 
+    void (async () => {
+      try {
+        setSyncing(true);
+        await syncPaymentStatus(orderId);
+      } catch (error) {
+        console.error("Initial payment sync error:", error);
+      } finally {
+        setSyncing(false);
+        await loadStatus();
+      }
+    })();
+  }, [orderId, user]);
+
+  useEffect(() => {
+    if (!orderId || !user) return;
+
     const channel = supabase
       .channel(`payment-pending-${orderId}`)
       .on("postgres_changes", {
