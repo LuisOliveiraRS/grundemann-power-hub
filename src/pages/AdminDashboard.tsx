@@ -110,6 +110,8 @@ const AdminDashboard = () => {
   // Client filters & editing
   const [clientSearch, setClientSearch] = useState("");
   const [editingClient, setEditingClient] = useState<Partial<ProfileFull> | null>(null);
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+  const [clientOrderItems, setClientOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [clientForm, setClientForm] = useState({
     full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
     address: "", address_number: "", address_complement: "", neighborhood: "",
