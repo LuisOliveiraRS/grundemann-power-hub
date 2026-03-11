@@ -139,14 +139,14 @@ const PaymentPending = () => {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="bg-accent/20 rounded-full p-6 inline-flex mb-6"
           >
-            <Clock className="h-16 w-16 text-accent-foreground" />
+            {syncing ? <Loader2 className="h-16 w-16 text-accent-foreground animate-spin" /> : <Clock className="h-16 w-16 text-accent-foreground" />}
           </motion.div>
 
           <h1 className="font-heading text-2xl md:text-3xl font-bold mb-2">
-            Pagamento Pendente ⏳
+            Aguardando confirmação do pagamento ⏳
           </h1>
           <p className="text-muted-foreground mb-6">
-            Seu pedido foi criado com sucesso! O pagamento está sendo processado.
+            Seu pedido foi criado com sucesso e esta página será atualizada automaticamente assim que o pagamento for confirmado.
           </p>
 
           {orderId && (
