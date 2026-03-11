@@ -78,7 +78,7 @@ const SmartSearch = () => {
   };
 
   return (
-    <div ref={ref} className="relative flex-1 max-w-xl">
+    <div ref={ref} className="relative flex-1 max-w-xl z-[60]">
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <input
@@ -96,7 +96,7 @@ const SmartSearch = () => {
       </form>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[70] overflow-hidden max-h-[400px] overflow-y-auto">
           {loading && (
             <div className="p-3 text-center text-muted-foreground text-sm">Buscando...</div>
           )}

@@ -32,11 +32,32 @@ const PartsFinder = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Search when HP is selected (step 2) to show all parts for that motor
+  useEffect(() => {
+    if (step === 2 && selectedHp) {
+      searchByHp();
+    }
+  }, [step, selectedHp]);
+
   useEffect(() => {
     if (step === 3 && selectedHp && selectedPart) {
       searchProducts();
     }
   }, [step]);
+
+  const searchByHp = async () => {
+    setLoading(true);
+    const hp = selectedHp!;
+    const { data } = await supabase
+      .from("products")
+      .select("id, name, price, image_url, sku, hp")
+      .eq("is_active", true)
+      .or(`hp.ilike.%${hp}%,name.ilike.%${hp}hp%,name.ilike.%${hp} hp%,engine_model.ilike.%${hp}%`)
+      .limit(12);
+    
+    setResults(data || []);
+    setLoading(false);
+  };
 
   const searchProducts = async () => {
     setLoading(true);
@@ -48,9 +69,9 @@ const PartsFinder = () => {
       .select("id, name, price, image_url, sku, hp")
       .eq("is_active", true)
       .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
-      .limit(8);
+      .limit(12);
 
-    // Filter by HP if possible
+    // Filter by HP
     const filtered = (data || []).filter((p: any) => {
       if (!selectedHp) return true;
       const nameMatch = p.name?.toLowerCase().includes(`${selectedHp}hp`) || p.name?.toLowerCase().includes(`${selectedHp} hp`);
@@ -93,14 +114,14 @@ const PartsFinder = () => {
                 {s}
               </div>
               <span className={`text-xs font-medium hidden sm:inline ${step >= s ? "text-foreground" : "text-muted-foreground"}`}>
-                {s === 1 ? "Potência" : s === 2 ? "Tipo de Peça" : "Resultados"}
+                {s === 1 ? "Potência" : s === 2 ? "Peças do Motor" : "Filtrar por Tipo"}
               </span>
               {s < 3 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             </div>
           ))}
         </div>
 
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
@@ -140,21 +161,58 @@ const PartsFinder = () => {
                 className="bg-card rounded-xl border border-border p-8 shadow-sm"
               >
                 <h3 className="font-heading font-bold text-lg text-card-foreground mb-1 flex items-center gap-2">
-                  <Filter className="h-5 w-5 text-primary" />
-                  Que tipo de peça você precisa?
+                  <Package className="h-5 w-5 text-primary" />
+                  Peças para motor {selectedHp}HP
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6">Motor selecionado: <strong className="text-primary">{selectedHp}HP</strong> · <button onClick={reset} className="underline text-primary">Alterar</button></p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Mostrando todas as peças compatíveis · <button onClick={reset} className="underline text-primary">Nova busca</button>
+                </p>
+
+                {/* Part type filter chips */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="text-xs text-muted-foreground py-1.5">Filtrar por tipo:</span>
                   {partTypes.map(pt => (
                     <button
                       key={pt.label}
                       onClick={() => { setSelectedPart(pt.label); setStep(3); }}
-                      className="rounded-lg border-2 border-border p-4 text-center font-heading font-semibold text-sm transition-all hover:border-primary hover:bg-primary/5 text-card-foreground"
+                      className="rounded-full border border-border px-4 py-1.5 text-xs font-semibold hover:border-primary hover:bg-primary/5 text-card-foreground transition-all"
                     >
                       {pt.label}
                     </button>
                   ))}
                 </div>
+
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">Nenhuma peça encontrada para motor {selectedHp}HP.</p>
+                    <button onClick={() => navigate(`/produtos?busca=${selectedHp}hp`)} className="text-primary font-bold underline">
+                      Buscar no catálogo completo
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {results.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => navigate(`/produto/${p.id}`)}
+                        className="rounded-lg border border-border bg-background p-3 hover:shadow-md hover:border-primary/30 transition-all text-left"
+                      >
+                        <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
+                          <img src={p.image_url || "/placeholder.svg"} alt={p.name} loading="lazy" className="w-full h-full object-contain p-2" />
+                        </div>
+                        <p className="text-xs font-semibold text-card-foreground line-clamp-2">{p.name}</p>
+                        {p.sku && <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {p.sku}</p>}
+                        <p className="text-sm font-heading font-extrabold text-primary mt-1">
+                          R$ {p.price.toFixed(2).replace(".", ",")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -167,11 +225,11 @@ const PartsFinder = () => {
                 className="bg-card rounded-xl border border-border p-8 shadow-sm"
               >
                 <h3 className="font-heading font-bold text-lg text-card-foreground mb-1 flex items-center gap-2">
-                  <Package className="h-5 w-5 text-primary" />
-                  Peças compatíveis encontradas
+                  <Filter className="h-5 w-5 text-primary" />
+                  {selectedPart} para motor {selectedHp}HP
                 </h3>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Motor <strong className="text-primary">{selectedHp}HP</strong> · {selectedPart} · <button onClick={reset} className="underline text-primary">Nova busca</button>
+                  <button onClick={() => setStep(2)} className="underline text-primary">Voltar às peças</button> · <button onClick={reset} className="underline text-primary">Nova busca</button>
                 </p>
 
                 {loading ? (
@@ -198,7 +256,7 @@ const PartsFinder = () => {
                         </div>
                         <p className="text-xs font-semibold text-card-foreground line-clamp-2">{p.name}</p>
                         {p.sku && <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {p.sku}</p>}
-                        <p className="text-sm font-heading font-extrabold text-price mt-1">
+                        <p className="text-sm font-heading font-extrabold text-primary mt-1">
                           R$ {p.price.toFixed(2).replace(".", ",")}
                         </p>
                       </button>

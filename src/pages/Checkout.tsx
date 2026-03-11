@@ -837,11 +837,12 @@ const Checkout = () => {
               <div className="bg-primary/10 rounded-full p-6 inline-flex mb-6">
                 <CheckCircle className="h-16 w-16 text-primary" />
               </div>
-              <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Confirmado!</h2>
-              <p className="text-muted-foreground mb-6">Obrigado pela sua compra! Seu pagamento foi aprovado e o pedido está sendo processado.</p>
+              <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Confirmado! ✅</h2>
+              <p className="text-muted-foreground mb-2">Obrigado pela sua compra! Seu pagamento foi aprovado com sucesso.</p>
+              <p className="text-sm text-muted-foreground mb-6">Pedido #{createdOrderId?.slice(0, 8)}</p>
               <div className="flex gap-3 justify-center">
                 <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
-                <Button onClick={() => navigate("/minha-conta")}>Meus Pedidos</Button>
+                <Button onClick={() => navigate("/minha-conta")}>Ver Meus Pedidos</Button>
               </div>
             </div>
           )}

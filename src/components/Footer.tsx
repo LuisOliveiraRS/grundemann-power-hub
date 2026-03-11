@@ -1,6 +1,7 @@
-import { Phone, MessageCircle, Mail, MapPin, ShieldCheck, FileText, RotateCcw, Calculator } from "lucide-react";
+import { Phone, MessageCircle, Mail, MapPin, ShieldCheck, FileText, RotateCcw, Calculator, CreditCard, QrCode, Banknote } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
+import PaymentBadges, { TrustBadges } from "@/components/PaymentBadges";
 
 const Footer = () => {
   return (
@@ -67,6 +68,20 @@ const Footer = () => {
             </ul>
           </div>
         </div>
+
+        {/* Payment & Trust Badges */}
+        <div className="mt-10 pt-6 border-t border-background/10">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold text-background uppercase tracking-wider mb-2">Formas de Pagamento</p>
+              <PaymentBadges />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-background uppercase tracking-wider mb-2">Segurança & Confiança</p>
+              <TrustBadges />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Legal links bar */}
@@ -92,7 +107,13 @@ const Footer = () => {
       {/* Copyright */}
       <div className="border-t border-background/10">
         <div className="container py-4 text-center text-xs text-background/50">
-          © 2026 Gründemann Geradores LTDA — CNPJ: 00.000.000/0001-00 — Todos os direitos reservados.
+          <p>© 2026 Gründemann Geradores LTDA — CNPJ: 00.000.000/0001-00 — Todos os direitos reservados.</p>
+          <p className="mt-1">
+            Design By{" "}
+            <a href="https://www.luisoliveira.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">
+              Luís Oliveira
+            </a>
+          </p>
         </div>
       </div>
     </footer>
