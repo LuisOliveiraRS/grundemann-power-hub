@@ -189,7 +189,7 @@ const PaymentPending = () => {
               </div>
             </div>
             <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-              Você receberá uma notificação quando o pagamento for confirmado.
+              Assim que o Mercado Pago confirmar, você será redirecionado automaticamente para a página de pagamento confirmado.
             </p>
           </div>
 

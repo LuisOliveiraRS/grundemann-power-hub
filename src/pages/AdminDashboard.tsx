@@ -149,7 +149,6 @@ const AdminDashboard = () => {
 
   useEffect(() => { loadAll(); }, []);
 
-  // Realtime subscription for orders and payments updates
   useEffect(() => {
     const channel = supabase
       .channel('admin-realtime-orders')
@@ -169,27 +168,44 @@ const AdminDashboard = () => {
             });
             if (newRow.status === 'confirmed' && oldRow?.status !== 'confirmed') {
               toast({ title: "💰 Pedido confirmado!", description: `Pedido #${newRow.id.substring(0, 8)} foi pago e confirmado.` });
+              void loadAll();
             }
           } else if (payload.eventType === 'INSERT') {
-            loadAll();
+            void loadAll();
             toast({ title: "🛒 Novo pedido!", description: `Novo pedido #${newRow.id.substring(0, 8)} recebido.` });
           }
         }
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' },
         (payload) => {
-          if (payload.eventType === 'UPDATE') {
+          if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
             const newRow = payload.new as any;
             if (newRow.status === 'approved') {
               toast({ title: "✅ Pagamento aprovado!", description: `Pagamento do pedido confirmado via ${newRow.payment_method || 'Mercado Pago'}.` });
-              loadAll();
+              void loadAll();
             }
           }
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [toast]);
+
+  useEffect(() => {
+    const pendingOrderIds = orders.filter(order => order.status === "pending").map(order => order.id);
+    if (pendingOrderIds.length === 0) return;
+
+    const interval = window.setInterval(async () => {
+      try {
+        await Promise.all(pendingOrderIds.map((orderId) => syncPaymentStatus(orderId)));
+        await loadAll();
+      } catch (error) {
+        console.error("Admin payment sync error:", error);
+      }
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [orders]);
 
   const loadAll = async () => {
     const [prodRes, ordRes, catRes, clientRes, subRes, testRes] = await Promise.all([
