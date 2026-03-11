@@ -284,8 +284,15 @@ const ClientDashboard = () => {
                   {t.count !== undefined && t.count > 0 && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{t.count}</Badge>}
                 </button>
               ))}
+              <button onClick={() => navigate("/calculadora-de-carga")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
+                <Calculator className="h-5 w-5" /> Calculadora de Carga
+              </button>
               <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
                 <ShoppingCart className="h-5 w-5" /> Continuar Comprando
+              </button>
+              <div className="border-t border-sidebar-border my-2" />
+              <button onClick={() => navigate("/mecanico")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
+                <Wrench className="h-5 w-5 text-primary" /> Seja Mecânico Parceiro
               </button>
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
                 <LogOut className="h-5 w-5" /> Sair
