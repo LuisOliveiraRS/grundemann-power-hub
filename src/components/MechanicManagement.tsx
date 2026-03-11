@@ -279,9 +279,17 @@ const MechanicManagement = () => {
                   {m.is_approved ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                   {m.is_approved ? "Revogar" : "Aprovar"}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                 {getWhatsAppUrl(m) && (
+                   <Button asChild size="sm" variant="outline">
+                     <a href={getWhatsAppUrl(m)!} target="_blank" rel="noopener noreferrer" aria-label={`Falar com ${m.profile?.full_name || m.company_name || 'mecânico'} no WhatsApp`}>
+                       <MessageCircle className="h-4 w-4 mr-1" />
+                       WhatsApp
+                     </a>
+                   </Button>
+                 )}
+                 <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
+                   <Trash2 className="h-4 w-4 text-destructive" />
+                 </Button>
               </div>
             </div>
           </div>
