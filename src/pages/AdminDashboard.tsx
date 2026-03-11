@@ -237,6 +237,10 @@ const AdminDashboard = () => {
       engine_model: productForm.engine_model || null,
       specifications: productForm.specifications ? (() => { try { return JSON.parse(productForm.specifications); } catch { return null; } })() : null,
       documents: productForm.documents.filter(Boolean),
+      weight_kg: productForm.weight_kg ? parseFloat(productForm.weight_kg) : null,
+      width_cm: productForm.width_cm ? parseFloat(productForm.width_cm) : null,
+      height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
+      length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
     };
     if (editingProduct?.id) {
       const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
