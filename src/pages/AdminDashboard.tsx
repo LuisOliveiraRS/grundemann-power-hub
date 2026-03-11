@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift, BookOpen, Globe, Paintbrush, FileText
 } from "lucide-react";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { BarChart3 as BarChart3Icon, Boxes } from "lucide-react";
 import MarketingCenter from "@/components/MarketingCenter";
 import SellerManagement from "@/components/SellerManagement";
