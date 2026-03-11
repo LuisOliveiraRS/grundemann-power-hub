@@ -27,6 +27,12 @@ const isConfirmedOrderStatus = (status?: string | null) =>
 const isCancelledPaymentStatus = (status?: string | null) =>
   ["rejected", "cancelled", "refunded"].includes(status || "");
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,10 +41,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     const token = authHeader.replace("Bearer ", "");
@@ -57,10 +60,7 @@ Deno.serve(async (req) => {
 
     const { data: claimsData, error: claimsError } = await authedSupabase.auth.getClaims(token);
     if (claimsError || !claimsData?.claims?.sub) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     const userId = claimsData.claims.sub;
@@ -81,17 +81,11 @@ Deno.serve(async (req) => {
       .single();
 
     if (orderError || !order) {
-      return new Response(JSON.stringify({ error: "Order not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Order not found" }, 404);
     }
 
     if (!isAdmin && order.user_id !== userId) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Forbidden" }, 403);
     }
 
     const { data: latestPayment } = await adminSupabase
@@ -102,16 +96,9 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (!latestPayment) {
-      return new Response(JSON.stringify({ ok: true, synced: false, order_status: order.status }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     let mercadoPagoPayment: any = null;
 
-    if (latestPayment.mp_payment_id) {
+    if (latestPayment?.mp_payment_id) {
       const paymentResponse = await fetch(`https://api.mercadopago.com/v1/payments/${latestPayment.mp_payment_id}`, {
         headers: { Authorization: `Bearer ${mpAccessToken}` },
       });
@@ -136,33 +123,44 @@ Deno.serve(async (req) => {
     }
 
     if (!mercadoPagoPayment) {
-      return new Response(JSON.stringify({
+      return jsonResponse({
         ok: true,
         synced: false,
-        payment_status: latestPayment.status,
+        payment_status: latestPayment?.status || "pending",
         order_status: order.status,
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const normalizedPaymentStatus = normalizePaymentStatus(mercadoPagoPayment.status);
     const paidAt = mercadoPagoPayment.date_approved || mercadoPagoPayment.date_last_updated || null;
 
-    await adminSupabase
-      .from("payments")
-      .update({
-        mp_payment_id: String(mercadoPagoPayment.id),
-        status: normalizedPaymentStatus,
-        payment_method: mercadoPagoPayment.payment_type_id || latestPayment.payment_method || null,
-        mp_status_detail: mercadoPagoPayment.status_detail || latestPayment.mp_status_detail || null,
-        paid_at: normalizedPaymentStatus === "approved" ? paidAt : null,
-      })
-      .eq("id", latestPayment.id);
+    const paymentPayload = {
+      mp_payment_id: String(mercadoPagoPayment.id),
+      status: normalizedPaymentStatus,
+      payment_method: mercadoPagoPayment.payment_type_id || latestPayment?.payment_method || null,
+      mp_status_detail: mercadoPagoPayment.status_detail || latestPayment?.mp_status_detail || null,
+      paid_at: normalizedPaymentStatus === "approved" ? paidAt : null,
+      amount: Number(mercadoPagoPayment.transaction_amount || order.total_amount || 0),
+    };
+
+    if (latestPayment?.id) {
+      await adminSupabase
+        .from("payments")
+        .update(paymentPayload)
+        .eq("id", latestPayment.id);
+    } else {
+      await adminSupabase.from("payments").insert({
+        order_id,
+        user_id: order.user_id,
+        ...paymentPayload,
+      });
+    }
+
+    let resolvedOrderStatus = order.status;
 
     if (normalizedPaymentStatus === "approved" && !isConfirmedOrderStatus(order.status)) {
       await adminSupabase.from("orders").update({ status: "confirmed" }).eq("id", order_id);
+      resolvedOrderStatus = "confirmed";
 
       await adminSupabase.from("order_status_history").insert({
         order_id,
@@ -173,7 +171,7 @@ Deno.serve(async (req) => {
       await adminSupabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Pagamento confirmado! ✅",
-        message: `Seu pagamento do pedido #${order_id.substring(0, 8)} foi aprovado com sucesso.`,
+        message: `Seu pagamento do pedido #${order_id.substring(0, 8)} foi aprovado com sucesso.",
         type: "order",
         link: "/minha-conta",
       });
@@ -184,7 +182,7 @@ Deno.serve(async (req) => {
           adminUsers.map((admin) => ({
             user_id: admin.user_id,
             title: "💰 Pagamento confirmado",
-            message: `Pedido #${order_id.substring(0, 8)} confirmado no valor de R$ ${Number(order.total_amount).toFixed(2).replace(".", ",")}.`,
+            message: `Pedido #${order_id.substring(0, 8)} confirmado no valor de R$ ${Number(order.total_amount).toFixed(2).replace(".", ",")}.",
             type: "order",
             link: "/admin",
           }))
@@ -215,6 +213,7 @@ Deno.serve(async (req) => {
 
     if (isCancelledPaymentStatus(normalizedPaymentStatus) && order.status === "pending") {
       await adminSupabase.from("orders").update({ status: "cancelled" }).eq("id", order_id);
+      resolvedOrderStatus = "cancelled";
 
       await adminSupabase.from("order_status_history").insert({
         order_id,
@@ -223,30 +222,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    const resolvedOrderStatus = normalizedPaymentStatus === "approved" && !isConfirmedOrderStatus(order.status)
-      ? "confirmed"
-      : isCancelledPaymentStatus(normalizedPaymentStatus) && order.status === "pending"
-        ? "cancelled"
-        : order.status;
-
-    return new Response(JSON.stringify({
+    return jsonResponse({
       ok: true,
       synced: true,
       payment_status: normalizedPaymentStatus,
       order_status: resolvedOrderStatus,
       mercadopago_status: mercadoPagoPayment.status,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("sync-payment-status error:", error);
-    return new Response(JSON.stringify({
-      ok: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      500
+    );
   }
 });
