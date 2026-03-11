@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Pagamento confirmado! ✅",
-        message: `Seu pagamento do pedido #${orderId.substring(0, 8)} foi aprovado! Seu pedido está sendo preparado.",
+        message: `Seu pagamento do pedido #${orderId.substring(0, 8)} foi aprovado! Seu pedido está sendo preparado.`,
         type: "order",
         link: "/minha-conta",
       });
