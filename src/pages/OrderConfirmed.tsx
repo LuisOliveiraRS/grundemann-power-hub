@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface OrderDetail {
   id: string;
