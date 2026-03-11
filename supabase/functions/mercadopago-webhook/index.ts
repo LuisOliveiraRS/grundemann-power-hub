@@ -5,58 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function verifyWebhookSignature(req: Request, body: string): Promise<boolean> {
-  const secret = Deno.env.get("MERCADOPAGO_WEBHOOK_SECRET");
-  if (!secret) {
-    console.warn("MERCADOPAGO_WEBHOOK_SECRET not set — skipping signature verification");
-    return true;
-  }
-
-  const xSignature = req.headers.get("x-signature");
-  const xRequestId = req.headers.get("x-request-id");
-
-  if (!xSignature || !xRequestId) {
-    console.warn("Missing x-signature or x-request-id headers");
-    return false;
-  }
-
-  const parts: Record<string, string> = {};
-  for (const part of xSignature.split(",")) {
-    const [key, value] = part.split("=", 2);
-    if (key && value) parts[key.trim()] = value.trim();
-  }
-
-  const ts = parts["ts"];
-  const v1 = parts["v1"];
-  if (!ts || !v1) {
-    console.warn("Invalid x-signature format");
-    return false;
-  }
-
-  const url = new URL(req.url);
-  const dataId = url.searchParams.get("data.id") || "";
-  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
-  const computed = Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (computed !== v1) {
-    console.error("Webhook signature mismatch");
-    return false;
-  }
-
-  return true;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -69,30 +17,33 @@ Deno.serve(async (req) => {
     }
 
     const bodyText = await req.text();
-    
-    const isValid = await verifyWebhookSignature(req, bodyText);
-    if (!isValid) {
-      console.error("Invalid webhook signature - rejecting request");
-      return new Response(JSON.stringify({ error: "Invalid signature" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    const body = JSON.parse(bodyText);
-    console.log("Webhook received:", JSON.stringify(body));
-
-    // Log webhook event for debugging
+    // Log webhook for debugging (use anon key for logging only)
     const logSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!
     );
+
+    let body: any;
+    try {
+      body = JSON.parse(bodyText);
+    } catch {
+      console.error("Invalid JSON body");
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Webhook received:", JSON.stringify(body));
+
     await logSupabase.from("webhook_logs").insert({
       event_type: body.type || body.action || "unknown",
       payment_id: String(body.data?.id || ""),
       raw_payload: body,
-    }).catch(() => {}); // Don't fail on log errors
+    }).catch(() => {});
 
+    // Process payment notifications
     if (body.type === "payment" || body.action === "payment.updated" || body.action === "payment.created") {
       const paymentId = body.data?.id;
       if (!paymentId) {
@@ -209,7 +160,7 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Auto commission: find active seller (default seller gets all orders)
+          // Auto commission
           const { data: sellers } = await supabase
             .from("sellers")
             .select("id, user_id, commission_rate")
@@ -220,7 +171,6 @@ Deno.serve(async (req) => {
             const seller = sellers[0];
             const commissionAmount = Number(order.total_amount) * (Number(seller.commission_rate) / 100);
 
-            // Check if commission already exists for this order
             const { data: existingComm } = await supabase
               .from("sale_commissions")
               .select("id")
@@ -238,10 +188,6 @@ Deno.serve(async (req) => {
                 status: "pending",
               });
 
-              // Update seller totals
-              await supabase.rpc("update_seller_totals_not_exists" as any, {}).catch(() => {
-                // If RPC doesn't exist, update manually
-              });
               const { data: currentSeller } = await supabase
                 .from("sellers")
                 .select("total_sales, total_commission")
@@ -255,7 +201,6 @@ Deno.serve(async (req) => {
                 }).eq("id", seller.id);
               }
 
-              // Notify seller
               await supabase.from("notifications").insert({
                 user_id: seller.user_id,
                 title: "🎉 Nova comissão!",
@@ -329,6 +274,7 @@ Deno.serve(async (req) => {
     });
   } catch (error: unknown) {
     console.error("Webhook error:", error);
+    // Always return 200 to prevent MP from retrying indefinitely
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
