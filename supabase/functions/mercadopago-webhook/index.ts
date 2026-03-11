@@ -82,6 +82,17 @@ Deno.serve(async (req) => {
     const body = JSON.parse(bodyText);
     console.log("Webhook received:", JSON.stringify(body));
 
+    // Log webhook event for debugging
+    const logSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!
+    );
+    await logSupabase.from("webhook_logs").insert({
+      event_type: body.type || body.action || "unknown",
+      payment_id: String(body.data?.id || ""),
+      raw_payload: body,
+    }).catch(() => {}); // Don't fail on log errors
+
     if (body.type === "payment" || body.action === "payment.updated" || body.action === "payment.created") {
       const paymentId = body.data?.id;
       if (!paymentId) {
