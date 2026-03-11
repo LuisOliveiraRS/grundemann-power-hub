@@ -448,21 +448,32 @@ const ClientDashboard = () => {
                       <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="font-heading font-bold text-lg mb-2">Nenhum orçamento</h3>
                       <p className="text-muted-foreground mb-4">Você ainda não solicitou nenhum orçamento.</p>
-                      <Button onClick={() => navigate("/produtos")}>Ver Produtos</Button>
+                      <Button onClick={() => navigate("/orcamento")}>Solicitar Orçamento</Button>
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      <div className="flex justify-end mb-2">
+                        <Button size="sm" onClick={() => navigate("/orcamento")}>
+                          <FileText className="h-4 w-4 mr-1" /> Novo Orçamento
+                        </Button>
+                      </div>
                       {quotes.map(q => (
                         <div key={q.id} className="bg-card rounded-xl shadow-sm border border-border p-5">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-heading font-bold">Orçamento #{q.id.slice(0, 8)}</p>
-                            <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : "bg-accent/20 text-accent-foreground"}>
+                            <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
                               {quoteStatusLabel[q.status] || q.status}
                             </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
                           {q.message && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{q.message}</p>}
                           <p className="font-heading font-bold text-price mt-2">R$ {Number(q.total_estimated).toFixed(2).replace(".", ",")}</p>
+                          {q.admin_notes && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <p className="text-xs font-semibold text-muted-foreground mb-1">Resposta do administrador:</p>
+                              <p className="text-sm bg-muted/50 rounded-lg p-3">{q.admin_notes}</p>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
