@@ -191,7 +191,7 @@ const MechanicArea = () => {
     shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
   };
 
-  const ProfileForm = () => (
+  const renderProfileForm = () => (
     <div className="space-y-6">
       {/* Personal info */}
       <div>
