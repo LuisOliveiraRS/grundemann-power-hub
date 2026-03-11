@@ -381,6 +381,7 @@ const ClientDashboard = () => {
                                   </Button>
                                 )}
                                 {canCancel(order.status) && <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={e => { e.stopPropagation(); cancelOrder(order.id); }}><XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar</Button>}
+                                {order.status === "cancelled" && <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={e => { e.stopPropagation(); deleteOrder(order.id); }}><Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir</Button>}
                                 {expandedOrder === order.id ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                               </div>
                             </div>
