@@ -186,6 +186,9 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
             <button onClick={() => go("/orcamento")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground">
               <FileText className="h-4 w-4 text-muted-foreground" /> Solicitar Orçamento
             </button>
+            <button onClick={() => go("/calculadora-de-carga")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground font-medium text-primary">
+              <Wrench className="h-4 w-4 text-primary" /> Calculadora de Carga
+            </button>
           </div>
 
           {/* Contact */}
