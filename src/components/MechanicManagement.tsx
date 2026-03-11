@@ -45,10 +45,46 @@ const MechanicManagement = () => {
     setLoading(false);
   };
 
-  const toggleApproval = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("mechanics").update({ is_approved: !current }).eq("id", id);
+  const normalizePhone = (phone?: string | null) => (phone || "").replace(/\D/g, "");
+
+  const getWhatsAppUrl = (mechanic: MechanicRow) => {
+    const phone = normalizePhone(mechanic.profile?.phone);
+    if (!phone) return null;
+
+    const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
+    const message = `Olá, ${recipient}! Aqui é da Grundemann. Estamos entrando em contato pelo painel administrativo.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  };
+
+  const sendApprovalNotification = async (mechanic: MechanicRow) => {
+    const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
+    const whatsappUrl = getWhatsAppUrl(mechanic);
+
+    await supabase.from("notifications").insert({
+      user_id: mechanic.user_id,
+      title: "Cadastro aprovado na Área do Mecânico 🎉",
+      message: `Olá, ${recipient}! Seu cadastro foi aprovado e sua área exclusiva já está liberada.`,
+      type: "info",
+      link: "/mecanico",
+    });
+
+    if (whatsappUrl) {
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const toggleApproval = async (mechanic: MechanicRow) => {
+    const nextApproved = !mechanic.is_approved;
+    const { error } = await supabase.from("mechanics").update({ is_approved: nextApproved }).eq("id", mechanic.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    toast({ title: !current ? "Mecânico aprovado!" : "Aprovação revogada!" });
+
+    if (nextApproved) {
+      await sendApprovalNotification(mechanic);
+      toast({ title: "Mecânico aprovado!", description: mechanic.profile?.phone ? "Mensagem de boas-vindas aberta no WhatsApp e notificação interna enviada." : "Notificação interna enviada." });
+    } else {
+      toast({ title: "Aprovação revogada!" });
+    }
+
     load();
   };
 
