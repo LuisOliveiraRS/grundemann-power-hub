@@ -14,9 +14,37 @@ import { gasolineSections, type CatalogSection } from "@/data/gasolineEnginePart
 import { dieselSections } from "@/data/dieselEngineParts";
 
 const ExplodedCatalogContent = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [engineType, setEngineType] = useState<"gasolina" | "diesel">("gasolina");
   const [selectedSection, setSelectedSection] = useState<CatalogSection | null>(null);
   const [hpFilter, setHpFilter] = useState("");
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+
+  const addToCart = async (e: React.MouseEvent, productId: string, productName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setAddingToCart(productId);
+    try {
+      const { data: existing } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: user.id, product_id: productId, quantity: 1 });
+      }
+      toast({ title: `${productName} adicionado ao carrinho!` });
+    } catch {
+      toast({ title: "Erro ao adicionar", variant: "destructive" });
+    }
+    setAddingToCart(null);
+  };
 
   const sections = engineType === "gasolina" ? gasolineSections : dieselSections;
   const hpOptions = engineType === "gasolina"
