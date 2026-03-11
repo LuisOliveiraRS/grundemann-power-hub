@@ -30,6 +30,7 @@ const QuoteRequest = lazy(() => import("./pages/QuoteRequest"));
 const MechanicArea = lazy(() => import("./pages/MechanicArea"));
 const TechnicalCenter = lazy(() => import("./pages/TechnicalCenter"));
 const ExplodedCatalog = lazy(() => import("./pages/ExplodedCatalog"));
+const GeneratorCalculator = lazy(() => import("./pages/GeneratorCalculator"));
 
 const queryClient = new QueryClient();
 
