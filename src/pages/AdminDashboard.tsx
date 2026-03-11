@@ -2025,11 +2025,16 @@ const AdminDashboard = () => {
         {/* ARTICLES TAB */}
         {tab === "articles" && (
           <div>
-            <div className="mb-8">
-              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
-                <BookOpen className="h-8 w-8 text-primary" /> Central Técnica
-              </h1>
-              <p className="text-muted-foreground mt-1">Gerencie artigos técnicos, guias de manutenção e conteúdo educacional</p>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <BookOpen className="h-7 w-7 text-primary" /> Central Técnica
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie artigos técnicos, guias de manutenção e conteúdo educacional</p>
+              </div>
             </div>
             <ArticleManagement />
           </div>
