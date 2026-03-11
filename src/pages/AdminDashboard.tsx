@@ -1898,17 +1898,71 @@ const AdminDashboard = () => {
         {/* QUOTES TAB */}
         {tab === "quotes" && <QuoteManagement />}
 
-        {/* MECHANICS TAB */}
-        {tab === "mechanics" && <MechanicManagement />}
-
-        {/* MECHANIC VIDEOS TAB */}
-        {(tab as string) === "mechanic-videos" && (
+        {/* MECHANICS HUB TAB */}
+        {tab === "mechanics" && (
           <div>
             <div className="mb-8">
-              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
-                <Video className="h-8 w-8 text-primary" /> Vídeos Técnicos
-              </h1>
-              <p className="text-muted-foreground mt-1">Gerencie vídeos de instalação e manutenção para mecânicos</p>
+              <div className="flex items-center gap-4 mb-2">
+                <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/70 p-4 shadow-lg">
+                  <Wrench className="h-10 w-10 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="font-heading text-3xl font-black text-foreground">Área do Mecânico</h1>
+                  <p className="text-muted-foreground mt-0.5">Gerencie mecânicos, vídeos, artigos, catálogos e orçamentos</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature cards grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              {[
+                { key: "mechanic-list" as const, label: "Mecânicos Cadastrados", desc: "Aprove, edite e gerencie mecânicos parceiros", icon: Users, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                { key: "mechanic-videos" as const, label: "Vídeos Técnicos", desc: "Gerencie vídeos de instalação e manutenção", icon: Video, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+                { key: "articles" as const, label: "Central Técnica", desc: "Artigos, guias de manutenção e conteúdo técnico", icon: BookOpen, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
+                { key: "catalogs" as const, label: "Catálogos Técnicos", desc: "Catálogos PDF disponíveis para download", icon: FileText, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                { key: "quotes" as const, label: "Orçamentos", desc: "Solicitações de orçamento dos clientes", icon: FileUp, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+              ].map((card) => (
+                <button
+                  key={card.key}
+                  onClick={() => setTab(card.key === "mechanic-list" ? "mechanics" : card.key)}
+                  className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden`}
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
+                  <div className={`inline-flex items-center justify-center rounded-xl ${card.iconBg} p-3 mb-4 shadow-sm group-hover:shadow-md transition-shadow`}>
+                    <card.icon className={`h-7 w-7 ${card.iconColor}`} />
+                  </div>
+                  <h3 className="font-heading font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{card.label}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
+                  <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    Acessar →
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Quick stats for mechanics */}
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="font-heading font-bold text-lg text-foreground mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" /> Gestão de Mecânicos
+              </h2>
+              <MechanicManagement />
+            </div>
+          </div>
+        )}
+
+        {/* MECHANIC VIDEOS SUB-TAB */}
+        {(tab as string) === "mechanic-videos" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <Video className="h-7 w-7 text-primary" /> Vídeos Técnicos
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie vídeos de instalação e manutenção para mecânicos</p>
+              </div>
             </div>
             <MechanicVideoManagement />
           </div>
