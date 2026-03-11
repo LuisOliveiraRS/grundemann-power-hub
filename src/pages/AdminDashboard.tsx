@@ -1549,9 +1549,18 @@ const AdminDashboard = () => {
                 <h1 className="font-heading text-3xl font-bold">Clientes</h1>
                 <p className="text-muted-foreground text-sm mt-1">{filteredClients.length} de {clients.length} clientes</p>
               </div>
-              <Button onClick={() => { setEditingClient({}); resetClientForm(); }} className="shadow-md">
-                <Plus className="h-4 w-4 mr-2" /> Novo Cliente
-              </Button>
+              <div className="flex gap-3">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent("Olá! Promoção especial da Gründemann Geradores! Confira nossos produtos: https://grundemann-power-hub.lovable.app/produtos")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white text-sm font-semibold transition-colors shadow-md"
+                >
+                  <MessageSquare className="h-4 w-4" /> Enviar Mensagem a Todos
+                </a>
+                <Button onClick={() => { setEditingClient({}); resetClientForm(); }} className="shadow-md">
+                  <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+                </Button>
+              </div>
             </div>
 
             {editingClient !== null && (
