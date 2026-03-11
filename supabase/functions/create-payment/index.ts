@@ -5,28 +5,47 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const resolveOrigin = (req: Request) => {
+  const originHeader = req.headers.get("origin");
+  if (originHeader) return originHeader;
+
+  const referer = req.headers.get("referer");
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      // ignore invalid referer
+    }
+  }
+
+  return "https://grundemann-power-hub.lovable.app";
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
-    if (!MERCADOPAGO_ACCESS_TOKEN) {
+    const mercadopagoAccessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
+    if (!mercadopagoAccessToken) {
       throw new Error("MERCADOPAGO_ACCESS_TOKEN is not configured");
     }
 
-    // Only TEST- prefix means sandbox; APP_USR- is production
-    const isTestToken = MERCADOPAGO_ACCESS_TOKEN.startsWith("TEST-");
+    const isTestToken = mercadopagoAccessToken.startsWith("TEST-");
 
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
+
+    const token = authHeader.replace("Bearer ", "");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -34,24 +53,22 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const userId = userData.user.id;
+    const userId = claimsData.claims.sub;
+    const userEmail = String(claimsData.claims.email || "");
+
     const { order_id } = await req.json();
     if (!order_id) {
       throw new Error("order_id is required");
     }
 
-    // Fetch order
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*")
+      .select("id, user_id, total_amount, status")
       .eq("id", order_id)
       .eq("user_id", userId)
       .single();
@@ -60,28 +77,34 @@ Deno.serve(async (req) => {
       throw new Error("Order not found");
     }
 
-    // Fetch order items
-    const { data: orderItems } = await supabase
-      .from("order_items")
-      .select("*")
-      .eq("order_id", order_id);
+    const origin = resolveOrigin(req);
 
-    // Fetch user profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    if (order.status === "confirmed") {
+      return jsonResponse({
+        init_point: `${origin}/pedido-confirmado?order_id=${order_id}`,
+        already_paid: true,
+      });
+    }
 
-    // Build MP preference items
+    const [{ data: orderItems }, { data: profile }] = await Promise.all([
+      supabase
+        .from("order_items")
+        .select("product_name, quantity, price_at_purchase")
+        .eq("order_id", order_id),
+      supabase
+        .from("profiles")
+        .select("full_name, email, cpf_cnpj, phone, address, address_number, zip_code")
+        .eq("user_id", userId)
+        .single(),
+    ]);
+
     const items = (orderItems || []).map((item: any) => ({
-      title: item.product_name.substring(0, 256),
-      quantity: item.quantity,
-      unit_price: Math.max(0.01, Math.round(Number(item.price_at_purchase) * 100) / 100),
+      title: String(item.product_name || "Produto").substring(0, 256),
+      quantity: Number(item.quantity) || 1,
+      unit_price: Math.max(0.01, Math.round(Number(item.price_at_purchase || 0) * 100) / 100),
       currency_id: "BRL",
     }));
 
-    // Add shipping as item if needed
     const itemsTotal = items.reduce((sum: number, i: any) => sum + i.unit_price * i.quantity, 0);
     if (Number(order.total_amount) > itemsTotal + 0.01) {
       const shippingAmount = Math.round((Number(order.total_amount) - itemsTotal) * 100) / 100;
@@ -95,17 +118,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Extract CPF/CNPJ - remove non-numeric chars
-    const rawDoc = (profile?.cpf_cnpj || "").replace(/\D/g, "");
+    const rawDoc = String(profile?.cpf_cnpj || "").replace(/\D/g, "");
     const identificationType = rawDoc.length > 11 ? "CNPJ" : "CPF";
 
-    // Build payer object with identification (required for PIX/boleto)
-    const payer: any = {
-      email: profile?.email || userData.user.email || "",
+    const payer: Record<string, any> = {
+      email: profile?.email || userEmail || "",
     };
 
     if (profile?.full_name) {
-      const nameParts = profile.full_name.trim().split(" ");
+      const nameParts = String(profile.full_name).trim().split(" ");
       payer.name = nameParts[0] || "";
       payer.surname = nameParts.slice(1).join(" ") || "";
     }
@@ -118,7 +139,7 @@ Deno.serve(async (req) => {
     }
 
     if (profile?.phone) {
-      const cleanPhone = (profile.phone || "").replace(/\D/g, "");
+      const cleanPhone = String(profile.phone).replace(/\D/g, "");
       if (cleanPhone.length >= 10) {
         payer.phone = {
           area_code: cleanPhone.substring(0, 2),
@@ -131,15 +152,13 @@ Deno.serve(async (req) => {
       payer.address = {
         street_name: profile.address,
         street_number: profile.address_number || "",
-        zip_code: (profile.zip_code || "").replace(/\D/g, ""),
+        zip_code: String(profile.zip_code || "").replace(/\D/g, ""),
       };
     }
 
-    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/[^/]*$/, "") || "https://grundemann-power-hub.lovable.app";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 
-    // Create Mercado Pago preference with all payment methods enabled
-    const preferenceBody: any = {
+    const preferenceBody: Record<string, any> = {
       items,
       payer,
       back_urls: {
@@ -158,15 +177,11 @@ Deno.serve(async (req) => {
       },
     };
 
-    console.log("Creating MP preference with items:", JSON.stringify(items));
-    console.log("Payer:", JSON.stringify(payer));
-    console.log("Is test token:", isTestToken);
-
     const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
       },
       body: JSON.stringify(preferenceBody),
     });
@@ -178,47 +193,54 @@ Deno.serve(async (req) => {
     }
 
     const preference = await mpResponse.json();
-    console.log("MP preference created:", preference.id);
-    console.log("init_point:", preference.init_point);
-    console.log("sandbox_init_point:", preference.sandbox_init_point);
 
-    // Save payment record
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    await supabaseAdmin.from("payments").insert({
-      order_id: order_id,
+    const { data: latestPayment } = await supabaseAdmin
+      .from("payments")
+      .select("id")
+      .eq("order_id", order_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const paymentPayload = {
+      order_id,
       user_id: userId,
       mp_preference_id: preference.id,
-      amount: order.total_amount,
+      mp_payment_id: null,
+      payment_method: null,
+      mp_status_detail: null,
+      paid_at: null,
+      amount: Number(order.total_amount),
       status: "pending",
-    });
+    };
 
-    // Use sandbox_init_point for test tokens, init_point for production
+    if (latestPayment?.id) {
+      await supabaseAdmin
+        .from("payments")
+        .update(paymentPayload)
+        .eq("id", latestPayment.id);
+    } else {
+      await supabaseAdmin.from("payments").insert(paymentPayload);
+    }
+
     const paymentUrl = isTestToken
       ? (preference.sandbox_init_point || preference.init_point)
       : (preference.init_point || preference.sandbox_init_point);
 
-    return new Response(
-      JSON.stringify({
-        preference_id: preference.id,
-        init_point: paymentUrl,
-        sandbox_init_point: preference.sandbox_init_point,
-        is_test: isTestToken,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return jsonResponse({
+      preference_id: preference.id,
+      init_point: paymentUrl,
+      sandbox_init_point: preference.sandbox_init_point,
+      is_test: isTestToken,
+    });
   } catch (error: unknown) {
     console.error("Error creating payment:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: msg }, 500);
   }
 });

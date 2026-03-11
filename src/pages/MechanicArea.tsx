@@ -191,7 +191,7 @@ const MechanicArea = () => {
     shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
   };
 
-  const ProfileForm = () => (
+  const renderProfileForm = () => (
     <div className="space-y-6">
       {/* Personal info */}
       <div>
@@ -316,7 +316,7 @@ const MechanicArea = () => {
                   <CardDescription>Preencha seus dados pessoais e profissionais para acessar benefícios exclusivos.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <ProfileForm />
+                  {renderProfileForm()}
                   <Button onClick={register} disabled={saving} className="w-full" size="lg">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wrench className="h-4 w-4 mr-2" />}
                     Solicitar Cadastro de Mecânico
@@ -408,7 +408,7 @@ const MechanicArea = () => {
                     <CardDescription>Atualize seus dados pessoais e da oficina</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <ProfileForm />
+                    {renderProfileForm()}
                     <div className="flex items-center gap-4">
                       <Button onClick={updateProfile} disabled={saving}>
                         {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

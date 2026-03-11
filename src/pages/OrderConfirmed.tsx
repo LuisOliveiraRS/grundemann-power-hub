@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface OrderDetail {
   id: string;
@@ -94,10 +95,21 @@ const OrderConfirmed = () => {
     return () => { supabase.removeChannel(channel); };
   }, [orderId, user]);
 
-  // Poll as fallback every 5 seconds while pending
+  // Poll + sync fallback every 5 seconds while pending
   useEffect(() => {
     if (paymentStatus !== "pending" && paymentStatus !== "loading") return;
-    const interval = setInterval(loadOrder, 5000);
+
+    const interval = setInterval(async () => {
+      if (!orderId) return;
+      try {
+        await syncPaymentStatus(orderId);
+      } catch (error) {
+        console.error("OrderConfirmed sync error:", error);
+      } finally {
+        await loadOrder();
+      }
+    }, 5000);
+
     return () => clearInterval(interval);
   }, [paymentStatus, orderId, user]);
 
