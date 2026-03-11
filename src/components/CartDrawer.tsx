@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import PaymentBadges from "@/components/PaymentBadges";
 
 interface CartItem {
   id: string;
@@ -64,7 +65,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
       {/* Backdrop */}
       <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
 
-      {/* Compact cart popup - positioned top-right */}
+      {/* Compact cart popup */}
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -101,7 +102,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
             </div>
           ) : (
             <>
-              {/* Items - scrollable */}
+              {/* Items */}
               <div className="max-h-[280px] overflow-y-auto divide-y divide-border">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
@@ -116,7 +117,7 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-xs truncate">{item.product?.name}</p>
-                      <p className="text-price font-bold text-sm">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
+                      <p className="text-primary font-bold text-sm">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
                     </div>
                     <div className="flex items-center gap-0.5">
                       <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-1 hover:bg-muted rounded transition-colors">
@@ -138,11 +139,12 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
               <div className="border-t border-border px-5 py-4 space-y-3 bg-muted/10">
                 <div className="flex justify-between font-heading font-bold">
                   <span className="text-sm">Total</span>
-                  <span className="text-price text-lg">R$ {total.toFixed(2).replace(".", ",")}</span>
+                  <span className="text-primary text-lg">R$ {total.toFixed(2).replace(".", ",")}</span>
                 </div>
                 <Button className="w-full font-bold" onClick={goToCheckout}>
                   Finalizar Pedido
                 </Button>
+                <PaymentBadges compact />
                 <button
                   onClick={() => onOpenChange(false)}
                   className="w-full text-center text-xs text-primary hover:underline font-medium"

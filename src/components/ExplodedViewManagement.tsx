@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Upload, Loader2, Eye, EyeOff, X, ImageIcon } from "lucide-react";
+import { Plus, Trash2, Upload, Loader2, Eye, EyeOff, X, ImageIcon, FileText } from "lucide-react";
 
 interface ExplodedView {
   id: string;
@@ -54,25 +53,28 @@ const ExplodedViewManagement = () => {
     setEditingId(null);
   };
 
-  const handleImageUpload = async (file: File) => {
+  const handleFileUpload = async (file: File) => {
     setUploading(true);
-    const ext = file.name.split(".").pop();
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const isPdf = ext === "pdf";
+    const bucket = isPdf ? "technical-catalogs" : "product-images";
     const fileName = `exploded-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+    
+    const { error } = await supabase.storage.from(bucket).upload(fileName, file);
     if (error) {
       toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
       setUploading(false);
       return;
     }
-    const { data } = supabase.storage.from("product-images").getPublicUrl(fileName);
+    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
     setForm(f => ({ ...f, image_url: data.publicUrl }));
-    toast({ title: "Imagem enviada!" });
+    toast({ title: isPdf ? "PDF enviado!" : "Imagem enviada!" });
     setUploading(false);
   };
 
   const saveView = async () => {
     if (!form.section_name.trim() || !form.image_url.trim()) {
-      toast({ title: "Preencha nome da seção e imagem", variant: "destructive" });
+      toast({ title: "Preencha nome da seção e arquivo", variant: "destructive" });
       return;
     }
     const payload = {
@@ -124,6 +126,8 @@ const ExplodedViewManagement = () => {
     loadViews();
   };
 
+  const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const gasolinaViews = views.filter(v => v.engine_type === "gasolina");
@@ -174,13 +178,20 @@ const ExplodedViewManagement = () => {
             </div>
           </div>
 
-          {/* Image upload */}
+          {/* File upload - images and PDFs */}
           <div>
-            <Label>Imagem da Vista Explodida *</Label>
+            <Label>Imagem ou PDF da Vista Explodida *</Label>
             <div className="mt-2 flex items-start gap-4">
               {form.image_url ? (
                 <div className="relative">
-                  <img src={form.image_url} alt="Preview" className="h-32 w-40 object-contain rounded-lg border border-border bg-white" />
+                  {isPdf(form.image_url) ? (
+                    <div className="h-32 w-40 rounded-lg border border-border bg-muted flex flex-col items-center justify-center">
+                      <FileText className="h-10 w-10 text-primary mb-1" />
+                      <p className="text-[10px] text-muted-foreground">PDF</p>
+                    </div>
+                  ) : (
+                    <img src={form.image_url} alt="Preview" className="h-32 w-40 object-contain rounded-lg border border-border bg-background" />
+                  )}
                   <button onClick={() => setForm(f => ({ ...f, image_url: "" }))} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"><X className="h-3 w-3" /></button>
                 </div>
               ) : (
@@ -189,14 +200,14 @@ const ExplodedViewManagement = () => {
                   className="h-32 w-40 rounded-lg border-2 border-dashed border-border hover:border-primary/50 cursor-pointer flex flex-col items-center justify-center"
                 >
                   {uploading ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <ImageIcon className="h-8 w-8 text-muted-foreground" />}
-                  <p className="text-xs text-muted-foreground mt-1">{uploading ? "Enviando..." : "Upload"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{uploading ? "Enviando..." : "Imagem ou PDF"}</p>
                 </div>
               )}
               <div className="flex-1">
-                <Input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="Ou cole a URL da imagem..." className="text-xs" />
+                <Input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="Ou cole a URL do arquivo..." className="text-xs" />
               </div>
             </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0]); }} />
+            <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={e => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0]); }} />
           </div>
 
           <div className="flex gap-3">
@@ -206,7 +217,7 @@ const ExplodedViewManagement = () => {
         </div>
       )}
 
-      {/* Views list grouped by engine type */}
+      {/* Views list */}
       {[
         { label: "Motor Gasolina", items: gasolinaViews, color: "text-primary" },
         { label: "Motor Diesel", items: dieselViews, color: "text-secondary" },
@@ -218,8 +229,15 @@ const ExplodedViewManagement = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {group.items.map(v => (
               <div key={v.id} className={`rounded-xl border overflow-hidden transition-opacity ${v.is_active ? "border-border" : "border-border/50 opacity-50"}`}>
-                <div className="aspect-square bg-white p-1">
-                  <img src={v.image_url} alt={v.section_name} className="w-full h-full object-contain" />
+                <div className="aspect-square bg-background p-1">
+                  {isPdf(v.image_url) ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-lg">
+                      <FileText className="h-12 w-12 text-primary mb-1" />
+                      <p className="text-xs text-muted-foreground">PDF</p>
+                    </div>
+                  ) : (
+                    <img src={v.image_url} alt={v.section_name} className="w-full h-full object-contain" />
+                  )}
                 </div>
                 <div className="p-3 bg-card">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -245,7 +263,7 @@ const ExplodedViewManagement = () => {
       ))}
 
       {views.length === 0 && (
-        <p className="text-center text-muted-foreground py-10">Nenhuma vista explodida cadastrada. As vistas padrão (embutidas no código) continuarão sendo exibidas.</p>
+        <p className="text-center text-muted-foreground py-10">Nenhuma vista explodida cadastrada.</p>
       )}
     </div>
   );
