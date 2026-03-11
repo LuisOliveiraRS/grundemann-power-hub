@@ -1,4 +1,4 @@
-import { Phone, MessageCircle, Mail, MapPin, ShieldCheck, FileText, RotateCcw } from "lucide-react";
+import { Phone, MessageCircle, Mail, MapPin, ShieldCheck, FileText, RotateCcw, Calculator } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 
@@ -32,6 +32,7 @@ const Footer = () => {
               <li><Link to="/mecanico" className="hover:text-primary transition-colors">Área do Mecânico</Link></li>
               <li><Link to="/central-tecnica" className="hover:text-primary transition-colors">Central Técnica</Link></li>
               <li><Link to="/catalogo-interativo" className="hover:text-primary transition-colors">Catálogo Interativo</Link></li>
+              <li><Link to="/calculadora-de-carga" className="hover:text-primary transition-colors flex items-center gap-1.5"><Calculator className="h-3 w-3" /> Calculadora de Carga</Link></li>
             </ul>
           </div>
 
@@ -41,7 +42,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/categoria/geradores-diesel" className="hover:text-primary transition-colors">Geradores Diesel</Link></li>
               <li><Link to="/categoria/geradores-gasolina" className="hover:text-primary transition-colors">Geradores Gasolina</Link></li>
-              <li><Link to="/categoria/pecas-componentes" className="hover:text-primary transition-colors">Peças e Componentes</Link></li>
+              <li><Link to="/categoria/pecas-e-componentes" className="hover:text-primary transition-colors">Peças e Componentes</Link></li>
               <li><Link to="/categoria/manutencao" className="hover:text-primary transition-colors">Manutenção</Link></li>
               <li><Link to="/categoria/acessorios" className="hover:text-primary transition-colors">Acessórios</Link></li>
             </ul>

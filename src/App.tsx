@@ -30,6 +30,7 @@ const QuoteRequest = lazy(() => import("./pages/QuoteRequest"));
 const MechanicArea = lazy(() => import("./pages/MechanicArea"));
 const TechnicalCenter = lazy(() => import("./pages/TechnicalCenter"));
 const ExplodedCatalog = lazy(() => import("./pages/ExplodedCatalog"));
+const GeneratorCalculator = lazy(() => import("./pages/GeneratorCalculator"));
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/mecanico" element={<MechanicArea />} />
                 <Route path="/central-tecnica" element={<TechnicalCenter />} />
                 <Route path="/catalogo-interativo" element={<ExplodedCatalog />} />
+                <Route path="/calculadora-de-carga" element={<GeneratorCalculator />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

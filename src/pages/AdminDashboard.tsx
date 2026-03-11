@@ -78,7 +78,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "stock" | "subscribers" | "rewards" | "articles" | "seo" | "shipping" | "analytics" | "price-research" | "appearance" | "catalogs">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -616,6 +616,8 @@ const AdminDashboard = () => {
     cancelled: "bg-destructive/20 text-destructive",
   };
 
+  const [expandedSidebarGroup, setExpandedSidebarGroup] = useState<string | null>("mechanic-area");
+
   const sideItems = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "products", label: "Produtos", icon: Package },
@@ -624,12 +626,8 @@ const AdminDashboard = () => {
     { key: "clients", label: "Clientes", icon: Users },
     { key: "testimonials", label: "Depoimentos", icon: MessageSquare },
     { key: "sellers", label: "Vendedores", icon: Users },
-    { key: "quotes", label: "Orçamentos", icon: FileUp },
-    { key: "mechanics", label: "Mecânicos", icon: Wrench },
     { key: "roles", label: "Permissões", icon: Users },
     { key: "marketing", label: "Marketing", icon: Megaphone },
-    { key: "articles", label: "Central Técnica", icon: BookOpen },
-    { key: "catalogs", label: "Catálogos Técnicos", icon: FileText },
     { key: "seo", label: "SEO", icon: Globe },
     { key: "shipping", label: "Frete", icon: Truck },
     { key: "stock", label: "Estoque & ML", icon: Boxes },
@@ -639,6 +637,14 @@ const AdminDashboard = () => {
     { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
     { key: "appearance", label: "Aparência", icon: Paintbrush },
+  ] as const;
+
+  const mechanicSubItems = [
+    { key: "mechanics", label: "Mecânicos", icon: Users },
+    { key: "mechanic-videos", label: "Vídeos Técnicos", icon: Video },
+    { key: "articles", label: "Central Técnica", icon: BookOpen },
+    { key: "catalogs", label: "Catálogos Técnicos", icon: FileText },
+    { key: "quotes", label: "Orçamentos", icon: FileUp },
   ] as const;
 
   // Filtered data
@@ -744,7 +750,7 @@ const AdminDashboard = () => {
           <img src={logo} alt="Gründemann" className="h-12 w-auto brightness-200" />
           <p className="text-xs text-sidebar-foreground/50 mt-2">Painel Administrativo</p>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {sideItems.map((item) => (
             <button
               key={item.key}
@@ -762,6 +768,40 @@ const AdminDashboard = () => {
               )}
             </button>
           ))}
+
+          {/* Mechanic Area Group */}
+          <div className="pt-2">
+            <button
+              onClick={() => setExpandedSidebarGroup(expandedSidebarGroup === "mechanic-area" ? null : "mechanic-area")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all duration-200 ${
+                mechanicSubItems.some(s => tab === s.key)
+                  ? "bg-primary/20 text-primary"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
+              }`}
+            >
+              <Wrench className="h-5 w-5" />
+              <span>Área do Mecânico</span>
+              <ChevronDown className={`h-4 w-4 ml-auto transition-transform duration-200 ${expandedSidebarGroup === "mechanic-area" ? "rotate-180" : ""}`} />
+            </button>
+            {expandedSidebarGroup === "mechanic-area" && (
+              <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-primary/20 pl-3">
+                {mechanicSubItems.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setTab(item.key)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      tab === item.key
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
         <div className="p-3 border-t border-sidebar-border space-y-1">
           <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
@@ -1509,9 +1549,18 @@ const AdminDashboard = () => {
                 <h1 className="font-heading text-3xl font-bold">Clientes</h1>
                 <p className="text-muted-foreground text-sm mt-1">{filteredClients.length} de {clients.length} clientes</p>
               </div>
-              <Button onClick={() => { setEditingClient({}); resetClientForm(); }} className="shadow-md">
-                <Plus className="h-4 w-4 mr-2" /> Novo Cliente
-              </Button>
+              <div className="flex gap-3">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent("Olá! Promoção especial da Gründemann Geradores! Confira nossos produtos: https://grundemann-power-hub.lovable.app/produtos")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white text-sm font-semibold transition-colors shadow-md"
+                >
+                  <MessageSquare className="h-4 w-4" /> Enviar Mensagem a Todos
+                </a>
+                <Button onClick={() => { setEditingClient({}); resetClientForm(); }} className="shadow-md">
+                  <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+                </Button>
+              </div>
             </div>
 
             {editingClient !== null && (
@@ -1575,13 +1624,18 @@ const AdminDashboard = () => {
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nome</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Email</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telefone</th>
-                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">CPF/CNPJ</th>
+                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Compras</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Cidade/UF</th>
                       <th className="text-right p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filteredClients.map(c => (
+                    {filteredClients.map(c => {
+                      const clientOrders = orders.filter(o => o.user_id === c.user_id);
+                      const clientTotal = clientOrders.reduce((s, o) => s + Number(o.total_amount), 0);
+                      const phoneClean = (c.phone || "").replace(/\D/g, "");
+                      const hasPhone = phoneClean.length >= 10;
+                      return (
                       <tr key={c.user_id} className="hover:bg-muted/30 transition-colors">
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
@@ -1591,21 +1645,49 @@ const AdminDashboard = () => {
                             <div>
                               <span className="font-medium block">{c.full_name || "—"}</span>
                               {c.company_name && <span className="text-[10px] text-muted-foreground">{c.company_name}</span>}
+                              {c.cpf_cnpj && <span className="text-[10px] text-muted-foreground block font-mono">{c.cpf_cnpj}</span>}
                             </div>
                           </div>
                         </td>
-                        <td className="p-3.5 text-muted-foreground">{c.email}</td>
-                        <td className="p-3.5 text-muted-foreground">{c.phone || "—"}</td>
-                        <td className="p-3.5 text-muted-foreground font-mono text-xs">{c.cpf_cnpj || "—"}</td>
-                        <td className="p-3.5 text-muted-foreground">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
+                        <td className="p-3.5 text-muted-foreground text-xs">{c.email}</td>
+                        <td className="p-3.5">
+                          {c.phone ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground text-xs">{c.phone}</span>
+                              {hasPhone && (
+                                <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366] text-white hover:bg-[#1da851] transition-colors"
+                                  title="WhatsApp"
+                                >
+                                  <MessageSquare className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                          ) : <span className="text-muted-foreground text-xs">—</span>}
+                        </td>
+                        <td className="p-3.5">
+                          {clientOrders.length > 0 ? (
+                            <div>
+                              <Badge variant="secondary" className="text-[10px]">{clientOrders.length} pedido{clientOrders.length > 1 ? "s" : ""}</Badge>
+                              <p className="text-[10px] font-bold text-primary mt-0.5">R$ {clientTotal.toFixed(2).replace(".", ",")}</p>
+                            </div>
+                          ) : <span className="text-muted-foreground text-xs">Sem compras</span>}
+                        </td>
+                        <td className="p-3.5 text-muted-foreground text-xs">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
                         <td className="p-3.5">
                           <div className="flex items-center justify-end gap-1">
+                            {hasPhone && (
+                              <a href={`https://wa.me/55${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#25D366]"><MessageSquare className="h-4 w-4" /></Button>
+                              </a>
+                            )}
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editClient(c)}><Edit className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteClient(c.user_id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                     {filteredClients.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
                   </tbody>
                 </table>
@@ -1860,9 +1942,17 @@ const AdminDashboard = () => {
         {tab === "quotes" && <QuoteManagement />}
 
         {/* MECHANICS TAB */}
-        {tab === "mechanics" && (
-          <div className="space-y-8">
-            <MechanicManagement />
+        {tab === "mechanics" && <MechanicManagement />}
+
+        {/* MECHANIC VIDEOS TAB */}
+        {(tab as string) === "mechanic-videos" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Video className="h-8 w-8 text-primary" /> Vídeos Técnicos
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie vídeos de instalação e manutenção para mecânicos</p>
+            </div>
             <MechanicVideoManagement />
           </div>
         )}
