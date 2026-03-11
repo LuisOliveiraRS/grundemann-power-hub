@@ -18,9 +18,11 @@ import AIAssistant from "@/components/AIAssistant";
 import FirstVisitPopup from "@/components/FirstVisitPopup";
 import AbandonedCartReminder from "@/components/AbandonedCartReminder";
 import MobileContactBar from "@/components/MobileContactBar";
+import GuaranteeSection from "@/components/GuaranteeSection";
 
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
+const HomeFAQ = lazy(() => import("@/components/HomeFAQ"));
 
 const SectionLoader = () => <div className="py-8 flex justify-center"><div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" /></div>;
 
@@ -78,8 +80,8 @@ const Index = () => {
           "name": "Grundemann Power Hub",
           "description": "Loja especializada em peças para motores estacionários e geradores de energia",
           "url": "https://grundemann-power-hub.lovable.app",
-          "telephone": "+55-47-99999-9999",
-          "address": { "@type": "PostalAddress", "addressCountry": "BR" },
+          "telephone": "+55-51-98182-5748",
+          "address": { "@type": "PostalAddress", "addressLocality": "São Leopoldo", "addressRegion": "RS", "addressCountry": "BR" },
           "priceRange": "$$"
         })}</script>
       </Helmet>
@@ -102,6 +104,7 @@ const Index = () => {
         </Suspense>
       )}
       <SocialProof />
+      <GuaranteeSection />
       <TechnicalCenterTeaser />
 
       {/* Mechanic Partner CTA */}
@@ -125,6 +128,9 @@ const Index = () => {
       <CategoriesSection />
       <Suspense fallback={<SectionLoader />}>
         <TestimonialsSection />
+      </Suspense>
+      <Suspense fallback={<SectionLoader />}>
+        <HomeFAQ />
       </Suspense>
       <WhatsAppButton />
       <AIAssistant />

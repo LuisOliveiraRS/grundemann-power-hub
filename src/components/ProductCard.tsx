@@ -1,4 +1,4 @@
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -41,12 +41,17 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
     }
   };
 
+  const discount = oldPrice ? Math.round((1 - price / oldPrice) * 100) : 0;
+
   return (
     <div className="group rounded-lg border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => id && navigate(`/produto/${id}`)}>
       <div className="relative aspect-square overflow-hidden bg-muted">
         <img src={image} alt={name} loading="lazy" className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300" />
         {oldPrice && (
-          <span className="absolute top-2 left-2 rounded bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">OFERTA</span>
+          <span className="absolute top-2 left-2 rounded bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">-{discount}%</span>
+        )}
+        {stockQuantity !== undefined && stockQuantity <= 5 && stockQuantity > 0 && (
+          <span className="absolute bottom-2 left-2 rounded bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">Últimas unidades</span>
         )}
         {id && onToggleFavorite && (
           <div className="absolute top-2 right-2">
@@ -59,10 +64,10 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
         {sku && <p className="text-[10px] text-muted-foreground mt-1">Cód: {sku}</p>}
         {oldPrice && <p className="mt-2 text-xs text-muted-foreground line-through">R$ {oldPrice.toFixed(2).replace(".", ",")}</p>}
         <p className="mt-1 font-heading text-xl font-extrabold text-price">R$ {price.toFixed(2).replace(".", ",")}</p>
-        {installments && <p className="text-xs text-muted-foreground">{installments}</p>}
-        {stockQuantity !== undefined && <p className="text-[10px] text-muted-foreground mt-1">{stockQuantity > 0 ? `${stockQuantity} em estoque` : "Indisponível"}</p>}
-        <button onClick={addToCart} className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity">
-          <ShoppingCart className="h-4 w-4" /> Comprar
+        <p className="text-[10px] text-muted-foreground">3x R$ {(price / 3).toFixed(2).replace(".", ",")} s/juros</p>
+        {stockQuantity !== undefined && stockQuantity === 0 && <p className="text-[10px] text-destructive font-bold mt-1">Indisponível</p>}
+        <button onClick={addToCart} disabled={stockQuantity === 0} className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+          <ShoppingCart className="h-4 w-4" /> {stockQuantity === 0 ? "Indisponível" : "Comprar"}
         </button>
       </div>
     </div>
