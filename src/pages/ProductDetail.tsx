@@ -19,6 +19,7 @@ import ProductReviews from "@/components/ProductReviews";
 import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import AIAssistant from "@/components/AIAssistant";
 import ProductCard from "@/components/ProductCard";
+import RecentlyViewed, { addToRecentlyViewed } from "@/components/RecentlyViewed";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
@@ -64,6 +65,7 @@ const ProductDetail = () => {
       const p = data as Product;
       setProduct(p);
       setSelectedImage(p.image_url);
+      addToRecentlyViewed({ id: p.id, name: p.name, price: p.price, image_url: p.image_url });
       
       const promises: any[] = [];
       
@@ -416,6 +418,7 @@ const ProductDetail = () => {
         </div>
       )}
 
+      <RecentlyViewed />
       <WhatsAppButton message={whatsappMessage} />
       <AIAssistant />
       <Footer />

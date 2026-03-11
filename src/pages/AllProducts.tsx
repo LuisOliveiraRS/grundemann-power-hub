@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import ProductCard from "@/components/ProductCard";
@@ -7,6 +8,8 @@ import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +42,7 @@ const AllProducts = () => {
   const [priceMin, setPriceMin] = useState(searchParams.get("preco_min") || "");
   const [priceMax, setPriceMax] = useState(searchParams.get("preco_max") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("ordem") || "name");
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [page, setPage] = useState(1);
 
   useEffect(() => { loadData(); }, []);
@@ -64,6 +68,7 @@ const AllProducts = () => {
     if (selectedHp && p.hp !== selectedHp) return false;
     if (priceMin && p.price < parseFloat(priceMin)) return false;
     if (priceMax && p.price > parseFloat(priceMax)) return false;
+    if (inStockOnly && p.stock_quantity <= 0) return false;
     if (search) {
       const q = search.toLowerCase();
       const match = p.name.toLowerCase().includes(q) ||
@@ -80,40 +85,59 @@ const AllProducts = () => {
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "price_asc") return a.price - b.price;
     if (sortBy === "price_desc") return b.price - a.price;
-    if (sortBy === "newest") return 0; // already ordered
+    if (sortBy === "newest") return 0;
     return a.name.localeCompare(b.name);
   });
 
   const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
   const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
-  const activeFilters = [selectedCategory, selectedBrand, selectedHp, priceMin, priceMax].filter(Boolean).length;
+  const activeFilters = [selectedCategory, selectedBrand, selectedHp, priceMin, priceMax, inStockOnly ? "stock" : ""].filter(Boolean).length;
 
   const clearFilters = () => {
     setSelectedCategory(""); setSelectedBrand(""); setSelectedHp("");
-    setPriceMin(""); setPriceMax(""); setSearch(""); setPage(1);
+    setPriceMin(""); setPriceMax(""); setSearch(""); setInStockOnly(false); setPage(1);
   };
+
+  const pageTitle = search ? `Resultados para "${search}"` : "Todos os Produtos";
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>{`${pageTitle} | Grundemann Power Hub`}</title>
+        <meta name="description" content="Catálogo completo de peças para motores estacionários, geradores e equipamentos industriais. Filtros, carburadores, pistões e mais." />
+        <meta property="og:title" content={`${pageTitle} | Grundemann Power Hub`} />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://grundemann-power-hub.lovable.app/produtos" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": pageTitle,
+          "description": "Catálogo completo de peças para motores estacionários",
+          "numberOfItems": filtered.length,
+          "url": "https://grundemann-power-hub.lovable.app/produtos"
+        })}</script>
+      </Helmet>
       <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-8">
+          <SEOBreadcrumb items={[{ label: pageTitle }]} />
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="font-heading text-3xl font-bold">Todos os Produtos</h1>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold">{pageTitle}</h1>
               <p className="text-muted-foreground text-sm mt-1">{filtered.length} produto{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}</p>
             </div>
             <div className="flex items-center gap-3">
               <select
                 className="border border-input rounded-lg px-3 py-2 text-sm bg-background"
                 value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1); }}
+                aria-label="Ordenar produtos"
               >
                 <option value="name">Nome A-Z</option>
                 <option value="price_asc">Menor Preço</option>
                 <option value="price_desc">Maior Preço</option>
               </select>
-              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} aria-expanded={showFilters}>
                 <SlidersHorizontal className="h-4 w-4 mr-1" /> Filtros
                 {activeFilters > 0 && <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">{activeFilters}</Badge>}
               </Button>
@@ -122,7 +146,7 @@ const AllProducts = () => {
 
           {/* Filters panel */}
           {showFilters && (
-            <div className="bg-card rounded-xl border border-border p-5 mb-6 animate-in slide-in-from-top-2">
+            <div className="bg-card rounded-xl border border-border p-5 mb-6 animate-in slide-in-from-top-2" role="region" aria-label="Filtros de produtos">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-heading font-bold text-sm">Filtros Avançados</h3>
                 {activeFilters > 0 && (
@@ -131,7 +155,7 @@ const AllProducts = () => {
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Busca</label>
                   <Input placeholder="Nome, SKU, marca..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-9 text-sm" />
@@ -165,6 +189,12 @@ const AllProducts = () => {
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Preço Máx.</label>
                   <Input type="number" placeholder="R$ 999" value={priceMax} onChange={e => { setPriceMax(e.target.value); setPage(1); }} className="h-9 text-sm" />
                 </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm h-9">
+                    <input type="checkbox" checked={inStockOnly} onChange={e => { setInStockOnly(e.target.checked); setPage(1); }} className="rounded border-input" />
+                    <span className="text-xs font-medium">Em estoque</span>
+                  </label>
+                </div>
               </div>
             </div>
           )}
@@ -177,6 +207,7 @@ const AllProducts = () => {
               {selectedHp && <Badge variant="secondary" className="gap-1">{selectedHp} HP <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedHp("")} /></Badge>}
               {priceMin && <Badge variant="secondary" className="gap-1">Min R$ {priceMin} <X className="h-3 w-3 cursor-pointer" onClick={() => setPriceMin("")} /></Badge>}
               {priceMax && <Badge variant="secondary" className="gap-1">Max R$ {priceMax} <X className="h-3 w-3 cursor-pointer" onClick={() => setPriceMax("")} /></Badge>}
+              {inStockOnly && <Badge variant="secondary" className="gap-1">Em estoque <X className="h-3 w-3 cursor-pointer" onClick={() => setInStockOnly(false)} /></Badge>}
             </div>
           )}
 
@@ -197,8 +228,8 @@ const AllProducts = () => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-8">
-                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                <nav aria-label="Paginação de produtos" className="flex items-center justify-center gap-2 mt-8">
+                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="Página anterior">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -208,20 +239,21 @@ const AllProducts = () => {
                     else if (page >= totalPages - 3) pageNum = totalPages - 6 + i;
                     else pageNum = page - 3 + i;
                     return (
-                      <Button key={pageNum} variant={page === pageNum ? "default" : "outline"} size="sm" className="w-9" onClick={() => setPage(pageNum)}>
+                      <Button key={pageNum} variant={page === pageNum ? "default" : "outline"} size="sm" className="w-9" onClick={() => { setPage(pageNum); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label={`Página ${pageNum}`} aria-current={page === pageNum ? "page" : undefined}>
                         {pageNum}
                       </Button>
                     );
                   })}
-                  <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                  <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-label="Próxima página">
                     <ChevronRight className="h-4 w-4" />
                   </Button>
-                </div>
+                </nav>
               )}
             </>
           )}
         </div>
       </div>
+      <WhatsAppButton />
       <Footer />
     </div>
   );
