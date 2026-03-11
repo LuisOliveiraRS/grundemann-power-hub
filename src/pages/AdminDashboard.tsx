@@ -789,9 +789,6 @@ const AdminDashboard = () => {
           ))}
         </nav>
         <div className="p-3 border-t border-sidebar-border space-y-1">
-          <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
-            <ShoppingCart className="h-5 w-5" /> Ver Loja
-          </button>
           <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
             <LogOut className="h-5 w-5" /> Sair
           </button>
