@@ -1624,13 +1624,18 @@ const AdminDashboard = () => {
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nome</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Email</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telefone</th>
-                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">CPF/CNPJ</th>
+                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Compras</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Cidade/UF</th>
                       <th className="text-right p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filteredClients.map(c => (
+                    {filteredClients.map(c => {
+                      const clientOrders = orders.filter(o => o.user_id === c.user_id);
+                      const clientTotal = clientOrders.reduce((s, o) => s + Number(o.total_amount), 0);
+                      const phoneClean = (c.phone || "").replace(/\D/g, "");
+                      const hasPhone = phoneClean.length >= 10;
+                      return (
                       <tr key={c.user_id} className="hover:bg-muted/30 transition-colors">
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
@@ -1640,21 +1645,49 @@ const AdminDashboard = () => {
                             <div>
                               <span className="font-medium block">{c.full_name || "—"}</span>
                               {c.company_name && <span className="text-[10px] text-muted-foreground">{c.company_name}</span>}
+                              {c.cpf_cnpj && <span className="text-[10px] text-muted-foreground block font-mono">{c.cpf_cnpj}</span>}
                             </div>
                           </div>
                         </td>
-                        <td className="p-3.5 text-muted-foreground">{c.email}</td>
-                        <td className="p-3.5 text-muted-foreground">{c.phone || "—"}</td>
-                        <td className="p-3.5 text-muted-foreground font-mono text-xs">{c.cpf_cnpj || "—"}</td>
-                        <td className="p-3.5 text-muted-foreground">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
+                        <td className="p-3.5 text-muted-foreground text-xs">{c.email}</td>
+                        <td className="p-3.5">
+                          {c.phone ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground text-xs">{c.phone}</span>
+                              {hasPhone && (
+                                <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366] text-white hover:bg-[#1da851] transition-colors"
+                                  title="WhatsApp"
+                                >
+                                  <MessageSquare className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                          ) : <span className="text-muted-foreground text-xs">—</span>}
+                        </td>
+                        <td className="p-3.5">
+                          {clientOrders.length > 0 ? (
+                            <div>
+                              <Badge variant="secondary" className="text-[10px]">{clientOrders.length} pedido{clientOrders.length > 1 ? "s" : ""}</Badge>
+                              <p className="text-[10px] font-bold text-primary mt-0.5">R$ {clientTotal.toFixed(2).replace(".", ",")}</p>
+                            </div>
+                          ) : <span className="text-muted-foreground text-xs">Sem compras</span>}
+                        </td>
+                        <td className="p-3.5 text-muted-foreground text-xs">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
                         <td className="p-3.5">
                           <div className="flex items-center justify-end gap-1">
+                            {hasPhone && (
+                              <a href={`https://wa.me/55${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#25D366]"><MessageSquare className="h-4 w-4" /></Button>
+                              </a>
+                            )}
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editClient(c)}><Edit className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteClient(c.user_id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                     {filteredClients.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
                   </tbody>
                 </table>
