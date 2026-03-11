@@ -1530,7 +1530,7 @@ const AdminDashboard = () => {
                   target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white text-sm font-semibold transition-colors shadow-md"
                 >
-                  <MessageSquare className="h-4 w-4" /> Enviar Mensagem a Todos
+                  <WhatsAppIcon className="h-4 w-4" /> Enviar Mensagem a Todos
                 </a>
                 <Button onClick={() => { setEditingClient({}); resetClientForm(); }} className="shadow-md">
                   <Plus className="h-4 w-4 mr-2" /> Novo Cliente
