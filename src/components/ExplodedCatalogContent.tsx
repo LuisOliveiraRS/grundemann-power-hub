@@ -1,19 +1,50 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShoppingCart, Search, Fuel, Flame } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, ShoppingCart, Search, Fuel, Flame, Plus } from "lucide-react";
 import ZoomableImage from "@/components/ZoomableImage";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gasolineSections, type CatalogSection } from "@/data/gasolineEngineParts";
 import { dieselSections } from "@/data/dieselEngineParts";
 
 const ExplodedCatalogContent = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [engineType, setEngineType] = useState<"gasolina" | "diesel">("gasolina");
   const [selectedSection, setSelectedSection] = useState<CatalogSection | null>(null);
   const [hpFilter, setHpFilter] = useState("");
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+
+  const addToCart = async (e: React.MouseEvent, productId: string, productName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setAddingToCart(productId);
+    try {
+      const { data: existing } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: user.id, product_id: productId, quantity: 1 });
+      }
+      toast({ title: `${productName} adicionado ao carrinho!` });
+    } catch {
+      toast({ title: "Erro ao adicionar", variant: "destructive" });
+    }
+    setAddingToCart(null);
+  };
 
   const sections = engineType === "gasolina" ? gasolineSections : dieselSections;
   const hpOptions = engineType === "gasolina"
@@ -223,11 +254,26 @@ const ExplodedCatalogContent = () => {
                             {p.sku && <span className="text-[10px] text-muted-foreground">SKU: {p.sku}</span>}
                           </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          {p.original_price && Number(p.original_price) > p.price && (
-                            <p className="text-xs text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</p>
-                          )}
-                          <p className="font-heading font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                        <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+                          <div>
+                            {p.original_price && Number(p.original_price) > p.price && (
+                              <p className="text-xs text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</p>
+                            )}
+                            <p className="font-heading font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs"
+                            onClick={(e) => addToCart(e, p.id, p.name)}
+                            disabled={addingToCart === p.id}
+                          >
+                            {addingToCart === p.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Plus className="h-3 w-3" />
+                            )}
+                            Carrinho
+                          </Button>
                         </div>
                       </Link>
                     ))}
