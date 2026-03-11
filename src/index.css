@@ -119,4 +119,17 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+  .text-price {
+    color: hsl(var(--price-color));
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optimize CLS for images */
+img {
+  content-visibility: auto;
 }

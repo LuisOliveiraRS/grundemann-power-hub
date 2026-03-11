@@ -7,7 +7,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download, Cpu } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download, Cpu, Truck, ShieldCheck, Clock, CreditCard, HelpCircle, ChevronRight } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,6 +18,7 @@ import ProductSEO from "@/components/ProductSEO";
 import ProductReviews from "@/components/ProductReviews";
 import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import AIAssistant from "@/components/AIAssistant";
+import ProductCard from "@/components/ProductCard";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
@@ -26,8 +28,16 @@ interface Product {
   brand: string | null; hp: string | null; engine_model: string | null;
   specifications: any; documents: string[] | null;
   meta_title: string | null; meta_description: string | null;
-  compatible_motors: string[] | null;
+  compatible_motors: string[] | null; free_shipping: boolean;
 }
+
+const faqItems = [
+  { q: "Como funciona o envio?", a: "Enviamos para todo o Brasil via PAC e SEDEX. Após o pagamento, o pedido é processado em até 24h úteis." },
+  { q: "Quais formas de pagamento?", a: "Aceitamos PIX (5% de desconto), cartão de crédito (Visa, Mastercard) em até 3x sem juros, e boleto bancário." },
+  { q: "O produto vem com garantia?", a: "Sim! Todos os nossos produtos possuem garantia contra defeitos de fabricação conforme legislação vigente." },
+  { q: "Posso trocar ou devolver?", a: "Sim, oferecemos 7 dias para devolução após o recebimento, conforme o Código de Defesa do Consumidor." },
+  { q: "Como saber se a peça é compatível com meu motor?", a: "Verifique a seção 'Compatível Com' na página do produto ou entre em contato pelo WhatsApp para confirmar." },
+];
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -42,6 +52,9 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [compatibleProducts, setCompatibleProducts] = useState<any[]>([]);
+  const [zoomedImage, setZoomedImage] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
 
   useEffect(() => { if (id) loadProduct(); }, [id]);
 
@@ -51,13 +64,30 @@ const ProductDetail = () => {
       const p = data as Product;
       setProduct(p);
       setSelectedImage(p.image_url);
+      
+      const promises: Promise<any>[] = [];
+      
       if (data.category_id) {
-        const { data: cat } = await supabase.from("categories").select("name").eq("id", data.category_id).single();
-        if (cat) setCategoryName(cat.name);
-        // Load related products
-        const { data: related } = await supabase.from("products").select("id, name, price, image_url, sku").eq("category_id", data.category_id).neq("id", data.id).eq("is_active", true).limit(4);
-        if (related) setRelatedProducts(related);
+        promises.push(
+          supabase.from("categories").select("name").eq("id", data.category_id).single().then(({ data: cat }) => {
+            if (cat) setCategoryName(cat.name);
+          }),
+          supabase.from("products").select("id, name, price, original_price, image_url, sku, stock_quantity")
+            .eq("category_id", data.category_id).neq("id", data.id).eq("is_active", true).limit(4)
+            .then(({ data: related }) => { if (related) setRelatedProducts(related); })
+        );
       }
+      
+      // Load compatible products (same engine_model or HP)
+      if (data.engine_model || data.hp) {
+        let query = supabase.from("products").select("id, name, price, original_price, image_url, sku, stock_quantity")
+          .eq("is_active", true).neq("id", data.id).limit(4);
+        if (data.engine_model) query = query.eq("engine_model", data.engine_model);
+        else if (data.hp) query = query.eq("hp", data.hp);
+        promises.push(query.then(({ data: compat }) => { if (compat) setCompatibleProducts(compat); }));
+      }
+      
+      await Promise.all(promises);
     }
     setLoading(false);
   };
@@ -80,6 +110,13 @@ const ProductDetail = () => {
   const getYouTubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
   };
 
   const whatsappMessage = product
@@ -124,17 +161,22 @@ const ProductDetail = () => {
       />
       <TopBar /><Header />
       <div className="flex-1">
-        <div className="container py-8">
+        <div className="container py-6 md:py-8">
           {/* Breadcrumb */}
           <SEOBreadcrumb items={[
             ...(categoryName ? [{ label: categoryName, href: "/produtos" }] : []),
             { label: product.name },
           ]} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            {/* Image gallery */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+            {/* Image gallery with zoom */}
             <div>
-              <div className="bg-card rounded-xl border border-border p-4 md:p-8 flex items-center justify-center aspect-square mb-3 relative">
+              <div
+                className="bg-card rounded-xl border border-border p-4 md:p-8 flex items-center justify-center aspect-square mb-3 relative overflow-hidden cursor-crosshair"
+                onMouseEnter={() => setZoomedImage(true)}
+                onMouseLeave={() => setZoomedImage(false)}
+                onMouseMove={handleImageMouseMove}
+              >
                 {showVideo && product.video_url ? (
                   (() => {
                     const embedUrl = getYouTubeEmbedUrl(product.video_url);
@@ -145,12 +187,18 @@ const ProductDetail = () => {
                     );
                   })()
                 ) : selectedImage ? (
-                  <img src={selectedImage} alt={product.name} className="max-h-full max-w-full object-contain" />
+                  <img
+                    src={selectedImage}
+                    alt={product.name}
+                    className={`max-h-full max-w-full object-contain transition-transform duration-200 ${zoomedImage ? 'scale-[2]' : ''}`}
+                    style={zoomedImage ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
+                    loading="lazy"
+                  />
                 ) : (
                   <Package className="h-24 w-24 text-muted-foreground" />
                 )}
                 {/* Favorite + Share */}
-                <div className="absolute top-3 right-3 flex gap-2">
+                <div className="absolute top-3 right-3 flex gap-2 z-10">
                   <FavoriteButton productId={product.id} productName={product.name} isFavorite={isFavorite(product.id)} onToggle={toggleFavorite} size="md" />
                   <button
                     onClick={() => { navigator.clipboard.writeText(window.location.href); toast({ title: "Link copiado!" }); }}
@@ -159,13 +207,14 @@ const ProductDetail = () => {
                     <Share2 className="h-5 w-5" />
                   </button>
                 </div>
+                {!showVideo && <span className="absolute bottom-3 left-3 text-[10px] text-muted-foreground bg-card/80 backdrop-blur-sm px-2 py-1 rounded">🔍 Passe o mouse para ampliar</span>}
               </div>
               {(allImages.length > 1 || product.video_url) && (
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {allImages.map((img, idx) => (
                     <button key={idx} onClick={() => { setSelectedImage(img); setShowVideo(false); }}
                       className={`flex-shrink-0 w-16 h-16 rounded-lg border-2 overflow-hidden transition-all ${selectedImage === img && !showVideo ? 'border-primary shadow-md' : 'border-border hover:border-primary/50'}`}>
-                      <img src={img} alt={`${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={img} alt={`${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                   {product.video_url && (
@@ -195,11 +244,23 @@ const ProductDetail = () => {
                 </div>
               )}
               <p className="font-heading text-3xl md:text-4xl font-extrabold text-price mb-1">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
-              <p className="text-sm text-muted-foreground mb-6">ou 3x de R$ {(product.price / 3).toFixed(2).replace(".",",")} sem juros</p>
+              <p className="text-sm text-muted-foreground mb-2">ou 3x de R$ {(product.price / 3).toFixed(2).replace(".",",")} sem juros</p>
+              <p className="text-sm text-primary font-bold mb-4">💰 No PIX: R$ {(product.price * 0.95).toFixed(2).replace(".",",")} (5% OFF)</p>
 
-              <div className="mb-6">
+              {/* Trust signals inline */}
+              <div className="flex flex-wrap gap-3 mb-5 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5 text-primary" />{product.free_shipping ? "Frete Grátis" : "Envio todo Brasil"}</span>
+                <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary" />Garantia</span>
+                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-primary" />Envio em 24h</span>
+                <span className="flex items-center gap-1"><CreditCard className="h-3.5 w-3.5 text-primary" />3x sem juros</span>
+              </div>
+
+              <div className="mb-5">
                 {product.stock_quantity > 0 ? (
-                  <Badge variant="outline" className="text-primary border-primary"><Package className="h-3 w-3 mr-1" /> {product.stock_quantity} em estoque</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-primary border-primary"><Package className="h-3 w-3 mr-1" /> Em estoque</Badge>
+                    {product.stock_quantity <= 5 && <span className="text-xs text-destructive font-bold animate-pulse">⚡ Últimas {product.stock_quantity} unidades!</span>}
+                  </div>
                 ) : (
                   <Badge variant="destructive">Fora de estoque</Badge>
                 )}
@@ -207,7 +268,7 @@ const ProductDetail = () => {
 
               {product.stock_quantity > 0 && (
                 <>
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-3 mb-5">
                     <Label className="text-sm font-semibold">Quantidade:</Label>
                     <div className="flex items-center border border-border rounded-lg">
                       <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 hover:bg-muted rounded-l-lg"><Minus className="h-4 w-4" /></button>
@@ -216,7 +277,7 @@ const ProductDetail = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button size="lg" className="text-base px-8" onClick={addToCart}>
+                    <Button size="lg" className="text-base px-8 shadow-lg shadow-primary/20" onClick={addToCart}>
                       <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                     </Button>
                     <Button size="lg" variant="outline" className="text-base" onClick={() => {
@@ -240,7 +301,7 @@ const ProductDetail = () => {
               {/* Description */}
               {product.description && (
                 <div className="mt-8 border-t border-border pt-6">
-                  <h3 className="font-heading font-bold text-lg mb-3">Descrição</h3>
+                  <h2 className="font-heading font-bold text-lg mb-3">Descrição</h2>
                   <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{product.description}</p>
                 </div>
               )}
@@ -248,7 +309,7 @@ const ProductDetail = () => {
               {/* Specifications */}
               {specs.length > 0 && (
                 <div className="mt-6 border-t border-border pt-6">
-                  <h3 className="font-heading font-bold text-lg mb-3">Especificações Técnicas</h3>
+                  <h2 className="font-heading font-bold text-lg mb-3">Especificações Técnicas</h2>
                   <div className="bg-muted/30 rounded-lg overflow-hidden">
                     {specs.map(([key, value], idx) => (
                       <div key={key} className={`flex justify-between px-4 py-3 text-sm ${idx % 2 === 0 ? "bg-muted/20" : ""}`}>
@@ -263,9 +324,9 @@ const ProductDetail = () => {
               {/* Motor Compatibility */}
               {product.compatible_motors && product.compatible_motors.length > 0 && (
                 <div className="mt-6 border-t border-border pt-6">
-                  <h3 className="font-heading font-bold text-lg mb-3 flex items-center gap-2">
+                  <h2 className="font-heading font-bold text-lg mb-3 flex items-center gap-2">
                     <Cpu className="h-5 w-5 text-primary" /> Compatível Com
-                  </h3>
+                  </h2>
                   <div className="flex flex-wrap gap-2">
                     {product.compatible_motors.map((motor, idx) => (
                       <Badge key={idx} variant="outline" className="text-sm px-3 py-1.5 border-primary/30 bg-primary/5 text-primary font-semibold">
@@ -279,7 +340,7 @@ const ProductDetail = () => {
               {/* Documents */}
               {product.documents && product.documents.length > 0 && (
                 <div className="mt-6 border-t border-border pt-6">
-                  <h3 className="font-heading font-bold text-lg mb-3">Documentos Técnicos</h3>
+                  <h2 className="font-heading font-bold text-lg mb-3">Documentos Técnicos</h2>
                   <div className="space-y-2">
                     {product.documents.map((doc, idx) => (
                       <a key={idx} href={doc} target="_blank" rel="noopener noreferrer"
@@ -294,29 +355,67 @@ const ProductDetail = () => {
             </div>
           </div>
 
+          {/* Compatible Products */}
+          {compatibleProducts.length > 0 && (
+            <div className="mt-14 border-t border-border pt-8">
+              <h2 className="font-heading text-2xl font-bold mb-6 flex items-center gap-2">
+                <Cpu className="h-6 w-6 text-primary" /> Peças Compatíveis
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {compatibleProducts.map((p: any) => (
+                  <ProductCard key={p.id} id={p.id} name={p.name} image={p.image_url || "/placeholder.svg"} price={p.price} oldPrice={p.original_price || undefined} sku={p.sku || undefined} stockQuantity={p.stock_quantity} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Product Reviews */}
           <ProductReviews productId={product.id} productName={product.name} />
 
           {/* Related products */}
           {relatedProducts.length > 0 && (
-            <div className="mt-16 border-t border-border pt-10">
+            <div className="mt-14 border-t border-border pt-8">
               <h2 className="font-heading text-2xl font-bold mb-6">Produtos Relacionados</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {relatedProducts.map((p: any) => (
-                  <div key={p.id} onClick={() => navigate(`/produto/${p.id}`)} className="bg-card rounded-lg border border-border p-4 cursor-pointer hover:shadow-lg transition-shadow">
-                    <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-                      {p.image_url ? <img src={p.image_url} alt={p.name} className="max-h-full max-w-full object-contain" /> : <Package className="h-10 w-10 text-muted-foreground" />}
-                    </div>
-                    <h3 className="font-heading text-sm font-semibold line-clamp-2">{p.name}</h3>
-                    {p.sku && <p className="text-[10px] text-muted-foreground mt-1">Cód: {p.sku}</p>}
-                    <p className="font-heading text-lg font-bold text-price mt-2">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
-                  </div>
+                  <ProductCard key={p.id} id={p.id} name={p.name} image={p.image_url || "/placeholder.svg"} price={p.price} oldPrice={p.original_price || undefined} sku={p.sku || undefined} stockQuantity={p.stock_quantity} />
                 ))}
               </div>
             </div>
           )}
+
+          {/* FAQ */}
+          <div className="mt-14 border-t border-border pt-8 max-w-3xl mx-auto">
+            <h2 className="font-heading text-2xl font-bold mb-6 text-center flex items-center justify-center gap-2">
+              <HelpCircle className="h-6 w-6 text-primary" /> Perguntas Frequentes
+            </h2>
+            <Accordion type="single" collapsible className="w-full">
+              {faqItems.map((faq, idx) => (
+                <AccordionItem key={idx} value={`faq-${idx}`}>
+                  <AccordionTrigger className="text-left font-semibold">{faq.q}</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">{faq.a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
         </div>
       </div>
+
+      {/* Sticky mobile buy button */}
+      {product.stock_quantity > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-card/95 backdrop-blur-sm border-t border-border p-3 safe-area-bottom">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-heading text-lg font-extrabold text-price truncate">R$ {Number(product.price).toFixed(2).replace(".",",")}</p>
+              <p className="text-[10px] text-muted-foreground">3x R$ {(product.price / 3).toFixed(2).replace(".",",")} s/juros</p>
+            </div>
+            <Button size="lg" className="shadow-lg shadow-primary/30 px-6" onClick={addToCart}>
+              <ShoppingCart className="h-5 w-5 mr-2" /> Comprar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <WhatsAppButton message={whatsappMessage} />
       <AIAssistant />
       <Footer />
