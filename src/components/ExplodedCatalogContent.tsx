@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShoppingCart, Search, Fuel, Flame } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, ShoppingCart, Search, Fuel, Flame, Plus } from "lucide-react";
 import ZoomableImage from "@/components/ZoomableImage";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { gasolineSections, type CatalogSection } from "@/data/gasolineEngineParts";
 import { dieselSections } from "@/data/dieselEngineParts";
