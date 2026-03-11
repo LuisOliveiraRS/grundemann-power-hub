@@ -34,6 +34,7 @@ import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
+import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
