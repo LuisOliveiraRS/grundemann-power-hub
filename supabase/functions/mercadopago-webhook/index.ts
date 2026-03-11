@@ -128,6 +128,12 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Update webhook log with order_id and status
+      await logSupabase.from("webhook_logs").update({
+        order_id: orderId,
+        status: payment.status,
+      }).eq("payment_id", String(paymentId)).catch(() => {});
+
       const supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
