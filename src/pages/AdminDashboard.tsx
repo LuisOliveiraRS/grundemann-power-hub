@@ -1610,8 +1610,10 @@ const AdminDashboard = () => {
                       const clientTotal = clientOrders.reduce((s, o) => s + Number(o.total_amount), 0);
                       const phoneClean = (c.phone || "").replace(/\D/g, "");
                       const hasPhone = phoneClean.length >= 10;
+                      const isExpanded = expandedClientId === c.user_id;
                       return (
-                      <tr key={c.user_id} className="hover:bg-muted/30 transition-colors">
+                      <React.Fragment key={c.user_id}>
+                      <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => toggleClientExpand(c.user_id)}>
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1633,8 +1635,9 @@ const AdminDashboard = () => {
                                 <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366] text-white hover:bg-[#1da851] transition-colors"
                                   title="WhatsApp"
+                                  onClick={e => e.stopPropagation()}
                                 >
-                                  <MessageSquare className="h-3 w-3" />
+                                  <WhatsAppIcon className="h-3 w-3" />
                                 </a>
                               )}
                             </div>
@@ -1642,18 +1645,21 @@ const AdminDashboard = () => {
                         </td>
                         <td className="p-3.5">
                           {clientOrders.length > 0 ? (
-                            <div>
-                              <Badge variant="secondary" className="text-[10px]">{clientOrders.length} pedido{clientOrders.length > 1 ? "s" : ""}</Badge>
-                              <p className="text-[10px] font-bold text-primary mt-0.5">R$ {clientTotal.toFixed(2).replace(".", ",")}</p>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <Badge variant="secondary" className="text-[10px]">{clientOrders.length} pedido{clientOrders.length > 1 ? "s" : ""}</Badge>
+                                <p className="text-[10px] font-bold text-primary mt-0.5">R$ {clientTotal.toFixed(2).replace(".", ",")}</p>
+                              </div>
+                              {isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
                             </div>
                           ) : <span className="text-muted-foreground text-xs">Sem compras</span>}
                         </td>
                         <td className="p-3.5 text-muted-foreground text-xs">{[c.city, c.state].filter(Boolean).join("/") || "—"}</td>
                         <td className="p-3.5">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                             {hasPhone && (
                               <a href={`https://wa.me/55${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#25D366]"><MessageSquare className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#25D366]"><WhatsAppIcon className="h-4 w-4" /></Button>
                               </a>
                             )}
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editClient(c)}><Edit className="h-4 w-4" /></Button>
@@ -1661,6 +1667,44 @@ const AdminDashboard = () => {
                           </div>
                         </td>
                       </tr>
+                      {/* Expanded: purchase details */}
+                      {isExpanded && clientOrders.length > 0 && (
+                        <tr>
+                          <td colSpan={6} className="p-0">
+                            <div className="bg-muted/30 border-t border-b border-border px-6 py-4">
+                              <h4 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
+                                <ShoppingCart className="h-4 w-4 text-primary" /> Histórico de Compras
+                              </h4>
+                              <div className="space-y-3">
+                                {clientOrders.map(o => (
+                                  <div key={o.id} className="bg-card rounded-lg border border-border p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-mono text-xs font-bold text-foreground">#{o.id.slice(0, 8)}</span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor[o.status] || ""}`}>{statusLabel[o.status] || o.status}</span>
+                                        <span className="text-[10px] text-muted-foreground">{new Date(o.created_at).toLocaleDateString("pt-BR")}</span>
+                                      </div>
+                                      <span className="font-bold text-sm text-price">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</span>
+                                    </div>
+                                    {/* Order items */}
+                                    {clientOrderItems[o.id] && clientOrderItems[o.id].length > 0 && (
+                                      <div className="mt-2 border-t border-border pt-2 space-y-1">
+                                        {clientOrderItems[o.id].map(item => (
+                                          <div key={item.id} className="flex items-center justify-between text-xs">
+                                            <span className="text-foreground">{item.quantity}x {item.product_name}</span>
+                                            <span className="text-muted-foreground font-medium">R$ {Number(item.price_at_purchase).toFixed(2).replace(".", ",")}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                       );
                     })}
                     {filteredClients.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
