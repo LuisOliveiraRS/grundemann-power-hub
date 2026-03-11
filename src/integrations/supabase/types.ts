@@ -827,11 +827,13 @@ export type Database = {
           documents: string[] | null
           engine_model: string | null
           free_shipping: boolean
+          height_cm: number | null
           hp: string | null
           id: string
           image_url: string | null
           is_active: boolean
           is_featured: boolean
+          length_cm: number | null
           meta_description: string | null
           meta_title: string | null
           name: string
@@ -843,6 +845,8 @@ export type Database = {
           subcategory_id: string | null
           updated_at: string
           video_url: string | null
+          weight_kg: number | null
+          width_cm: number | null
         }
         Insert: {
           additional_images?: string[] | null
@@ -854,11 +858,13 @@ export type Database = {
           documents?: string[] | null
           engine_model?: string | null
           free_shipping?: boolean
+          height_cm?: number | null
           hp?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          length_cm?: number | null
           meta_description?: string | null
           meta_title?: string | null
           name: string
@@ -870,6 +876,8 @@ export type Database = {
           subcategory_id?: string | null
           updated_at?: string
           video_url?: string | null
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Update: {
           additional_images?: string[] | null
@@ -881,11 +889,13 @@ export type Database = {
           documents?: string[] | null
           engine_model?: string | null
           free_shipping?: boolean
+          height_cm?: number | null
           hp?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          length_cm?: number | null
           meta_description?: string | null
           meta_title?: string | null
           name?: string
@@ -897,6 +907,8 @@ export type Database = {
           subcategory_id?: string | null
           updated_at?: string
           video_url?: string | null
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Relationships: [
           {
