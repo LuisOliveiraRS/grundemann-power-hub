@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Wrench, Search, CheckCircle2, XCircle, Trash2, Eye, Loader2, Plus, UserPlus } from "lucide-react";
+import { Wrench, Search, CheckCircle2, XCircle, Trash2, Loader2, Plus, UserPlus, MessageCircle } from "lucide-react";
 
 interface MechanicRow {
   id: string;
