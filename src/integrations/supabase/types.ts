@@ -184,6 +184,51 @@ export type Database = {
         }
         Relationships: []
       }
+      exploded_views: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          engine_type: string
+          id: string
+          image_url: string
+          is_active: boolean
+          search_term: string | null
+          section_label: string
+          section_name: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          engine_type?: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          search_term?: string | null
+          section_label?: string
+          section_name: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          engine_type?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          search_term?: string | null
+          section_label?: string
+          section_name?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -827,11 +872,13 @@ export type Database = {
           documents: string[] | null
           engine_model: string | null
           free_shipping: boolean
+          height_cm: number | null
           hp: string | null
           id: string
           image_url: string | null
           is_active: boolean
           is_featured: boolean
+          length_cm: number | null
           meta_description: string | null
           meta_title: string | null
           name: string
@@ -843,6 +890,8 @@ export type Database = {
           subcategory_id: string | null
           updated_at: string
           video_url: string | null
+          weight_kg: number | null
+          width_cm: number | null
         }
         Insert: {
           additional_images?: string[] | null
@@ -854,11 +903,13 @@ export type Database = {
           documents?: string[] | null
           engine_model?: string | null
           free_shipping?: boolean
+          height_cm?: number | null
           hp?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          length_cm?: number | null
           meta_description?: string | null
           meta_title?: string | null
           name: string
@@ -870,6 +921,8 @@ export type Database = {
           subcategory_id?: string | null
           updated_at?: string
           video_url?: string | null
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Update: {
           additional_images?: string[] | null
@@ -881,11 +934,13 @@ export type Database = {
           documents?: string[] | null
           engine_model?: string | null
           free_shipping?: boolean
+          height_cm?: number | null
           hp?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_featured?: boolean
+          length_cm?: number | null
           meta_description?: string | null
           meta_title?: string | null
           name?: string
@@ -897,6 +952,8 @@ export type Database = {
           subcategory_id?: string | null
           updated_at?: string
           video_url?: string | null
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Relationships: [
           {

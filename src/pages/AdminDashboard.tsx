@@ -30,6 +30,7 @@ import AppearanceSettings from "@/components/AppearanceSettings";
 import PriceResearch from "@/components/PriceResearch";
 import CatalogManagement from "@/components/CatalogManagement";
 import MechanicVideoManagement from "@/components/MechanicVideoManagement";
+import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -79,7 +80,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -129,7 +130,8 @@ const AdminDashboard = () => {
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "",
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
-    specifications: "" as string, documents: [] as string[]
+    specifications: "" as string, documents: [] as string[],
+    weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -235,6 +237,10 @@ const AdminDashboard = () => {
       engine_model: productForm.engine_model || null,
       specifications: productForm.specifications ? (() => { try { return JSON.parse(productForm.specifications); } catch { return null; } })() : null,
       documents: productForm.documents.filter(Boolean),
+      weight_kg: productForm.weight_kg ? parseFloat(productForm.weight_kg) : null,
+      width_cm: productForm.width_cm ? parseFloat(productForm.width_cm) : null,
+      height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
+      length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
     };
     if (editingProduct?.id) {
       const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
@@ -248,7 +254,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [] });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -340,6 +346,10 @@ const AdminDashboard = () => {
       brand: (p as any).brand || "", hp: (p as any).hp || "", engine_model: (p as any).engine_model || "",
       specifications: (p as any).specifications ? JSON.stringify((p as any).specifications, null, 2) : "",
       documents: ((p as any).documents || []) as string[],
+      weight_kg: (p as any).weight_kg ? String((p as any).weight_kg) : "",
+      width_cm: (p as any).width_cm ? String((p as any).width_cm) : "",
+      height_cm: (p as any).height_cm ? String((p as any).height_cm) : "",
+      length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
     });
     setTab("products");
   };
@@ -765,7 +775,7 @@ const AdminDashboard = () => {
               key={item.key}
               onClick={() => setTab(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === item.key || (item.key === "mechanics" && ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes"].includes(tab))
+                tab === item.key || (item.key === "mechanics" && ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes", "exploded-views"].includes(tab))
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
               }`}
@@ -1029,7 +1039,27 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Specifications JSON */}
+                    {/* Weight & Dimensions */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label>Peso (kg)</Label>
+                        <Input type="number" step="0.01" value={productForm.weight_kg} onChange={e => setProductForm({ ...productForm, weight_kg: e.target.value })} placeholder="Ex: 2.5" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Largura (cm)</Label>
+                        <Input type="number" step="0.1" value={productForm.width_cm} onChange={e => setProductForm({ ...productForm, width_cm: e.target.value })} placeholder="Ex: 30" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Altura (cm)</Label>
+                        <Input type="number" step="0.1" value={productForm.height_cm} onChange={e => setProductForm({ ...productForm, height_cm: e.target.value })} placeholder="Ex: 20" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Comprimento (cm)</Label>
+                        <Input type="number" step="0.1" value={productForm.length_cm} onChange={e => setProductForm({ ...productForm, length_cm: e.target.value })} placeholder="Ex: 40" className="mt-1" />
+                      </div>
+                    </div>
+
+
                     <div className="md:col-span-2">
                       <Label className="flex items-center gap-2"><Package className="h-4 w-4" /> Especificações Técnicas (JSON)</Label>
                       <Textarea
@@ -1997,6 +2027,7 @@ const AdminDashboard = () => {
                 { key: "mechanic-videos" as const, label: "Vídeos Técnicos", desc: "Gerencie vídeos de instalação e manutenção", icon: Video, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
                 { key: "articles" as const, label: "Central Técnica", desc: "Artigos, guias de manutenção e conteúdo técnico", icon: BookOpen, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { key: "catalogs" as const, label: "Catálogos Técnicos", desc: "Catálogos PDF disponíveis para download", icon: FileText, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                { key: "exploded-views" as const, label: "Vistas Explodidas", desc: "Gerencie diagramas de vistas explodidas dos motores", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { key: "quotes" as const, label: "Orçamentos", desc: "Solicitações de orçamento dos clientes", icon: FileUp, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
               ].map((card) => (
                 <button
@@ -2184,7 +2215,25 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* APPEARANCE TAB */}
+        {/* EXPLODED VIEWS TAB */}
+        {(tab as string) === "exploded-views" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <Package className="h-7 w-7 text-primary" /> Vistas Explodidas
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie os diagramas de vistas explodidas dos motores</p>
+              </div>
+            </div>
+            <ExplodedViewManagement />
+          </div>
+        )}
+
+
         {tab === "appearance" && (
           <div>
             <div className="mb-8">

@@ -1,0 +1,317 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, ShoppingCart, Search, Fuel, Flame, Plus, Layers } from "lucide-react";
+import ZoomableImage from "@/components/ZoomableImage";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TopBar from "@/components/TopBar";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import AIAssistant from "@/components/AIAssistant";
+import { gasolineSections, type CatalogSection } from "@/data/gasolineEngineParts";
+import { dieselSections } from "@/data/dieselEngineParts";
+
+interface DBExplodedView {
+  id: string;
+  section_name: string;
+  section_label: string;
+  description: string;
+  search_term: string;
+  image_url: string;
+  engine_type: string;
+  display_order: number;
+}
+
+const ExplodedViews = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [engineType, setEngineType] = useState<"gasolina" | "diesel">("gasolina");
+  const [selectedSection, setSelectedSection] = useState<CatalogSection | null>(null);
+  const [hpFilter, setHpFilter] = useState("");
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+
+  // Load custom views from DB
+  const { data: dbViews } = useQuery({
+    queryKey: ["exploded-views"],
+    queryFn: async () => {
+      const { data } = await supabase.from("exploded_views").select("*").eq("is_active", true).order("display_order");
+      return (data || []) as DBExplodedView[];
+    },
+  });
+
+  // Merge hardcoded + DB views
+  const hardcodedSections = engineType === "gasolina" ? gasolineSections : dieselSections;
+  const dbSections: CatalogSection[] = (dbViews || [])
+    .filter(v => v.engine_type === engineType)
+    .map(v => ({
+      id: v.id,
+      label: v.section_label,
+      name: v.section_name,
+      description: v.description || "",
+      searchTerm: v.search_term || v.section_name,
+      image: v.image_url,
+      parts: [],
+    }));
+  const sections = [...hardcodedSections, ...dbSections];
+
+  const hpOptions = engineType === "gasolina"
+    ? ["", "5.5", "6.5", "7.0", "8.0", "9.0", "13.0", "15.0"]
+    : ["", "5.0", "7.0", "10.0", "13.0"];
+
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["exploded-products", selectedSection?.searchTerm, hpFilter, engineType],
+    queryFn: async () => {
+      if (!selectedSection) return [];
+      let query = supabase
+        .from("products")
+        .select("id, name, price, image_url, sku, hp, brand, original_price")
+        .eq("is_active", true)
+        .ilike("name", `%${selectedSection.searchTerm}%`)
+        .limit(12);
+      if (hpFilter) query = query.ilike("hp", `%${hpFilter}%`);
+      const { data } = await query;
+      return data || [];
+    },
+    enabled: !!selectedSection,
+  });
+
+  const addToCart = async (e: React.MouseEvent, productId: string, productName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { navigate("/auth"); return; }
+    setAddingToCart(productId);
+    try {
+      const { data: existing } = await supabase
+        .from("cart_items").select("id, quantity")
+        .eq("user_id", user.id).eq("product_id", productId).maybeSingle();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: user.id, product_id: productId, quantity: 1 });
+      }
+      toast({ title: `${productName} adicionado ao carrinho!` });
+    } catch { toast({ title: "Erro ao adicionar", variant: "destructive" }); }
+    setAddingToCart(null);
+  };
+
+  const handleEngineChange = (value: string) => {
+    setEngineType(value as "gasolina" | "diesel");
+    setSelectedSection(null);
+    setHpFilter("");
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>Vistas Explodidas de Motores Estacionários | Grundemann</title>
+        <meta name="description" content="Explore vistas explodidas de motores estacionários a gasolina e diesel. Clique nas peças e adicione diretamente ao carrinho." />
+      </Helmet>
+      <TopBar />
+      <Header />
+
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-foreground via-secondary to-foreground py-14">
+        <div className="container text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 mb-4">
+            <Layers className="h-4 w-4 text-primary" />
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">Vistas Explodidas</span>
+          </div>
+          <h1 className="font-heading text-3xl md:text-5xl font-black text-background mb-3">
+            VISTAS EXPLODIDAS DE MOTORES
+          </h1>
+          <p className="text-background/70 max-w-xl mx-auto">
+            Selecione o tipo de motor, explore os diagramas detalhados e compre as peças que precisa diretamente.
+          </p>
+        </div>
+      </section>
+
+      <div className="flex-1 container py-10">
+        {/* Engine type tabs */}
+        <Tabs value={engineType} onValueChange={handleEngineChange} className="mb-8">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12">
+            <TabsTrigger value="gasolina" className="gap-2 text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Fuel className="h-4 w-4" /> Motor Gasolina
+            </TabsTrigger>
+            <TabsTrigger value="diesel" className="gap-2 text-sm font-bold data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
+              <Flame className="h-4 w-4" /> Motor Diesel
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Sections grid */}
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <h2 className="font-heading font-bold text-lg mb-1 text-foreground">
+              {engineType === "gasolina" ? "Motor Gasolina" : "Motor Diesel"} — Seções
+            </h2>
+            <p className="text-muted-foreground text-xs mb-4">Clique em uma seção para ver as peças disponíveis</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {sections.map((section) => {
+                const isSelected = selectedSection?.id === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => { setSelectedSection(section); setHpFilter(""); }}
+                    className={`relative group text-left rounded-xl border-2 transition-all duration-200 overflow-hidden ${
+                      isSelected ? "border-primary shadow-lg shadow-primary/10" : "border-border hover:border-primary/40 hover:shadow-md"
+                    }`}
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-white border-b border-border">
+                      <img src={section.image} alt={section.name} className={`w-full h-full object-contain p-2 transition-all duration-300 ${isSelected ? "scale-105" : "group-hover:scale-105"}`} loading="lazy" />
+                      <div className={`absolute inset-0 transition-opacity ${isSelected ? "bg-primary/10" : "bg-foreground/5 group-hover:bg-transparent"}`} />
+                      {section.label && (
+                        <div className={`absolute top-2 left-2 inline-flex items-center justify-center w-7 h-7 rounded-lg text-[10px] font-black transition-colors ${
+                          isSelected ? "bg-primary text-primary-foreground" : "bg-foreground/80 text-background group-hover:bg-primary group-hover:text-primary-foreground"
+                        }`}>
+                          {section.label}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-2.5">
+                      <p className={`font-heading font-bold text-xs leading-tight transition-colors ${isSelected ? "text-primary" : "text-foreground group-hover:text-primary"}`}>
+                        {section.name}
+                      </p>
+                    </div>
+                    {isSelected && (
+                      <motion.div layoutId="ev-section-indicator" className="absolute inset-0 border-2 border-primary rounded-xl pointer-events-none" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected section large image */}
+            <AnimatePresence mode="wait">
+              {selectedSection && (
+                <motion.div
+                  key={`img-${engineType}-${selectedSection.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-4 rounded-xl border border-border overflow-hidden bg-background"
+                >
+                  <ZoomableImage
+                    src={selectedSection.image}
+                    alt={`Vista Explodida — ${selectedSection.name}`}
+                    parts={selectedSection.parts}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Products panel */}
+          <div>
+            <AnimatePresence mode="wait">
+              {!selectedSection ? (
+                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="bg-card rounded-2xl border border-border p-8 text-center h-full flex flex-col items-center justify-center min-h-[300px]"
+                >
+                  <Search className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <h3 className="font-heading font-bold text-lg text-foreground mb-2">Selecione uma seção</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Clique em uma seção do {engineType === "gasolina" ? "motor a gasolina" : "motor diesel"} para ver os produtos compatíveis.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`${engineType}-${selectedSection.id}`}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-4"
+                >
+                  <div className="bg-card rounded-2xl border border-border p-6">
+                    <Badge className={`mb-2 ${engineType === "gasolina" ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}>
+                      {selectedSection.label ? `Seção ${selectedSection.label} — ` : ""}{engineType === "gasolina" ? "Gasolina" : "Diesel"}
+                    </Badge>
+                    <h2 className="font-heading font-bold text-xl text-foreground">{selectedSection.name}</h2>
+                    <p className="text-muted-foreground text-sm mt-1">{selectedSection.description}</p>
+
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <span className="text-xs text-muted-foreground py-1">Filtrar por potência:</span>
+                      {hpOptions.map((hp) => (
+                        <button key={hp} onClick={() => setHpFilter(hp)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            hpFilter === hp
+                              ? engineType === "gasolina" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                        >
+                          {hp ? `${hp}HP` : "Todos"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {isLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  ) : products && products.length > 0 ? (
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                      {products.map((p) => (
+                        <Link key={p.id} to={`/produto/${p.id}`}
+                          className="flex items-center gap-4 bg-card rounded-xl border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group"
+                        >
+                          {p.image_url ? (
+                            <img src={p.image_url} alt={p.name} className="h-16 w-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                          ) : (
+                            <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                              <ShoppingCart className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate">{p.name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {p.brand && <Badge variant="outline" className="text-[10px]">{p.brand}</Badge>}
+                              {p.hp && <Badge variant="outline" className="text-[10px]">{p.hp}</Badge>}
+                              {p.sku && <span className="text-[10px] text-muted-foreground">SKU: {p.sku}</span>}
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+                            <div>
+                              {p.original_price && Number(p.original_price) > p.price && (
+                                <p className="text-xs text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</p>
+                              )}
+                              <p className="font-heading font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                            </div>
+                            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={(e) => addToCart(e, p.id, p.name)} disabled={addingToCart === p.id}>
+                              {addingToCart === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                              Carrinho
+                            </Button>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-card rounded-xl border border-border p-8 text-center">
+                      <p className="text-muted-foreground text-sm">
+                        Nenhum produto encontrado para "{selectedSection.name}"{hpFilter ? ` ${hpFilter}HP` : ""}.
+                      </p>
+                      <Link to="/produtos" className="text-primary text-sm mt-2 inline-block hover:underline">Ver todos os produtos →</Link>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      <WhatsAppButton />
+      <AIAssistant />
+      <Footer />
+    </div>
+  );
+};
+
+export default ExplodedViews;
