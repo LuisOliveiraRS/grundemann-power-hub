@@ -747,7 +747,7 @@ const AdminDashboard = () => {
               key={item.key}
               onClick={() => setTab(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === item.key
+                tab === item.key || (item.key === "mechanics" && ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes"].includes(tab))
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
               }`}
@@ -759,40 +759,6 @@ const AdminDashboard = () => {
               )}
             </button>
           ))}
-
-          {/* Mechanic Area Group */}
-          <div className="pt-2">
-            <button
-              onClick={() => setExpandedSidebarGroup(expandedSidebarGroup === "mechanic-area" ? null : "mechanic-area")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all duration-200 ${
-                mechanicSubItems.some(s => tab === s.key)
-                  ? "bg-primary/20 text-primary"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
-              }`}
-            >
-              <Wrench className="h-5 w-5" />
-              <span>Área do Mecânico</span>
-              <ChevronDown className={`h-4 w-4 ml-auto transition-transform duration-200 ${expandedSidebarGroup === "mechanic-area" ? "rotate-180" : ""}`} />
-            </button>
-            {expandedSidebarGroup === "mechanic-area" && (
-              <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-primary/20 pl-3">
-                {mechanicSubItems.map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setTab(item.key)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      tab === item.key
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </nav>
         <div className="p-3 border-t border-sidebar-border space-y-1">
           <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
