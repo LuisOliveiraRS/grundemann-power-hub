@@ -103,7 +103,7 @@ const MechanicArea = () => {
       setCnpj(mechRes.data.cnpj || "");
       setSpecialty(mechRes.data.specialty || "");
 
-      const [orderRes, catalogRes, videoRes] = await Promise.all([
+      const [orderRes, catalogRes, videoRes, quotesRes] = await Promise.all([
         supabase
           .from("orders")
           .select("id, total_amount, status, created_at")
@@ -122,10 +122,16 @@ const MechanicArea = () => {
           .eq("is_active", true)
           .order("category")
           .order("created_at", { ascending: false }),
+        supabase
+          .from("quotes")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
       ]);
       setOrders(orderRes.data || []);
       setCatalogs(catalogRes.data || []);
       setMechVideos(videoRes.data || []);
+      setQuotes(quotesRes.data || []);
     }
     setLoading(false);
   };
