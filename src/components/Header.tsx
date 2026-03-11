@@ -60,7 +60,7 @@ const Header = () => {
           </button>
 
           <a href="/" className="flex-shrink-0">
-            <img src={logo} alt="Gründemann Geradores" className="h-12 md:h-40 w-auto" />
+            <img src={logo} alt="Gründemann Geradores" className="h-14 md:h-48 w-auto" />
           </a>
 
           <SmartSearch />

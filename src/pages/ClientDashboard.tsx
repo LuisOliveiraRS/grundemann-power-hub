@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users, CreditCard, AlertCircle, RefreshCw, Banknote } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users, CreditCard, AlertCircle, RefreshCw, Banknote, Calculator, Wrench, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -202,6 +202,14 @@ const ClientDashboard = () => {
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este pedido cancelado? Esta ação não pode ser desfeita.")) return;
+    await supabase.from("order_items").delete().eq("order_id", orderId);
+    const { error } = await supabase.from("orders").delete().eq("id", orderId);
+    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); }
+    else { toast({ title: "Pedido excluído com sucesso!" }); loadOrders(); loadPayments(); }
+  };
+
   const canCancel = (status: string) => ["pending", "confirmed"].includes(status);
   const canPay = (orderId: string, status: string) => {
     if (status !== "pending") return false;
@@ -276,8 +284,15 @@ const ClientDashboard = () => {
                   {t.count !== undefined && t.count > 0 && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{t.count}</Badge>}
                 </button>
               ))}
+              <button onClick={() => navigate("/calculadora-de-carga")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
+                <Calculator className="h-5 w-5" /> Calculadora de Carga
+              </button>
               <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
                 <ShoppingCart className="h-5 w-5" /> Continuar Comprando
+              </button>
+              <div className="border-t border-sidebar-border my-2" />
+              <button onClick={() => navigate("/mecanico")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
+                <Wrench className="h-5 w-5 text-primary" /> Seja Mecânico Parceiro
               </button>
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
                 <LogOut className="h-5 w-5" /> Sair
@@ -373,6 +388,7 @@ const ClientDashboard = () => {
                                   </Button>
                                 )}
                                 {canCancel(order.status) && <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={e => { e.stopPropagation(); cancelOrder(order.id); }}><XCircle className="h-3.5 w-3.5 mr-1" /> Cancelar</Button>}
+                                {order.status === "cancelled" && <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={e => { e.stopPropagation(); deleteOrder(order.id); }}><Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir</Button>}
                                 {expandedOrder === order.id ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                               </div>
                             </div>

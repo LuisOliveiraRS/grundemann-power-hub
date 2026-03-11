@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { BookOpen, Wrench } from "lucide-react";
+import { BookOpen, Wrench, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -103,6 +103,25 @@ const Index = () => {
       )}
       <SocialProof />
       <TechnicalCenterTeaser />
+
+      {/* Mechanic Partner CTA */}
+      <section className="py-12 bg-gradient-to-r from-secondary to-secondary/80">
+        <div className="container text-center">
+          <div className="max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-background/10 rounded-full px-4 py-1.5 mb-4">
+              <BadgeCheck className="h-5 w-5 text-accent" />
+              <span className="text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
+            </div>
+            <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">É Mecânico? Cadastre-se!</h2>
+            <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para oficinas e profissionais.</p>
+            <Link to="/mecanico" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
+              <Wrench className="h-5 w-5" />
+              Quero ser Mecânico Parceiro
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <CategoriesSection />
       <Suspense fallback={<SectionLoader />}>
         <TestimonialsSection />
