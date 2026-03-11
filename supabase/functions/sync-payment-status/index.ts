@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
 
     const { data: latestPayment } = await adminSupabase
       .from("payments")
-      .select("id, order_id, user_id, status, mp_payment_id, mp_preference_id, payment_method, mp_status_detail")
+      .select("id, status, mp_payment_id, payment_method, mp_status_detail")
       .eq("order_id", order_id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -144,10 +144,7 @@ Deno.serve(async (req) => {
     };
 
     if (latestPayment?.id) {
-      await adminSupabase
-        .from("payments")
-        .update(paymentPayload)
-        .eq("id", latestPayment.id);
+      await adminSupabase.from("payments").update(paymentPayload).eq("id", latestPayment.id);
     } else {
       await adminSupabase.from("payments").insert({
         order_id,
@@ -182,7 +179,7 @@ Deno.serve(async (req) => {
           adminUsers.map((admin) => ({
             user_id: admin.user_id,
             title: "💰 Pagamento confirmado",
-            message: `Pedido #${order_id.substring(0, 8)} confirmado no valor de R$ ${Number(order.total_amount).toFixed(2).replace(".", ",")}.",
+            message: `Pedido #${order_id.substring(0, 8)} confirmado no valor de R$ ${Number(order.total_amount).toFixed(2).replace(".", ",")}.`,
             type: "order",
             link: "/admin",
           }))
