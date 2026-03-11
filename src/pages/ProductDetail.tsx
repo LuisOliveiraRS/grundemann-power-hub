@@ -65,6 +65,7 @@ const ProductDetail = () => {
       const p = data as Product;
       setProduct(p);
       setSelectedImage(p.image_url);
+      addToRecentlyViewed({ id: p.id, name: p.name, price: p.price, image_url: p.image_url });
       
       const promises: any[] = [];
       
