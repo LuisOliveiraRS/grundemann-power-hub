@@ -541,6 +541,21 @@ const AdminDashboard = () => {
     toast({ title: "Cliente excluído!" }); loadAll();
   };
 
+  const toggleClientExpand = async (userId: string) => {
+    if (expandedClientId === userId) { setExpandedClientId(null); return; }
+    setExpandedClientId(userId);
+    // Load order items for this client's orders
+    const clientOrdIds = orders.filter(o => o.user_id === userId).map(o => o.id);
+    if (clientOrdIds.length > 0) {
+      const { data } = await supabase.from("order_items").select("*").in("order_id", clientOrdIds);
+      if (data) {
+        const grouped: Record<string, OrderItem[]> = {};
+        clientOrdIds.forEach(oid => { grouped[oid] = (data as OrderItem[]).filter(i => (i as any).order_id === oid); });
+        setClientOrderItems(prev => ({ ...prev, ...grouped }));
+      }
+    }
+  };
+
   const syncMercadoLivre = async () => {
     setSyncing(true);
     try {
