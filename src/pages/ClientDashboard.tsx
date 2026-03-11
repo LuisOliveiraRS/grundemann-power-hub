@@ -202,6 +202,14 @@ const ClientDashboard = () => {
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este pedido cancelado? Esta ação não pode ser desfeita.")) return;
+    await supabase.from("order_items").delete().eq("order_id", orderId);
+    const { error } = await supabase.from("orders").delete().eq("id", orderId);
+    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); }
+    else { toast({ title: "Pedido excluído com sucesso!" }); loadOrders(); loadPayments(); }
+  };
+
   const canCancel = (status: string) => ["pending", "confirmed"].includes(status);
   const canPay = (orderId: string, status: string) => {
     if (status !== "pending") return false;
