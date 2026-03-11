@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
       await supabase.from("notifications").insert({
         user_id: order.user_id,
         title: "Pagamento não aprovado ❌",
-        message: `O pagamento do pedido #${orderId.substring(0, 8)} não foi aprovado. Tente novamente.",
+        message: `O pagamento do pedido #${orderId.substring(0, 8)} não foi aprovado. Tente novamente.`,
         type: "order",
         link: "/minha-conta",
       });
