@@ -130,7 +130,8 @@ const AdminDashboard = () => {
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "",
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
-    specifications: "" as string, documents: [] as string[]
+    specifications: "" as string, documents: [] as string[],
+    weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
