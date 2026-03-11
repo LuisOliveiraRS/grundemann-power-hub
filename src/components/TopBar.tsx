@@ -1,32 +1,37 @@
-import { Phone, MessageCircle, Package, ShoppingCart, Wrench } from "lucide-react";
+import { Phone, MessageCircle, Package, ShoppingCart, Wrench, Calculator } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const TopBar = () => {
   return (
     <div className="bg-topbar text-topbar-foreground hidden md:block">
       <div className="container flex items-center justify-between py-2 text-sm">
         <div className="flex items-center gap-6">
-          <a href="tel:+555181825748" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <a href="tel:+5551981825748" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Phone className="h-3.5 w-3.5" />
-            <span>Telefone: (51) 8182-5748</span>
+            <span>Telefone: (51) 98182-5748</span>
           </a>
-          <a href="https://wa.me/555181825748" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <a href="https://wa.me/5551981825748" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <MessageCircle className="h-3.5 w-3.5" />
-            <span>WhatsApp: (51) 8182-5748</span>
+            <span>WhatsApp: (51) 98182-5748</span>
           </a>
         </div>
         <div className="flex items-center gap-6">
-          <a href="/mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          <Link to="/calculadora-de-carga" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+            <Calculator className="h-3.5 w-3.5" />
+            <span>Calculadora de Carga</span>
+          </Link>
+          <Link to="/mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Wrench className="h-3.5 w-3.5" />
             <span>Área do Mecânico</span>
-          </a>
-          <a href="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          </Link>
+          <Link to="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <Package className="h-3.5 w-3.5" />
             <span>Rastrear Pedido</span>
-          </a>
-          <a href="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+          </Link>
+          <Link to="/minha-conta" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
             <ShoppingCart className="h-3.5 w-3.5" />
             <span>Meus Pedidos</span>
-          </a>
+          </Link>
         </div>
       </div>
     </div>
