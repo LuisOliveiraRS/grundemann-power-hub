@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { CheckCircle, Package, Truck, ArrowRight, ShoppingCart } from "lucide-react";
+import { CheckCircle, Package, Truck, ArrowRight, ShoppingCart, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -23,26 +23,86 @@ const OrderConfirmed = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string>("loading");
   const orderId = searchParams.get("order_id");
 
+  const loadOrder = async () => {
+    if (!orderId || !user) return;
+    const { data: o } = await supabase
+      .from("orders")
+      .select("id, total_amount, status, created_at, shipping_address")
+      .eq("id", orderId)
+      .eq("user_id", user.id)
+      .single();
+    if (!o) return;
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("product_name, quantity, price_at_purchase")
+      .eq("order_id", orderId);
+    setOrder({ ...o, items: items || [] } as OrderDetail);
+
+    // Check payment status
+    const { data: payment } = await supabase
+      .from("payments")
+      .select("status")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (payment) {
+      setPaymentStatus(payment.status);
+    } else {
+      setPaymentStatus("pending");
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     if (!orderId || !user) return;
-    const load = async () => {
-      const { data: o } = await supabase
-        .from("orders")
-        .select("id, total_amount, status, created_at, shipping_address")
-        .eq("id", orderId)
-        .eq("user_id", user.id)
-        .single();
-      if (!o) return;
-      const { data: items } = await supabase
-        .from("order_items")
-        .select("product_name, quantity, price_at_purchase")
-        .eq("order_id", orderId);
-      setOrder({ ...o, items: items || [] } as OrderDetail);
-    };
-    load();
+    loadOrder();
   }, [orderId, user]);
+
+  // Realtime subscription for payment and order updates
+  useEffect(() => {
+    if (!orderId || !user) return;
+
+    const channel = supabase
+      .channel(`order-confirmed-${orderId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'payments',
+        filter: `order_id=eq.${orderId}`,
+      }, (payload) => {
+        const newStatus = (payload.new as any)?.status;
+        if (newStatus) setPaymentStatus(newStatus);
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${orderId}`,
+      }, (payload) => {
+        const newOrder = payload.new as any;
+        if (newOrder) {
+          setOrder(prev => prev ? { ...prev, status: newOrder.status } : prev);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [orderId, user]);
+
+  // Poll as fallback every 5 seconds while pending
+  useEffect(() => {
+    if (paymentStatus !== "pending" && paymentStatus !== "loading") return;
+    const interval = setInterval(loadOrder, 5000);
+    return () => clearInterval(interval);
+  }, [paymentStatus, orderId, user]);
+
+  const isConfirmed = paymentStatus === "approved" || order?.status === "confirmed";
+  const isPending = paymentStatus === "pending" || paymentStatus === "loading";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -59,9 +119,15 @@ const OrderConfirmed = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="bg-primary/10 rounded-full p-6 inline-flex mb-6"
+            className={`rounded-full p-6 inline-flex mb-6 ${isConfirmed ? "bg-primary/10" : "bg-accent/10"}`}
           >
-            <CheckCircle className="h-16 w-16 text-primary" />
+            {isConfirmed ? (
+              <CheckCircle className="h-16 w-16 text-primary" />
+            ) : isPending ? (
+              <Loader2 className="h-16 w-16 text-accent animate-spin" />
+            ) : (
+              <Clock className="h-16 w-16 text-accent" />
+            )}
           </motion.div>
 
           <motion.h1
@@ -70,7 +136,11 @@ const OrderConfirmed = () => {
             transition={{ delay: 0.4 }}
             className="font-heading text-2xl md:text-3xl font-bold mb-2"
           >
-            Pagamento Confirmado! ✅
+            {isConfirmed
+              ? "Pagamento Confirmado! ✅"
+              : isPending
+                ? "Aguardando Confirmação..."
+                : "Pedido Recebido"}
           </motion.h1>
 
           <motion.p
@@ -79,7 +149,11 @@ const OrderConfirmed = () => {
             transition={{ delay: 0.5 }}
             className="text-muted-foreground mb-6"
           >
-            Obrigado pela sua compra! Seu pagamento foi aprovado com sucesso.
+            {isConfirmed
+              ? "Obrigado pela sua compra! Seu pagamento foi aprovado com sucesso."
+              : isPending
+                ? "Estamos processando seu pagamento. Esta página atualizará automaticamente."
+                : "Seu pedido foi recebido e está sendo processado."}
           </motion.p>
 
           {order && (
@@ -101,8 +175,12 @@ const OrderConfirmed = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Status</span>
-                <span className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-full font-semibold">
-                  Confirmado
+                <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                  isConfirmed
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-accent/20 text-accent-foreground"
+                }`}>
+                  {isConfirmed ? "Confirmado" : isPending ? "Processando..." : order.status}
                 </span>
               </div>
 

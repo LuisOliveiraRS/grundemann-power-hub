@@ -115,11 +115,11 @@ const ClientDashboard = () => {
 
   useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); loadPayments(); } }, [user]);
 
-  // Realtime payments subscription
+  // Realtime payments + orders subscription
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel('user-payments')
+      .channel('user-payments-orders')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
         (payload) => {
           loadPayments();
@@ -127,13 +127,28 @@ const ClientDashboard = () => {
           const oldStatus = (payload.old as any)?.status;
           if (newStatus === 'approved' && oldStatus !== 'approved') {
             toast({ title: "Pagamento aprovado! ✅", description: "Seu pagamento foi confirmado com sucesso. Obrigado pela compra!" });
+            loadOrders();
           } else if (newStatus === 'rejected' && oldStatus !== 'rejected') {
             toast({ title: "Pagamento recusado ❌", description: "Seu pagamento foi recusado. Tente novamente ou use outro método.", variant: "destructive" });
+            loadOrders();
           } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
             toast({ title: "Reembolso processado 💰", description: "Seu pagamento foi reembolsado com sucesso." });
           }
         }
-      ).subscribe();
+      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          loadOrders();
+          const newStatus = (payload.new as any)?.status;
+          const oldStatus = (payload.old as any)?.status;
+          if (newStatus === 'confirmed' && oldStatus !== 'confirmed') {
+            toast({ title: "Pedido confirmado! 🎉", description: "Seu pedido foi confirmado e está sendo preparado." });
+          } else if (newStatus === 'shipped' && oldStatus !== 'shipped') {
+            toast({ title: "Pedido enviado! 🚚", description: "Seu pedido foi despachado para entrega." });
+          }
+        }
+      )
+      .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
   useEffect(() => { if (user && favoriteIds.size > 0) loadFavoriteProducts(); }, [favoriteIds]);
