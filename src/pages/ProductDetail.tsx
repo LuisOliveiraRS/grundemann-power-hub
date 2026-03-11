@@ -418,6 +418,7 @@ const ProductDetail = () => {
         </div>
       )}
 
+      <RecentlyViewed />
       <WhatsAppButton message={whatsappMessage} />
       <AIAssistant />
       <Footer />
