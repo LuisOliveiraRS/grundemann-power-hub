@@ -472,6 +472,8 @@ const ClientDashboard = () => {
                     <div className="space-y-3">
                       {payments.map(payment => {
                         const PIcon = paymentStatusIcon[payment.status] || Clock;
+                        const canPayPayment = payment.status === "pending" || payment.status === "rejected";
+                        const canDeletePayment = payment.status === "pending";
                         return (
                           <div key={payment.id} className="bg-card rounded-xl shadow-sm border border-border p-5 hover:shadow-md transition-shadow">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -488,7 +490,7 @@ const ClientDashboard = () => {
                                 <span className={`text-xs px-3 py-1.5 rounded-full font-semibold border ${paymentStatusColor[payment.status] || "bg-muted text-muted-foreground border-border"}`}>
                                   {paymentStatusLabel[payment.status] || payment.status}
                                 </span>
-                                <p className="font-heading font-bold text-lg text-price">R$ {Number(payment.amount).toFixed(2).replace(".", ",")}</p>
+                                <p className="font-heading font-bold text-lg text-primary">R$ {Number(payment.amount).toFixed(2).replace(".", ",")}</p>
                               </div>
                             </div>
                             <div className="mt-3 pt-3 border-t border-border flex flex-wrap gap-4 text-xs text-muted-foreground">
@@ -514,7 +516,29 @@ const ClientDashboard = () => {
                                 {mpStatusDetailLabel[payment.mp_status_detail] || payment.mp_status_detail}
                               </div>
                             )}
-                            {payment.status === "pending" && (
+                            {/* Action buttons for pending payments */}
+                            {(canPayPayment || canDeletePayment) && (
+                              <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
+                                {canPayPayment && (
+                                  <Button size="sm" className="gap-1.5" disabled={payingOrderId === payment.order_id} onClick={() => initiatePayment(payment.order_id)}>
+                                    {payingOrderId === payment.order_id ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Processando...</> : <><CreditCard className="h-3.5 w-3.5" /> Pagar Agora</>}
+                                  </Button>
+                                )}
+                                {canDeletePayment && (
+                                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={async () => {
+                                    if (!confirm("Deseja cancelar este pedido e pagamento?")) return;
+                                    await supabase.from("orders").update({ status: "cancelled" as any }).eq("id", payment.order_id);
+                                    await supabase.from("order_status_history").insert({ order_id: payment.order_id, status: "cancelled" as any, notes: "Cancelado pelo cliente" });
+                                    toast({ title: "Pedido cancelado!" });
+                                    loadOrders();
+                                    loadPayments();
+                                  }}>
+                                    <XCircle className="h-3.5 w-3.5" /> Cancelar Pedido
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                            {payment.status === "pending" && !canPayPayment && (
                               <div className="mt-2 flex items-center gap-2 text-xs bg-accent/10 text-accent-foreground rounded-lg px-3 py-2">
                                 <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
                                 Aguardando confirmação do pagamento — atualiza automaticamente
