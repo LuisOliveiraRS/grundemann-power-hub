@@ -775,7 +775,7 @@ const AdminDashboard = () => {
               key={item.key}
               onClick={() => setTab(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === item.key || (item.key === "mechanics" && ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes"].includes(tab))
+                tab === item.key || (item.key === "mechanics" && ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes", "exploded-views"].includes(tab))
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
               }`}
