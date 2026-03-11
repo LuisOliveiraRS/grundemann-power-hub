@@ -1039,7 +1039,27 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Specifications JSON */}
+                    {/* Weight & Dimensions */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label>Peso (kg)</Label>
+                        <Input type="number" step="0.01" value={productForm.weight_kg} onChange={e => setProductForm({ ...productForm, weight_kg: e.target.value })} placeholder="Ex: 2.5" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Largura (cm)</Label>
+                        <Input type="number" step="0.1" value={productForm.width_cm} onChange={e => setProductForm({ ...productForm, width_cm: e.target.value })} placeholder="Ex: 30" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Altura (cm)</Label>
+                        <Input type="number" step="0.1" value={productForm.height_cm} onChange={e => setProductForm({ ...productForm, height_cm: e.target.value })} placeholder="Ex: 20" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>Comprimento (cm)</Label>
+                        <Input type="number" step="0.1" value={productForm.length_cm} onChange={e => setProductForm({ ...productForm, length_cm: e.target.value })} placeholder="Ex: 40" className="mt-1" />
+                      </div>
+                    </div>
+
+
                     <div className="md:col-span-2">
                       <Label className="flex items-center gap-2"><Package className="h-4 w-4" /> Especificações Técnicas (JSON)</Label>
                       <Textarea
