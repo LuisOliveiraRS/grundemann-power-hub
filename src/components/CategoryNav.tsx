@@ -37,6 +37,26 @@ const CategoryNav = () => {
   const [openCat, setOpenCat] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
+  // Extract numeric HP from subcategory name for sorting
+  const extractHp = (name: string): number | null => {
+    const match = name.match(/(\d+)\s*hp/i);
+    return match ? parseInt(match[1], 10) : null;
+  };
+
+  const sortSubcategories = (subs: Subcategory[]): Subcategory[] => {
+    return [...subs].sort((a, b) => {
+      const hpA = extractHp(a.name);
+      const hpB = extractHp(b.name);
+      // Both have HP → sort numerically
+      if (hpA !== null && hpB !== null) return hpA - hpB;
+      // Only one has HP → HP ones go first
+      if (hpA !== null) return -1;
+      if (hpB !== null) return 1;
+      // Neither has HP → alphabetical
+      return a.name.localeCompare(b.name);
+    });
+  };
+
   useEffect(() => {
     Promise.all([
       supabase.from("categories").select("id, name, slug, is_visible").order("name"),
@@ -47,7 +67,7 @@ const CategoryNav = () => {
         .limit(20),
     ]).then(([catRes, subRes, prodRes]) => {
       if (catRes.data && catRes.data.length > 0) setCategories(catRes.data);
-      if (subRes.data) setSubcategories(subRes.data as Subcategory[]);
+      if (subRes.data) setSubcategories(sortSubcategories(subRes.data as Subcategory[]));
       if (prodRes.data) setFeaturedProducts(prodRes.data as FeaturedProduct[]);
     });
   }, []);

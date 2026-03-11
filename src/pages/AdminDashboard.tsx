@@ -148,6 +148,48 @@ const AdminDashboard = () => {
 
   useEffect(() => { loadAll(); }, []);
 
+  // Realtime subscription for orders and payments updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-realtime-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' },
+        (payload) => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+          if (payload.eventType === 'UPDATE') {
+            setOrders(prev => {
+              const updated = prev.map(o => o.id === newRow.id ? { ...o, ...newRow } : o);
+              setStats(s => ({
+                ...s,
+                pendingOrders: updated.filter(o => o.status === "pending").length,
+                revenue: updated.filter(o => o.status !== "cancelled").reduce((sum, o) => sum + Number(o.total_amount), 0),
+              }));
+              return updated;
+            });
+            if (newRow.status === 'confirmed' && oldRow?.status !== 'confirmed') {
+              toast({ title: "💰 Pedido confirmado!", description: `Pedido #${newRow.id.substring(0, 8)} foi pago e confirmado.` });
+            }
+          } else if (payload.eventType === 'INSERT') {
+            loadAll();
+            toast({ title: "🛒 Novo pedido!", description: `Novo pedido #${newRow.id.substring(0, 8)} recebido.` });
+          }
+        }
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            const newRow = payload.new as any;
+            if (newRow.status === 'approved') {
+              toast({ title: "✅ Pagamento aprovado!", description: `Pagamento do pedido confirmado via ${newRow.payment_method || 'Mercado Pago'}.` });
+              loadAll();
+            }
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   const loadAll = async () => {
     const [prodRes, ordRes, catRes, clientRes, subRes, testRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
