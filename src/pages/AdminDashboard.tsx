@@ -1900,9 +1900,17 @@ const AdminDashboard = () => {
         {tab === "quotes" && <QuoteManagement />}
 
         {/* MECHANICS TAB */}
-        {tab === "mechanics" && (
-          <div className="space-y-8">
-            <MechanicManagement />
+        {tab === "mechanics" && <MechanicManagement />}
+
+        {/* MECHANIC VIDEOS TAB */}
+        {(tab as string) === "mechanic-videos" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Video className="h-8 w-8 text-primary" /> Vídeos Técnicos
+              </h1>
+              <p className="text-muted-foreground mt-1">Gerencie vídeos de instalação e manutenção para mecânicos</p>
+            </div>
             <MechanicVideoManagement />
           </div>
         )}
