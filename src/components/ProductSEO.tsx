@@ -11,14 +11,16 @@ interface ProductSEOProps {
   stockQuantity: number;
   metaTitle?: string | null;
   metaDescription?: string | null;
+  reviewCount?: number;
+  avgRating?: number;
 }
 
-const ProductSEO = ({ name, description, sku, price, image, brand, category, stockQuantity, metaTitle, metaDescription }: ProductSEOProps) => {
+const ProductSEO = ({ name, description, sku, price, image, brand, category, stockQuantity, metaTitle, metaDescription, reviewCount, avgRating }: ProductSEOProps) => {
   const title = metaTitle || `${name} | Grundemann Power Hub`;
   const desc = metaDescription || description?.slice(0, 160) || `Compre ${name} na Grundemann Power Hub. Peças para motores estacionários com qualidade e garantia.`;
   const url = typeof window !== "undefined" ? window.location.href : "";
 
-  const jsonLd = {
+  const jsonLd: any = {
     "@context": "https://schema.org",
     "@type": "Product",
     name,
@@ -33,8 +35,23 @@ const ProductSEO = ({ name, description, sku, price, image, brand, category, sto
       priceCurrency: "BRL",
       availability: stockQuantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       url,
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      seller: {
+        "@type": "Organization",
+        name: "Grundemann Power Hub",
+      },
     },
   };
+
+  if (reviewCount && reviewCount > 0 && avgRating) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: avgRating.toFixed(1),
+      reviewCount,
+      bestRating: "5",
+      worstRating: "1",
+    };
+  }
 
   return (
     <Helmet>
@@ -48,6 +65,8 @@ const ProductSEO = ({ name, description, sku, price, image, brand, category, sto
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={desc} />
+      <meta property="product:price:amount" content={price.toFixed(2)} />
+      <meta property="product:price:currency" content="BRL" />
       <link rel="canonical" href={url} />
       <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
     </Helmet>
