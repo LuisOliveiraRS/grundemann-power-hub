@@ -73,6 +73,7 @@ const App = () => (
                 <Route path="/central-tecnica" element={<TechnicalCenter />} />
                 <Route path="/catalogo-interativo" element={<ExplodedCatalog />} />
                 <Route path="/calculadora-de-carga" element={<GeneratorCalculator />} />
+                <Route path="/vistas-explodidas" element={<ExplodedViews />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
