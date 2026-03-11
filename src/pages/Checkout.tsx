@@ -832,21 +832,7 @@ const Checkout = () => {
           )}
 
           {/* Step 4: Success - auto redirect after 5s */}
-          {step === 4 && (
-            <div className="bg-card rounded-xl border border-border shadow-sm p-12 text-center">
-              <div className="bg-primary/10 rounded-full p-6 inline-flex mb-6">
-                <CheckCircle className="h-16 w-16 text-primary" />
-              </div>
-              <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Confirmado! ✅</h2>
-              <p className="text-muted-foreground mb-2">Obrigado pela sua compra! Seu pagamento foi aprovado e o pedido está sendo processado.</p>
-              <p className="text-sm text-muted-foreground mb-6">Pedido #{createdOrderId?.slice(0, 8)} · Você será redirecionado em instantes...</p>
-              <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
-                <Button onClick={() => navigate("/minha-conta")}>Meus Pedidos</Button>
-              </div>
-              {(() => { setTimeout(() => navigate("/minha-conta"), 5000); return null; })()}
-            </div>
-          )}
+          {step === 4 && <PaymentSuccess orderId={createdOrderId} navigate={navigate} />}
 
           {/* Step 5: Pending Payment (PIX/Boleto) */}
           {step === 5 && (
