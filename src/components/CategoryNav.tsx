@@ -89,7 +89,7 @@ const CategoryNav = () => {
   const getCatProducts = (catId: string) => featuredProducts.filter(p => p.category_id === catId).slice(0, 2);
 
   return (
-    <nav className="bg-nav relative z-40" ref={navRef}>
+    <nav className="bg-nav sticky top-0 z-40 shadow-md" ref={navRef}>
       <div className="container">
         <ul className="flex flex-wrap items-center justify-center md:justify-between">
           {items.map((cat) => {

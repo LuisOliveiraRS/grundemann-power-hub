@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Wrench, Search, CheckCircle2, XCircle, Trash2, Eye, Loader2, Plus, UserPlus } from "lucide-react";
+import { Wrench, Search, CheckCircle2, XCircle, Trash2, Loader2, Plus, UserPlus, MessageCircle } from "lucide-react";
 
 interface MechanicRow {
   id: string;
@@ -45,10 +45,46 @@ const MechanicManagement = () => {
     setLoading(false);
   };
 
-  const toggleApproval = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("mechanics").update({ is_approved: !current }).eq("id", id);
+  const normalizePhone = (phone?: string | null) => (phone || "").replace(/\D/g, "");
+
+  const getWhatsAppUrl = (mechanic: MechanicRow) => {
+    const phone = normalizePhone(mechanic.profile?.phone);
+    if (!phone) return null;
+
+    const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
+    const message = `Olá, ${recipient}! Aqui é da Grundemann. Estamos entrando em contato pelo painel administrativo.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  };
+
+  const sendApprovalNotification = async (mechanic: MechanicRow) => {
+    const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
+    const whatsappUrl = getWhatsAppUrl(mechanic);
+
+    await supabase.from("notifications").insert({
+      user_id: mechanic.user_id,
+      title: "Cadastro aprovado na Área do Mecânico 🎉",
+      message: `Olá, ${recipient}! Seu cadastro foi aprovado e sua área exclusiva já está liberada.`,
+      type: "info",
+      link: "/mecanico",
+    });
+
+    if (whatsappUrl) {
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const toggleApproval = async (mechanic: MechanicRow) => {
+    const nextApproved = !mechanic.is_approved;
+    const { error } = await supabase.from("mechanics").update({ is_approved: nextApproved }).eq("id", mechanic.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    toast({ title: !current ? "Mecânico aprovado!" : "Aprovação revogada!" });
+
+    if (nextApproved) {
+      await sendApprovalNotification(mechanic);
+      toast({ title: "Mecânico aprovado!", description: mechanic.profile?.phone ? "Mensagem de boas-vindas aberta no WhatsApp e notificação interna enviada." : "Notificação interna enviada." });
+    } else {
+      toast({ title: "Aprovação revogada!" });
+    }
+
     load();
   };
 
@@ -235,17 +271,25 @@ const MechanicManagement = () => {
                     onChange={e => updateDiscount(m.id, Number(e.target.value))}
                   />
                 </div>
-                <Button
-                  size="sm"
-                  variant={m.is_approved ? "outline" : "default"}
-                  onClick={() => toggleApproval(m.id, m.is_approved)}
-                >
+                 <Button
+                   size="sm"
+                   variant={m.is_approved ? "outline" : "default"}
+                   onClick={() => toggleApproval(m)}
+                 >
                   {m.is_approved ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
                   {m.is_approved ? "Revogar" : "Aprovar"}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                 {getWhatsAppUrl(m) && (
+                   <Button asChild size="sm" variant="outline">
+                     <a href={getWhatsAppUrl(m)!} target="_blank" rel="noopener noreferrer" aria-label={`Falar com ${m.profile?.full_name || m.company_name || 'mecânico'} no WhatsApp`}>
+                       <MessageCircle className="h-4 w-4 mr-1" />
+                       WhatsApp
+                     </a>
+                   </Button>
+                 )}
+                 <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
+                   <Trash2 className="h-4 w-4 text-destructive" />
+                 </Button>
               </div>
             </div>
           </div>

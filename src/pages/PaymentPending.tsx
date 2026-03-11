@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Clock, ShoppingCart, ArrowRight, QrCode, Banknote } from "lucide-react";
+import { Clock, ShoppingCart, ArrowRight, QrCode, Banknote, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { syncPaymentStatus } from "@/lib/paymentSync";
+
+const terminalPaymentStatuses = ["approved", "rejected", "cancelled", "refunded"];
 
 const PaymentPending = () => {
   const [searchParams] = useSearchParams();
@@ -15,19 +18,109 @@ const PaymentPending = () => {
   const { user } = useAuth();
   const orderId = searchParams.get("order_id");
   const [orderTotal, setOrderTotal] = useState<number | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string>("pending");
+  const [orderStatus, setOrderStatus] = useState<string>("pending");
+  const [syncing, setSyncing] = useState(false);
+
+  const isWaiting = useMemo(
+    () => !terminalPaymentStatuses.includes(paymentStatus) && orderStatus !== "confirmed",
+    [paymentStatus, orderStatus]
+  );
+
+  const loadStatus = async () => {
+    if (!orderId || !user) return;
+
+    const [{ data: order }, { data: payment }] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("total_amount, status")
+        .eq("id", orderId)
+        .eq("user_id", user.id)
+        .single(),
+      supabase
+        .from("payments")
+        .select("status")
+        .eq("order_id", orderId)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (order) {
+      setOrderTotal(Number(order.total_amount));
+      setOrderStatus(order.status);
+    }
+
+    if (payment?.status) {
+      setPaymentStatus(payment.status);
+    }
+  };
+
+  useEffect(() => {
+    void loadStatus();
+  }, [orderId, user]);
 
   useEffect(() => {
     if (!orderId || !user) return;
-    supabase
-      .from("orders")
-      .select("total_amount")
-      .eq("id", orderId)
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setOrderTotal(data.total_amount);
-      });
+
+    const channel = supabase
+      .channel(`payment-pending-${orderId}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "payments",
+        filter: `order_id=eq.${orderId}`,
+      }, (payload) => {
+        const status = (payload.new as { status?: string } | null)?.status;
+        if (status) setPaymentStatus(status);
+      })
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "orders",
+        filter: `id=eq.${orderId}`,
+      }, (payload) => {
+        const status = (payload.new as { status?: string } | null)?.status;
+        if (status) setOrderStatus(status);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [orderId, user]);
+
+  useEffect(() => {
+    if (!orderId || !user || !isWaiting) return;
+
+    const interval = window.setInterval(async () => {
+      try {
+        setSyncing(true);
+        await syncPaymentStatus(orderId);
+        await loadStatus();
+      } catch (error) {
+        console.error("Payment sync error:", error);
+      } finally {
+        setSyncing(false);
+      }
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [orderId, user, isWaiting]);
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    if (paymentStatus === "approved" || orderStatus === "confirmed") {
+      navigate(`/pedido-confirmado?order_id=${orderId}`, { replace: true });
+      return;
+    }
+
+    if (["rejected", "cancelled", "refunded"].includes(paymentStatus) || orderStatus === "cancelled") {
+      navigate(`/pagamento-erro?order_id=${orderId}`, { replace: true });
+    }
+  }, [navigate, orderId, orderStatus, paymentStatus]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -46,14 +139,14 @@ const PaymentPending = () => {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="bg-accent/20 rounded-full p-6 inline-flex mb-6"
           >
-            <Clock className="h-16 w-16 text-accent-foreground" />
+            {syncing ? <Loader2 className="h-16 w-16 text-accent-foreground animate-spin" /> : <Clock className="h-16 w-16 text-accent-foreground" />}
           </motion.div>
 
           <h1 className="font-heading text-2xl md:text-3xl font-bold mb-2">
-            Pagamento Pendente ⏳
+            Aguardando confirmação do pagamento ⏳
           </h1>
           <p className="text-muted-foreground mb-6">
-            Seu pedido foi criado com sucesso! O pagamento está sendo processado.
+            Seu pedido foi criado com sucesso e esta página será atualizada automaticamente assim que o pagamento for confirmado.
           </p>
 
           {orderId && (
@@ -96,7 +189,7 @@ const PaymentPending = () => {
               </div>
             </div>
             <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-              Você receberá uma notificação quando o pagamento for confirmado.
+              Assim que o Mercado Pago confirmar, você será redirecionado automaticamente para a página de pagamento confirmado.
             </p>
           </div>
 

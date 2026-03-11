@@ -15,6 +15,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
 import ReferralProgram from "@/components/ReferralProgram";
+import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface Profile {
   full_name: string; email: string; phone: string;
@@ -115,34 +116,34 @@ const ClientDashboard = () => {
 
   useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); loadPayments(); } }, [user]);
 
-  // Realtime payments + orders subscription
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel('user-payments-orders')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
+      .channel(`user-payments-orders-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments', filter: `user_id=eq.${user.id}` },
         (payload) => {
-          loadPayments();
+          void loadPayments();
           const newStatus = (payload.new as any)?.status;
           const oldStatus = (payload.old as any)?.status;
           if (newStatus === 'approved' && oldStatus !== 'approved') {
             toast({ title: "Pagamento aprovado! ✅", description: "Seu pagamento foi confirmado com sucesso. Obrigado pela compra!" });
-            loadOrders();
+            void loadOrders();
           } else if (newStatus === 'rejected' && oldStatus !== 'rejected') {
             toast({ title: "Pagamento recusado ❌", description: "Seu pagamento foi recusado. Tente novamente ou use outro método.", variant: "destructive" });
-            loadOrders();
+            void loadOrders();
           } else if (newStatus === 'refunded' && oldStatus !== 'refunded') {
             toast({ title: "Reembolso processado 💰", description: "Seu pagamento foi reembolsado com sucesso." });
           }
         }
       )
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
         (payload) => {
-          loadOrders();
+          void loadOrders();
           const newStatus = (payload.new as any)?.status;
           const oldStatus = (payload.old as any)?.status;
           if (newStatus === 'confirmed' && oldStatus !== 'confirmed') {
             toast({ title: "Pedido confirmado! 🎉", description: "Seu pedido foi confirmado e está sendo preparado." });
+            void loadPayments();
           } else if (newStatus === 'shipped' && oldStatus !== 'shipped') {
             toast({ title: "Pedido enviado! 🚚", description: "Seu pedido foi despachado para entrega." });
           }
@@ -150,7 +151,29 @@ const ClientDashboard = () => {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const pendingOrderIds = Array.from(new Set([
+      ...orders.filter(order => order.status === "pending").map(order => order.id),
+      ...payments.filter(payment => payment.status === "pending").map(payment => payment.order_id),
+    ]));
+
+    if (pendingOrderIds.length === 0) return;
+
+    const interval = window.setInterval(async () => {
+      try {
+        await Promise.all(pendingOrderIds.map((orderId) => syncPaymentStatus(orderId)));
+        await Promise.all([loadOrders(), loadPayments()]);
+      } catch (error) {
+        console.error("Client payment sync error:", error);
+      }
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [user, orders, payments]);
   useEffect(() => { if (user && favoriteIds.size > 0) loadFavoriteProducts(); }, [favoriteIds]);
 
   const loadProfile = async () => {
