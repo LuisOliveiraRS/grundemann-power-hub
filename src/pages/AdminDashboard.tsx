@@ -2215,7 +2215,25 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* APPEARANCE TAB */}
+        {/* EXPLODED VIEWS TAB */}
+        {(tab as string) === "exploded-views" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <Package className="h-7 w-7 text-primary" /> Vistas Explodidas
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie os diagramas de vistas explodidas dos motores</p>
+              </div>
+            </div>
+            <ExplodedViewManagement />
+          </div>
+        )}
+
+
         {tab === "appearance" && (
           <div>
             <div className="mb-8">

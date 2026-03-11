@@ -31,6 +31,7 @@ const MechanicArea = lazy(() => import("./pages/MechanicArea"));
 const TechnicalCenter = lazy(() => import("./pages/TechnicalCenter"));
 const ExplodedCatalog = lazy(() => import("./pages/ExplodedCatalog"));
 const GeneratorCalculator = lazy(() => import("./pages/GeneratorCalculator"));
+const ExplodedViews = lazy(() => import("./pages/ExplodedViews"));
 
 const queryClient = new QueryClient();
 
