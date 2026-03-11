@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface CartItem {
   id: string;
@@ -22,7 +22,6 @@ interface CartDrawerProps {
 const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -58,55 +57,104 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
     navigate("/checkout");
   };
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="font-heading">Meu Carrinho</SheetTitle>
-        </SheetHeader>
+  if (!open) return null;
 
-        {!user ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">Faça login para ver seu carrinho</p>
-              <Button onClick={() => { onOpenChange(false); navigate("/auth"); }}>Entrar</Button>
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
+
+      {/* Compact cart popup - positioned top-right */}
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="fixed top-16 right-4 md:right-8 z-50 w-[360px] max-w-[calc(100vw-2rem)] bg-card rounded-2xl border border-border shadow-2xl overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/30">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              <h3 className="font-heading font-bold text-base">Meu Carrinho</h3>
+              {items.length > 0 && (
+                <span className="bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {items.reduce((s, i) => s + i.quantity, 0)}
+                </span>
+              )}
             </div>
+            <button onClick={() => onOpenChange(false)} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
           </div>
-        ) : items.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-muted-foreground">Carrinho vazio</p>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto space-y-3 py-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 border border-border rounded-lg p-3">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{item.product?.name}</p>
-                    <p className="text-price font-bold text-sm">R$ {(item.product?.price || 0).toFixed(2)}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-1 hover:bg-muted rounded"><Minus className="h-4 w-4" /></button>
-                    <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.id, item.quantity + 1)} className="p-1 hover:bg-muted rounded"><Plus className="h-4 w-4" /></button>
-                  </div>
-                  <button onClick={() => removeItem(item.id)} className="text-destructive p-1"><Trash2 className="h-4 w-4" /></button>
-                </div>
-              ))}
+
+          {!user ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground text-sm mb-4">Faça login para ver seu carrinho</p>
+              <Button size="sm" onClick={() => { onOpenChange(false); navigate("/auth"); }}>Entrar</Button>
             </div>
-            <div className="border-t border-border pt-4 space-y-3">
-              <div className="flex justify-between font-heading font-bold text-lg">
-                <span>Total</span>
-                <span className="text-price">R$ {total.toFixed(2)}</span>
+          ) : items.length === 0 ? (
+            <div className="p-8 text-center">
+              <ShoppingCart className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">Carrinho vazio</p>
+            </div>
+          ) : (
+            <>
+              {/* Items - scrollable */}
+              <div className="max-h-[280px] overflow-y-auto divide-y divide-border">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
+                    <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                      {item.product?.image_url ? (
+                        <img src={item.product.image_url} alt="" className="h-full w-full object-contain p-1" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs truncate">{item.product?.name}</p>
+                      <p className="text-price font-bold text-sm">R$ {(item.product?.price || 0).toFixed(2).replace(".", ",")}</p>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <button onClick={() => updateQty(item.id, item.quantity - 1)} className="p-1 hover:bg-muted rounded transition-colors">
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                      <button onClick={() => updateQty(item.id, item.quantity + 1)} className="p-1 hover:bg-muted rounded transition-colors">
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <button onClick={() => removeItem(item.id)} className="text-destructive p-1 hover:bg-destructive/10 rounded transition-colors">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
-              <Button className="w-full" onClick={goToCheckout}>
-                Finalizar Pedido
-              </Button>
-            </div>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
+
+              {/* Footer */}
+              <div className="border-t border-border px-5 py-4 space-y-3 bg-muted/10">
+                <div className="flex justify-between font-heading font-bold">
+                  <span className="text-sm">Total</span>
+                  <span className="text-price text-lg">R$ {total.toFixed(2).replace(".", ",")}</span>
+                </div>
+                <Button className="w-full font-bold" onClick={goToCheckout}>
+                  Finalizar Pedido
+                </Button>
+                <button
+                  onClick={() => onOpenChange(false)}
+                  className="w-full text-center text-xs text-primary hover:underline font-medium"
+                >
+                  Continuar comprando
+                </button>
+              </div>
+            </>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </>
   );
 };
 
