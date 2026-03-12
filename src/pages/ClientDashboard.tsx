@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users, CreditCard, AlertCircle, RefreshCw, Banknote, Calculator, Wrench, Trash2 } from "lucide-react";
+import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users, CreditCard, AlertCircle, RefreshCw, Banknote, Calculator, Wrench, Trash2, Printer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import CategoryNav from "@/components/CategoryNav";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
 import ReferralProgram from "@/components/ReferralProgram";
+import QuotePrintSheet from "@/components/QuotePrintSheet";
 import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface Profile {
@@ -28,7 +29,8 @@ interface Order {
   shipping_address: string | null; notes: string | null; tracking_code?: string | null;
   items?: OrderItem[];
 }
-interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; admin_notes: string | null; }
+interface QuoteItem { product_name: string; product_sku: string | null; quantity: number; unit_price: number; }
+interface Quote { id: string; status: string; total_estimated: number; created_at: string; message: string | null; admin_notes: string | null; customer_name: string; customer_email: string; customer_phone: string; customer_company: string | null; items?: QuoteItem[]; }
 interface FavProduct { id: string; name: string; price: number; image_url: string | null; sku: string | null; }
 interface Payment {
   id: string; order_id: string; amount: number; status: string;
@@ -108,6 +110,8 @@ const ClientDashboard = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [printingQuote, setPrintingQuote] = useState<Quote | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -191,8 +195,8 @@ const ClientDashboard = () => {
   };
 
   const loadQuotes = async () => {
-    const { data } = await supabase.from("quotes").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
-    if (data) setQuotes(data as Quote[]);
+    const { data } = await supabase.from("quotes").select("*, quote_items(product_name, product_sku, quantity, unit_price)").eq("user_id", user!.id).order("created_at", { ascending: false });
+    if (data) setQuotes(data.map((q: any) => ({ ...q, items: q.quote_items || [] })) as Quote[]);
   };
 
   const loadPayments = async () => {
@@ -282,6 +286,19 @@ const ClientDashboard = () => {
   });
   const hasFilters = orderStatusFilter || orderDateFrom || orderDateTo;
 
+  const printQuote = (quote: Quote) => {
+    setPrintingQuote(quote);
+    setTimeout(() => {
+      if (!printRef.current) return;
+      const win = window.open("", "_blank");
+      if (!win) { toast({ title: "Permita pop-ups para imprimir", variant: "destructive" }); return; }
+      win.document.write(`<!DOCTYPE html><html><head><title>Orçamento</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printRef.current.innerHTML}</body></html>`);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); win.close(); setPrintingQuote(null); }, 500);
+    }, 100);
+  };
+
   const tabs = [
     { id: "profile" as const, label: "Meus Dados", icon: User },
     { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
@@ -294,6 +311,29 @@ const ClientDashboard = () => {
 
   return (
     <Layout>
+      {/* Hidden print area for quotes */}
+      {printingQuote && (
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <div ref={printRef}>
+            <QuotePrintSheet quote={{
+              id: printingQuote.id,
+              created_at: printingQuote.created_at,
+              customer_name: printingQuote.customer_name || profile.full_name,
+              customer_email: printingQuote.customer_email || profile.email,
+              customer_phone: printingQuote.customer_phone || profile.phone,
+              customer_company: printingQuote.customer_company || profile.company_name,
+              message: printingQuote.message,
+              total_estimated: printingQuote.total_estimated,
+              items: (printingQuote.items || []).map(i => ({
+                product_name: i.product_name,
+                product_sku: i.product_sku,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+              })),
+            }} />
+          </div>
+        </div>
+      )}
       <div className="flex-1 bg-muted/50">
         <div className="container py-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Minha Conta</h1>
@@ -326,8 +366,8 @@ const ClientDashboard = () => {
                 <ShoppingCart className="h-5 w-5" /> Continuar Comprando
               </button>
               <div className="border-t border-sidebar-border my-2" />
-              <button onClick={() => navigate("/mecanico")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
-                <Wrench className="h-5 w-5 text-primary" /> Seja Mecânico Parceiro
+              <button onClick={() => navigate("/parceiros")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
+                <Wrench className="h-5 w-5 text-primary" /> Seja Revendedor / Oficina / Mecânico
               </button>
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
                 <LogOut className="h-5 w-5" /> Sair
@@ -496,11 +536,23 @@ const ClientDashboard = () => {
                         <div key={q.id} className="bg-card rounded-xl shadow-sm border border-border p-5">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-heading font-bold">Orçamento #{q.id.slice(0, 8)}</p>
-                            <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
-                              {quoteStatusLabel[q.status] || q.status}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" onClick={() => printQuote(q)} className="gap-1.5">
+                                <Printer className="h-3.5 w-3.5" /> PDF
+                              </Button>
+                              <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
+                                {quoteStatusLabel[q.status] || q.status}
+                              </Badge>
+                            </div>
                           </div>
                           <p className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                          {q.items && q.items.length > 0 && (
+                            <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                              {q.items.map((item, idx) => (
+                                <p key={idx}>{item.quantity}x {item.product_name} — R$ {(Number(item.unit_price) * item.quantity).toFixed(2).replace(".", ",")}</p>
+                              ))}
+                            </div>
+                          )}
                           {q.message && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{q.message}</p>}
                           <p className="font-heading font-bold text-price mt-2">R$ {Number(q.total_estimated).toFixed(2).replace(".", ",")}</p>
                           {q.admin_notes && (

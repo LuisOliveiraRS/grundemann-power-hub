@@ -39,6 +39,7 @@ const PaymentPending = lazy(() => import("./pages/PaymentPending"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
 const RevendedorDashboard = lazy(() => import("./pages/RevendedorDashboard"));
 const OficinaDashboard = lazy(() => import("./pages/OficinaDashboard"));
+const PartnerLogin = lazy(() => import("./pages/PartnerLogin"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +94,7 @@ const App = () => (
                     <Route path="/oficina" element={<ProtectedRoute><OficinaDashboard /></ProtectedRoute>} />
                     <Route path="/orcamento" element={<QuoteRequest />} />
                     <Route path="/mecanico" element={<MechanicArea />} />
+                    <Route path="/parceiros" element={<PartnerLogin />} />
                     <Route path="/central-tecnica" element={<TechnicalCenter />} />
                     <Route path="/catalogo-interativo" element={<ExplodedCatalog />} />
                     <Route path="/calculadora-de-carga" element={<GeneratorCalculator />} />
