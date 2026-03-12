@@ -522,6 +522,7 @@ export type Database = {
           created_at: string
           discount_rate: number
           id: string
+          inscricao_estadual: string | null
           is_approved: boolean
           specialty: string | null
           updated_at: string
@@ -533,6 +534,7 @@ export type Database = {
           created_at?: string
           discount_rate?: number
           id?: string
+          inscricao_estadual?: string | null
           is_approved?: boolean
           specialty?: string | null
           updated_at?: string
@@ -544,6 +546,7 @@ export type Database = {
           created_at?: string
           discount_rate?: number
           id?: string
+          inscricao_estadual?: string | null
           is_approved?: boolean
           specialty?: string | null
           updated_at?: string

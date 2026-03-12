@@ -1,0 +1,1 @@
+ALTER TABLE public.mechanics ADD COLUMN IF NOT EXISTS inscricao_estadual text DEFAULT '';

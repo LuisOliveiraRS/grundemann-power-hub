@@ -10,11 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video, Package, ChevronUp } from "lucide-react";
-import TopBar from "@/components/TopBar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
-import AIAssistant from "@/components/AIAssistant";
+import Layout from "@/components/Layout";
 import PartIdentifier from "@/components/PartIdentifier";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
 import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
@@ -23,6 +19,7 @@ interface MechanicProfile {
   id: string;
   company_name: string;
   cnpj: string;
+  inscricao_estadual: string;
   specialty: string;
   discount_rate: number;
   is_approved: boolean;
@@ -58,6 +55,7 @@ const MechanicArea = () => {
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
+  const [inscricaoEstadual, setInscricaoEstadual] = useState("");
   const [specialty, setSpecialty] = useState("");
 
   // Profile form
@@ -101,6 +99,7 @@ const MechanicArea = () => {
       setMechanic(mechRes.data as MechanicProfile);
       setCompanyName(mechRes.data.company_name || "");
       setCnpj(mechRes.data.cnpj || "");
+      setInscricaoEstadual((mechRes.data as any).inscricao_estadual || "");
       setSpecialty(mechRes.data.specialty || "");
 
       const [orderRes, catalogRes, videoRes, quotesRes] = await Promise.all([
@@ -153,8 +152,9 @@ const MechanicArea = () => {
       user_id: user.id,
       company_name: companyName,
       cnpj,
+      inscricao_estadual: inscricaoEstadual,
       specialty,
-    });
+    } as any);
 
     if (error) {
       toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
@@ -170,7 +170,7 @@ const MechanicArea = () => {
     setSaving(true);
 
     const [mechErr, profErr] = await Promise.all([
-      supabase.from("mechanics").update({ company_name: companyName, cnpj, specialty }).eq("id", mechanic.id),
+      supabase.from("mechanics").update({ company_name: companyName, cnpj, inscricao_estadual: inscricaoEstadual, specialty } as any).eq("id", mechanic.id),
       supabase.from("profiles").update({
         full_name: fullName, phone, address, address_number: addressNumber,
         city, state, zip_code: zipCode, neighborhood,
@@ -228,6 +228,10 @@ const MechanicArea = () => {
             <Label>CNPJ (opcional)</Label>
             <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
           </div>
+          <div>
+            <Label>Inscrição Estadual (IE)</Label>
+            <Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="IE" />
+          </div>
           <div className="sm:col-span-2">
             <Label>Especialidade</Label>
             <Input value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Ex: Motores estacionários, geradores, bombas d'água" />
@@ -271,9 +275,7 @@ const MechanicArea = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopBar />
-      <Header />
+    <Layout>
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-foreground via-secondary to-foreground py-16">
@@ -627,10 +629,7 @@ const MechanicArea = () => {
         </div>
       </div>
 
-      <WhatsAppButton />
-      <AIAssistant />
-      <Footer />
-    </div>
+    </Layout>
   );
 };
 

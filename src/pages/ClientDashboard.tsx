@@ -9,10 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Package, User, LogOut, ShoppingCart, ChevronDown, ChevronUp, MapPin, Phone, Clock, CheckCircle, Truck, XCircle, Filter, X, Building2, Heart, FileText, Download, Gift, Users, CreditCard, AlertCircle, RefreshCw, Banknote, Calculator, Wrench, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import TopBar from "@/components/TopBar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import Layout from "@/components/Layout";
+import CategoryNav from "@/components/CategoryNav";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
 import ReferralProgram from "@/components/ReferralProgram";
 import { syncPaymentStatus } from "@/lib/paymentSync";
@@ -295,8 +293,7 @@ const ClientDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+    <Layout>
       <div className="flex-1 bg-muted/50">
         <div className="container py-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Minha Conta</h1>
@@ -660,9 +657,7 @@ const ClientDashboard = () => {
           </div>
         </div>
       </div>
-      <WhatsAppButton />
-      <Footer />
-    </div>
+    </Layout>
   );
 };
 
