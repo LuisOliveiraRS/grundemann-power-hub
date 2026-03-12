@@ -137,10 +137,10 @@ const CategoryNav = () => {
 
                 {/* Mega Dropdown */}
                 {hasDropdown && isOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[380px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[420px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                     <div className="flex">
                       {/* Subcategories */}
-                      <div className={`py-2 ${catProducts.length > 0 ? "w-1/2 border-r border-border" : "w-full"}`}>
+                      <div className="w-1/2 border-r border-border py-2">
                         <Link
                           to={`/categoria/${cat.slug}`}
                           onClick={() => setOpenCat(null)}
@@ -153,17 +153,28 @@ const CategoryNav = () => {
                             key={sub.id}
                             to={`/categoria/${cat.slug}/${sub.slug}`}
                             onClick={() => setOpenCat(null)}
-                            className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                            onMouseEnter={() => setHoveredSub(sub.id)}
+                            className={`block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
                           >
                             {sub.name}
                           </Link>
                         ))}
                       </div>
 
-                      {/* Featured/Launch Products */}
-                      {catProducts.length > 0 && (
-                        <div className="w-1/2 p-3 space-y-2">
-                          {catProducts.map(p => (
+                      {/* Products panel - shows subcategory products on hover, or featured products by default */}
+                      <div className="w-1/2 p-3 space-y-2">
+                        {(() => {
+                          const displayProducts = hoveredSub
+                            ? getSubcatProducts(hoveredSub)
+                            : catProducts;
+                          if (displayProducts.length === 0) {
+                            return (
+                              <p className="text-xs text-muted-foreground text-center py-4">
+                                {hoveredSub ? "Nenhum produto nesta subcategoria" : "Nenhum produto em destaque"}
+                              </p>
+                            );
+                          }
+                          return displayProducts.map(p => (
                             <Link
                               key={p.id}
                               to={`/produto/${p.id}`}
@@ -191,12 +202,15 @@ const CategoryNav = () => {
                                   )}
                                 </div>
                                 <p className="text-xs font-semibold truncate group-hover:text-primary transition-colors">{p.name}</p>
-                                <p className="text-xs font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                                <div className="flex items-center gap-1.5">
+                                  {p.original_price && <span className="text-[10px] text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</span>}
+                                  <p className="text-xs font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                                </div>
                               </div>
                             </Link>
-                          ))}
-                        </div>
-                      )}
+                          ));
+                        })()}
+                      </div>
                     </div>
                   </div>
                 )}
