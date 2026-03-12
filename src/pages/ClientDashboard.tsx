@@ -193,8 +193,8 @@ const ClientDashboard = () => {
   };
 
   const loadQuotes = async () => {
-    const { data } = await supabase.from("quotes").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
-    if (data) setQuotes(data as Quote[]);
+    const { data } = await supabase.from("quotes").select("*, quote_items(product_name, product_sku, quantity, unit_price)").eq("user_id", user!.id).order("created_at", { ascending: false });
+    if (data) setQuotes(data.map((q: any) => ({ ...q, items: q.quote_items || [] })) as Quote[]);
   };
 
   const loadPayments = async () => {
