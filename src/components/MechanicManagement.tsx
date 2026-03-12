@@ -19,6 +19,7 @@ interface MechanicRow {
   discount_rate: number;
   is_approved: boolean;
   created_at: string;
+  partner_type?: string;
   profile?: { full_name: string; email: string; phone: string | null; city: string | null; state: string | null; address: string | null; neighborhood: string | null; zip_code: string | null } | null;
 }
 
@@ -200,12 +201,12 @@ const MechanicManagement = () => {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
-            <Wrench className="h-8 w-8 text-primary" /> Gestão de Mecânicos
+            <Wrench className="h-8 w-8 text-primary" /> Gestão de Parceiros
           </h1>
-          <p className="text-muted-foreground mt-1">Aprove cadastros, edite fichas, defina descontos</p>
+          <p className="text-muted-foreground mt-1">Mecânicos, Oficinas e Revendedores — Aprove, edite e gerencie</p>
         </div>
         <Button onClick={() => setShowAddForm(!showAddForm)}>
-          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Mecânico
+          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Parceiro
         </Button>
       </div>
 
@@ -287,12 +288,13 @@ const MechanicManagement = () => {
             ) : (
               /* View Card */
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-heading font-bold text-foreground">{m.profile?.full_name || "Sem nome"}</p>
                     <Badge className={m.is_approved ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}>
                       {m.is_approved ? "Aprovado" : "Pendente"}
                     </Badge>
+                    <Badge variant="outline" className="text-xs capitalize">{(m as any).partner_type || "mecanico"}</Badge>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
                     <p>📧 {m.profile?.email || "—"}</p>

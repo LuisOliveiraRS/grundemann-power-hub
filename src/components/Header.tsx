@@ -77,6 +77,14 @@ const Header = () => {
                 Vendedor
               </button>
             )}
+            {!isAdmin && !isSeller && partnerType && (
+              <button
+                onClick={() => navigate(partnerType === "revendedor" ? "/revendedor" : partnerType === "oficina" ? "/oficina" : "/mecanico")}
+                className="hidden md:block text-xs font-bold text-primary hover:underline"
+              >
+                {partnerType === "revendedor" ? "Área Revendedor" : partnerType === "oficina" ? "Área Oficina" : "Área Mecânico"}
+              </button>
+            )}
             {user ? (
               <div className="hidden md:flex items-center gap-2">
                 <button

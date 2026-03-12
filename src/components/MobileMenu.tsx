@@ -26,7 +26,7 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
-  const { user, isAdmin, isSeller, userName, signOut } = useAuth();
+  const { user, isAdmin, isSeller, userName, partnerType, signOut } = useAuth();
   const navigate = useNavigate();
   const { tree } = useMenuCategories();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -141,6 +141,15 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
             {isSeller && !isAdmin && (
               <button onClick={() => go("/vendedor")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-primary">
                 <LayoutDashboard className="h-4 w-4" /> Painel Vendedor
+              </button>
+            )}
+            {!isAdmin && !isSeller && partnerType && (
+              <button
+                onClick={() => go(partnerType === "revendedor" ? "/revendedor" : partnerType === "oficina" ? "/oficina" : "/mecanico")}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-primary"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                {partnerType === "revendedor" ? "Área Revendedor" : partnerType === "oficina" ? "Área Oficina" : "Área Mecânico"}
               </button>
             )}
           </div>

@@ -154,6 +154,7 @@ const MechanicArea = () => {
       cnpj,
       inscricao_estadual: inscricaoEstadual,
       specialty,
+      partner_type: "mecanico",
     } as any);
 
     if (error) {
