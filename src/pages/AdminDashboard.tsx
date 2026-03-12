@@ -1925,8 +1925,6 @@ const AdminDashboard = () => {
         {/* REPORTS TAB */}
         {tab === "reports" && <AdminReports />}
 
-        {/* SUBCATEGORY TREE TAB */}
-        {tab === "categories" && expandedCat === "__tree__" && <SubcategoryTreeManagement />}
 
         {/* SELLERS TAB */}
         {tab === "sellers" && <SellerManagement />}
