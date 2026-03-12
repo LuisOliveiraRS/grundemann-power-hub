@@ -200,7 +200,7 @@ const CategoryNav = () => {
 
                 {hasDropdown && isOpen && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[520px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-visible">
-                    <div className="flex">
+                    <div className="flex relative">
                       {/* Left: only direct children, with recursive flyout on hover */}
                       <div className="w-1/2 border-r border-border py-2 max-h-[400px] overflow-y-auto">
                         <Link
