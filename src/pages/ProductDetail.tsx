@@ -136,7 +136,7 @@ const ProductDetail = () => {
 
   if (!product) return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1 flex items-center justify-center flex-col gap-4">
         <p className="text-muted-foreground">Produto não encontrado.</p>
         <Button onClick={() => navigate("/")}>Voltar à Loja</Button>
