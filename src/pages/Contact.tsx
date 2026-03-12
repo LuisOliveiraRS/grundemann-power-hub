@@ -78,10 +78,10 @@ const Contact = () => {
 
             <div className="space-y-4">
               {[
-                { icon: Phone, title: "Telefone", value: "(51) 8182-5748", href: "tel:+555181825748" },
-                { icon: MessageCircle, title: "WhatsApp", value: "(51) 8182-5748", href: "https://wa.me/555181825748" },
+                { icon: Phone, title: "Telefone", value: "(51) 98182-5748", href: "tel:+5551981825748" },
+                { icon: MessageCircle, title: "WhatsApp", value: "(51) 98182-5748", href: "https://wa.me/5551981825748" },
                 { icon: Mail, title: "Email", value: "adair.grundemann@gmail.com", href: "mailto:adair.grundemann@gmail.com" },
-                { icon: Clock, title: "Horário de Atendimento", value: "Seg a Sex: 8h às 18h\nSáb: 8h às 12h", href: null },
+                { icon: Clock, title: "Horário de Atendimento", value: "Seg a Sex: 8h às 18h", href: null },
               ].map((item) => (
                 <div key={item.title} className="bg-card rounded-xl border border-border p-5">
                   <div className="flex items-start gap-3">
