@@ -170,7 +170,7 @@ const MechanicArea = () => {
     setSaving(true);
 
     const [mechErr, profErr] = await Promise.all([
-      supabase.from("mechanics").update({ company_name: companyName, cnpj, specialty }).eq("id", mechanic.id),
+      supabase.from("mechanics").update({ company_name: companyName, cnpj, inscricao_estadual: inscricaoEstadual, specialty } as any).eq("id", mechanic.id),
       supabase.from("profiles").update({
         full_name: fullName, phone, address, address_number: addressNumber,
         city, state, zip_code: zipCode, neighborhood,
