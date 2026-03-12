@@ -131,7 +131,20 @@ const Checkout = () => {
     loadCart();
   };
 
-  const subtotal = items.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+  const [mechanicDiscount, setMechanicDiscount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const checkMechanic = async () => {
+      const { data } = await supabase.from("mechanics").select("discount_rate, is_approved").eq("user_id", user.id).maybeSingle();
+      if (data?.is_approved && data.discount_rate > 0) setMechanicDiscount(data.discount_rate);
+    };
+    checkMechanic();
+  }, [user]);
+
+  const rawSubtotal = items.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+  const mechanicDiscountAmount = mechanicDiscount > 0 ? rawSubtotal * (mechanicDiscount / 100) : 0;
+  const subtotal = rawSubtotal - mechanicDiscountAmount;
 
   const calculateDiscount = (): number => {
     if (!appliedCoupon) return 0;
@@ -540,8 +553,14 @@ const Checkout = () => {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} itens)</span>
-                          <span>R$ {subtotal.toFixed(2).replace(".", ",")}</span>
+                          <span>R$ {rawSubtotal.toFixed(2).replace(".", ",")}</span>
                         </div>
+                        {mechanicDiscount > 0 && (
+                          <div className="flex justify-between text-sm text-primary">
+                            <span>Desconto Mecânico ({mechanicDiscount}%)</span>
+                            <span>- R$ {mechanicDiscountAmount.toFixed(2).replace(".", ",")}</span>
+                          </div>
+                        )}
                         {appliedCoupon && discount > 0 && (
                           <div className="flex justify-between text-sm text-primary">
                             <span>Desconto ({appliedCoupon.code})</span>
