@@ -37,6 +37,7 @@ const ExplodedViews = lazy(() => import("./pages/ExplodedViews"));
 const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const PaymentPending = lazy(() => import("./pages/PaymentPending"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
+const RevendedorDashboard = lazy(() => import("./pages/RevendedorDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
