@@ -367,20 +367,18 @@ const ClientDashboard = () => {
               </div>
               {tabs.map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 relative ${tab === t.id ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"}`}>
                   <t.icon className="h-5 w-5" /> {t.label}
-                  {t.count !== undefined && t.count > 0 && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{t.count}</Badge>}
+                  {(t as any).pulse && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-destructive animate-pulse" title="Orçamento em andamento" />
+                  )}
+                  {t.count !== undefined && t.count > 0 && !(t as any).pulse && <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-sidebar-primary-foreground/20 text-sidebar-foreground">{t.count}</Badge>}
                 </button>
               ))}
-              <button onClick={() => navigate("/calculadora-de-carga")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
-                <Calculator className="h-5 w-5" /> Calculadora de Carga
+              <button onClick={() => navigate("/orcamento")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-sidebar-accent/30 transition-colors relative">
+                <FileText className="h-5 w-5" /> Adicionar ao Orçamento
+                {hasQuoteDraft && <span className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-destructive animate-pulse" />}
               </button>
-              <button onClick={() => navigate("/")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground transition-colors">
-                <ShoppingCart className="h-5 w-5" /> Continuar Comprando
-              </button>
-              <div className="border-t border-sidebar-border my-2" />
-              <button onClick={() => navigate("/parceiros")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
-                <Wrench className="h-5 w-5 text-primary" /> Seja Revendedor / Oficina / Mecânico
               </button>
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
                 <LogOut className="h-5 w-5" /> Sair
