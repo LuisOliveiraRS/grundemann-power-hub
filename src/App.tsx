@@ -37,6 +37,7 @@ const ExplodedViews = lazy(() => import("./pages/ExplodedViews"));
 const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const PaymentPending = lazy(() => import("./pages/PaymentPending"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
+const RevendedorDashboard = lazy(() => import("./pages/RevendedorDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,6 +88,7 @@ const App = () => (
                     <Route path="/admin/importar" element={<ProtectedRoute adminOnly><ProductImport /></ProtectedRoute>} />
                     <Route path="/admin/exportar-ml" element={<ProtectedRoute adminOnly><MLExport /></ProtectedRoute>} />
                     <Route path="/vendedor" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
+                    <Route path="/revendedor" element={<ProtectedRoute><RevendedorDashboard /></ProtectedRoute>} />
                     <Route path="/orcamento" element={<QuoteRequest />} />
                     <Route path="/mecanico" element={<MechanicArea />} />
                     <Route path="/central-tecnica" element={<TechnicalCenter />} />

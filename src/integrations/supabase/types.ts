@@ -524,6 +524,7 @@ export type Database = {
           id: string
           inscricao_estadual: string | null
           is_approved: boolean
+          partner_type: string
           specialty: string | null
           updated_at: string
           user_id: string
@@ -536,6 +537,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           is_approved?: boolean
+          partner_type?: string
           specialty?: string | null
           updated_at?: string
           user_id: string
@@ -548,6 +550,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           is_approved?: boolean
+          partner_type?: string
           specialty?: string | null
           updated_at?: string
           user_id?: string

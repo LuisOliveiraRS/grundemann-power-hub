@@ -13,7 +13,7 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const { user, isAdmin, isSeller, signOut } = useAuth();
+  const { user, isAdmin, isSeller, userName, partnerType, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -84,7 +84,7 @@ const Header = () => {
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <User className="h-5 w-5" />
-                  <span>Minha Conta</span>
+                  <span>{userName || "Minha Conta"}</span>
                 </button>
                 <button
                   onClick={async () => { await signOut(); navigate("/"); }}

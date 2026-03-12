@@ -145,7 +145,7 @@ const TechnicalCenter = () => {
                 <Link to="/produtos" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors">
                   Ver Produtos
                 </Link>
-                <a href="https://wa.me/5500000000000?text=Olá, preciso de ajuda técnica com meu motor estacionário" target="_blank" rel="noopener noreferrer"
+                <a href="https://wa.me/5551981825748?text=Olá, preciso de ajuda técnica com meu motor estacionário" target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-2.5 rounded-lg font-medium hover:bg-primary/5 transition-colors">
                   Falar com Técnico
                 </a>

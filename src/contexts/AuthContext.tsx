@@ -8,6 +8,9 @@ interface AuthContextType {
   isAdmin: boolean;
   isSeller: boolean;
   isLoading: boolean;
+  userName: string;
+  partnerType: string | null; // 'mecanico' | 'oficina' | 'revendedor' | null
+  isApprovedPartner: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -17,6 +20,9 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isSeller: false,
   isLoading: true,
+  userName: "",
+  partnerType: null,
+  isApprovedPartner: false,
   signOut: async () => {},
 });
 
@@ -28,6 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState("");
+  const [partnerType, setPartnerType] = useState<string | null>(null);
+  const [isApprovedPartner, setIsApprovedPartner] = useState(false);
 
   const checkRoles = async (userId: string) => {
     const { data } = await supabase
@@ -39,16 +48,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsSeller(roles.includes("seller"));
   };
 
+  const loadProfile = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", userId)
+      .single();
+    if (profile?.full_name) {
+      setUserName(profile.full_name.split(" ")[0]); // First name only
+    }
+
+    const { data: mechanic } = await supabase
+      .from("mechanics")
+      .select("partner_type, is_approved")
+      .eq("user_id", userId)
+      .single();
+    if (mechanic) {
+      setPartnerType(mechanic.partner_type as string);
+      setIsApprovedPartner(mechanic.is_approved);
+    } else {
+      setPartnerType(null);
+      setIsApprovedPartner(false);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => checkRoles(session.user.id), 0);
+          setTimeout(() => {
+            checkRoles(session.user.id);
+            loadProfile(session.user.id);
+          }, 0);
         } else {
           setIsAdmin(false);
           setIsSeller(false);
+          setUserName("");
+          setPartnerType(null);
+          setIsApprovedPartner(false);
         }
         setIsLoading(false);
       }
@@ -59,6 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkRoles(session.user.id);
+        loadProfile(session.user.id);
       }
       setIsLoading(false);
     });
@@ -71,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isLoading, userName, partnerType, isApprovedPartner, signOut }}>
       {children}
     </AuthContext.Provider>
   );
