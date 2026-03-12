@@ -77,13 +77,32 @@ const Header = () => {
                 Vendedor
               </button>
             )}
-            <button
-              onClick={() => user ? navigate("/minha-conta") : navigate("/auth")}
-              className="hidden md:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <User className="h-5 w-5" />
-              <span>{user ? "Minha Conta" : "Entrar"}</span>
-            </button>
+            {user ? (
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  onClick={() => navigate("/minha-conta")}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <User className="h-5 w-5" />
+                  <span>Minha Conta</span>
+                </button>
+                <button
+                  onClick={async () => { await signOut(); navigate("/"); }}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors ml-1"
+                  title="Sair"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/auth")}
+                className="hidden md:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <LogIn className="h-5 w-5" />
+                <span>Entrar</span>
+              </button>
+            )}
             <button
               onClick={() => setCartOpen(true)}
               className="relative flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
