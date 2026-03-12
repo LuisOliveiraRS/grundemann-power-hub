@@ -27,7 +27,7 @@ interface Subcategory { id: string; name: string; slug: string; category_id: str
 interface FeaturedProduct {
   id: string; name: string; price: number; original_price: number | null;
   image_url: string | null; is_featured: boolean; is_launch: boolean;
-  category_id: string | null;
+  category_id: string | null; subcategory_id: string | null;
 }
 
 const CategoryNav = () => {
