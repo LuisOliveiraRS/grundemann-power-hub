@@ -238,7 +238,7 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
@@ -246,6 +246,7 @@ const AdminDashboard = () => {
       supabase.from("subcategories").select("*").order("name"),
       supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
+      supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
