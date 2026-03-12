@@ -32,6 +32,7 @@ import CatalogManagement from "@/components/CatalogManagement";
 import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
+import SiteFeatureReport from "@/components/SiteFeatureReport";
 import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
@@ -108,7 +109,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance" | "site-report">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -754,6 +755,7 @@ const AdminDashboard = () => {
     { key: "analytics", label: "Analytics", icon: TrendingUp },
     { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
+    { key: "site-report", label: "Relatório do Site", icon: FileText },
     { key: "appearance", label: "Aparência", icon: Paintbrush },
   ] as const;
 
@@ -2288,6 +2290,9 @@ const AdminDashboard = () => {
             <AppearanceSettings />
           </div>
         )}
+
+        {/* SITE FEATURE REPORT TAB */}
+        {tab === "site-report" && <SiteFeatureReport />}
       </main>
     </div>
   );
