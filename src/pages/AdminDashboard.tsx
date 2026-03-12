@@ -51,6 +51,25 @@ interface PaymentInfo {
   mp_payment_id: string | null; amount: number; paid_at: string | null;
 }
 
+interface QuoteRequest {
+  id: string;
+  user_id: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  status: string;
+  total_estimated: number | null;
+  message: string | null;
+  admin_notes: string | null;
+  created_at: string;
+}
+
+interface ProductCategoryLink {
+  product_id: string;
+  category_id: string;
+  subcategory_id: string | null;
+}
+
 interface OrderWithItems {
   id: string; user_id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
