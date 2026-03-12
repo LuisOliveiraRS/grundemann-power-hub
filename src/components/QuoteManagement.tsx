@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Search, ChevronDown, ChevronUp, Eye, Package, DollarSign, Clock, CheckCircle, MessageCircle } from "lucide-react";
+import { FileText, Search, ChevronDown, ChevronUp, Package, DollarSign, Clock, CheckCircle, MessageCircle, Printer } from "lucide-react";
+import { buildWhatsAppUrl } from "@/lib/whatsappUtils";
+import QuotePrintSheet from "@/components/QuotePrintSheet";
 
 interface Quote {
   id: string;
@@ -53,6 +55,8 @@ const QuoteManagement = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const printRef = useRef<HTMLDivElement>(null);
+  const [printingQuote, setPrintingQuote] = useState<Quote | null>(null);
 
   useEffect(() => { loadQuotes(); }, []);
 
@@ -79,6 +83,25 @@ const QuoteManagement = () => {
     await supabase.from("quotes").update({ admin_notes: notes } as any).eq("id", quoteId);
   };
 
+  const printQuote = async (quote: Quote) => {
+    let quoteToPrint = { ...quote };
+    if (!quoteToPrint.items) {
+      const { data } = await supabase.from("quote_items").select("*").eq("quote_id", quote.id);
+      quoteToPrint.items = (data || []) as QuoteItem[];
+    }
+    setPrintingQuote(quoteToPrint);
+    setTimeout(() => {
+      const printContent = printRef.current;
+      if (!printContent) return;
+      const win = window.open("", "_blank");
+      if (!win) { toast({ title: "Erro", description: "Permita pop-ups para imprimir.", variant: "destructive" }); return; }
+      win.document.write(`<!DOCTYPE html><html><head><title>Orçamento #${quote.id.slice(0, 8)}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); win.close(); }, 500);
+    }, 200);
+  };
+
   const filtered = quotes.filter(q => {
     if (statusFilter && q.status !== statusFilter) return false;
     if (search) {
@@ -99,6 +122,24 @@ const QuoteManagement = () => {
 
   return (
     <div>
+      {/* Hidden print area */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div ref={printRef}>
+          {printingQuote && (
+            <QuotePrintSheet quote={{
+              ...printingQuote,
+              total_estimated: Number(printingQuote.total_estimated),
+              items: (printingQuote.items || []).map(i => ({
+                product_name: i.product_name,
+                product_sku: i.product_sku,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+              })),
+            }} />
+          )}
+        </div>
+      </div>
+
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold">Orçamentos</h1>
         <p className="text-muted-foreground mt-1">Gerencie solicitações de orçamento</p>
@@ -200,27 +241,31 @@ const QuoteManagement = () => {
                   />
                 </div>
 
-                {/* Status buttons + WhatsApp */}
+                {/* Status buttons + WhatsApp + Print */}
                 <div className="flex flex-wrap items-center gap-2">
                   {Object.entries(statusLabels).map(([k, v]) => (
                     <Button key={k} variant={quote.status === k ? "default" : "outline"} size="sm" onClick={() => updateStatus(quote.id, k)}>
                       {v}
                     </Button>
                   ))}
-                  {quote.customer_phone && (
-                    <a
-                      href={`https://wa.me/55${quote.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                        `Olá ${quote.customer_name}! Referente ao seu orçamento #${quote.id.slice(0, 8)} na Gründemann Geradores.\n\n`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button type="button" size="sm" className="bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)] text-white gap-1.5">
-                        <MessageCircle className="h-4 w-4" />
-                        Responder via WhatsApp
-                      </Button>
-                    </a>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => printQuote(quote)} className="gap-1.5">
+                    <Printer className="h-4 w-4" />
+                    Imprimir PDF
+                  </Button>
+                  {quote.customer_phone && (() => {
+                    const waUrl = buildWhatsAppUrl(
+                      quote.customer_phone,
+                      `Olá ${quote.customer_name}! Referente ao seu orçamento #${quote.id.slice(0, 8)} na Gründemann Geradores.\n\n`
+                    );
+                    return waUrl ? (
+                      <a href={waUrl} target="_blank" rel="noopener noreferrer">
+                        <Button type="button" size="sm" className="bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)] text-white gap-1.5">
+                          <MessageCircle className="h-4 w-4" />
+                          Responder via WhatsApp
+                        </Button>
+                      </a>
+                    ) : null;
+                  })()}
                 </div>
               </div>
             )}
