@@ -268,9 +268,7 @@ const MechanicArea = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopBar />
-      <Header />
+    <Layout>
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-foreground via-secondary to-foreground py-16">
