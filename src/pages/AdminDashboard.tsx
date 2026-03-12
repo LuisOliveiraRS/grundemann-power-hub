@@ -430,6 +430,7 @@ const AdminDashboard = () => {
 
   const editProduct = (p: Product) => {
     setEditingProduct(p);
+    const linkedCatIds = productCategoryLinks.filter(l => l.product_id === p.id).map(l => l.category_id).filter(cid => cid !== p.category_id);
     setProductForm({
       name: p.name, description: p.description || "", sku: p.sku || "",
       price: String(p.price), original_price: p.original_price ? String(p.original_price) : "",
@@ -445,6 +446,7 @@ const AdminDashboard = () => {
       width_cm: (p as any).width_cm ? String((p as any).width_cm) : "",
       height_cm: (p as any).height_cm ? String((p as any).height_cm) : "",
       length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
+      extra_category_ids: linkedCatIds,
     });
     setTab("products");
   };
