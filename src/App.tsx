@@ -94,6 +94,7 @@ const App = () => (
                     <Route path="/oficina" element={<ProtectedRoute><OficinaDashboard /></ProtectedRoute>} />
                     <Route path="/orcamento" element={<QuoteRequest />} />
                     <Route path="/mecanico" element={<MechanicArea />} />
+                    <Route path="/parceiros" element={<PartnerLogin />} />
                     <Route path="/central-tecnica" element={<TechnicalCenter />} />
                     <Route path="/catalogo-interativo" element={<ExplodedCatalog />} />
                     <Route path="/calculadora-de-carga" element={<GeneratorCalculator />} />
