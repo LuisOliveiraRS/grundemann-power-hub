@@ -326,6 +326,7 @@ const Checkout = () => {
     <div className="min-h-screen flex flex-col">
       <TopBar />
       <Header />
+      <CategoryNav />
       <div className="flex-1 bg-muted/50">
         <div className="container py-8 max-w-4xl">
           {/* Steps indicator */}

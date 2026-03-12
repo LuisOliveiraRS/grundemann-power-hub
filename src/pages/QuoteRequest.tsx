@@ -137,7 +137,7 @@ const QuoteRequest = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-8 max-w-4xl">
           <h1 className="font-heading text-3xl font-bold mb-2">Solicitar Orçamento</h1>

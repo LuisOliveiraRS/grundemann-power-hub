@@ -162,7 +162,7 @@ const ProductDetail = () => {
         metaTitle={product.meta_title}
         metaDescription={product.meta_description}
       />
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-6 md:py-8">
           {/* Breadcrumb */}
