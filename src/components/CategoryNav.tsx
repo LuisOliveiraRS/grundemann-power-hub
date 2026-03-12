@@ -65,7 +65,7 @@ const SubMenuItem = ({
       </Link>
 
       {hasChildren && open && (
-        <div className="absolute left-full top-0 min-w-[220px] bg-card border border-border rounded-lg shadow-xl z-[70] animate-in fade-in slide-in-from-left-2 duration-150">
+        <div className="absolute left-full top-0 min-w-[220px] bg-card border border-border rounded-lg shadow-xl z-[80] animate-in fade-in slide-in-from-left-2 duration-150">
           <Link
             to={`/categoria/${node.fullPath}`}
             onClick={onClose}
