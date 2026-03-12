@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail, MapPin, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, ChevronUp } from "lucide-react";
+import { User, Phone, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, Store, TrendingUp, BarChart3, DollarSign, Printer, LogOut } from "lucide-react";
 import Layout from "@/components/Layout";
+import UserQuotesList from "@/components/UserQuotesList";
 
 interface PartnerProfile {
   id: string;
@@ -37,7 +38,7 @@ interface UserProfile {
 }
 
 const RevendedorDashboard = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [partner, setPartner] = useState<PartnerProfile | null>(null);
@@ -48,9 +49,8 @@ const RevendedorDashboard = () => {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"hub" | "perfil" | "compras" | "catalogos" | "orcamentos">("hub");
+  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos">("overview");
 
-  // Profile form
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -68,13 +68,12 @@ const RevendedorDashboard = () => {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-
     const [partnerRes, profileRes, ordersRes, catalogsRes, quotesRes] = await Promise.all([
       supabase.from("mechanics").select("*").eq("user_id", user.id).single(),
       supabase.from("profiles").select("*").eq("user_id", user.id).single(),
       supabase.from("orders").select("*, order_items(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("technical_catalogs").select("*").eq("is_active", true).ilike("category", "Revendedor%").order("title"),
-      supabase.from("quotes").select("*, quote_items(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("quotes").select("*, quote_items(product_name, product_sku, quantity, unit_price)").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
     if (partnerRes.data) setPartner(partnerRes.data as any);
@@ -92,8 +91,7 @@ const RevendedorDashboard = () => {
     }
     if (ordersRes.data) setOrders(ordersRes.data);
     if (catalogsRes.data) setCatalogs(catalogsRes.data);
-    if (quotesRes.data) setQuotes(quotesRes.data);
-
+    if (quotesRes.data) setQuotes(quotesRes.data.map((q: any) => ({ ...q, items: q.quote_items || [] })));
     setLoading(false);
   };
 
@@ -101,14 +99,8 @@ const RevendedorDashboard = () => {
     if (!user) return;
     setSaving(true);
     await supabase.from("profiles").update({
-      full_name: fullName,
-      phone,
-      address,
-      address_number: addressNumber,
-      city,
-      state,
-      zip_code: zipCode,
-      neighborhood,
+      full_name: fullName, phone, address, address_number: addressNumber,
+      city, state, zip_code: zipCode, neighborhood,
     }).eq("user_id", user.id);
     toast({ title: "Perfil atualizado!" });
     setSaving(false);
@@ -126,29 +118,12 @@ const RevendedorDashboard = () => {
   };
 
   const statusLabel: Record<string, string> = {
-    pending: "Pendente",
-    confirmed: "Confirmado",
-    processing: "Em Processamento",
-    shipped: "Enviado",
-    delivered: "Entregue",
-    cancelled: "Cancelado",
-  };
-
-  const quoteStatusLabel: Record<string, string> = {
-    pending: "Aguardando Resposta",
-    answered: "Respondido",
-    approved: "Aprovado",
-    rejected: "Recusado",
+    pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
+    shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
   };
 
   if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
+    return <Layout><div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
 
   if (!partner || partner.partner_type !== "revendedor") {
@@ -158,7 +133,7 @@ const RevendedorDashboard = () => {
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">Acesso Restrito</h1>
           <p className="text-muted-foreground mb-4">Esta área é exclusiva para revendedores cadastrados.</p>
-          <Button onClick={() => navigate("/auth")}>Cadastrar como Revendedor</Button>
+          <Button onClick={() => navigate("/parceiros")}>Cadastrar como Revendedor</Button>
         </div>
       </Layout>
     );
@@ -177,9 +152,12 @@ const RevendedorDashboard = () => {
     );
   }
 
-  const tabs = [
-    { id: "hub" as const, label: "Início", icon: Package },
-    { id: "perfil" as const, label: "Perfil", icon: User },
+  const totalSpent = orders.reduce((s, o) => s + Number(o.total_amount), 0);
+  const deliveredOrders = orders.filter(o => o.status === "delivered").length;
+
+  const sidebarItems = [
+    { id: "overview" as const, label: "Painel", icon: BarChart3 },
+    { id: "perfil" as const, label: "Meu Perfil", icon: User },
     { id: "compras" as const, label: "Compras", icon: ShoppingCart },
     { id: "catalogos" as const, label: "Catálogos PDF", icon: Download },
     { id: "orcamentos" as const, label: "Orçamentos", icon: FileText },
@@ -187,243 +165,269 @@ const RevendedorDashboard = () => {
 
   return (
     <Layout>
-      <div className="bg-gradient-brand py-8">
-        <div className="container">
-          <div className="flex items-center gap-3">
-            <Building2 className="h-8 w-8 text-primary-foreground" />
-            <div>
-              <h1 className="font-heading text-2xl font-bold text-primary-foreground">Área do Revendedor</h1>
-              <p className="text-primary-foreground/70 text-sm">{partner.company_name || fullName}</p>
+      {/* Top bar */}
+      <div className="bg-foreground border-b border-border">
+        <div className="container py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+                <Store className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-heading text-lg font-bold text-background">Portal do Revendedor</h1>
+                <p className="text-background/60 text-xs">{partner.company_name || fullName} · CNPJ: {partner.cnpj}</p>
+              </div>
             </div>
-            <Badge className="ml-auto bg-accent text-accent-foreground">{partner.discount_rate}% desconto</Badge>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">{partner.discount_rate}% OFF</Badge>
+              <Button variant="outline" size="sm" onClick={() => navigate("/")} className="text-background border-background/20 hover:bg-background/10">
+                Ver Loja
+              </Button>
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-background/60 hover:text-background hover:bg-background/10">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container py-6">
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6 border-b border-border pb-4">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Hub */}
-        {activeTab === "hub" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tabs.filter(t => t.id !== "hub").map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <Card key={tab.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => setActiveTab(tab.id)}>
-                  <CardContent className="flex items-center gap-4 py-6">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-heading font-bold">{tab.label}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {tab.id === "perfil" && "Gerencie seus dados"}
-                        {tab.id === "compras" && `${orders.length} pedidos`}
-                        {tab.id === "catalogos" && `${catalogs.length} catálogos disponíveis`}
-                        {tab.id === "orcamentos" && `${quotes.length} orçamentos`}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {/* Sidebar */}
+          <div className="md:col-span-1">
+            <nav className="bg-card rounded-xl border border-border p-2 space-y-1 sticky top-24">
+              {sidebarItems.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      activeSection === item.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
-        )}
 
-        {/* Profile */}
-        {activeTab === "perfil" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Meu Perfil</CardTitle>
-              <CardDescription>Atualize seus dados pessoais e de contato</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Nome Completo</Label>
-                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          {/* Content */}
+          <div className="md:col-span-4">
+            {/* Overview */}
+            {activeSection === "overview" && (
+              <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: "Total em Compras", value: `R$ ${totalSpent.toFixed(2).replace(".", ",")}`, icon: DollarSign, bg: "bg-primary/10", color: "text-primary" },
+                    { label: "Pedidos Realizados", value: orders.length, icon: ShoppingCart, bg: "bg-secondary/10", color: "text-secondary-foreground" },
+                    { label: "Entregues", value: deliveredOrders, icon: CheckCircle2, bg: "bg-primary/10", color: "text-primary" },
+                    { label: "Orçamentos", value: quotes.length, icon: FileText, bg: "bg-accent/10", color: "text-accent-foreground" },
+                  ].map(kpi => (
+                    <Card key={kpi.label} className="border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`rounded-lg p-2 ${kpi.bg}`}>
+                            <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                            <p className="font-heading font-bold text-lg">{kpi.value}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                <div>
-                  <Label>Telefone</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Endereço</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Número</Label>
-                  <Input value={addressNumber} onChange={(e) => setAddressNumber(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Bairro</Label>
-                  <Input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Cidade</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Estado</Label>
-                  <Input value={state} onChange={(e) => setState(e.target.value)} />
-                </div>
-                <div>
-                  <Label>CEP</Label>
-                  <Input value={zipCode} onChange={(e) => setZipCode(e.target.value)} />
-                </div>
-              </div>
 
-              <div className="bg-muted/50 rounded-lg p-4 mt-4">
-                <p className="text-sm font-semibold mb-2">Dados da Empresa</p>
-                <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                  <p>Razão Social: <strong className="text-foreground">{partner.company_name}</strong></p>
-                  <p>CNPJ: <strong className="text-foreground">{partner.cnpj}</strong></p>
-                  <p>IE: <strong className="text-foreground">{partner.inscricao_estadual}</strong></p>
-                  <p>Desconto: <strong className="text-foreground">{partner.discount_rate}%</strong></p>
-                </div>
-              </div>
-
-              <Button onClick={saveProfile} disabled={saving}>
-                {saving ? "Salvando..." : "Salvar Alterações"}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Orders */}
-        {activeTab === "compras" && (
-          <div className="space-y-4">
-            <h2 className="font-heading text-xl font-bold">Histórico de Compras</h2>
-            {orders.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum pedido encontrado.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              orders.map((order) => (
-                <Card key={order.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between mb-2">
+                {/* Quick actions */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection("orcamentos")}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <FileText className="h-7 w-7 text-primary" />
+                      </div>
                       <div>
-                        <p className="font-semibold text-sm">Pedido #{order.id.slice(0, 8)}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")}</p>
+                        <h3 className="font-heading font-bold text-lg">Orçamentos</h3>
+                        <p className="text-sm text-muted-foreground">{quotes.length} solicitações · Solicite novos orçamentos</p>
                       </div>
-                      <div className="text-right">
-                        <Badge variant="outline">{statusLabel[order.status] || order.status}</Badge>
-                        <p className="text-sm font-bold mt-1">R$ {Number(order.total_amount).toFixed(2)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection("catalogos")}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center">
+                        <Download className="h-7 w-7 text-secondary-foreground" />
                       </div>
-                    </div>
-                    {order.order_items && (
-                      <div className="text-xs text-muted-foreground">
-                        {order.order_items.map((item: any) => (
-                          <p key={item.id}>{item.quantity}x {item.product_name}</p>
+                      <div>
+                        <h3 className="font-heading font-bold text-lg">Catálogos PDF</h3>
+                        <p className="text-sm text-muted-foreground">{catalogs.length} catálogos disponíveis para download</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection("compras")}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
+                        <ShoppingCart className="h-7 w-7 text-accent-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-lg">Compras</h3>
+                        <p className="text-sm text-muted-foreground">{orders.length} pedidos realizados</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => navigate("/")}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <TrendingUp className="h-7 w-7 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-lg">Ir à Loja</h3>
+                        <p className="text-sm text-muted-foreground">Explore produtos com {partner.discount_rate}% de desconto</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recent orders */}
+                {orders.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Últimas Compras</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {orders.slice(0, 5).map(order => (
+                          <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                            <div>
+                              <p className="font-semibold text-sm">Pedido #{order.id.slice(0, 8)}</p>
+                              <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline">{statusLabel[order.status] || order.status}</Badge>
+                              <p className="font-bold text-sm">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
+                            </div>
+                          </div>
                         ))}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Catalogs */}
-        {activeTab === "catalogos" && (
-          <div className="space-y-4">
-            <h2 className="font-heading text-xl font-bold">Catálogos Técnicos em PDF</h2>
-            {catalogs.length === 0 ? (
+            {/* Profile */}
+            {activeSection === "perfil" && (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  <Download className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum catálogo disponível no momento.</p>
+                <CardHeader>
+                  <CardTitle>Perfil do Revendedor</CardTitle>
+                  <CardDescription>Atualize seus dados pessoais e de contato</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><Label>Nome Completo</Label><Input value={fullName} onChange={e => setFullName(e.target.value)} /></div>
+                    <div><Label>Telefone</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
+                    <div><Label>Endereço</Label><Input value={address} onChange={e => setAddress(e.target.value)} /></div>
+                    <div><Label>Número</Label><Input value={addressNumber} onChange={e => setAddressNumber(e.target.value)} /></div>
+                    <div><Label>Bairro</Label><Input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} /></div>
+                    <div><Label>Cidade</Label><Input value={city} onChange={e => setCity(e.target.value)} /></div>
+                    <div><Label>Estado</Label><Input value={state} onChange={e => setState(e.target.value)} /></div>
+                    <div><Label>CEP</Label><Input value={zipCode} onChange={e => setZipCode(e.target.value)} /></div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-4 mt-4">
+                    <p className="text-sm font-semibold mb-2">Dados da Empresa</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                      <p>Razão Social: <strong className="text-foreground">{partner.company_name}</strong></p>
+                      <p>CNPJ: <strong className="text-foreground">{partner.cnpj}</strong></p>
+                      <p>IE: <strong className="text-foreground">{partner.inscricao_estadual}</strong></p>
+                      <p>Desconto: <strong className="text-foreground">{partner.discount_rate}%</strong></p>
+                    </div>
+                  </div>
+                  <Button onClick={saveProfile} disabled={saving}>{saving ? "Salvando..." : "Salvar Alterações"}</Button>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {catalogs.map((catalog) => (
-                  <Card key={catalog.id}>
-                    <CardContent className="py-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{catalog.title}</p>
-                        <p className="text-xs text-muted-foreground">{catalog.category}</p>
+            )}
+
+            {/* Orders */}
+            {activeSection === "compras" && (
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Histórico de Compras</h2>
+                {orders.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum pedido encontrado.</p></CardContent></Card>
+                ) : orders.map(order => (
+                  <Card key={order.id}>
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="font-semibold text-sm">Pedido #{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="outline">{statusLabel[order.status] || order.status}</Badge>
+                          <p className="text-sm font-bold mt-1">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
+                        </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDownload(catalog)}
-                        disabled={downloadingId === catalog.id}
-                      >
-                        {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                      </Button>
+                      {order.order_items && (
+                        <div className="text-xs text-muted-foreground">
+                          {order.order_items.map((item: any) => (
+                            <p key={item.id}>{item.quantity}x {item.product_name}</p>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Quotes */}
-        {activeTab === "orcamentos" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-xl font-bold">Meus Orçamentos</h2>
-              <Button onClick={() => navigate("/orcamento")}>Novo Orçamento</Button>
-            </div>
-            {quotes.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum orçamento solicitado.</p>
-                  <Button variant="outline" className="mt-3" onClick={() => navigate("/orcamento")}>Solicitar Orçamento</Button>
-                </CardContent>
-              </Card>
-            ) : (
-              quotes.map((quote) => (
-                <Card key={quote.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="font-semibold text-sm">Orçamento #{quote.id.slice(0, 8)}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(quote.created_at).toLocaleDateString("pt-BR")}</p>
-                      </div>
-                      <Badge variant="outline">{quoteStatusLabel[quote.status] || quote.status}</Badge>
-                    </div>
-                    {quote.quote_items && (
-                      <div className="text-xs text-muted-foreground">
-                        {quote.quote_items.map((item: any) => (
-                          <p key={item.id}>{item.quantity}x {item.product_name}</p>
-                        ))}
-                      </div>
-                    )}
-                    {quote.total_estimated > 0 && (
-                      <p className="text-sm font-bold mt-2">Total estimado: R$ {Number(quote.total_estimated).toFixed(2)}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
+            {/* Catalogs */}
+            {activeSection === "catalogos" && (
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Catálogos e Materiais para Revendedores</h2>
+                {catalogs.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><Download className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum catálogo disponível no momento.</p></CardContent></Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {catalogs.map(catalog => (
+                      <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
+                        <CardContent className="py-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-5 w-5 text-primary" /></div>
+                            <div>
+                              <p className="font-semibold text-sm">{catalog.title}</p>
+                              <p className="text-xs text-muted-foreground">{catalog.description || catalog.category}</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => handleDownload(catalog)} disabled={downloadingId === catalog.id}>
+                            {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Quotes */}
+            {activeSection === "orcamentos" && (
+              <div>
+                <h2 className="font-heading text-xl font-bold mb-4">Meus Orçamentos</h2>
+                <UserQuotesList
+                  quotes={quotes}
+                  profileName={fullName}
+                  profileEmail={profile?.email}
+                  profilePhone={phone}
+                  profileCompany={partner.company_name}
+                />
+              </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
