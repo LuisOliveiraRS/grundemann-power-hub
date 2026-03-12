@@ -38,8 +38,9 @@ const SmartSearch = () => {
     const [prodRes, catRes] = await Promise.all([
       supabase.from("products").select("id, name, sku, image_url, brand, hp, price")
         .eq("is_active", true)
-        .or(`name.ilike.${term},sku.ilike.${term},brand.ilike.${term},description.ilike.${term},engine_model.ilike.${term}`)
-        .limit(8),
+        .or(`name.ilike.${term},sku.ilike.${term},brand.ilike.${term},description.ilike.${term},engine_model.ilike.${term},hp.ilike.${term}`)
+        .order("hp", { ascending: true })
+        .limit(12),
       supabase.from("categories").select("id, name, slug")
         .ilike("name", term)
         .limit(4),
