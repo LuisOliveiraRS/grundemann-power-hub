@@ -379,7 +379,7 @@ const ClientDashboard = () => {
                 <FileText className="h-5 w-5" /> Adicionar ao Orçamento
                 {hasQuoteDraft && <span className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-destructive animate-pulse" />}
               </button>
-              </button>
+              <div className="border-t border-sidebar-border my-2" />
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
                 <LogOut className="h-5 w-5" /> Sair
               </button>
