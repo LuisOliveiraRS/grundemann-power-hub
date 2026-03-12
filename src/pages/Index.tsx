@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { BookOpen, Wrench, BadgeCheck } from "lucide-react";
+import { BookOpen, Wrench, BadgeCheck, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -33,7 +33,7 @@ const TechnicalCenterTeaser = () => (
         <h2 className="font-heading text-2xl md:text-3xl font-black text-foreground">CENTRAL TÉCNICA DE MOTORES ESTACIONÁRIOS</h2>
         <p className="text-muted-foreground mt-2">Artigos, guias e ferramentas para mecânicos e proprietários de motores</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         <Link to="/central-tecnica" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
           <BookOpen className="h-10 w-10 text-primary mb-3" />
           <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Artigos Técnicos</h3>
@@ -43,6 +43,11 @@ const TechnicalCenterTeaser = () => (
           <Wrench className="h-10 w-10 text-primary mb-3" />
           <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Catálogo Interativo</h3>
           <p className="text-sm text-muted-foreground mt-1">Vista explodida do motor — clique nas peças e compre diretamente.</p>
+        </Link>
+        <Link to="/calculadora-de-carga" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
+          <Calculator className="h-10 w-10 text-primary mb-3" />
+          <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Calculadora de Carga</h3>
+          <p className="text-sm text-muted-foreground mt-1">Dimensione a carga ideal e encontre o gerador certo para sua necessidade.</p>
         </Link>
       </div>
     </div>
@@ -115,7 +120,7 @@ const Index = () => {
               <BadgeCheck className="h-5 w-5 text-accent" />
               <span className="text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
             </div>
-            <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Oficinas e Mecânicos - Cadastre-se aqui.</h2>
+            <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Oficinas e Mecânicos<br className="hidden md:block" />Cadastre-se aqui.</h2>
             <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para oficinas e profissionais.</p>
             <Link to="/mecanico" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
               <Wrench className="h-5 w-5" />

@@ -34,6 +34,12 @@ interface Subcategory {
   category_id: string;
 }
 
+const mergeUniqueProducts = (a: Product[], b: Product[]) => {
+  const map = new Map<string, Product>();
+  [...a, ...b].forEach((p) => map.set(p.id, p));
+  return [...map.values()].sort((x, y) => x.name.localeCompare(y.name));
+};
+
 const CategoryPage = () => {
   const { slug, subSlug } = useParams();
   const navigate = useNavigate();
@@ -54,7 +60,6 @@ const CategoryPage = () => {
     setCategory(cat as Category);
 
     if (subSlug) {
-      // Load subcategory and filter products by subcategory_id
       const { data: sub } = await supabase
         .from("subcategories")
         .select("*")
@@ -62,30 +67,46 @@ const CategoryPage = () => {
         .eq("category_id", cat.id)
         .single();
 
-      if (sub) {
-        setSubcategory(sub as Subcategory);
-        const { data: prods } = await supabase
-          .from("products")
-          .select("*")
-          .eq("subcategory_id", sub.id)
-          .eq("is_active", true)
-          .order("name");
-        setProducts((prods || []) as Product[]);
-      } else {
+      if (!sub) {
         setSubcategory(null);
         setProducts([]);
+        setLoading(false);
+        return;
       }
+
+      setSubcategory(sub as Subcategory);
+
+      const [directRes, linksRes] = await Promise.all([
+        supabase.from("products").select("*").eq("subcategory_id", sub.id).eq("is_active", true),
+        supabase.from("product_categories").select("product_id").eq("subcategory_id", sub.id),
+      ]);
+
+      const linkedIds = [...new Set((linksRes.data || []).map((l: any) => l.product_id))];
+      let linkedProducts: Product[] = [];
+      if (linkedIds.length > 0) {
+        const { data } = await supabase.from("products").select("*").in("id", linkedIds).eq("is_active", true);
+        linkedProducts = (data || []) as Product[];
+      }
+
+      setProducts(mergeUniqueProducts((directRes.data || []) as Product[], linkedProducts));
     } else {
-      // Show all products in category
       setSubcategory(null);
-      const { data: prods } = await supabase
-        .from("products")
-        .select("*")
-        .eq("category_id", cat.id)
-        .eq("is_active", true)
-        .order("name");
-      setProducts((prods || []) as Product[]);
+
+      const [directRes, linksRes] = await Promise.all([
+        supabase.from("products").select("*").eq("category_id", cat.id).eq("is_active", true),
+        supabase.from("product_categories").select("product_id").eq("category_id", cat.id),
+      ]);
+
+      const linkedIds = [...new Set((linksRes.data || []).map((l: any) => l.product_id))];
+      let linkedProducts: Product[] = [];
+      if (linkedIds.length > 0) {
+        const { data } = await supabase.from("products").select("*").in("id", linkedIds).eq("is_active", true);
+        linkedProducts = (data || []) as Product[];
+      }
+
+      setProducts(mergeUniqueProducts((directRes.data || []) as Product[], linkedProducts));
     }
+
     setLoading(false);
   };
 
@@ -102,14 +123,6 @@ const CategoryPage = () => {
           <meta property="og:description" content={description || `Peças e equipamentos da categoria ${title}`} />
           <meta property="og:type" content="website" />
           <link rel="canonical" href={`https://grundemann-power-hub.lovable.app/categoria/${slug}${subSlug ? `/${subSlug}` : ''}`} />
-          <script type="application/ld+json">{JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "CollectionPage",
-            "name": title,
-            "description": description || `Categoria ${title}`,
-            "numberOfItems": products.length,
-            "url": `https://grundemann-power-hub.lovable.app/categoria/${slug}${subSlug ? `/${subSlug}` : ''}`
-          })}</script>
         </Helmet>
       )}
       <TopBar /><Header /><CategoryNav />

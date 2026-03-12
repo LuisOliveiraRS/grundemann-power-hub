@@ -16,7 +16,7 @@ const Footer = () => {
             </p>
             <div className="mt-4 p-3 rounded-lg bg-background/5 border border-background/10">
               <p className="text-xs font-semibold text-background">Gründemann Geradores LTDA</p>
-              <p className="text-xs mt-1">CNPJ: 00.000.000/0001-00</p>
+              <p className="text-xs mt-1">CNPJ: 48.530.708/0001-80</p>
               <p className="text-xs mt-1 flex items-start gap-1.5">
                 <MapPin className="h-3 w-3 text-primary mt-0.5 shrink-0" />
                 Rua Luiz Bernardo da Silva, 190 - Pinheiro, São Leopoldo/RS - CEP 93042-110
@@ -107,7 +107,7 @@ const Footer = () => {
       {/* Copyright */}
       <div className="border-t border-background/10">
         <div className="container py-4 text-center text-xs text-background/50">
-          <p>© 2026 Gründemann Geradores LTDA — CNPJ: 00.000.000/0001-00 — Todos os direitos reservados.</p>
+          <p>© 2026 Gründemann Geradores LTDA — CNPJ: 48.530.708/0001-80 — Todos os direitos reservados.</p>
           <p className="mt-1">
             Design By{" "}
             <a href="https://www.luisoliveira.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">

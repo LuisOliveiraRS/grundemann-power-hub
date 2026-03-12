@@ -14,6 +14,7 @@ const TopBar = () => {
             <MessageCircle className="h-3.5 w-3.5" />
             <span>WhatsApp: (51) 98182-5748</span>
           </a>
+          <span className="text-topbar-foreground/80 text-xs">CNPJ: 48.530.708/0001-80</span>
         </div>
         <div className="flex items-center gap-6">
           <Link to="/calculadora-de-carga" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
