@@ -287,11 +287,8 @@ const MechanicArea = () => {
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Exclusivo para Profissionais</span>
           </div>
            <h1 className="font-heading text-3xl md:text-4xl font-black text-background mb-3">
-             ÁREA DO MECÂNICO
+             ÁREA DA OFICINA - MECÂNICO
            </h1>
-           <p className="text-background/70 max-w-lg mx-auto">
-             Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.
-           </p>
           <p className="text-background/70 max-w-lg mx-auto">
             Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.
           </p>

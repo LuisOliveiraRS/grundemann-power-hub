@@ -122,10 +122,16 @@ const Index = () => {
             </div>
             <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Revendedores, Oficinas e Mecânicos<br className="hidden md:block" />Cadastre-se aqui.</h2>
             <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para parceiros profissionais.</p>
-            <Link to="/parceiros" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
-              <Wrench className="h-5 w-5" />
-              Quero ser Parceiro
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/parceiros/revendedor" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
+                <BadgeCheck className="h-5 w-5" />
+                Sou Revendedor
+              </Link>
+              <Link to="/parceiros/oficina-mecanico" className="inline-flex items-center gap-2 bg-background text-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-background/90 transition-colors shadow-lg hover:shadow-xl border border-border">
+                <Wrench className="h-5 w-5" />
+                Sou Oficina / Mecânico
+              </Link>
+            </div>
           </div>
         </div>
       </section>

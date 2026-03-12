@@ -181,7 +181,7 @@ const OficinaDashboard = () => {
           <div className="flex items-center gap-3">
             <Building2 className="h-8 w-8 text-primary-foreground" />
             <div>
-              <h1 className="font-heading text-2xl font-bold text-primary-foreground">Área da Oficina</h1>
+              <h1 className="font-heading text-2xl font-bold text-primary-foreground">Área da Oficina - Mecânico</h1>
               <p className="text-primary-foreground/70 text-sm">{partner.company_name || fullName}</p>
             </div>
             <Badge className="ml-auto bg-accent text-accent-foreground">{partner.discount_rate}% desconto</Badge>

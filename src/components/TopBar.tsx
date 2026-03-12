@@ -1,4 +1,4 @@
-import { Phone, MessageCircle, Package, ShoppingCart, Wrench, Calculator } from "lucide-react";
+import { Phone, MessageCircle, Package, ShoppingCart, Wrench, Calculator, Store } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const TopBar = () => {
