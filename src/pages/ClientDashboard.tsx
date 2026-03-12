@@ -366,8 +366,8 @@ const ClientDashboard = () => {
                 <ShoppingCart className="h-5 w-5" /> Continuar Comprando
               </button>
               <div className="border-t border-sidebar-border my-2" />
-              <button onClick={() => navigate("/mecanico")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
-                <Wrench className="h-5 w-5 text-primary" /> Seja Mecânico Parceiro
+              <button onClick={() => navigate("/parceiros")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-primary/20 to-secondary/20 text-sidebar-foreground hover:from-primary/30 hover:to-secondary/30 transition-all">
+                <Wrench className="h-5 w-5 text-primary" /> Seja Revendedor / Oficina / Mecânico
               </button>
               <button onClick={signOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive/80 hover:bg-destructive/10 hover:text-destructive transition-colors">
                 <LogOut className="h-5 w-5" /> Sair
