@@ -119,6 +119,18 @@ const ClientDashboard = () => {
 
   useEffect(() => { if (user) { loadProfile(); loadOrders(); loadQuotes(); loadPayments(); } }, [user]);
 
+  // Check for pending quote items in localStorage
+  useEffect(() => {
+    const checkDraft = () => {
+      const saved = localStorage.getItem("quote_items");
+      setHasQuoteDraft(!!saved && JSON.parse(saved).length > 0);
+    };
+    checkDraft();
+    window.addEventListener("storage", checkDraft);
+    const interval = setInterval(checkDraft, 2000);
+    return () => { window.removeEventListener("storage", checkDraft); clearInterval(interval); };
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     const channel = supabase
