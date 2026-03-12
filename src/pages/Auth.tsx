@@ -48,6 +48,28 @@ const Auth = () => {
     if (refCode) setIsLogin(false);
   }, [refCode]);
 
+  // Auto-redirect already authenticated users to their dashboard
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const userId = session.user.id;
+
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      if ((roles || []).some((r: any) => r.role === "admin")) {
+        navigate("/admin", { replace: true });
+        return;
+      }
+
+      const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
+      if (mechanic?.partner_type === "revendedor") navigate("/revendedor", { replace: true });
+      else if (mechanic?.partner_type === "oficina") navigate("/oficina", { replace: true });
+      else if (mechanic?.partner_type === "mecanico") navigate("/mecanico", { replace: true });
+      else navigate("/minha-conta", { replace: true });
+    };
+    if (!redirect) checkAuth();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
