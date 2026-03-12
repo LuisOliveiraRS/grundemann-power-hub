@@ -65,10 +65,19 @@ const PartnerLogin = () => {
         .maybeSingle();
 
       if (mechanic) {
-        const dest = mechanic.partner_type === "revendedor" ? "/revendedor"
-          : mechanic.partner_type === "oficina" ? "/oficina"
-          : "/mecanico";
-        navigate(dest, { replace: true });
+        // Only auto-redirect if the user's partner type matches this route
+        const matchesRoute = routeType
+          ? (routeTypeMap[routeType] || []).includes(mechanic.partner_type as PartnerType)
+          : true;
+
+        if (matchesRoute) {
+          const dest = mechanic.partner_type === "revendedor" ? "/revendedor"
+            : mechanic.partner_type === "oficina" ? "/oficina"
+            : "/mecanico";
+          navigate(dest, { replace: true });
+        } else {
+          setCheckingAuth(false);
+        }
       } else {
         setCheckingAuth(false);
       }
