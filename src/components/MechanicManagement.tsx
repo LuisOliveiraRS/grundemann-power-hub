@@ -19,6 +19,7 @@ interface MechanicRow {
   discount_rate: number;
   is_approved: boolean;
   created_at: string;
+  partner_type?: string;
   profile?: { full_name: string; email: string; phone: string | null; city: string | null; state: string | null; address: string | null; neighborhood: string | null; zip_code: string | null } | null;
 }
 
