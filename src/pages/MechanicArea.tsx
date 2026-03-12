@@ -373,34 +373,49 @@ const MechanicArea = () => {
               )}
 
               {activeTab === "hub" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {[
-                    { key: "perfil" as const, label: "Meu Perfil", desc: "Atualize seus dados pessoais e da oficina", icon: User, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
-                    { key: "videos" as const, label: "Vídeos Técnicos", desc: "Vídeos de instalação e manutenção exclusivos", icon: Video, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
-                    { key: "vistas" as const, label: "Vistas Explodidas", desc: "Diagramas interativos dos motores", icon: Search, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
-                    { key: "artigos" as const, label: "Artigos Técnicos", desc: "Guias de manutenção e diagnóstico", icon: BookOpen, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
-                    { key: "catalogos" as const, label: "Catálogos PDF", desc: "Manuais e catálogos para download", icon: FileText, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
-                    { key: "orcamentos" as const, label: "Meus Orçamentos", desc: "Acompanhe suas solicitações de orçamento", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
-                    { key: "compras" as const, label: "Histórico de Compras", desc: "Acompanhe todas as suas compras", icon: ShoppingCart, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
-                    { key: "identificador" as const, label: "Identificar Peça", desc: "Use IA para identificar peças por foto", icon: Wrench, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
-                  ].map((card) => (
-                    <button
-                      key={card.key}
-                      onClick={() => setActiveTab(card.key)}
-                      className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden`}
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
-                      <div className={`inline-flex items-center justify-center rounded-xl ${card.iconBg} p-3 mb-4 shadow-sm group-hover:shadow-md transition-shadow`}>
-                        <card.icon className={`h-7 w-7 ${card.iconColor}`} />
-                      </div>
-                      <h3 className="font-heading font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{card.label}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
-                      <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        Acessar →
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                <>
+                  {!mechanic.is_approved && (
+                    <div className="bg-accent/10 border border-accent/30 rounded-xl p-6 text-center mb-6">
+                      <AlertCircle className="h-12 w-12 text-accent-foreground mx-auto mb-3" />
+                      <h3 className="font-heading font-bold text-lg mb-2">Cadastro em Análise</h3>
+                      <p className="text-muted-foreground text-sm">Seu cadastro está sendo analisado pela equipe. Após a aprovação, você terá acesso a todos os conteúdos exclusivos e descontos especiais.</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {[
+                      { key: "perfil" as const, label: "Meu Perfil", desc: "Atualize seus dados pessoais e da oficina", icon: User, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25", requiresApproval: false },
+                      { key: "videos" as const, label: "Vídeos Técnicos", desc: "Vídeos de instalação e manutenção exclusivos", icon: Video, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25", requiresApproval: true },
+                      { key: "vistas" as const, label: "Vistas Explodidas", desc: "Diagramas interativos dos motores", icon: Search, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30", requiresApproval: true },
+                      { key: "artigos" as const, label: "Artigos Técnicos", desc: "Guias de manutenção e diagnóstico", icon: BookOpen, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25", requiresApproval: true },
+                      { key: "catalogos" as const, label: "Catálogos PDF", desc: "Manuais e catálogos para download", icon: FileText, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25", requiresApproval: true },
+                      { key: "orcamentos" as const, label: "Meus Orçamentos", desc: "Acompanhe suas solicitações de orçamento", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30", requiresApproval: false },
+                      { key: "compras" as const, label: "Histórico de Compras", desc: "Acompanhe todas as suas compras", icon: ShoppingCart, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25", requiresApproval: false },
+                      { key: "identificador" as const, label: "Identificar Peça", desc: "Use IA para identificar peças por foto", icon: Wrench, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25", requiresApproval: true },
+                    ].map((card) => {
+                      const blocked = card.requiresApproval && !mechanic.is_approved;
+                      return (
+                        <button
+                          key={card.key}
+                          onClick={() => !blocked && setActiveTab(card.key)}
+                          disabled={blocked}
+                          className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 transition-all duration-300 overflow-hidden ${blocked ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:scale-[1.02]"}`}
+                        >
+                          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
+                          <div className={`inline-flex items-center justify-center rounded-xl ${card.iconBg} p-3 mb-4 shadow-sm group-hover:shadow-md transition-shadow`}>
+                            <card.icon className={`h-7 w-7 ${card.iconColor}`} />
+                          </div>
+                          <h3 className="font-heading font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{card.label}</h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
+                          {blocked ? (
+                            <div className="mt-4 inline-flex items-center text-xs font-semibold text-destructive">🔒 Requer aprovação</div>
+                          ) : (
+                            <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">Acessar →</div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               )}
 
               {activeTab === "perfil" && (
