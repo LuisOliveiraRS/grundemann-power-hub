@@ -65,7 +65,7 @@ const SubMenuItem = ({
       </Link>
 
       {hasChildren && open && (
-        <div className="absolute left-full top-0 min-w-[220px] bg-card border border-border rounded-lg shadow-xl z-[70] animate-in fade-in slide-in-from-left-2 duration-150">
+        <div className="absolute left-full top-0 min-w-[220px] bg-card border border-border rounded-lg shadow-xl z-[80] animate-in fade-in slide-in-from-left-2 duration-150">
           <Link
             to={`/categoria/${node.fullPath}`}
             onClick={onClose}
@@ -200,9 +200,9 @@ const CategoryNav = () => {
 
                 {hasDropdown && isOpen && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[520px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-visible">
-                    <div className="flex">
+                    <div className="flex relative">
                       {/* Left: only direct children, with recursive flyout on hover */}
-                      <div className="w-1/2 border-r border-border py-2 max-h-[400px] overflow-y-auto">
+                      <div className="w-1/2 border-r border-border py-2 max-h-[400px] overflow-y-auto overflow-x-visible relative z-[65]">
                         <Link
                           to={`/categoria/${cat.fullPath}`}
                           onClick={close}
