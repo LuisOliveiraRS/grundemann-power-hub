@@ -2290,6 +2290,9 @@ const AdminDashboard = () => {
             <AppearanceSettings />
           </div>
         )}
+
+        {/* SITE FEATURE REPORT TAB */}
+        {tab === "site-report" && <SiteFeatureReport />}
       </main>
     </div>
   );
