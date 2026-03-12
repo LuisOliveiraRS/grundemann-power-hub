@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Search, ChevronDown, ChevronUp, Eye, Package, DollarSign, Clock, CheckCircle } from "lucide-react";
+import { FileText, Search, ChevronDown, ChevronUp, Eye, Package, DollarSign, Clock, CheckCircle, MessageCircle } from "lucide-react";
 
 interface Quote {
   id: string;
