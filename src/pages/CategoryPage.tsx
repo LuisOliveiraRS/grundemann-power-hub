@@ -76,9 +76,8 @@ const CategoryPage = () => {
   const description = currentNode?.description;
 
   // Build breadcrumb path
-  const breadcrumbItems = ancestors.map(a => {
-    // Find the slug path for this ancestor
-    const ancestorNode = findBySlugPath(getSlugPathForAncestor(a.id));
+  const breadcrumbItems: { label: string; href?: string }[] = ancestors.map(a => {
+    const ancestorNode = findNodeInTree(tree, a.id);
     return { label: a.name, href: `/categoria/${ancestorNode?.fullPath || a.slug}` };
   });
   breadcrumbItems.push({ label: title });
