@@ -1,8 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, ArrowRight, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const IMPACT_PHRASES = [
+  "QUALIDADE PROFISSIONAL",
+  "GARANTIA E PROCEDÊNCIA",
+  "FORÇA E DURABILIDADE",
+  "POTÊNCIA QUE VOCÊ CONFIA",
+  "DESEMPENHO SUPERIOR",
+];
 
 interface FeaturedProduct {
   id: string;
