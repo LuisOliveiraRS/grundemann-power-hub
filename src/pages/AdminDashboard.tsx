@@ -32,12 +32,14 @@ import CatalogManagement from "@/components/CatalogManagement";
 import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
+import ResellerContentManagement from "@/components/ResellerContentManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
 import { syncPaymentStatus } from "@/lib/paymentSync";
+import { normalizeWhatsAppPhone } from "@/lib/whatsappUtils";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
@@ -109,7 +111,7 @@ const AdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance" | "site-report">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "products" | "orders" | "categories" | "clients" | "testimonials" | "reports" | "sellers" | "quotes" | "roles" | "marketing" | "mechanics" | "mechanic-videos" | "articles" | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards" | "seo" | "shipping" | "analytics" | "price-research" | "appearance" | "site-report" | "reseller-content">("dashboard");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [testimonialForm, setTestimonialForm] = useState({ customer_name: "", customer_city: "", rating: "5", comment: "" });
   const [editingTestimonial, setEditingTestimonial] = useState<Partial<Testimonial> | null>(null);
@@ -1745,8 +1747,8 @@ const AdminDashboard = () => {
                     {filteredClients.map(c => {
                       const clientOrders = orders.filter(o => o.user_id === c.user_id);
                       const clientTotal = clientOrders.reduce((s, o) => s + Number(o.total_amount), 0);
-                      const phoneClean = (c.phone || "").replace(/\D/g, "");
-                      const hasPhone = phoneClean.length >= 10;
+                      const phoneClean = normalizeWhatsAppPhone(c.phone);
+                      const hasPhone = phoneClean.length >= 12;
                       const isExpanded = expandedClientId === c.user_id;
                       return (
                       <React.Fragment key={c.user_id}>
@@ -1769,7 +1771,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-1.5">
                               <span className="text-muted-foreground text-xs">{c.phone}</span>
                               {hasPhone && (
-                                <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
+                                <a href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366] text-white hover:bg-[#1da851] transition-colors"
                                   title="WhatsApp"
                                   onClick={e => e.stopPropagation()}
@@ -1795,7 +1797,7 @@ const AdminDashboard = () => {
                         <td className="p-3.5">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                             {hasPhone && (
-                              <a href={`https://wa.me/55${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
+                              <a href={`https://wa.me/${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-[#25D366]"><WhatsAppIcon className="h-4 w-4" /></Button>
                               </a>
                             )}
@@ -1971,6 +1973,7 @@ const AdminDashboard = () => {
                 { key: "catalogs" as const, label: "Catálogos Técnicos", desc: "Catálogos PDF disponíveis para download", icon: FileText, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
                 { key: "exploded-views" as const, label: "Vistas Explodidas", desc: "Gerencie diagramas de vistas explodidas dos motores", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { key: "quotes" as const, label: "Orçamentos", desc: "Solicitações de orçamento dos clientes", icon: FileUp, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+                { key: "reseller-content" as const, label: "Conteúdo Revendedor", desc: "PDFs, tabelas de preço e materiais para revendedores", icon: Download, gradient: "from-primary/15 to-secondary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
               ].map((card) => (
                 <button
                   key={card.key}
@@ -2172,6 +2175,24 @@ const AdminDashboard = () => {
               </div>
             </div>
             <ExplodedViewManagement />
+          </div>
+        )}
+
+        {/* RESELLER CONTENT TAB */}
+        {(tab as string) === "reseller-content" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <Download className="h-7 w-7 text-primary" /> Conteúdo para Revendedores
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie PDFs e materiais exclusivos para revendedores</p>
+              </div>
+            </div>
+            <ResellerContentManagement />
           </div>
         )}
 

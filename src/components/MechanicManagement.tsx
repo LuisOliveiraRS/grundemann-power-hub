@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Wrench, Search, CheckCircle2, XCircle, Trash2, Loader2, Plus, UserPlus, Edit, ChevronDown, ChevronUp, Save, X } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
+import { buildWhatsAppUrl } from "@/lib/whatsappUtils";
 
 interface MechanicRow {
   id: string;
@@ -51,14 +52,10 @@ const MechanicManagement = () => {
     setLoading(false);
   };
 
-  const normalizePhone = (phone?: string | null) => (phone || "").replace(/\D/g, "");
-
   const getWhatsAppUrl = (mechanic: MechanicRow) => {
-    const phone = normalizePhone(mechanic.profile?.phone);
-    if (!phone) return null;
     const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
     const message = `Olá, ${recipient}! Aqui é da Grundemann. Estamos entrando em contato pelo painel administrativo.`;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    return buildWhatsAppUrl(mechanic.profile?.phone, message);
   };
 
   const sendApprovalNotification = async (mechanic: MechanicRow) => {
