@@ -293,8 +293,7 @@ const ClientDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+    <Layout>
       <div className="flex-1 bg-muted/50">
         <div className="container py-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Minha Conta</h1>
