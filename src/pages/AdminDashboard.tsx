@@ -2178,6 +2178,24 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* RESELLER CONTENT TAB */}
+        {(tab as string) === "reseller-content" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5">
+                <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar
+              </Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3">
+                  <Download className="h-7 w-7 text-primary" /> Conteúdo para Revendedores
+                </h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie PDFs e materiais exclusivos para revendedores</p>
+              </div>
+            </div>
+            <ResellerContentManagement />
+          </div>
+        )
+
 
         {tab === "appearance" && (
           <div>
