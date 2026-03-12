@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download, Cpu, Truck, ShieldCheck, Clock, CreditCard, HelpCircle, ChevronRight } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
+import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FavoriteButton from "@/components/FavoriteButton";

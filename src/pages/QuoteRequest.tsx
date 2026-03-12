@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
+import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import { FileText, Trash2, Plus, Minus, Send, ShoppingCart } from "lucide-react";
 
