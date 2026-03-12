@@ -51,14 +51,11 @@ const MechanicManagement = () => {
     setLoading(false);
   };
 
-  const normalizePhone = (phone?: string | null) => (phone || "").replace(/\D/g, "");
-
   const getWhatsAppUrl = (mechanic: MechanicRow) => {
-    const phone = normalizePhone(mechanic.profile?.phone);
-    if (!phone) return null;
+    const { buildWhatsAppUrl } = require("@/lib/whatsappUtils");
     const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
     const message = `Olá, ${recipient}! Aqui é da Grundemann. Estamos entrando em contato pelo painel administrativo.`;
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    return buildWhatsAppUrl(mechanic.profile?.phone, message);
   };
 
   const sendApprovalNotification = async (mechanic: MechanicRow) => {
