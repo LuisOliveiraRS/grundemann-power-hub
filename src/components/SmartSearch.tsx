@@ -136,38 +136,51 @@ const SmartSearch = () => {
           {loading && (
             <li className="p-3 text-center text-muted-foreground text-sm">Buscando...</li>
           )}
-          {suggestions.map((s, i) => (
-            <li key={`${s.type}-${s.id}-${i}`} role="option" aria-selected={i === selectedIdx}>
-              <button
-                onClick={() => goTo(s)}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left border-b border-border last:border-0 ${i === selectedIdx ? "bg-muted/50" : ""}`}
-              >
-                {s.type === "product" ? (
-                  s.image ? (
-                    <img src={s.image} alt="" className="h-10 w-10 rounded-lg object-cover border border-border" loading="lazy" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                      <Package className="h-5 w-5 text-muted-foreground" />
+          {(() => {
+            let lastHp: string | undefined = undefined;
+            return suggestions.map((s, i) => {
+              const showHpHeader = s.type === "product" && s.hp && s.hp !== lastHp;
+              if (s.type === "product" && s.hp) lastHp = s.hp;
+              return (
+                <li key={`${s.type}-${s.id}-${i}`} role="option" aria-selected={i === selectedIdx}>
+                  {showHpHeader && (
+                    <div className="px-4 py-1.5 bg-muted/70 border-b border-border flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-bold text-primary uppercase tracking-wider">Motor {s.hp}HP</span>
                     </div>
-                  )
-                ) : (
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Tag className="h-5 w-5 text-primary" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{s.name}</p>
-                  {s.extra && <p className="text-xs text-muted-foreground truncate">{s.extra}</p>}
-                  {s.type === "category" && <p className="text-xs text-primary font-medium">Ver categoria →</p>}
-                </div>
-                {s.type === "product" && s.price !== undefined && (
-                  <span className="text-sm font-bold text-price flex-shrink-0">
-                    R$ {s.price.toFixed(2).replace(".", ",")}
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
+                  )}
+                  <button
+                    onClick={() => goTo(s)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left border-b border-border last:border-0 ${i === selectedIdx ? "bg-muted/50" : ""}`}
+                  >
+                    {s.type === "product" ? (
+                      s.image ? (
+                        <img src={s.image} alt="" className="h-10 w-10 rounded-lg object-cover border border-border" loading="lazy" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                          <Package className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Tag className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{s.name}</p>
+                      {s.extra && <p className="text-xs text-muted-foreground truncate">{s.extra}</p>}
+                      {s.type === "category" && <p className="text-xs text-primary font-medium">Ver categoria →</p>}
+                    </div>
+                    {s.type === "product" && s.price !== undefined && (
+                      <span className="text-sm font-bold text-price flex-shrink-0">
+                        R$ {s.price.toFixed(2).replace(".", ",")}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            });
+          })()}
         </ul>
       )}
     </div>
