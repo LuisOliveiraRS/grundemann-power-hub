@@ -14,6 +14,7 @@ import Layout from "@/components/Layout";
 import PartIdentifier from "@/components/PartIdentifier";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
 import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
+import UserQuotesList from "@/components/UserQuotesList";
 
 interface MechanicProfile {
   id: string;
