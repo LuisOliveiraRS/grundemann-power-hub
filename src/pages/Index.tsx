@@ -33,7 +33,7 @@ const TechnicalCenterTeaser = () => (
         <h2 className="font-heading text-2xl md:text-3xl font-black text-foreground">CENTRAL TÉCNICA DE MOTORES ESTACIONÁRIOS</h2>
         <p className="text-muted-foreground mt-2">Artigos, guias e ferramentas para mecânicos e proprietários de motores</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         <Link to="/central-tecnica" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
           <BookOpen className="h-10 w-10 text-primary mb-3" />
           <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Artigos Técnicos</h3>
@@ -43,6 +43,11 @@ const TechnicalCenterTeaser = () => (
           <Wrench className="h-10 w-10 text-primary mb-3" />
           <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Catálogo Interativo</h3>
           <p className="text-sm text-muted-foreground mt-1">Vista explodida do motor — clique nas peças e compre diretamente.</p>
+        </Link>
+        <Link to="/calculadora-de-carga" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
+          <Calculator className="h-10 w-10 text-primary mb-3" />
+          <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Calculadora de Carga</h3>
+          <p className="text-sm text-muted-foreground mt-1">Dimensione a carga ideal e encontre o gerador certo para sua necessidade.</p>
         </Link>
       </div>
     </div>
