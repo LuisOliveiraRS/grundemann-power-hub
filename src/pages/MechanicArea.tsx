@@ -19,6 +19,7 @@ interface MechanicProfile {
   id: string;
   company_name: string;
   cnpj: string;
+  inscricao_estadual: string;
   specialty: string;
   discount_rate: number;
   is_approved: boolean;
