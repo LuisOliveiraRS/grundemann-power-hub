@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,15 @@ const partnerConfig: Record<PartnerType, { label: string; icon: any; description
   mecanico: { label: "Mecânico", icon: Wrench, description: "Profissional autônomo" },
 };
 
+// Map route slugs to allowed partner types
+const routeTypeMap: Record<string, PartnerType[]> = {
+  "revendedor": ["revendedor"],
+  "oficina-mecanico": ["oficina", "mecanico"],
+};
+
 const PartnerLogin = () => {
+  const { type: routeType } = useParams<{ type?: string }>();
+  const { user } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,10 +34,12 @@ const PartnerLogin = () => {
   const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [partnerType, setPartnerType] = useState<PartnerType>("revendedor");
+  const allowedTypes = routeType ? routeTypeMap[routeType] || (Object.keys(partnerConfig) as PartnerType[]) : (Object.keys(partnerConfig) as PartnerType[]);
+  const [partnerType, setPartnerType] = useState<PartnerType>(allowedTypes[0]);
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [inscricaoEstadual, setInscricaoEstadual] = useState("");
@@ -36,6 +47,34 @@ const PartnerLogin = () => {
   const [specialty, setSpecialty] = useState("");
 
   const needsCnpj = partnerType === "oficina" || partnerType === "revendedor";
+
+  const pageTitle = routeType === "revendedor"
+    ? "Área do Revendedor"
+    : routeType === "oficina-mecanico"
+      ? "Área da Oficina - Mecânico"
+      : "Área de Parceiros";
+
+  // Auto-redirect logged-in users to their dashboard
+  useEffect(() => {
+    if (!user) { setCheckingAuth(false); return; }
+    const checkPartner = async () => {
+      const { data: mechanic } = await supabase
+        .from("mechanics")
+        .select("partner_type, is_approved")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (mechanic) {
+        const dest = mechanic.partner_type === "revendedor" ? "/revendedor"
+          : mechanic.partner_type === "oficina" ? "/oficina"
+          : "/mecanico";
+        navigate(dest, { replace: true });
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    checkPartner();
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +85,6 @@ const PartnerLogin = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (data.user) {
-        // Check partner type and redirect
         const { data: mechanic } = await supabase
           .from("mechanics")
           .select("partner_type, is_approved")
@@ -59,34 +97,19 @@ const PartnerLogin = () => {
             : "/mecanico";
           navigate(dest);
         } else {
-          navigate("/minha-conta");
+          // No partner record — if on specific route, show signup
+          toast({ title: "Conta encontrada", description: "Você ainda não tem cadastro de parceiro. Faça seu cadastro." });
+          setIsLogin(false);
         }
       }
     } else {
-      // Validation
-      if (needsCnpj && !cnpj.trim()) {
-        toast({ title: "CNPJ obrigatório", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      if (needsCnpj && !inscricaoEstadual.trim()) {
-        toast({ title: "Inscrição Estadual obrigatória", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      if (!fullName.trim()) {
-        toast({ title: "Nome completo obrigatório", variant: "destructive" });
-        setLoading(false);
-        return;
-      }
+      if (needsCnpj && !cnpj.trim()) { toast({ title: "CNPJ obrigatório", variant: "destructive" }); setLoading(false); return; }
+      if (needsCnpj && !inscricaoEstadual.trim()) { toast({ title: "Inscrição Estadual obrigatória", variant: "destructive" }); setLoading(false); return; }
+      if (!fullName.trim()) { toast({ title: "Nome completo obrigatório", variant: "destructive" }); setLoading(false); return; }
 
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-          emailRedirectTo: window.location.origin,
-        },
+        email, password,
+        options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin },
       });
 
       if (error) {
@@ -119,6 +142,16 @@ const PartnerLogin = () => {
     setLoading(false);
   };
 
+  if (checkingAuth) {
+    return (
+      <Layout showFooter={false} showWhatsApp={false} showAI={false}>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout showFooter={false} showWhatsApp={false} showAI={false}>
       <div className="flex-1 flex items-center justify-center bg-muted py-8">
@@ -127,20 +160,18 @@ const PartnerLogin = () => {
             <img src={logo} alt="Gründemann" className="h-20" />
           </div>
           <div className="text-center mb-6">
-            <h2 className="font-heading text-2xl font-bold">
-              Área do Revendedor - Oficina - Mecânico
-            </h2>
+            <h2 className="font-heading text-2xl font-bold">{pageTitle}</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {isLogin ? "Acesse sua conta de parceiro" : "Cadastre-se como parceiro profissional"}
             </p>
           </div>
 
-          {/* Partner Type Selector - only on signup */}
-          {!isLogin && (
+          {/* Partner Type Selector - only on signup and if multiple types allowed */}
+          {!isLogin && allowedTypes.length > 1 && (
             <div className="mb-6">
               <Label className="text-sm font-semibold mb-3 block">Tipo de parceiro</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(partnerConfig) as PartnerType[]).map((type) => {
+              <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${allowedTypes.length}, 1fr)` }}>
+                {allowedTypes.map((type) => {
                   const config = partnerConfig[type];
                   const Icon = config.icon;
                   const isSelected = partnerType === type;
@@ -161,6 +192,16 @@ const PartnerLogin = () => {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Show single type label when only one allowed */}
+          {!isLogin && allowedTypes.length === 1 && (
+            <div className="mb-6 text-center">
+              <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-2">
+                {(() => { const Icon = partnerConfig[allowedTypes[0]].icon; return <Icon className="h-5 w-5 text-primary" />; })()}
+                <span className="text-sm font-semibold text-primary">{partnerConfig[allowedTypes[0]].label}</span>
               </div>
             </div>
           )}
