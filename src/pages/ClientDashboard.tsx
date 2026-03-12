@@ -536,11 +536,23 @@ const ClientDashboard = () => {
                         <div key={q.id} className="bg-card rounded-xl shadow-sm border border-border p-5">
                           <div className="flex items-center justify-between mb-2">
                             <p className="font-heading font-bold">Orçamento #{q.id.slice(0, 8)}</p>
-                            <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
-                              {quoteStatusLabel[q.status] || q.status}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" onClick={() => printQuote(q)} className="gap-1.5">
+                                <Printer className="h-3.5 w-3.5" /> PDF
+                              </Button>
+                              <Badge className={q.status === "accepted" ? "bg-primary text-primary-foreground" : q.status === "rejected" ? "bg-destructive/20 text-destructive" : q.status === "quoted" ? "bg-primary/20 text-primary" : "bg-accent/20 text-accent-foreground"}>
+                                {quoteStatusLabel[q.status] || q.status}
+                              </Badge>
+                            </div>
                           </div>
                           <p className="text-xs text-muted-foreground">{new Date(q.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                          {q.items && q.items.length > 0 && (
+                            <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                              {q.items.map((item, idx) => (
+                                <p key={idx}>{item.quantity}x {item.product_name} — R$ {(Number(item.unit_price) * item.quantity).toFixed(2).replace(".", ",")}</p>
+                              ))}
+                            </div>
+                          )}
                           {q.message && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{q.message}</p>}
                           <p className="font-heading font-bold text-price mt-2">R$ {Number(q.total_estimated).toFixed(2).replace(".", ",")}</p>
                           {q.admin_notes && (
