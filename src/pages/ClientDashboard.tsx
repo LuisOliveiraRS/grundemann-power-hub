@@ -657,9 +657,7 @@ const ClientDashboard = () => {
           </div>
         </div>
       </div>
-      <WhatsAppButton />
-      <Footer />
-    </div>
+    </Layout>
   );
 };
 
