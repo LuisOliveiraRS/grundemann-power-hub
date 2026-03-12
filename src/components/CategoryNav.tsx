@@ -94,6 +94,7 @@ const CategoryNav = () => {
 
   const getSubcats = (catId: string) => subcategories.filter(s => s.category_id === catId);
   const getCatProducts = (catId: string) => featuredProducts.filter(p => p.category_id === catId).slice(0, 2);
+  const getSubcatProducts = (subId: string) => allProducts.filter(p => p.subcategory_id === subId).slice(0, 3);
 
   return (
     <nav className="bg-nav sticky top-0 z-40 shadow-md" ref={navRef}>
