@@ -124,7 +124,7 @@ const MechanicArea = () => {
           .order("created_at", { ascending: false }),
         supabase
           .from("quotes")
-          .select("*")
+          .select("*, quote_items(product_name, product_sku, quantity, unit_price)")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
       ]);
