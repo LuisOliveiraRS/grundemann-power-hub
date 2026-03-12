@@ -152,8 +152,9 @@ const MechanicArea = () => {
       user_id: user.id,
       company_name: companyName,
       cnpj,
+      inscricao_estadual: inscricaoEstadual,
       specialty,
-    });
+    } as any);
 
     if (error) {
       toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
