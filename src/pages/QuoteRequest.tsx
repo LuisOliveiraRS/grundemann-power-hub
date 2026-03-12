@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
-import { FileText, Trash2, Plus, Minus, Send, ShoppingCart, Search, Loader2, Package } from "lucide-react";
+import QuotePrintSheet from "@/components/QuotePrintSheet";
+import { FileText, Trash2, Plus, Minus, Send, ShoppingCart, Search, Loader2, Package, Printer } from "lucide-react";
 
 interface QuoteItem {
   product_id: string;
