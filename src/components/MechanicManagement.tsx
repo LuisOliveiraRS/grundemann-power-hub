@@ -201,12 +201,12 @@ const MechanicManagement = () => {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
-            <Wrench className="h-8 w-8 text-primary" /> Gestão de Mecânicos
+            <Wrench className="h-8 w-8 text-primary" /> Gestão de Parceiros
           </h1>
-          <p className="text-muted-foreground mt-1">Aprove cadastros, edite fichas, defina descontos</p>
+          <p className="text-muted-foreground mt-1">Mecânicos, Oficinas e Revendedores — Aprove, edite e gerencie</p>
         </div>
         <Button onClick={() => setShowAddForm(!showAddForm)}>
-          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Mecânico
+          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Parceiro
         </Button>
       </div>
 
