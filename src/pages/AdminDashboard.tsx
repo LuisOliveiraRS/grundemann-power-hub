@@ -258,7 +258,7 @@ const AdminDashboard = () => {
     const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
     const tests = (testRes.data || []) as Testimonial[];
-    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests);
+    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests); setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
