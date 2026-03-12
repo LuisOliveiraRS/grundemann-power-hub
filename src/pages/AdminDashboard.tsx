@@ -44,12 +44,18 @@ interface Product {
   additional_images?: string[] | null; video_url?: string | null;
 }
 
+interface PaymentInfo {
+  id: string; order_id: string; status: string; payment_method: string | null;
+  mp_payment_id: string | null; amount: number; paid_at: string | null;
+}
+
 interface OrderWithItems {
   id: string; user_id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
   tracking_code?: string | null;
   items?: OrderItem[];
   profile?: ProfileFull | null;
+  payment?: PaymentInfo | null;
 }
 
 interface Testimonial {
