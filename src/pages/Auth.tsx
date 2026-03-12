@@ -53,11 +53,39 @@ const Auth = () => {
     setLoading(true);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: loginData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
-      } else {
-        navigate(redirect || "/");
+      } else if (loginData.user) {
+        if (redirect) {
+          navigate(redirect);
+        } else {
+          // Check if user is admin
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", loginData.user.id);
+          const isAdminUser = (roles || []).some((r: any) => r.role === "admin");
+          if (isAdminUser) {
+            navigate("/admin");
+          } else {
+            // Check partner type
+            const { data: mechanic } = await supabase
+              .from("mechanics")
+              .select("partner_type")
+              .eq("user_id", loginData.user.id)
+              .maybeSingle();
+            if (mechanic?.partner_type === "revendedor") {
+              navigate("/revendedor");
+            } else if (mechanic?.partner_type === "oficina") {
+              navigate("/oficina");
+            } else if (mechanic?.partner_type === "mecanico") {
+              navigate("/mecanico");
+            } else {
+              navigate("/minha-conta");
+            }
+          }
+        }
       }
     } else {
       // Validation
