@@ -200,13 +200,27 @@ const QuoteManagement = () => {
                   />
                 </div>
 
-                {/* Status buttons */}
-                <div className="flex flex-wrap gap-2">
+                {/* Status buttons + WhatsApp */}
+                <div className="flex flex-wrap items-center gap-2">
                   {Object.entries(statusLabels).map(([k, v]) => (
                     <Button key={k} variant={quote.status === k ? "default" : "outline"} size="sm" onClick={() => updateStatus(quote.id, k)}>
                       {v}
                     </Button>
                   ))}
+                  {quote.customer_phone && (
+                    <a
+                      href={`https://wa.me/55${quote.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                        `Olá ${quote.customer_name}! Referente ao seu orçamento #${quote.id.slice(0, 8)} na Gründemann Geradores.\n\n`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button type="button" size="sm" className="bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)] text-white gap-1.5">
+                        <MessageCircle className="h-4 w-4" />
+                        Responder via WhatsApp
+                      </Button>
+                    </a>
+                  )}
                 </div>
               </div>
             )}
