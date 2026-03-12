@@ -291,7 +291,7 @@ const ProductDetail = () => {
                       localStorage.setItem("quote_items", JSON.stringify(saved));
                       toast({ title: "Produto adicionado ao orçamento!" });
                     }}>
-                      <FileText className="h-5 w-5 mr-2" /> Solicitar Orçamento
+                      <FileText className="h-5 w-5 mr-2" /> Adicionar ao Orçamento
                     </Button>
                   </div>
                   {/* WhatsApp product button */}
