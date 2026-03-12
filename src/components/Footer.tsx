@@ -16,7 +16,7 @@ const Footer = () => {
             </p>
             <div className="mt-4 p-3 rounded-lg bg-background/5 border border-background/10">
               <p className="text-xs font-semibold text-background">Gründemann Geradores LTDA</p>
-              <p className="text-xs mt-1">CNPJ: 00.000.000/0001-00</p>
+              <p className="text-xs mt-1">CNPJ: 48.530.708/0001-80</p>
               <p className="text-xs mt-1 flex items-start gap-1.5">
                 <MapPin className="h-3 w-3 text-primary mt-0.5 shrink-0" />
                 Rua Luiz Bernardo da Silva, 190 - Pinheiro, São Leopoldo/RS - CEP 93042-110
