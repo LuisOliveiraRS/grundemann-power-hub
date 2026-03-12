@@ -24,6 +24,14 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhraseIndex((prev) => (prev + 1) % IMPACT_PHRASES.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     supabase
