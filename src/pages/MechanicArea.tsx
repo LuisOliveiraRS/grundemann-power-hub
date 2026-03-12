@@ -285,9 +285,12 @@ const MechanicArea = () => {
             <Wrench className="h-4 w-4 text-primary" />
             <span className="text-xs font-bold uppercase tracking-wider text-primary">Exclusivo para Profissionais</span>
           </div>
-          <h1 className="font-heading text-3xl md:text-4xl font-black text-background mb-3">
-            ÁREA DO MECÂNICO
-          </h1>
+           <h1 className="font-heading text-3xl md:text-4xl font-black text-background mb-3">
+             ÁREA DO MECÂNICO
+           </h1>
+           <p className="text-background/70 max-w-lg mx-auto">
+             Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.
+           </p>
           <p className="text-background/70 max-w-lg mx-auto">
             Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.
           </p>

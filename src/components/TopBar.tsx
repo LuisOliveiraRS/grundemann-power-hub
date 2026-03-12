@@ -21,7 +21,7 @@ const TopBar = () => {
             <Calculator className="h-3.5 w-3.5" />
             <span>Calculadora de Carga</span>
           </Link>
-          <Link to="/mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity animate-pulse text-accent font-bold">
+          <Link to="/parceiros" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity animate-pulse text-accent font-bold">
             <Wrench className="h-3.5 w-3.5" />
             <span>Revendedores - Oficinas e Mecânicos</span>
           </Link>
