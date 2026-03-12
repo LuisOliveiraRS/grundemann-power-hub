@@ -33,7 +33,7 @@ import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
-import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
+import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
