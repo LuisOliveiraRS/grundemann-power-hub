@@ -55,6 +55,7 @@ const MechanicArea = () => {
   // Mechanic form
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
+  const [inscricaoEstadual, setInscricaoEstadual] = useState("");
   const [specialty, setSpecialty] = useState("");
 
   // Profile form
