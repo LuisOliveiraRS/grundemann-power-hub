@@ -6,7 +6,8 @@ import {
   Gift, BookOpen, Globe, Wrench, Mail, Megaphone, BarChart3,
   Calculator, Search, Bell, Heart, FileText, Upload, Video,
   Shield, CreditCard, Bot, Eye, Layers, Settings, CheckCircle2,
-  ChevronDown, ChevronUp, Zap, Smartphone, Share2, FileDown
+  ChevronDown, ChevronUp, Zap, Smartphone, Share2, FileDown,
+  DollarSign
 } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 
