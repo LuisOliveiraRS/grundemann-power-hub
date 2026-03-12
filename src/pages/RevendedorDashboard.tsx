@@ -73,7 +73,7 @@ const RevendedorDashboard = () => {
       supabase.from("mechanics").select("*").eq("user_id", user.id).single(),
       supabase.from("profiles").select("*").eq("user_id", user.id).single(),
       supabase.from("orders").select("*, order_items(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("technical_catalogs").select("*").eq("is_active", true).order("title"),
+      supabase.from("technical_catalogs").select("*").eq("is_active", true).ilike("category", "Revendedor%").order("title"),
       supabase.from("quotes").select("*, quote_items(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
