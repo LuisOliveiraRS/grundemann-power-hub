@@ -120,7 +120,7 @@ const QuoteRequest = () => {
 
   if (submitted) return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
