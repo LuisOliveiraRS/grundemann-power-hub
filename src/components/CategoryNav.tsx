@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Fuel, Wrench, Settings, Zap, ShieldCheck, Cog, ChevronDown, Star, Sparkles } from "lucide-react";
+import { Fuel, Wrench, Settings, Zap, ShieldCheck, Cog, ChevronDown, ChevronRight, Star, Sparkles } from "lucide-react";
+import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
 
 const iconMap: Record<string, any> = {
+  Fuel, Zap, Cog, Wrench, Settings, ShieldCheck,
   "geradores-diesel": Fuel,
   "geradores-gasolina": Zap,
   "pecas-componentes": Cog,
@@ -13,166 +15,96 @@ const iconMap: Record<string, any> = {
   "servicos-tecnicos": ShieldCheck,
 };
 
-const defaultCategories = [
-  { id: "1", name: "Geradores Diesel", slug: "geradores-diesel", icon: Fuel },
-  { id: "2", name: "Geradores Gasolina", slug: "geradores-gasolina", icon: Zap },
-  { id: "3", name: "Peças e Componentes", slug: "pecas-e-componentes", icon: Cog },
-  { id: "4", name: "Manutenção", slug: "manutencao", icon: Wrench },
-  { id: "5", name: "Acessórios", slug: "acessorios", icon: Settings },
-  { id: "6", name: "Serviços Técnicos", slug: "servicos-tecnicos", icon: ShieldCheck },
-];
-
-interface DBCategory { id: string; name: string; slug: string; is_visible?: boolean; }
-interface Subcategory { id: string; name: string; slug: string; category_id: string; parent_id: string | null; }
 interface FeaturedProduct {
   id: string; name: string; price: number; original_price: number | null;
   image_url: string | null; is_featured: boolean; is_launch: boolean;
-  category_id: string | null; subcategory_id: string | null;
-}
-interface ProductCategoryLink {
-  product_id: string;
-  category_id: string;
-  subcategory_id: string | null;
+  menu_category_id: string | null;
 }
 
 const CategoryNav = () => {
-  const [categories, setCategories] = useState<DBCategory[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const { tree, loading } = useMenuCategories();
+  const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [allProducts, setAllProducts] = useState<FeaturedProduct[]>([]);
-  const [productLinks, setProductLinks] = useState<ProductCategoryLink[]>([]);
   const [openCat, setOpenCat] = useState<string | null>(null);
   const [hoveredSub, setHoveredSub] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
-  const extractHp = (name: string): number | null => {
-    const match = name.match(/(\d+)\s*hp/i);
-    return match ? parseInt(match[1], 10) : null;
-  };
-
-  const sortSubcategories = (subs: Subcategory[]): Subcategory[] => {
-    return [...subs].sort((a, b) => {
-      const hpA = extractHp(a.name);
-      const hpB = extractHp(b.name);
-      if (hpA !== null && hpB !== null) return hpA - hpB;
-      if (hpA !== null) return -1;
-      if (hpB !== null) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  };
-
   useEffect(() => {
     Promise.all([
-      supabase.from("categories").select("id, name, slug, is_visible").order("name"),
-      supabase.from("subcategories").select("id, name, slug, category_id, parent_id").order("name"),
-      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id, subcategory_id")
-        .eq("is_active", true)
-        .or("is_featured.eq.true,is_launch.eq.true")
-        .limit(60),
-      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id, subcategory_id")
-        .eq("is_active", true)
-        .order("price", { ascending: true })
-        .limit(400),
-      supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
-    ]).then(([catRes, subRes, prodRes, allProdRes, linksRes]) => {
-      if (catRes.data && catRes.data.length > 0) setCategories(catRes.data);
-      if (subRes.data) setSubcategories(sortSubcategories(subRes.data as Subcategory[]));
-      if (prodRes.data) setFeaturedProducts(prodRes.data as FeaturedProduct[]);
-      if (allProdRes.data) setAllProducts(allProdRes.data as FeaturedProduct[]);
-      if (linksRes.data) setProductLinks(linksRes.data as ProductCategoryLink[]);
+      supabase.from("products")
+        .select("id, name, price, original_price, image_url, is_featured, is_launch, menu_category_id")
+        .eq("is_active", true).or("is_featured.eq.true,is_launch.eq.true").limit(60),
+      supabase.from("products")
+        .select("id, name, price, original_price, image_url, is_featured, is_launch, menu_category_id")
+        .eq("is_active", true).order("price", { ascending: true }).limit(400),
+    ]).then(([featRes, allRes]) => {
+      if (featRes.data) setProducts(featRes.data as FeaturedProduct[]);
+      if (allRes.data) setAllProducts(allRes.data as FeaturedProduct[]);
     });
   }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenCat(null);
-        setHoveredSub(null);
+        setOpenCat(null); setHoveredSub(null);
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const linkedByCategory = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    productLinks.forEach((l) => {
-      if (!map.has(l.category_id)) map.set(l.category_id, new Set());
-      map.get(l.category_id)!.add(l.product_id);
-    });
-    return map;
-  }, [productLinks]);
-
-  const linkedBySubcategory = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    productLinks.forEach((l) => {
-      if (!l.subcategory_id) return;
-      if (!map.has(l.subcategory_id)) map.set(l.subcategory_id, new Set());
-      map.get(l.subcategory_id)!.add(l.product_id);
-    });
-    return map;
-  }, [productLinks]);
-
-  const visibleCategories = categories.filter((c) => c.is_visible !== false);
-  const items = visibleCategories.length > 0
-    ? visibleCategories.map((c) => ({ ...c, icon: iconMap[c.slug] || Cog }))
-    : defaultCategories;
-
-  const getSubcatsTree = (catId: string, parentId: string | null = null, depth = 0): (Subcategory & { depth: number })[] => {
-    const children = sortSubcategories(
-      subcategories.filter((s) => s.category_id === catId && s.parent_id === parentId),
-    );
-    return children.flatMap((child) => [{ ...child, depth }, ...getSubcatsTree(catId, child.id, depth + 1)]);
+  // Collect all descendant IDs for a category
+  const getDescendantIds = (node: MenuCategoryNode): string[] => {
+    return [node.id, ...node.children.flatMap(getDescendantIds)];
   };
 
-  const productInCategory = (product: FeaturedProduct, catId: string) => {
-    if (product.category_id === catId) return true;
-    return linkedByCategory.get(catId)?.has(product.id) ?? false;
+  const getProductsForNode = (node: MenuCategoryNode, source: FeaturedProduct[]) => {
+    const ids = new Set(getDescendantIds(node));
+    return source.filter(p => p.menu_category_id && ids.has(p.menu_category_id)).sort((a, b) => a.price - b.price).slice(0, 3);
   };
 
-  const productInSubcategory = (product: FeaturedProduct, subId: string) => {
-    if (product.subcategory_id === subId) return true;
-    return linkedBySubcategory.get(subId)?.has(product.id) ?? false;
+  // Flatten a node's children recursively for the dropdown list
+  const flattenNode = (node: MenuCategoryNode): { node: MenuCategoryNode; depth: number }[] => {
+    return node.children.flatMap(child => [
+      { node: child, depth: child.depth - node.depth - 1 },
+      ...flattenChildren(child, node.depth + 1),
+    ]);
   };
 
-  const getCatProducts = (catId: string) =>
-    featuredProducts.filter((p) => productInCategory(p, catId)).sort((a, b) => a.price - b.price).slice(0, 3);
+  const flattenChildren = (node: MenuCategoryNode, baseDepth: number): { node: MenuCategoryNode; depth: number }[] => {
+    return node.children.flatMap(child => [
+      { node: child, depth: child.depth - baseDepth },
+      ...flattenChildren(child, baseDepth),
+    ]);
+  };
 
-  const getSubcatProducts = (subId: string) =>
-    allProducts.filter((p) => productInSubcategory(p, subId)).sort((a, b) => a.price - b.price).slice(0, 3);
+  const getIcon = (node: MenuCategoryNode) => {
+    return iconMap[node.icon] || iconMap[node.slug] || Cog;
+  };
+
+  if (loading) return null;
 
   return (
     <nav className="bg-nav sticky top-0 z-40 shadow-md" ref={navRef}>
       <div className="container">
         <ul className="flex flex-wrap items-center justify-center md:justify-between">
-          {items.map((cat) => {
-            const subs = getSubcatsTree(cat.id);
-            const catProducts = getCatProducts(cat.id);
+          {tree.map(cat => {
+            const subs = flattenNode(cat);
+            const catProducts = getProductsForNode(cat, products);
             const hasDropdown = subs.length > 0 || catProducts.length > 0;
             const isOpen = openCat === cat.id;
-            const Icon = cat.icon;
+            const Icon = getIcon(cat);
 
             return (
               <li
-                key={cat.slug}
+                key={cat.id}
                 className="relative group"
-                onMouseEnter={() => {
-                  if (!hasDropdown) return;
-                  setOpenCat(cat.id);
-                  setHoveredSub(null);
-                }}
-                onMouseLeave={() => {
-                  if (!hasDropdown) return;
-                  setOpenCat(null);
-                  setHoveredSub(null);
-                }}
+                onMouseEnter={() => { if (hasDropdown) { setOpenCat(cat.id); setHoveredSub(null); } }}
+                onMouseLeave={() => { if (hasDropdown) { setOpenCat(null); setHoveredSub(null); } }}
               >
                 {hasDropdown ? (
                   <button
-                    onClick={() => {
-                      setOpenCat(isOpen ? null : cat.id);
-                      setHoveredSub(null);
-                    }}
+                    onClick={() => { setOpenCat(isOpen ? null : cat.id); setHoveredSub(null); }}
                     className={`flex flex-col items-center gap-1 px-4 py-3 text-nav-foreground transition-colors text-xs font-semibold uppercase tracking-wide whitespace-nowrap w-full ${isOpen ? "bg-primary-foreground/15" : "hover:bg-primary-foreground/10"}`}
                   >
                     <Icon className="h-5 w-5" />
@@ -183,7 +115,7 @@ const CategoryNav = () => {
                   </button>
                 ) : (
                   <Link
-                    to={`/categoria/${cat.slug}`}
+                    to={`/categoria/${cat.fullPath}`}
                     className="flex flex-col items-center gap-1 px-4 py-3 text-nav-foreground hover:bg-primary-foreground/10 transition-colors text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
                   >
                     <Icon className="h-5 w-5" />
@@ -194,32 +126,36 @@ const CategoryNav = () => {
                 {hasDropdown && isOpen && (
                   <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[500px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                     <div className="flex">
-                      <div className="w-1/2 border-r border-border py-2 max-h-[360px] overflow-y-auto">
+                      <div className="w-1/2 border-r border-border py-2 max-h-[400px] overflow-y-auto">
                         <Link
-                          to={`/categoria/${cat.slug}`}
+                          to={`/categoria/${cat.fullPath}`}
                           onClick={() => setOpenCat(null)}
                           className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors font-bold border-b border-border"
                         >
                           Ver todos em {cat.name}
                         </Link>
-                        {subs.map((sub) => (
+                        {subs.map(({ node: sub, depth }) => (
                           <Link
                             key={sub.id}
-                            to={`/categoria/${cat.slug}/${sub.slug}`}
+                            to={`/categoria/${sub.fullPath}`}
                             onClick={() => setOpenCat(null)}
                             onMouseEnter={() => setHoveredSub(sub.id)}
-                            className={`block py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
-                            style={{ paddingLeft: `${16 + sub.depth * 14}px`, paddingRight: "12px" }}
+                            className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
+                            style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
                           >
-                            {sub.depth > 0 ? "↳ " : ""}
-                            {sub.name}
+                            {depth > 0 && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />}
+                            <span className={depth === 0 ? "font-semibold" : ""}>{sub.name}</span>
+                            {sub.children.length > 0 && (
+                              <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground flex-shrink-0" />
+                            )}
                           </Link>
                         ))}
                       </div>
 
                       <div className="w-1/2 p-3 space-y-2">
                         {(() => {
-                          const displayProducts = hoveredSub ? getSubcatProducts(hoveredSub) : catProducts;
+                          const hoveredNode = hoveredSub ? findNodeById(cat, hoveredSub) : null;
+                          const displayProducts = hoveredNode ? getProductsForNode(hoveredNode, allProducts) : catProducts;
                           if (displayProducts.length === 0) {
                             return (
                               <p className="text-xs text-muted-foreground text-center py-4">
@@ -227,7 +163,7 @@ const CategoryNav = () => {
                               </p>
                             );
                           }
-                          return displayProducts.map((p) => (
+                          return displayProducts.map(p => (
                             <Link
                               key={p.id}
                               to={`/produto/${p.id}`}
@@ -281,5 +217,14 @@ const CategoryNav = () => {
     </nav>
   );
 };
+
+function findNodeById(root: MenuCategoryNode, id: string): MenuCategoryNode | null {
+  if (root.id === id) return root;
+  for (const child of root.children) {
+    const found = findNodeById(child, id);
+    if (found) return found;
+  }
+  return null;
+}
 
 export default CategoryNav;

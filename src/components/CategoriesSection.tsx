@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Fuel, Zap, Cog, Wrench, Settings, ShieldCheck } from "lucide-react";
+import { useMenuCategories } from "@/hooks/useMenuCategories";
 
 const iconMap: Record<string, any> = {
+  Fuel, Zap, Cog, Wrench, Settings, ShieldCheck,
   "geradores-diesel": Fuel,
   "geradores-gasolina": Zap,
   "pecas-componentes": Cog,
@@ -13,32 +15,21 @@ const iconMap: Record<string, any> = {
   "servicos-tecnicos": ShieldCheck,
 };
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  productCount?: number;
-}
-
 const CategoriesSection = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { tree, loading } = useMenuCategories();
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const load = async () => {
-      const { data: cats } = await supabase.from("categories").select("*").eq("is_visible", true).order("name");
-      if (cats && cats.length > 0) {
-        // Get product counts
-        const { data: products } = await supabase.from("products").select("category_id").eq("is_active", true);
-        const counts: Record<string, number> = {};
-        (products || []).forEach((p: any) => { if (p.category_id) counts[p.category_id] = (counts[p.category_id] || 0) + 1; });
-        setCategories(cats.map((c: any) => ({ ...c, productCount: counts[c.id] || 0 })));
-      }
+      const { data: products } = await supabase.from("products").select("menu_category_id").eq("is_active", true);
+      const counts: Record<string, number> = {};
+      (products || []).forEach((p: any) => { if (p.menu_category_id) counts[p.menu_category_id] = (counts[p.menu_category_id] || 0) + 1; });
+      setProductCounts(counts);
     };
     load();
   }, []);
 
-  if (categories.length === 0) return null;
+  if (loading || tree.length === 0) return null;
 
   return (
     <section className="py-12 bg-muted/30">
@@ -47,19 +38,20 @@ const CategoriesSection = () => {
           Categorias de Peças para Motores e Geradores
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((cat) => {
-            const Icon = iconMap[cat.slug] || Cog;
+          {tree.map((cat) => {
+            const Icon = iconMap[cat.icon] || iconMap[cat.slug] || Cog;
+            const count = productCounts[cat.id] || 0;
             return (
               <Link
                 key={cat.id}
-                to={`/categoria/${cat.slug}`}
+                to={`/categoria/${cat.fullPath}`}
                 className="group flex flex-col items-center gap-3 rounded-lg border border-border bg-card p-6 hover:shadow-md hover:border-primary/30 transition-all"
               >
                 <div className="rounded-full bg-primary p-4 text-primary-foreground group-hover:scale-110 transition-transform">
                   <Icon className="h-7 w-7" />
                 </div>
                 <span className="font-heading text-sm font-semibold text-card-foreground text-center">{cat.name}</span>
-                <span className="text-xs text-muted-foreground">{cat.productCount} produtos</span>
+                <span className="text-xs text-muted-foreground">{count} produtos</span>
               </Link>
             );
           })}
