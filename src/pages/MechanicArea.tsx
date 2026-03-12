@@ -6,10 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2, User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video, Package, ChevronUp } from "lucide-react";
+import {
+  Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2,
+  User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video, Package,
+  BarChart3, DollarSign, TrendingUp, LogOut,
+} from "lucide-react";
 import Layout from "@/components/Layout";
 import PartIdentifier from "@/components/PartIdentifier";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
@@ -38,8 +41,10 @@ interface UserProfile {
   neighborhood: string | null;
 }
 
+type SectionId = "overview" | "perfil" | "compras" | "catalogos" | "vistas" | "artigos" | "videos" | "orcamentos" | "identificador";
+
 const MechanicArea = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [mechanic, setMechanic] = useState<MechanicProfile | null>(null);
@@ -49,7 +54,7 @@ const MechanicArea = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"hub" | "perfil" | "compras" | "identificador" | "catalogos" | "vistas" | "artigos" | "videos" | "orcamentos">("hub");
+  const [activeSection, setActiveSection] = useState<SectionId>("overview");
   const [mechVideos, setMechVideos] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
 
@@ -104,29 +109,10 @@ const MechanicArea = () => {
       setSpecialty(mechRes.data.specialty || "");
 
       const [orderRes, catalogRes, videoRes, quotesRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select("id, total_amount, status, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("technical_catalogs")
-          .select("*")
-          .eq("is_active", true)
-          .order("category")
-          .order("title"),
-        supabase
-          .from("mechanic_videos")
-          .select("*")
-          .eq("is_active", true)
-          .order("category")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("quotes")
-          .select("*, quote_items(product_name, product_sku, quantity, unit_price)")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+        supabase.from("orders").select("*, order_items(*)").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
+        supabase.from("technical_catalogs").select("*").eq("is_active", true).order("category").order("title"),
+        supabase.from("mechanic_videos").select("*").eq("is_active", true).order("category").order("created_at", { ascending: false }),
+        supabase.from("quotes").select("*, quote_items(product_name, product_sku, quantity, unit_price)").eq("user_id", user!.id).order("created_at", { ascending: false }),
       ]);
       setOrders(orderRes.data || []);
       setCatalogs(catalogRes.data || []);
@@ -142,20 +128,14 @@ const MechanicArea = () => {
     if (!fullName.trim()) { toast({ title: "Informe seu nome completo", variant: "destructive" }); return; }
 
     setSaving(true);
-
-    // Update profile first
     await supabase.from("profiles").update({
       full_name: fullName, phone, address, address_number: addressNumber,
       city, state, zip_code: zipCode, neighborhood,
     }).eq("user_id", user.id);
 
     const { error } = await supabase.from("mechanics").insert({
-      user_id: user.id,
-      company_name: companyName,
-      cnpj,
-      inscricao_estadual: inscricaoEstadual,
-      specialty,
-      partner_type: "mecanico",
+      user_id: user.id, company_name: companyName, cnpj, inscricao_estadual: inscricaoEstadual,
+      specialty, partner_type: "mecanico",
     } as any);
 
     if (error) {
@@ -170,457 +150,479 @@ const MechanicArea = () => {
   const updateProfile = async () => {
     if (!mechanic || !user) return;
     setSaving(true);
-
-    const [mechErr, profErr] = await Promise.all([
+    await Promise.all([
       supabase.from("mechanics").update({ company_name: companyName, cnpj, inscricao_estadual: inscricaoEstadual, specialty } as any).eq("id", mechanic.id),
       supabase.from("profiles").update({
         full_name: fullName, phone, address, address_number: addressNumber,
         city, state, zip_code: zipCode, neighborhood,
       }).eq("user_id", user.id),
     ]);
-
-    if (mechErr.error || profErr.error) {
-      toast({ title: "Erro ao atualizar", variant: "destructive" });
-    } else {
-      toast({ title: "Perfil atualizado com sucesso!" });
-      loadData();
-    }
+    toast({ title: "Perfil atualizado com sucesso!" });
     setSaving(false);
   };
 
-  const statusMap: Record<string, string> = {
+  const handleDownload = async (catalog: any) => {
+    setDownloadingId(catalog.id);
+    try {
+      const { data } = await supabase.storage.from("technical-catalogs").createSignedUrl(catalog.file_url, 300);
+      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    } catch {
+      toast({ title: "Erro ao baixar", variant: "destructive" });
+    }
+    setDownloadingId(null);
+  };
+
+  const statusLabel: Record<string, string> = {
     pending: "Pendente", confirmed: "Confirmado", processing: "Em Processamento",
     shipped: "Enviado", delivered: "Entregue", cancelled: "Cancelado",
   };
 
-  const renderProfileForm = () => (
-    <div className="space-y-6">
-      {/* Personal info */}
-      <div>
-        <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
-          <User className="h-4 w-4 text-primary" /> Dados Pessoais
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label>Nome Completo *</Label>
-            <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Seu nome completo" />
-          </div>
-          <div>
-            <Label>Email</Label>
-            <Input value={email} disabled className="bg-muted" />
-          </div>
-          <div>
-            <Label>Telefone / WhatsApp</Label>
-            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
-          </div>
-        </div>
-      </div>
+  // ---- Pre-dashboard states (loading, not logged in, not registered, not approved) ----
 
-      {/* Company info */}
-      <div>
-        <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-primary" /> Dados da Oficina
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label>Nome da Oficina / Empresa *</Label>
-            <Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Ex: Oficina do João" />
-          </div>
-          <div>
-            <Label>CNPJ (opcional)</Label>
-            <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
-          </div>
-          <div>
-            <Label>Inscrição Estadual (IE)</Label>
-            <Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="IE" />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Especialidade</Label>
-            <Input value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Ex: Motores estacionários, geradores, bombas d'água" />
-          </div>
-        </div>
-      </div>
+  if (loading) {
+    return <Layout><div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
+  }
 
-      {/* Address */}
-      <div>
-        <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-primary" /> Endereço
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <Label>Endereço</Label>
-            <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="Rua, Avenida..." />
+  if (!user) {
+    return (
+      <Layout>
+        <section className="bg-gradient-to-br from-foreground via-secondary to-foreground py-16">
+          <div className="container text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 mb-4">
+              <Wrench className="h-4 w-4 text-primary" />
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">Exclusivo para Profissionais</span>
+            </div>
+            <h1 className="font-heading text-3xl md:text-4xl font-black text-background mb-3">ÁREA DA OFICINA - MECÂNICO</h1>
+            <p className="text-background/70 max-w-lg mx-auto mb-6">Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.</p>
           </div>
-          <div>
-            <Label>Número</Label>
-            <Input value={addressNumber} onChange={e => setAddressNumber(e.target.value)} placeholder="123" />
-          </div>
-          <div>
-            <Label>Bairro</Label>
-            <Input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="Bairro" />
-          </div>
-          <div>
-            <Label>Cidade</Label>
-            <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Cidade" />
-          </div>
-          <div>
-            <Label>Estado</Label>
-            <Input value={state} onChange={e => setState(e.target.value)} placeholder="SP" />
-          </div>
-          <div>
-            <Label>CEP</Label>
-            <Input value={zipCode} onChange={e => setZipCode(e.target.value)} placeholder="00000-000" />
+        </section>
+        <div className="container py-10">
+          <div className="max-w-md mx-auto text-center">
+            <Card>
+              <CardHeader><CardTitle>Faça login para continuar</CardTitle><CardDescription>Você precisa ter uma conta para se cadastrar como mecânico.</CardDescription></CardHeader>
+              <CardContent><Button onClick={() => navigate("/auth")} className="w-full">Entrar / Cadastrar</Button></CardContent>
+            </Card>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      </Layout>
+    );
+  }
+
+  if (!mechanic) {
+    return (
+      <Layout>
+        <section className="bg-gradient-to-br from-foreground via-secondary to-foreground py-16">
+          <div className="container text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 mb-4">
+              <Wrench className="h-4 w-4 text-primary" />
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">Exclusivo para Profissionais</span>
+            </div>
+            <h1 className="font-heading text-3xl md:text-4xl font-black text-background mb-3">ÁREA DA OFICINA - MECÂNICO</h1>
+            <p className="text-background/70 max-w-lg mx-auto">Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.</p>
+          </div>
+        </section>
+        <div className="container py-10">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" /> Cadastro de Mecânico</CardTitle>
+                <CardDescription>Preencha seus dados pessoais e profissionais para acessar benefícios exclusivos.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <RegistrationForm
+                  fullName={fullName} setFullName={setFullName} email={email} phone={phone} setPhone={setPhone}
+                  companyName={companyName} setCompanyName={setCompanyName} cnpj={cnpj} setCnpj={setCnpj}
+                  inscricaoEstadual={inscricaoEstadual} setInscricaoEstadual={setInscricaoEstadual}
+                  specialty={specialty} setSpecialty={setSpecialty}
+                  address={address} setAddress={setAddress} addressNumber={addressNumber} setAddressNumber={setAddressNumber}
+                  neighborhood={neighborhood} setNeighborhood={setNeighborhood} city={city} setCity={setCity}
+                  state={state} setState={setState} zipCode={zipCode} setZipCode={setZipCode}
+                />
+                <Button onClick={register} disabled={saving} className="w-full" size="lg">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wrench className="h-4 w-4 mr-2" />}
+                  Solicitar Cadastro de Mecânico
+                </Button>
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+              {[
+                { icon: ShieldCheck, title: "Descontos Especiais", desc: "Até 15% de desconto em todos os produtos" },
+                { icon: FileText, title: "Manuais Técnicos", desc: "Acesso a documentação exclusiva" },
+                { icon: ShoppingCart, title: "Histórico Completo", desc: "Acompanhe todas suas compras" },
+              ].map(b => (
+                <div key={b.title} className="bg-card rounded-xl border border-border p-5 text-center">
+                  <b.icon className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="font-heading font-bold text-sm text-card-foreground">{b.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{b.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!mechanic.is_approved) {
+    return (
+      <Layout>
+        <div className="container py-16 text-center max-w-md mx-auto">
+          <Clock className="h-12 w-12 text-accent mx-auto mb-4" />
+          <h1 className="font-heading text-2xl font-bold mb-2">Cadastro em Análise</h1>
+          <p className="text-muted-foreground mb-4">Seu cadastro de mecânico está sendo analisado. Você receberá uma notificação quando for aprovado.</p>
+          <Badge variant="outline" className="text-accent border-accent">Aguardando Aprovação</Badge>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ---- Approved dashboard (same layout as Revendedor) ----
+
+  const totalSpent = orders.reduce((s, o) => s + Number(o.total_amount), 0);
+  const deliveredOrders = orders.filter(o => o.status === "delivered").length;
+
+  const sidebarItems: { id: SectionId; label: string; icon: any }[] = [
+    { id: "overview", label: "Painel", icon: BarChart3 },
+    { id: "perfil", label: "Meu Perfil", icon: User },
+    { id: "compras", label: "Compras", icon: ShoppingCart },
+    { id: "orcamentos", label: "Orçamentos", icon: FileText },
+    { id: "catalogos", label: "Catálogos PDF", icon: Download },
+    { id: "vistas", label: "Vistas Explodidas", icon: Search },
+    { id: "artigos", label: "Artigos Técnicos", icon: BookOpen },
+    { id: "videos", label: "Vídeos", icon: Video },
+    { id: "identificador", label: "Identificar Peça", icon: Wrench },
+  ];
 
   return (
     <Layout>
-
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-foreground via-secondary to-foreground py-16">
-        <div className="container text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 mb-4">
-            <Wrench className="h-4 w-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Exclusivo para Profissionais</span>
+      {/* Top bar */}
+      <div className="bg-foreground border-b border-border">
+        <div className="container py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+                <Wrench className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-heading text-lg font-bold text-background">Área da Oficina - Mecânico</h1>
+                <p className="text-background/60 text-xs">{companyName || fullName} {cnpj ? `· CNPJ: ${cnpj}` : ""}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">{mechanic.discount_rate}% OFF</Badge>
+              <Button variant="outline" size="sm" onClick={() => navigate("/")} className="text-background border-background/20 hover:bg-background/10">
+                Ver Loja
+              </Button>
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-background/60 hover:text-background hover:bg-background/10">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-           <h1 className="font-heading text-3xl md:text-4xl font-black text-background mb-3">
-             ÁREA DA OFICINA - MECÂNICO
-           </h1>
-          <p className="text-background/70 max-w-lg mx-auto">
-            Cadastre-se como profissional e tenha acesso a descontos especiais, manuais técnicos e ferramentas exclusivas.
-          </p>
         </div>
-      </section>
+      </div>
 
-      <div className="flex-1">
-        <div className="container py-10">
-          {loading ? (
-            <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-          ) : !user ? (
-            <div className="max-w-md mx-auto text-center">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Faça login para continuar</CardTitle>
-                  <CardDescription>Você precisa ter uma conta para se cadastrar como mecânico.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/auth")} className="w-full">Entrar / Cadastrar</Button>
-                </CardContent>
-              </Card>
-            </div>
-          ) : !mechanic ? (
-            /* Registration form */
-            <div className="max-w-2xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" /> Cadastro de Mecânico</CardTitle>
-                  <CardDescription>Preencha seus dados pessoais e profissionais para acessar benefícios exclusivos.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {renderProfileForm()}
-                  <Button onClick={register} disabled={saving} className="w-full" size="lg">
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wrench className="h-4 w-4 mr-2" />}
-                    Solicitar Cadastro de Mecânico
-                  </Button>
-                </CardContent>
-              </Card>
+      <div className="container py-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {/* Sidebar */}
+          <div className="md:col-span-1">
+            <nav className="bg-card rounded-xl border border-border p-2 space-y-1 sticky top-24">
+              {sidebarItems.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      activeSection === item.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-              {/* Benefits */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-                {[
-                  { icon: ShieldCheck, title: "Descontos Especiais", desc: "Até 15% de desconto em todos os produtos" },
-                  { icon: FileText, title: "Manuais Técnicos", desc: "Acesso a documentação exclusiva" },
-                  { icon: ShoppingCart, title: "Histórico Completo", desc: "Acompanhe todas suas compras" },
-                ].map(b => (
-                  <div key={b.title} className="bg-card rounded-xl border border-border p-5 text-center">
-                    <b.icon className="h-8 w-8 text-primary mx-auto mb-2" />
-                    <p className="font-heading font-bold text-sm text-card-foreground">{b.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{b.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            /* Dashboard */
-            <div className="space-y-6">
-              {/* Status banner */}
-              <div className={`rounded-xl p-5 border flex items-center gap-4 ${mechanic.is_approved ? "bg-primary/5 border-primary/20" : "bg-accent/10 border-accent/30"}`}>
-                {mechanic.is_approved ? (
-                  <CheckCircle2 className="h-8 w-8 text-primary flex-shrink-0" />
-                ) : (
-                  <AlertCircle className="h-8 w-8 text-accent-foreground flex-shrink-0" />
-                )}
-                <div>
-                  <p className="font-heading font-bold text-foreground">
-                    {mechanic.is_approved ? "Cadastro Aprovado ✓" : "Cadastro em Análise"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {mechanic.is_approved
-                      ? `Desconto de ${mechanic.discount_rate}% aplicado automaticamente nas compras.`
-                      : "Seu cadastro está sendo analisado. Em breve você terá acesso aos descontos."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Navigation Hub or Back button */}
-              {activeTab !== "hub" && (
-                <div className="mb-4">
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("hub")} className="gap-1.5">
-                    <ChevronUp className="h-4 w-4 -rotate-90" /> Voltar ao Menu
-                  </Button>
-                </div>
-              )}
-
-              {activeTab === "hub" && (
-                <>
-                  {!mechanic.is_approved && (
-                    <div className="bg-accent/10 border border-accent/30 rounded-xl p-6 text-center mb-6">
-                      <AlertCircle className="h-12 w-12 text-accent-foreground mx-auto mb-3" />
-                      <h3 className="font-heading font-bold text-lg mb-2">Cadastro em Análise</h3>
-                      <p className="text-muted-foreground text-sm">Seu cadastro está sendo analisado pela equipe. Após a aprovação, você terá acesso a todos os conteúdos exclusivos e descontos especiais.</p>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {[
-                      { key: "perfil" as const, label: "Meu Perfil", desc: "Atualize seus dados pessoais e da oficina", icon: User, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25", requiresApproval: false },
-                      { key: "videos" as const, label: "Vídeos Técnicos", desc: "Vídeos de instalação e manutenção exclusivos", icon: Video, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25", requiresApproval: true },
-                      { key: "vistas" as const, label: "Vistas Explodidas", desc: "Diagramas interativos dos motores", icon: Search, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30", requiresApproval: true },
-                      { key: "artigos" as const, label: "Artigos Técnicos", desc: "Guias de manutenção e diagnóstico", icon: BookOpen, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25", requiresApproval: true },
-                      { key: "catalogos" as const, label: "Catálogos PDF", desc: "Manuais e catálogos para download", icon: FileText, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25", requiresApproval: true },
-                      { key: "orcamentos" as const, label: "Meus Orçamentos", desc: "Acompanhe suas solicitações de orçamento", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30", requiresApproval: false },
-                      { key: "compras" as const, label: "Histórico de Compras", desc: "Acompanhe todas as suas compras", icon: ShoppingCart, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25", requiresApproval: false },
-                      { key: "identificador" as const, label: "Identificar Peça", desc: "Use IA para identificar peças por foto", icon: Wrench, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25", requiresApproval: true },
-                    ].map((card) => {
-                      const blocked = card.requiresApproval && !mechanic.is_approved;
-                      return (
-                        <button
-                          key={card.key}
-                          onClick={() => !blocked && setActiveTab(card.key)}
-                          disabled={blocked}
-                          className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 transition-all duration-300 overflow-hidden ${blocked ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:scale-[1.02]"}`}
-                        >
-                          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
-                          <div className={`inline-flex items-center justify-center rounded-xl ${card.iconBg} p-3 mb-4 shadow-sm group-hover:shadow-md transition-shadow`}>
-                            <card.icon className={`h-7 w-7 ${card.iconColor}`} />
+          {/* Content */}
+          <div className="md:col-span-4">
+            {/* Overview */}
+            {activeSection === "overview" && (
+              <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: "Total em Compras", value: `R$ ${totalSpent.toFixed(2).replace(".", ",")}`, icon: DollarSign, bg: "bg-primary/10", color: "text-primary" },
+                    { label: "Pedidos Realizados", value: orders.length, icon: ShoppingCart, bg: "bg-secondary/10", color: "text-secondary-foreground" },
+                    { label: "Entregues", value: deliveredOrders, icon: CheckCircle2, bg: "bg-primary/10", color: "text-primary" },
+                    { label: "Orçamentos", value: quotes.length, icon: FileText, bg: "bg-accent/10", color: "text-accent-foreground" },
+                  ].map(kpi => (
+                    <Card key={kpi.label} className="border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`rounded-lg p-2 ${kpi.bg}`}>
+                            <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
                           </div>
-                          <h3 className="font-heading font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{card.label}</h3>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
-                          {blocked ? (
-                            <div className="mt-4 inline-flex items-center text-xs font-semibold text-destructive">🔒 Requer aprovação</div>
-                          ) : (
-                            <div className="mt-4 inline-flex items-center text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">Acessar →</div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+                          <div>
+                            <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                            <p className="font-heading font-bold text-lg">{kpi.value}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
-              {activeTab === "perfil" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Meu Perfil Profissional</CardTitle>
-                    <CardDescription>Atualize seus dados pessoais e da oficina</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {renderProfileForm()}
-                    <div className="flex items-center gap-4">
-                      <Button onClick={updateProfile} disabled={saving}>
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                        Salvar Alterações
-                      </Button>
-                      <Badge variant={mechanic.is_approved ? "default" : "secondary"}>
-                        {mechanic.is_approved ? `Desconto: ${mechanic.discount_rate}%` : "Aprovação Pendente"}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                {/* Quick actions */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { section: "orcamentos" as SectionId, label: "Orçamentos", desc: `${quotes.length} solicitações`, icon: FileText },
+                    { section: "catalogos" as SectionId, label: "Catálogos PDF", desc: `${catalogs.length} catálogos disponíveis`, icon: Download },
+                    { section: "vistas" as SectionId, label: "Vistas Explodidas", desc: "Diagramas interativos dos motores", icon: Search },
+                    { section: "artigos" as SectionId, label: "Artigos Técnicos", desc: "Guias de manutenção e diagnóstico", icon: BookOpen },
+                    { section: "videos" as SectionId, label: "Vídeos Técnicos", desc: `${mechVideos.length} vídeos disponíveis`, icon: Video },
+                    { section: "identificador" as SectionId, label: "Identificar Peça", desc: "Use IA para identificar peças por foto", icon: Wrench },
+                  ].map(item => (
+                    <Card key={item.section} className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection(item.section)}>
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                          <item.icon className="h-7 w-7 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading font-bold text-lg">{item.label}</h3>
+                          <p className="text-sm text-muted-foreground">{item.desc}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
-              {activeTab === "compras" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-primary" /> Histórico de Compras
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {orders.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">Nenhuma compra realizada ainda.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {orders.map(o => (
-                          <div key={o.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                {/* Recent orders */}
+                {orders.length > 0 && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg">Últimas Compras</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {orders.slice(0, 5).map(order => (
+                          <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
                             <div>
-                              <p className="text-sm font-medium">Pedido #{o.id.slice(0, 8)}</p>
-                              <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("pt-BR")}</p>
+                              <p className="font-semibold text-sm">Pedido #{order.id.slice(0, 8)}</p>
+                              <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")}</p>
                             </div>
-                            <div className="text-right">
-                              <p className="font-heading font-bold text-price">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</p>
-                              <Badge variant="outline" className="text-xs">{statusMap[o.status] || o.status}</Badge>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline">{statusLabel[order.status] || order.status}</Badge>
+                              <p className="font-bold text-sm">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
                             </div>
                           </div>
                         ))}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
 
-              {activeTab === "identificador" && <PartIdentifier />}
+            {/* Profile */}
+            {activeSection === "perfil" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Perfil do Mecânico</CardTitle>
+                  <CardDescription>Atualize seus dados pessoais e da oficina</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <RegistrationForm
+                    fullName={fullName} setFullName={setFullName} email={email} phone={phone} setPhone={setPhone}
+                    companyName={companyName} setCompanyName={setCompanyName} cnpj={cnpj} setCnpj={setCnpj}
+                    inscricaoEstadual={inscricaoEstadual} setInscricaoEstadual={setInscricaoEstadual}
+                    specialty={specialty} setSpecialty={setSpecialty}
+                    address={address} setAddress={setAddress} addressNumber={addressNumber} setAddressNumber={setAddressNumber}
+                    neighborhood={neighborhood} setNeighborhood={setNeighborhood} city={city} setCity={setCity}
+                    state={state} setState={setState} zipCode={zipCode} setZipCode={setZipCode}
+                  />
+                  <div className="flex items-center gap-4">
+                    <Button onClick={updateProfile} disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Salvar Alterações
+                    </Button>
+                    <Badge>{mechanic.discount_rate}% de desconto</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-              {activeTab === "vistas" && <ExplodedCatalogContent />}
-
-              {activeTab === "artigos" && <TechnicalArticlesContent />}
-
-              {activeTab === "videos" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Video className="h-5 w-5 text-primary" /> Vídeos Técnicos
-                    </CardTitle>
-                    <CardDescription>Vídeos exclusivos para mecânicos cadastrados</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {mechVideos.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">Nenhum vídeo disponível no momento.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {(() => {
-                          const grouped = mechVideos.reduce((acc: Record<string, any[]>, v: any) => {
-                            if (!acc[v.category]) acc[v.category] = [];
-                            acc[v.category].push(v);
-                            return acc;
-                          }, {});
-                          return Object.entries(grouped).map(([category, items]) => (
-                            <div key={category}>
-                              <h3 className="font-heading font-bold text-sm text-foreground mb-3">{category}</h3>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {(items as any[]).map((video: any) => (
-                                  <div key={video.id} className="rounded-xl border border-border overflow-hidden bg-card">
-                                    <div className="aspect-video">
-                                      {video.video_url.includes("youtube.com") || video.video_url.includes("youtu.be") ? (
-                                        <iframe
-                                          src={video.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
-                                          className="w-full h-full"
-                                          allowFullScreen
-                                          title={video.title}
-                                        />
-                                      ) : (
-                                        <video src={video.video_url} controls className="w-full h-full object-cover" />
-                                      )}
-                                    </div>
-                                    <div className="p-3">
-                                      <p className="font-heading font-bold text-sm">{video.title}</p>
-                                      {video.description && <p className="text-xs text-muted-foreground mt-1">{video.description}</p>}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ));
-                        })()}
+            {/* Orders */}
+            {activeSection === "compras" && (
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Histórico de Compras</h2>
+                {orders.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum pedido encontrado.</p></CardContent></Card>
+                ) : orders.map(order => (
+                  <Card key={order.id}>
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="font-semibold text-sm">Pedido #{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="outline">{statusLabel[order.status] || order.status}</Badge>
+                          <p className="text-sm font-bold mt-1">R$ {Number(order.total_amount).toFixed(2).replace(".", ",")}</p>
+                        </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                      {order.order_items && (
+                        <div className="text-xs text-muted-foreground">
+                          {order.order_items.map((item: any) => <p key={item.id}>{item.quantity}x {item.product_name}</p>)}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
-              {activeTab === "catalogos" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-primary" /> Catálogos Técnicos
-                    </CardTitle>
-                    <CardDescription>
-                      Manuais e catálogos exclusivos para mecânicos cadastrados
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {catalogs.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">Nenhum catálogo disponível no momento.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {(() => {
-                          const grouped = catalogs.reduce((acc: Record<string, any[]>, c: any) => {
-                            if (!acc[c.category]) acc[c.category] = [];
-                            acc[c.category].push(c);
-                            return acc;
-                          }, {});
-                          return Object.entries(grouped).map(([category, items]) => (
-                            <div key={category} className="space-y-2">
-                              <h3 className="font-heading font-bold text-sm text-foreground mt-4 first:mt-0">{category}</h3>
-                              {(items as any[]).map((catalog: any) => (
-                                <div key={catalog.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                                  <div className="rounded-lg bg-primary/10 p-2 flex-shrink-0">
-                                    <FileText className="h-5 w-5 text-primary" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm">{catalog.title}</p>
-                                    {catalog.description && <p className="text-xs text-muted-foreground line-clamp-1">{catalog.description}</p>}
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={downloadingId === catalog.id}
-                                    onClick={async () => {
-                                      setDownloadingId(catalog.id);
-                                      const { data, error } = await supabase.storage
-                                        .from("technical-catalogs")
-                                        .createSignedUrl(catalog.file_url, 300);
-                                      if (data?.signedUrl) {
-                                        window.open(data.signedUrl, "_blank");
-                                      } else {
-                                        toast({ title: "Erro ao baixar", description: "Tente novamente.", variant: "destructive" });
-                                      }
-                                      setDownloadingId(null);
-                                    }}
-                                  >
-                                    {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-                                    Baixar
-                                  </Button>
-                                </div>
-                              ))}
+            {/* Catalogs */}
+            {activeSection === "catalogos" && (
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Catálogos Técnicos</h2>
+                {catalogs.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><Download className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum catálogo disponível.</p></CardContent></Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {catalogs.map(catalog => (
+                      <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
+                        <CardContent className="py-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-5 w-5 text-primary" /></div>
+                            <div>
+                              <p className="font-semibold text-sm">{catalog.title}</p>
+                              <p className="text-xs text-muted-foreground">{catalog.description || catalog.category}</p>
                             </div>
-                          ));
-                        })()}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => handleDownload(catalog)} disabled={downloadingId === catalog.id}>
+                            {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* QUOTES TAB */}
-              {activeTab === "orcamentos" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Package className="h-5 w-5 text-primary" /> Meus Orçamentos
-                    </CardTitle>
-                    <CardDescription>Acompanhe suas solicitações de orçamento e respostas</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <UserQuotesList
-                      quotes={quotes.map((q: any) => ({ ...q, items: q.quote_items || q.items || [] }))}
-                      profileName={fullName}
-                      profileEmail={email}
-                      profilePhone={phone}
-                      profileCompany={companyName}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+            {/* Exploded Views */}
+            {activeSection === "vistas" && <ExplodedCatalogContent />}
+
+            {/* Articles */}
+            {activeSection === "artigos" && <TechnicalArticlesContent />}
+
+            {/* Videos */}
+            {activeSection === "videos" && (
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Vídeos Técnicos</h2>
+                {mechVideos.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><Video className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum vídeo disponível.</p></CardContent></Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(() => {
+                      const grouped = mechVideos.reduce((acc: Record<string, any[]>, v: any) => {
+                        if (!acc[v.category]) acc[v.category] = [];
+                        acc[v.category].push(v);
+                        return acc;
+                      }, {});
+                      return Object.entries(grouped).flatMap(([category, items]) => [
+                        <div key={`cat-${category}`} className="col-span-full"><h3 className="font-heading font-bold text-sm">{category}</h3></div>,
+                        ...(items as any[]).map((video: any) => (
+                          <Card key={video.id}>
+                            <div className="aspect-video">
+                              {video.video_url.includes("youtube.com") || video.video_url.includes("youtu.be") ? (
+                                <iframe src={video.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")} className="w-full h-full rounded-t-lg" allowFullScreen title={video.title} />
+                              ) : (
+                                <video src={video.video_url} controls className="w-full h-full object-cover rounded-t-lg" />
+                              )}
+                            </div>
+                            <CardContent className="p-3">
+                              <p className="font-heading font-bold text-sm">{video.title}</p>
+                              {video.description && <p className="text-xs text-muted-foreground mt-1">{video.description}</p>}
+                            </CardContent>
+                          </Card>
+                        )),
+                      ]);
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Part Identifier */}
+            {activeSection === "identificador" && <PartIdentifier />}
+
+            {/* Quotes */}
+            {activeSection === "orcamentos" && (
+              <div>
+                <h2 className="font-heading text-xl font-bold mb-4">Meus Orçamentos</h2>
+                <UserQuotesList
+                  quotes={quotes.map((q: any) => ({ ...q, items: q.quote_items || q.items || [] }))}
+                  profileName={fullName}
+                  profileEmail={email}
+                  profilePhone={phone}
+                  profileCompany={companyName}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
     </Layout>
   );
 };
+
+// Extracted as a separate component to avoid re-render focus issues
+const RegistrationForm = ({
+  fullName, setFullName, email, phone, setPhone,
+  companyName, setCompanyName, cnpj, setCnpj,
+  inscricaoEstadual, setInscricaoEstadual, specialty, setSpecialty,
+  address, setAddress, addressNumber, setAddressNumber,
+  neighborhood, setNeighborhood, city, setCity,
+  state, setState, zipCode, setZipCode,
+}: any) => (
+  <div className="space-y-6">
+    <div>
+      <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+        <User className="h-4 w-4 text-primary" /> Dados Pessoais
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><Label>Nome Completo *</Label><Input value={fullName} onChange={(e: any) => setFullName(e.target.value)} placeholder="Seu nome completo" /></div>
+        <div><Label>Email</Label><Input value={email} disabled className="bg-muted" /></div>
+        <div><Label>Telefone / WhatsApp</Label><Input value={phone} onChange={(e: any) => setPhone(e.target.value)} placeholder="(00) 00000-0000" /></div>
+      </div>
+    </div>
+    <div>
+      <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+        <Building2 className="h-4 w-4 text-primary" /> Dados da Oficina
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><Label>Nome da Oficina / Empresa *</Label><Input value={companyName} onChange={(e: any) => setCompanyName(e.target.value)} placeholder="Ex: Oficina do João" /></div>
+        <div><Label>CNPJ (opcional)</Label><Input value={cnpj} onChange={(e: any) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" /></div>
+        <div><Label>Inscrição Estadual (IE)</Label><Input value={inscricaoEstadual} onChange={(e: any) => setInscricaoEstadual(e.target.value)} placeholder="IE" /></div>
+        <div className="sm:col-span-2"><Label>Especialidade</Label><Input value={specialty} onChange={(e: any) => setSpecialty(e.target.value)} placeholder="Ex: Motores estacionários, geradores" /></div>
+      </div>
+    </div>
+    <div>
+      <h3 className="font-heading font-bold text-foreground mb-3 flex items-center gap-2">
+        <MapPin className="h-4 w-4 text-primary" /> Endereço
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="sm:col-span-2"><Label>Endereço</Label><Input value={address} onChange={(e: any) => setAddress(e.target.value)} placeholder="Rua, Avenida..." /></div>
+        <div><Label>Número</Label><Input value={addressNumber} onChange={(e: any) => setAddressNumber(e.target.value)} placeholder="123" /></div>
+        <div><Label>Bairro</Label><Input value={neighborhood} onChange={(e: any) => setNeighborhood(e.target.value)} placeholder="Bairro" /></div>
+        <div><Label>Cidade</Label><Input value={city} onChange={(e: any) => setCity(e.target.value)} placeholder="Cidade" /></div>
+        <div><Label>Estado</Label><Input value={state} onChange={(e: any) => setState(e.target.value)} placeholder="SP" /></div>
+        <div><Label>CEP</Label><Input value={zipCode} onChange={(e: any) => setZipCode(e.target.value)} placeholder="00000-000" /></div>
+      </div>
+    </div>
+  </div>
+);
 
 export default MechanicArea;
