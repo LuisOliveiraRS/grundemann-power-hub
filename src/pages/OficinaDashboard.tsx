@@ -12,6 +12,7 @@ import { User, Phone, Mail, MapPin, Building2, Download, FileText, ShoppingCart,
 import Layout from "@/components/Layout";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
 import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
+import UserQuotesList from "@/components/UserQuotesList";
 
 interface PartnerProfile {
   id: string;
