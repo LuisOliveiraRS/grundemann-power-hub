@@ -155,12 +155,14 @@ const AdminDashboard = () => {
   const [subForm, setSubForm] = useState({ name: "", slug: "", description: "", category_id: "" });
 
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [productCategoryLinks, setProductCategoryLinks] = useState<ProductCategoryLink[]>([]);
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "",
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
+    extra_category_ids: [] as string[],
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
