@@ -1,8 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, ArrowRight, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const IMPACT_PHRASES = [
+  "QUALIDADE PROFISSIONAL",
+  "GARANTIA E PROCEDÊNCIA",
+  "FORÇA E DURABILIDADE",
+  "POTÊNCIA QUE VOCÊ CONFIA",
+  "DESEMPENHO SUPERIOR",
+];
 
 interface FeaturedProduct {
   id: string;
@@ -16,6 +24,14 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhraseIndex((prev) => (prev + 1) % IMPACT_PHRASES.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     supabase
@@ -67,7 +83,7 @@ const HeroSection = () => {
               className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 mb-6"
             >
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary animate-[softPulse_3s_ease-in-out_infinite]">
                 Especialistas em Motores Estacionários
               </span>
             </motion.div>
@@ -77,7 +93,18 @@ const HeroSection = () => {
               <br />
               <span className="text-background">ESTACIONÁRIOS COM</span>
               <br />
-              <span className="text-primary">QUALIDADE PROFISSIONAL</span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={phraseIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-primary inline-block"
+                >
+                  {IMPACT_PHRASES[phraseIndex]}
+                </motion.span>
+              </AnimatePresence>
             </h1>
 
             <p className="mt-5 text-base md:text-lg text-background/70 max-w-lg leading-relaxed">
