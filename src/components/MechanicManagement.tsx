@@ -288,12 +288,13 @@ const MechanicManagement = () => {
             ) : (
               /* View Card */
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-heading font-bold text-foreground">{m.profile?.full_name || "Sem nome"}</p>
                     <Badge className={m.is_approved ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}>
                       {m.is_approved ? "Aprovado" : "Pendente"}
                     </Badge>
+                    <Badge variant="outline" className="text-xs capitalize">{(m as any).partner_type || "mecanico"}</Badge>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
                     <p>📧 {m.profile?.email || "—"}</p>
