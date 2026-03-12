@@ -131,7 +131,20 @@ const Checkout = () => {
     loadCart();
   };
 
-  const subtotal = items.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+  const [mechanicDiscount, setMechanicDiscount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const checkMechanic = async () => {
+      const { data } = await supabase.from("mechanics").select("discount_rate, is_approved").eq("user_id", user.id).maybeSingle();
+      if (data?.is_approved && data.discount_rate > 0) setMechanicDiscount(data.discount_rate);
+    };
+    checkMechanic();
+  }, [user]);
+
+  const rawSubtotal = items.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+  const mechanicDiscountAmount = mechanicDiscount > 0 ? rawSubtotal * (mechanicDiscount / 100) : 0;
+  const subtotal = rawSubtotal - mechanicDiscountAmount;
 
   const calculateDiscount = (): number => {
     if (!appliedCoupon) return 0;
