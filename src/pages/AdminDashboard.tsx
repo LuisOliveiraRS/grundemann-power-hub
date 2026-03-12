@@ -755,6 +755,7 @@ const AdminDashboard = () => {
     { key: "analytics", label: "Analytics", icon: TrendingUp },
     { key: "price-research", label: "Preços Concorrência", icon: DollarSign },
     { key: "reports", label: "Relatórios", icon: BarChart3 },
+    { key: "site-report", label: "Relatório do Site", icon: FileText },
     { key: "appearance", label: "Aparência", icon: Paintbrush },
   ] as const;
 
