@@ -1745,8 +1745,8 @@ const AdminDashboard = () => {
                     {filteredClients.map(c => {
                       const clientOrders = orders.filter(o => o.user_id === c.user_id);
                       const clientTotal = clientOrders.reduce((s, o) => s + Number(o.total_amount), 0);
-                      const phoneClean = (c.phone || "").replace(/\D/g, "");
-                      const hasPhone = phoneClean.length >= 10;
+                      const phoneClean = normalizeWhatsAppPhone(c.phone);
+                      const hasPhone = phoneClean.length >= 12;
                       const isExpanded = expandedClientId === c.user_id;
                       return (
                       <React.Fragment key={c.user_id}>
