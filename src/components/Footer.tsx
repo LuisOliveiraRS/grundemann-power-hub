@@ -107,7 +107,7 @@ const Footer = () => {
       {/* Copyright */}
       <div className="border-t border-background/10">
         <div className="container py-4 text-center text-xs text-background/50">
-          <p>© 2026 Gründemann Geradores LTDA — CNPJ: 00.000.000/0001-00 — Todos os direitos reservados.</p>
+          <p>© 2026 Gründemann Geradores LTDA — CNPJ: 48.530.708/0001-80 — Todos os direitos reservados.</p>
           <p className="mt-1">
             Design By{" "}
             <a href="https://www.luisoliveira.com.br" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">

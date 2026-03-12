@@ -120,7 +120,7 @@ const Index = () => {
               <BadgeCheck className="h-5 w-5 text-accent" />
               <span className="text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
             </div>
-            <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Oficinas e Mecânicos - Cadastre-se aqui.</h2>
+            <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Oficinas e Mecânicos<br className="hidden md:block" />Cadastre-se aqui.</h2>
             <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para oficinas e profissionais.</p>
             <Link to="/mecanico" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
               <Wrench className="h-5 w-5" />
