@@ -1795,7 +1795,7 @@ const AdminDashboard = () => {
                         <td className="p-3.5">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                             {hasPhone && (
-                              <a href={`https://wa.me/55${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
+                              <a href={`https://wa.me/${phoneClean}?text=${encodeURIComponent(`Olá ${c.full_name || ""}! Aqui é da Gründemann Geradores.`)}`} target="_blank" rel="noopener noreferrer">
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-[#25D366]"><WhatsAppIcon className="h-4 w-4" /></Button>
                               </a>
                             )}
