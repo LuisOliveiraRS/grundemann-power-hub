@@ -162,8 +162,8 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
             <button onClick={() => go("/catalogo-interativo")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground">
               <Wrench className="h-4 w-4 text-muted-foreground" /> Catálogo Interativo
             </button>
-            <button onClick={() => go("/mecanico")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground">
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" /> Área do Mecânico
+            <button onClick={() => go("/mecanico")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground font-semibold text-accent">
+              <ShieldCheck className="h-4 w-4 text-accent" /> Revendedores - Oficinas e Mecânicos
             </button>
             <button onClick={() => go("/orcamento")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground">
               <FileText className="h-4 w-4 text-muted-foreground" /> Solicitar Orçamento
