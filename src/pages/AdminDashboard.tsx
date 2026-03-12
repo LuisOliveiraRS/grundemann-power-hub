@@ -214,16 +214,21 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("subcategories").select("*").order("name"),
       supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").order("created_at", { ascending: false }),
     ]);
     const prods = (prodRes.data || []) as Product[];
-    const ords = (ordRes.data || []) as OrderWithItems[];
+    const payments = (payRes.data || []) as PaymentInfo[];
+    const ords = ((ordRes.data || []) as OrderWithItems[]).map(o => ({
+      ...o,
+      payment: payments.find(p => p.order_id === o.id) || null,
+    }));
     const cats = (catRes.data || []) as Category[];
     const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
