@@ -337,14 +337,25 @@ const AdminDashboard = () => {
       height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
     };
-    if (editingProduct?.id) {
-      const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
+    let productId = editingProduct?.id;
+    if (productId) {
+      const { error } = await supabase.from("products").update(data).eq("id", productId);
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Produto atualizado!" });
     } else {
-      const { error } = await supabase.from("products").insert(data);
-      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+      const { data: newProd, error } = await supabase.from("products").insert(data).select("id").single();
+      if (error || !newProd) { toast({ title: "Erro", description: error?.message, variant: "destructive" }); return; }
+      productId = newProd.id;
       toast({ title: "Produto criado!" });
+    }
+    // Sync extra categories in product_categories table
+    await supabase.from("product_categories").delete().eq("product_id", productId);
+    const extraLinks = productForm.extra_category_ids.filter(Boolean).map(catId => ({
+      product_id: productId!,
+      category_id: catId,
+    }));
+    if (extraLinks.length > 0) {
+      await supabase.from("product_categories").insert(extraLinks);
     }
     setEditingProduct(null); resetProductForm(); loadAll();
   };
