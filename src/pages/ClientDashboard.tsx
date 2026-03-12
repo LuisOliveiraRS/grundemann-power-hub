@@ -286,6 +286,19 @@ const ClientDashboard = () => {
   });
   const hasFilters = orderStatusFilter || orderDateFrom || orderDateTo;
 
+  const printQuote = (quote: Quote) => {
+    setPrintingQuote(quote);
+    setTimeout(() => {
+      if (!printRef.current) return;
+      const win = window.open("", "_blank");
+      if (!win) { toast({ title: "Permita pop-ups para imprimir", variant: "destructive" }); return; }
+      win.document.write(`<!DOCTYPE html><html><head><title>Orçamento</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printRef.current.innerHTML}</body></html>`);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); win.close(); setPrintingQuote(null); }, 500);
+    }, 100);
+  };
+
   const tabs = [
     { id: "profile" as const, label: "Meus Dados", icon: User },
     { id: "orders" as const, label: "Meus Pedidos", icon: Package, count: orders.length },
