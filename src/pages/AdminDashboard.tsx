@@ -1973,6 +1973,7 @@ const AdminDashboard = () => {
                 { key: "catalogs" as const, label: "Catálogos Técnicos", desc: "Catálogos PDF disponíveis para download", icon: FileText, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
                 { key: "exploded-views" as const, label: "Vistas Explodidas", desc: "Gerencie diagramas de vistas explodidas dos motores", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { key: "quotes" as const, label: "Orçamentos", desc: "Solicitações de orçamento dos clientes", icon: FileUp, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
+                { key: "reseller-content" as const, label: "Conteúdo Revendedor", desc: "PDFs, tabelas de preço e materiais para revendedores", icon: Download, gradient: "from-primary/15 to-secondary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
               ].map((card) => (
                 <button
                   key={card.key}
