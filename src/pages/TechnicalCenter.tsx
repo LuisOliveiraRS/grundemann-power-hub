@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { BookOpen, Wrench, Search, ChevronRight, Clock, Tag } from "lucide-react";
+import { BookOpen, Wrench, Search, ChevronRight, Clock, Tag, Calculator } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
@@ -186,6 +186,35 @@ const TechnicalCenter = () => {
           <div className="mt-6 max-w-md mx-auto relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar artigos..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-background" />
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Links */}
+      <section className="bg-muted/30 border-b border-border">
+        <div className="container py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <Link to="/central-tecnica" className="flex items-center gap-3 bg-card rounded-lg border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group">
+              <BookOpen className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors">Artigos Técnicos</h3>
+                <p className="text-xs text-muted-foreground">Guias de manutenção e reparo</p>
+              </div>
+            </Link>
+            <Link to="/catalogo-interativo" className="flex items-center gap-3 bg-card rounded-lg border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group">
+              <Wrench className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors">Catálogo Interativo</h3>
+                <p className="text-xs text-muted-foreground">Vista explodida do motor</p>
+              </div>
+            </Link>
+            <Link to="/calculadora-de-carga" className="flex items-center gap-3 bg-card rounded-lg border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group">
+              <Calculator className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors">Calculadora de Carga</h3>
+                <p className="text-xs text-muted-foreground">Dimensione o gerador ideal</p>
+              </div>
+            </Link>
           </div>
         </div>
       </section>
