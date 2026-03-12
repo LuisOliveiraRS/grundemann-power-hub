@@ -37,6 +37,8 @@ const QuoteRequest = () => {
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedQuoteId, setSubmittedQuoteId] = useState<string | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   // Product search
   const [searchQuery, setSearchQuery] = useState("");
