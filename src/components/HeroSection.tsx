@@ -83,7 +83,7 @@ const HeroSection = () => {
               className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 mb-6"
             >
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary animate-[softPulse_3s_ease-in-out_infinite]">
                 Especialistas em Motores Estacionários
               </span>
             </motion.div>
