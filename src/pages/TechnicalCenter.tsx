@@ -190,6 +190,35 @@ const TechnicalCenter = () => {
         </div>
       </section>
 
+      {/* Quick Links */}
+      <section className="bg-muted/30 border-b border-border">
+        <div className="container py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <Link to="/central-tecnica" className="flex items-center gap-3 bg-card rounded-lg border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group">
+              <BookOpen className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors">Artigos Técnicos</h3>
+                <p className="text-xs text-muted-foreground">Guias de manutenção e reparo</p>
+              </div>
+            </Link>
+            <Link to="/catalogo-interativo" className="flex items-center gap-3 bg-card rounded-lg border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group">
+              <Wrench className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors">Catálogo Interativo</h3>
+                <p className="text-xs text-muted-foreground">Vista explodida do motor</p>
+              </div>
+            </Link>
+            <Link to="/calculadora-de-carga" className="flex items-center gap-3 bg-card rounded-lg border border-border p-4 hover:border-primary/30 hover:shadow-md transition-all group">
+              <Calculator className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <h3 className="font-heading font-bold text-sm text-foreground group-hover:text-primary transition-colors">Calculadora de Carga</h3>
+                <p className="text-xs text-muted-foreground">Dimensione o gerador ideal</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <main className="flex-1 py-10">
         <div className="container">
           <div className="flex items-center gap-2 mb-8 flex-wrap">
