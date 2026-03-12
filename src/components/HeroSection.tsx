@@ -122,7 +122,7 @@ const HeroSection = () => {
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </button>
               <a
-                href="https://wa.me/5500000000000?text=Olá, gostaria de falar com um especialista Grundemann."
+                href="https://wa.me/5551981825748?text=Olá, gostaria de falar com um especialista Grundemann."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-lg border-2 border-background/30 bg-background/5 px-8 py-4 font-heading font-extrabold text-background text-sm uppercase tracking-wide hover:bg-background/10 transition-all backdrop-blur-sm"
