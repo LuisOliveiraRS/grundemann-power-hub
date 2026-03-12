@@ -177,11 +177,21 @@ const QuoteRequest = () => {
       await supabase.from("notifications").insert(notifications as any);
     }
 
+    setSubmittedQuoteId(quote.id);
     localStorage.removeItem("quote_items");
-    setItems([]);
     setSubmitted(true);
     setSubmitting(false);
     toast({ title: "Orçamento enviado com sucesso!" });
+  };
+
+  const printQuote = () => {
+    if (!printRef.current) return;
+    const win = window.open("", "_blank");
+    if (!win) { toast({ title: "Permita pop-ups para imprimir", variant: "destructive" }); return; }
+    win.document.write(`<!DOCTYPE html><html><head><title>Orçamento</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printRef.current.innerHTML}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 500);
   };
 
   if (submitted) return (
