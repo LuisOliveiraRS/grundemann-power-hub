@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import { BookOpen, Wrench, Search, ChevronRight, Clock, Tag } from "lucide-react";
+import { BookOpen, Wrench, Search, ChevronRight, Clock, Tag, Calculator } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
