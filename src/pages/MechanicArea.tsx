@@ -228,6 +228,10 @@ const MechanicArea = () => {
             <Label>CNPJ (opcional)</Label>
             <Input value={cnpj} onChange={e => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
           </div>
+          <div>
+            <Label>Inscrição Estadual (IE)</Label>
+            <Input value={inscricaoEstadual} onChange={e => setInscricaoEstadual(e.target.value)} placeholder="IE" />
+          </div>
           <div className="sm:col-span-2">
             <Label>Especialidade</Label>
             <Input value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Ex: Motores estacionários, geradores, bombas d'água" />
