@@ -48,11 +48,24 @@ const SmartSearch = () => {
 
     const results: Suggestion[] = [];
     (catRes.data || []).forEach((c: any) => results.push({ type: "category", id: c.slug, name: c.name }));
-    (prodRes.data || []).forEach((p: any) => results.push({
-      type: "product", id: p.id, name: p.name, price: p.price,
-      extra: [p.sku, p.brand, p.hp ? `${p.hp}HP` : null].filter(Boolean).join(" · "),
-      image: p.image_url,
-    }));
+    
+    // Group products by HP
+    const prods = (prodRes.data || []) as any[];
+    const grouped = new Map<string, any[]>();
+    prods.forEach(p => {
+      const hpKey = p.hp || "Outros";
+      if (!grouped.has(hpKey)) grouped.set(hpKey, []);
+      grouped.get(hpKey)!.push(p);
+    });
+    
+    grouped.forEach((items, hp) => {
+      items.forEach(p => results.push({
+        type: "product", id: p.id, name: p.name, price: p.price,
+        extra: [p.sku, p.brand, p.hp ? `${p.hp}HP` : null].filter(Boolean).join(" · "),
+        image: p.image_url,
+        hp: p.hp || undefined,
+      }));
+    });
 
     setSuggestions(results);
     setSelectedIdx(-1);

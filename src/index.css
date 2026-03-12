@@ -124,6 +124,12 @@
   }
 }
 
+/* Soft pulse animation */
+@keyframes softPulse {
+  0%, 100% { color: hsl(145 100% 29%); }
+  50% { color: hsl(0 0% 95%); }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
