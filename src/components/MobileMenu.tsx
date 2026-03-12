@@ -26,7 +26,7 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
-  const { user, isAdmin, isSeller, userName, signOut } = useAuth();
+  const { user, isAdmin, isSeller, userName, partnerType, signOut } = useAuth();
   const navigate = useNavigate();
   const { tree } = useMenuCategories();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
