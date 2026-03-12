@@ -110,6 +110,8 @@ const ClientDashboard = () => {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [printingQuote, setPrintingQuote] = useState<Quote | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState("");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
