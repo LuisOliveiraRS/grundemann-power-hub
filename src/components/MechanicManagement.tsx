@@ -53,7 +53,6 @@ const MechanicManagement = () => {
   };
 
   const getWhatsAppUrl = (mechanic: MechanicRow) => {
-    const { buildWhatsAppUrl } = require("@/lib/whatsappUtils");
     const recipient = mechanic.company_name || mechanic.profile?.full_name || "parceiro";
     const message = `Olá, ${recipient}! Aqui é da Grundemann. Estamos entrando em contato pelo painel administrativo.`;
     return buildWhatsAppUrl(mechanic.profile?.phone, message);
