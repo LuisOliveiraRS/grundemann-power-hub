@@ -155,12 +155,14 @@ const AdminDashboard = () => {
   const [subForm, setSubForm] = useState({ name: "", slug: "", description: "", category_id: "" });
 
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [productCategoryLinks, setProductCategoryLinks] = useState<ProductCategoryLink[]>([]);
   const [productForm, setProductForm] = useState({
     name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "",
     category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "",
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
+    extra_category_ids: [] as string[],
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -236,7 +238,7 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
@@ -244,6 +246,7 @@ const AdminDashboard = () => {
       supabase.from("subcategories").select("*").order("name"),
       supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
+      supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
@@ -255,7 +258,7 @@ const AdminDashboard = () => {
     const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
     const tests = (testRes.data || []) as Testimonial[];
-    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests);
+    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests); setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
@@ -334,19 +337,30 @@ const AdminDashboard = () => {
       height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
     };
-    if (editingProduct?.id) {
-      const { error } = await supabase.from("products").update(data).eq("id", editingProduct.id);
+    let productId = editingProduct?.id;
+    if (productId) {
+      const { error } = await supabase.from("products").update(data).eq("id", productId);
       if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Produto atualizado!" });
     } else {
-      const { error } = await supabase.from("products").insert(data);
-      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+      const { data: newProd, error } = await supabase.from("products").insert(data).select("id").single();
+      if (error || !newProd) { toast({ title: "Erro", description: error?.message, variant: "destructive" }); return; }
+      productId = newProd.id;
       toast({ title: "Produto criado!" });
+    }
+    // Sync extra categories in product_categories table
+    await supabase.from("product_categories").delete().eq("product_id", productId);
+    const extraLinks = productForm.extra_category_ids.filter(Boolean).map(catId => ({
+      product_id: productId!,
+      category_id: catId,
+    }));
+    if (extraLinks.length > 0) {
+      await supabase.from("product_categories").insert(extraLinks);
     }
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [] });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -427,6 +441,7 @@ const AdminDashboard = () => {
 
   const editProduct = (p: Product) => {
     setEditingProduct(p);
+    const linkedCatIds = productCategoryLinks.filter(l => l.product_id === p.id).map(l => l.category_id).filter(cid => cid !== p.category_id);
     setProductForm({
       name: p.name, description: p.description || "", sku: p.sku || "",
       price: String(p.price), original_price: p.original_price ? String(p.original_price) : "",
@@ -442,6 +457,7 @@ const AdminDashboard = () => {
       width_cm: (p as any).width_cm ? String((p as any).width_cm) : "",
       height_cm: (p as any).height_cm ? String((p as any).height_cm) : "",
       length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
+      extra_category_ids: linkedCatIds,
     });
     setTab("products");
   };
@@ -1139,6 +1155,32 @@ const AdminDashboard = () => {
                           <option value="">Sem subcategoria</option>
                           {getCatSubcats(productForm.category_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
+                      </div>
+                    )}
+                    {categories.filter(c => c.id !== productForm.category_id).length > 0 && (
+                      <div className="md:col-span-2">
+                        <Label>Categorias Adicionais</Label>
+                        <div className="flex flex-wrap gap-2 mt-1 p-3 border border-input rounded-md bg-background">
+                          {categories.filter(c => c.id !== productForm.category_id).map(c => (
+                            <label key={c.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={productForm.extra_category_ids.includes(c.id)}
+                                onChange={(e) => {
+                                  const ids = e.target.checked
+                                    ? [...productForm.extra_category_ids, c.id]
+                                    : productForm.extra_category_ids.filter(id => id !== c.id);
+                                  setProductForm({ ...productForm, extra_category_ids: ids });
+                                }}
+                                className="rounded border-input"
+                              />
+                              {c.name}
+                            </label>
+                          ))}
+                        </div>
+                        {productForm.extra_category_ids.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">{productForm.extra_category_ids.length} categoria(s) adicional(is) selecionada(s)</p>
+                        )}
                       </div>
                     )}
                     <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
