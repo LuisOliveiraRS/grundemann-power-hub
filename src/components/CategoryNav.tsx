@@ -63,14 +63,19 @@ const CategoryNav = () => {
     Promise.all([
       supabase.from("categories").select("id, name, slug, is_visible").order("name"),
       supabase.from("subcategories").select("id, name, slug, category_id").order("name"),
-      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id")
+      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id, subcategory_id")
         .eq("is_active", true)
         .or("is_featured.eq.true,is_launch.eq.true")
         .limit(20),
-    ]).then(([catRes, subRes, prodRes]) => {
+      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id, subcategory_id")
+        .eq("is_active", true)
+        .order("price", { ascending: true })
+        .limit(200),
+    ]).then(([catRes, subRes, prodRes, allProdRes]) => {
       if (catRes.data && catRes.data.length > 0) setCategories(catRes.data);
       if (subRes.data) setSubcategories(sortSubcategories(subRes.data as Subcategory[]));
       if (prodRes.data) setFeaturedProducts(prodRes.data as FeaturedProduct[]);
+      if (allProdRes.data) setAllProducts(allProdRes.data as FeaturedProduct[]);
     });
   }, []);
 
