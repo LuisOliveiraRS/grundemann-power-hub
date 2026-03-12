@@ -1157,6 +1157,32 @@ const AdminDashboard = () => {
                         </select>
                       </div>
                     )}
+                    {categories.filter(c => c.id !== productForm.category_id).length > 0 && (
+                      <div className="md:col-span-2">
+                        <Label>Categorias Adicionais</Label>
+                        <div className="flex flex-wrap gap-2 mt-1 p-3 border border-input rounded-md bg-background">
+                          {categories.filter(c => c.id !== productForm.category_id).map(c => (
+                            <label key={c.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={productForm.extra_category_ids.includes(c.id)}
+                                onChange={(e) => {
+                                  const ids = e.target.checked
+                                    ? [...productForm.extra_category_ids, c.id]
+                                    : productForm.extra_category_ids.filter(id => id !== c.id);
+                                  setProductForm({ ...productForm, extra_category_ids: ids });
+                                }}
+                                className="rounded border-input"
+                              />
+                              {c.name}
+                            </label>
+                          ))}
+                        </div>
+                        {productForm.extra_category_ids.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">{productForm.extra_category_ids.length} categoria(s) adicional(is) selecionada(s)</p>
+                        )}
+                      </div>
+                    )}
                     <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
                     <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>
                     <div><Label>Estoque</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} /></div>
