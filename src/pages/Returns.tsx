@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
+import CategoryNav from "@/components/CategoryNav";
 import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import Footer from "@/components/Footer";
 import { ArrowLeftRight, Clock, CheckCircle, Phone } from "lucide-react";
@@ -22,7 +23,7 @@ const Returns = () => (
         "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
       })}</script>
     </Helmet>
-    <TopBar /><Header />
+    <TopBar /><Header /><CategoryNav />
     <div className="flex-1 container py-12 max-w-3xl">
       <SEOBreadcrumb items={[{ label: "Trocas e Devoluções" }]} />
       <h1 className="font-heading text-3xl font-bold mb-8">Trocas e Devoluções</h1>

@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Play, FileText, Heart, Share2, Download, Cpu, Truck, ShieldCheck, Clock, CreditCard, HelpCircle, ChevronRight } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
+import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -127,7 +128,7 @@ const ProductDetail = () => {
 
   if (loading) return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1 flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
       <Footer />
     </div>
@@ -135,7 +136,7 @@ const ProductDetail = () => {
 
   if (!product) return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1 flex items-center justify-center flex-col gap-4">
         <p className="text-muted-foreground">Produto não encontrado.</p>
         <Button onClick={() => navigate("/")}>Voltar à Loja</Button>
@@ -161,7 +162,7 @@ const ProductDetail = () => {
         metaTitle={product.meta_title}
         metaDescription={product.meta_description}
       />
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-6 md:py-8">
           {/* Breadcrumb */}

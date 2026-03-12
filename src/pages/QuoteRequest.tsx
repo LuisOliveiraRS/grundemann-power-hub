@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
+import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import { FileText, Trash2, Plus, Minus, Send, ShoppingCart } from "lucide-react";
 
@@ -119,7 +120,7 @@ const QuoteRequest = () => {
 
   if (submitted) return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -136,7 +137,7 @@ const QuoteRequest = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar /><Header />
+      <TopBar /><Header /><CategoryNav />
       <div className="flex-1">
         <div className="container py-8 max-w-4xl">
           <h1 className="font-heading text-3xl font-bold mb-2">Solicitar Orçamento</h1>

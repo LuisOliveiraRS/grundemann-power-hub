@@ -44,12 +44,18 @@ interface Product {
   additional_images?: string[] | null; video_url?: string | null;
 }
 
+interface PaymentInfo {
+  id: string; order_id: string; status: string; payment_method: string | null;
+  mp_payment_id: string | null; amount: number; paid_at: string | null;
+}
+
 interface OrderWithItems {
   id: string; user_id: string; status: string; total_amount: number;
   created_at: string; shipping_address: string | null; notes: string | null;
   tracking_code?: string | null;
   items?: OrderItem[];
   profile?: ProfileFull | null;
+  payment?: PaymentInfo | null;
 }
 
 interface Testimonial {
@@ -208,16 +214,21 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("subcategories").select("*").order("name"),
       supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").order("created_at", { ascending: false }),
     ]);
     const prods = (prodRes.data || []) as Product[];
-    const ords = (ordRes.data || []) as OrderWithItems[];
+    const payments = (payRes.data || []) as PaymentInfo[];
+    const ords = ((ordRes.data || []) as OrderWithItems[]).map(o => ({
+      ...o,
+      payment: payments.find(p => p.order_id === o.id) || null,
+    }));
     const cats = (catRes.data || []) as Category[];
     const cls = (clientRes.data || []) as ProfileFull[];
     const subs = (subRes.data || []) as Subcategory[];
@@ -1379,10 +1390,27 @@ const AdminDashboard = () => {
                         <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printOrder(o); }}>
                         <Printer className="h-3.5 w-3.5" /> Imprimir
                       </Button>
+                      {/* Payment Status */}
+                      {o.payment ? (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          o.payment.status === "approved" ? "bg-primary/15 text-primary" :
+                          o.payment.status === "pending" ? "bg-accent/30 text-accent-foreground" :
+                          o.payment.status === "rejected" ? "bg-destructive/15 text-destructive" :
+                          "bg-muted text-muted-foreground"
+                        }`}>
+                          {o.payment.status === "approved" ? "💳 Pago" :
+                           o.payment.status === "pending" ? "⏳ Aguardando Pgto" :
+                           o.payment.status === "rejected" ? "❌ Recusado" :
+                           `💳 ${o.payment.status}`}
+                          {o.payment.payment_method && ` (${o.payment.payment_method})`}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-muted text-muted-foreground">💳 Sem pagamento</span>
+                      )}
                       <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor[o.status] || ""}`}>{statusLabel[o.status] || o.status}</span>
                       <p className="font-heading font-bold text-price">R$ {Number(o.total_amount).toFixed(2).replace(".", ",")}</p>
                       <select value={o.status} onClick={(e) => e.stopPropagation()} onChange={(e) => updateOrderStatus(o.id, e.target.value)} className="border border-input rounded-md px-2 py-1.5 text-xs bg-background">

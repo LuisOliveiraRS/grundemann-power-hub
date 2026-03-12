@@ -27,14 +27,16 @@ interface Subcategory { id: string; name: string; slug: string; category_id: str
 interface FeaturedProduct {
   id: string; name: string; price: number; original_price: number | null;
   image_url: string | null; is_featured: boolean; is_launch: boolean;
-  category_id: string | null;
+  category_id: string | null; subcategory_id: string | null;
 }
 
 const CategoryNav = () => {
   const [categories, setCategories] = useState<DBCategory[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [allProducts, setAllProducts] = useState<FeaturedProduct[]>([]);
   const [openCat, setOpenCat] = useState<string | null>(null);
+  const [hoveredSub, setHoveredSub] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
   // Extract numeric HP from subcategory name for sorting
@@ -61,14 +63,19 @@ const CategoryNav = () => {
     Promise.all([
       supabase.from("categories").select("id, name, slug, is_visible").order("name"),
       supabase.from("subcategories").select("id, name, slug, category_id").order("name"),
-      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id")
+      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id, subcategory_id")
         .eq("is_active", true)
         .or("is_featured.eq.true,is_launch.eq.true")
         .limit(20),
-    ]).then(([catRes, subRes, prodRes]) => {
+      supabase.from("products").select("id, name, price, original_price, image_url, is_featured, is_launch, category_id, subcategory_id")
+        .eq("is_active", true)
+        .order("price", { ascending: true })
+        .limit(200),
+    ]).then(([catRes, subRes, prodRes, allProdRes]) => {
       if (catRes.data && catRes.data.length > 0) setCategories(catRes.data);
       if (subRes.data) setSubcategories(sortSubcategories(subRes.data as Subcategory[]));
       if (prodRes.data) setFeaturedProducts(prodRes.data as FeaturedProduct[]);
+      if (allProdRes.data) setAllProducts(allProdRes.data as FeaturedProduct[]);
     });
   }, []);
 
@@ -87,6 +94,7 @@ const CategoryNav = () => {
 
   const getSubcats = (catId: string) => subcategories.filter(s => s.category_id === catId);
   const getCatProducts = (catId: string) => featuredProducts.filter(p => p.category_id === catId).slice(0, 2);
+  const getSubcatProducts = (subId: string) => allProducts.filter(p => p.subcategory_id === subId).slice(0, 3);
 
   return (
     <nav className="bg-nav sticky top-0 z-40 shadow-md" ref={navRef}>
@@ -129,10 +137,10 @@ const CategoryNav = () => {
 
                 {/* Mega Dropdown */}
                 {hasDropdown && isOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[380px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[420px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
                     <div className="flex">
                       {/* Subcategories */}
-                      <div className={`py-2 ${catProducts.length > 0 ? "w-1/2 border-r border-border" : "w-full"}`}>
+                      <div className="w-1/2 border-r border-border py-2">
                         <Link
                           to={`/categoria/${cat.slug}`}
                           onClick={() => setOpenCat(null)}
@@ -145,17 +153,28 @@ const CategoryNav = () => {
                             key={sub.id}
                             to={`/categoria/${cat.slug}/${sub.slug}`}
                             onClick={() => setOpenCat(null)}
-                            className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                            onMouseEnter={() => setHoveredSub(sub.id)}
+                            className={`block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
                           >
                             {sub.name}
                           </Link>
                         ))}
                       </div>
 
-                      {/* Featured/Launch Products */}
-                      {catProducts.length > 0 && (
-                        <div className="w-1/2 p-3 space-y-2">
-                          {catProducts.map(p => (
+                      {/* Products panel - shows subcategory products on hover, or featured products by default */}
+                      <div className="w-1/2 p-3 space-y-2">
+                        {(() => {
+                          const displayProducts = hoveredSub
+                            ? getSubcatProducts(hoveredSub)
+                            : catProducts;
+                          if (displayProducts.length === 0) {
+                            return (
+                              <p className="text-xs text-muted-foreground text-center py-4">
+                                {hoveredSub ? "Nenhum produto nesta subcategoria" : "Nenhum produto em destaque"}
+                              </p>
+                            );
+                          }
+                          return displayProducts.map(p => (
                             <Link
                               key={p.id}
                               to={`/produto/${p.id}`}
@@ -183,12 +202,15 @@ const CategoryNav = () => {
                                   )}
                                 </div>
                                 <p className="text-xs font-semibold truncate group-hover:text-primary transition-colors">{p.name}</p>
-                                <p className="text-xs font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                                <div className="flex items-center gap-1.5">
+                                  {p.original_price && <span className="text-[10px] text-muted-foreground line-through">R$ {Number(p.original_price).toFixed(2).replace(".", ",")}</span>}
+                                  <p className="text-xs font-bold text-primary">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                                </div>
                               </div>
                             </Link>
-                          ))}
-                        </div>
-                      )}
+                          ));
+                        })()}
+                      </div>
                     </div>
                   </div>
                 )}
