@@ -554,6 +554,53 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -929,6 +976,7 @@ export type Database = {
           is_featured: boolean
           is_launch: boolean
           length_cm: number | null
+          menu_category_id: string | null
           meta_description: string | null
           meta_title: string | null
           name: string
@@ -961,6 +1009,7 @@ export type Database = {
           is_featured?: boolean
           is_launch?: boolean
           length_cm?: number | null
+          menu_category_id?: string | null
           meta_description?: string | null
           meta_title?: string | null
           name: string
@@ -993,6 +1042,7 @@ export type Database = {
           is_featured?: boolean
           is_launch?: boolean
           length_cm?: number | null
+          menu_category_id?: string | null
           meta_description?: string | null
           meta_title?: string | null
           name?: string
@@ -1013,6 +1063,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_menu_category_id_fkey"
+            columns: ["menu_category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
             referencedColumns: ["id"]
           },
           {

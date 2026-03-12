@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Package, Tag, Zap } from "lucide-react";
+import { Search, Package, Tag, Zap, X } from "lucide-react";
 
 interface Suggestion {
   type: "product" | "category";
@@ -13,12 +13,15 @@ interface Suggestion {
   hp?: string;
 }
 
+const HP_FILTERS = ["5", "7", "8", "10", "13", "15"];
+
 const SmartSearch = () => {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
+  const [activeHp, setActiveHp] = useState<string | null>(null);
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -31,42 +34,39 @@ const SmartSearch = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const search = async (q: string) => {
-    if (q.length < 2) { setSuggestions([]); return; }
+  const search = async (q: string, hpFilter?: string | null) => {
+    if (q.length < 2 && !hpFilter) { setSuggestions([]); return; }
     setLoading(true);
     const term = `%${q}%`;
 
+    let prodQuery = supabase.from("products").select("id, name, sku, image_url, brand, hp, price")
+      .eq("is_active", true);
+
+    if (q.length >= 2) {
+      prodQuery = prodQuery.or(`name.ilike.${term},sku.ilike.${term},brand.ilike.${term},description.ilike.${term},engine_model.ilike.${term},hp.ilike.${term}`);
+    }
+
+    if (hpFilter) {
+      prodQuery = prodQuery.eq("hp", hpFilter);
+    }
+
     const [prodRes, catRes] = await Promise.all([
-      supabase.from("products").select("id, name, sku, image_url, brand, hp, price")
-        .eq("is_active", true)
-        .or(`name.ilike.${term},sku.ilike.${term},brand.ilike.${term},description.ilike.${term},engine_model.ilike.${term},hp.ilike.${term}`)
-        .order("hp", { ascending: true })
-        .limit(12),
-      supabase.from("categories").select("id, name, slug")
-        .ilike("name", term)
-        .limit(4),
+      prodQuery.order("hp", { ascending: true }).limit(20),
+      q.length >= 2
+        ? supabase.from("menu_categories").select("id, name, slug").ilike("name", term).eq("is_active", true).limit(4)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const results: Suggestion[] = [];
     (catRes.data || []).forEach((c: any) => results.push({ type: "category", id: c.slug, name: c.name }));
-    
-    // Group products by HP
+
     const prods = (prodRes.data || []) as any[];
-    const grouped = new Map<string, any[]>();
-    prods.forEach(p => {
-      const hpKey = p.hp || "Outros";
-      if (!grouped.has(hpKey)) grouped.set(hpKey, []);
-      grouped.get(hpKey)!.push(p);
-    });
-    
-    grouped.forEach((items, hp) => {
-      items.forEach(p => results.push({
-        type: "product", id: p.id, name: p.name, price: p.price,
-        extra: [p.sku, p.brand, p.hp ? `${p.hp}HP` : null].filter(Boolean).join(" · "),
-        image: p.image_url,
-        hp: p.hp || undefined,
-      }));
-    });
+    prods.forEach(p => results.push({
+      type: "product", id: p.id, name: p.name, price: p.price,
+      extra: [p.sku, p.brand, p.hp ? `${p.hp}HP` : null].filter(Boolean).join(" · "),
+      image: p.image_url,
+      hp: p.hp || undefined,
+    }));
 
     setSuggestions(results);
     setSelectedIdx(-1);
@@ -77,7 +77,18 @@ const SmartSearch = () => {
   const handleChange = (value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => search(value), 250);
+    debounceRef.current = setTimeout(() => search(value, activeHp), 250);
+  };
+
+  const handleHpFilter = (hp: string) => {
+    if (activeHp === hp) {
+      setActiveHp(null);
+      if (query.length >= 2) search(query, null);
+      else { setSuggestions([]); setOpen(false); }
+    } else {
+      setActiveHp(hp);
+      search(query || "", hp);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -98,13 +109,14 @@ const SmartSearch = () => {
     e.preventDefault();
     if (query.trim()) {
       setOpen(false);
-      navigate(`/produtos?busca=${encodeURIComponent(query.trim())}`);
+      navigate(`/produtos?busca=${encodeURIComponent(query.trim())}${activeHp ? `&hp=${activeHp}` : ""}`);
     }
   };
 
   const goTo = (s: Suggestion) => {
     setOpen(false);
     setQuery("");
+    setActiveHp(null);
     if (s.type === "product") navigate(`/produto/${s.id}`);
     else navigate(`/categoria/${s.id}`);
   };
@@ -130,6 +142,30 @@ const SmartSearch = () => {
           </button>
         </div>
       </form>
+
+      {/* HP Filter Chips */}
+      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+        <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+        {HP_FILTERS.map(hp => (
+          <button
+            key={hp}
+            onClick={() => handleHpFilter(hp)}
+            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all ${
+              activeHp === hp
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+            }`}
+          >
+            {hp}HP
+          </button>
+        ))}
+        {activeHp && (
+          <button onClick={() => { setActiveHp(null); if (query.length >= 2) search(query, null); else { setSuggestions([]); setOpen(false); } }}
+            className="px-1.5 py-1 rounded-full text-[11px] text-destructive hover:bg-destructive/10 transition-colors">
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
 
       {open && (
         <ul className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[70] overflow-hidden max-h-[400px] overflow-y-auto" role="listbox">

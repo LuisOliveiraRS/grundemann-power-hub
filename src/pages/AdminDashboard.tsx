@@ -33,7 +33,7 @@ import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
-import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
+import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -1643,156 +1643,13 @@ const AdminDashboard = () => {
         {/* CATEGORIES TAB */}
         {tab === "categories" && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="font-heading text-3xl font-bold">Categorias & Subcategorias</h1>
-                <p className="text-muted-foreground text-sm mt-1">{categories.length} categorias, {subcategories.length} subcategorias</p>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => { setEditingSubcategory({}); setSubForm({ name: "", slug: "", description: "", category_id: "" }); }}>
-                  <FolderTree className="h-4 w-4 mr-2" /> Nova Subcategoria
-                </Button>
-                <Button onClick={() => { setEditingCategory({}); setCategoryForm({ name: "", slug: "", description: "", image_url: "" }); }} className="shadow-md">
-                  <Plus className="h-4 w-4 mr-2" /> Nova Categoria
-                </Button>
-              </div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3">
+                <Tag className="h-8 w-8 text-primary" /> Gestão de Categorias
+              </h1>
+              <p className="text-muted-foreground mt-1">Sistema hierárquico unificado com níveis ilimitados de subcategorias</p>
             </div>
-
-            {editingCategory !== null && (
-              <div className="bg-card rounded-xl shadow-lg border border-border p-6 mb-6">
-                <h3 className="font-heading text-lg font-bold mb-4">{editingCategory.id ? "Editar" : "Nova"} Categoria</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><Label>Nome *</Label><Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })} /></div>
-                  <div><Label>Slug</Label><Input value={categoryForm.slug} onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })} /></div>
-                  <div><Label>URL da Imagem</Label><Input value={categoryForm.image_url} onChange={(e) => setCategoryForm({ ...categoryForm, image_url: e.target.value })} /></div>
-                  <div><Label>Descrição</Label><Input value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} /></div>
-                </div>
-                <div className="flex gap-3 mt-5">
-                  <Button onClick={saveCategory}>Salvar Categoria</Button>
-                  <Button variant="outline" onClick={() => setEditingCategory(null)}>Cancelar</Button>
-                </div>
-              </div>
-            )}
-
-            {editingSubcategory !== null && (
-              <div className="bg-card rounded-xl shadow-lg border border-primary/20 p-6 mb-6">
-                <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2"><FolderTree className="h-5 w-5 text-primary" />{editingSubcategory.id ? "Editar" : "Nova"} Subcategoria</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Categoria Pai *</Label>
-                    <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={subForm.category_id} onChange={(e) => setSubForm({ ...subForm, category_id: e.target.value })}>
-                      <option value="">Selecione a categoria</option>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div><Label>Nome *</Label><Input value={subForm.name} onChange={(e) => setSubForm({ ...subForm, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })} /></div>
-                  <div><Label>Slug</Label><Input value={subForm.slug} onChange={(e) => setSubForm({ ...subForm, slug: e.target.value })} /></div>
-                  <div><Label>Descrição</Label><Input value={subForm.description} onChange={(e) => setSubForm({ ...subForm, description: e.target.value })} /></div>
-                </div>
-                <div className="flex gap-3 mt-5">
-                  <Button onClick={saveSubcategory}>Salvar Subcategoria</Button>
-                  <Button variant="outline" onClick={() => setEditingSubcategory(null)}>Cancelar</Button>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map(c => (
-                <div key={c.id} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">{c.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-1 font-mono">/{c.slug}</p>
-                        {c.description && <p className="text-sm text-muted-foreground mt-2">{c.description}</p>}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <select
-                          className="h-8 text-[10px] border border-input rounded-md px-1.5 bg-background text-muted-foreground w-auto"
-                          defaultValue=""
-                          onChange={async (e) => {
-                            if (e.target.value) {
-                              if (confirm(`Converter "${c.name}" em subcategoria de "${categories.find(cat => cat.id === e.target.value)?.name}"?`)) {
-                                await convertCategoryToSubcategory(c.id, e.target.value);
-                              }
-                              e.target.value = "";
-                            }
-                          }}
-                          title="Converter para subcategoria"
-                        >
-                          <option value="">→ Subcat.</option>
-                          {categories.filter(cat => cat.id !== c.id).map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))}
-                        </select>
-                        <Button
-                          variant="ghost" size="icon" className="h-8 w-8"
-                          title={c.is_visible !== false ? "Ocultar do menu" : "Mostrar no menu"}
-                          onClick={async () => {
-                            const newVal = c.is_visible === false ? true : false;
-                            await supabase.from("categories").update({ is_visible: newVal } as any).eq("id", c.id);
-                            setCategories(prev => prev.map(cat => cat.id === c.id ? { ...cat, is_visible: newVal } : cat));
-                            toast({ title: newVal ? "Categoria visível no menu" : "Categoria oculta do menu" });
-                          }}
-                        >
-                          {c.is_visible !== false ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCategory(c); setCategoryForm({ name: c.name, slug: c.slug, description: c.description || "", image_url: c.image_url || "" }); }}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCategory(c.id)}><Trash2 className="h-4 w-4" /></Button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{products.filter(p => p.category_id === c.id).length} produtos</Badge>
-                      <Badge variant="secondary">{getCatSubcats(c.id).length} subcategorias</Badge>
-                      {c.is_visible === false && (
-                        <Badge variant="outline" className="text-muted-foreground border-muted">
-                          <EyeOff className="h-3 w-3 mr-1" /> Oculta
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {getCatSubcats(c.id).length > 0 && (
-                    <div className="border-t border-border bg-muted/30">
-                      <button
-                        className="w-full flex items-center justify-between px-5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => setExpandedCat(expandedCat === c.id ? null : c.id)}
-                      >
-                        <span className="flex items-center gap-1.5"><FolderTree className="h-3.5 w-3.5" /> Subcategorias</span>
-                        {expandedCat === c.id ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                      </button>
-                      {expandedCat === c.id && (
-                        <div className="px-4 pb-3 space-y-1.5">
-                          {getCatSubcats(c.id).map(sub => (
-                            <div key={sub.id} className="flex items-center justify-between bg-background rounded-lg px-3 py-2 border border-border">
-                              <div>
-                                <span className="text-sm font-medium">{sub.name}</span>
-                                <span className="text-xs text-muted-foreground ml-2">/{sub.slug}</span>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" title="Promover para categoria" onClick={() => { if (confirm(`Promover "${sub.name}" para categoria principal?`)) convertSubcategoryToCategory(sub.id); }}>
-                                  <TrendingUp className="h-3 w-3 text-primary" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingSubcategory(sub); setSubForm({ name: sub.name, slug: sub.slug, description: sub.description || "", category_id: sub.category_id }); }}><Edit className="h-3 w-3" /></Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteSubcategory(sub.id)}><Trash2 className="h-3 w-3" /></Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {getCatSubcats(c.id).length === 0 && (
-                    <div className="border-t border-border px-5 py-2.5">
-                      <button className="text-xs text-primary hover:underline flex items-center gap-1" onClick={() => { setEditingSubcategory({}); setSubForm({ name: "", slug: "", description: "", category_id: c.id }); }}>
-                        <Plus className="h-3 w-3" /> Adicionar subcategoria
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {categories.length === 0 && <p className="text-muted-foreground col-span-3 text-center py-12">Nenhuma categoria cadastrada.</p>}
-            </div>
+            <CategoryTreeAdmin />
           </div>
         )}
 
@@ -2068,8 +1925,6 @@ const AdminDashboard = () => {
         {/* REPORTS TAB */}
         {tab === "reports" && <AdminReports />}
 
-        {/* SUBCATEGORY TREE TAB */}
-        {tab === "categories" && expandedCat === "__tree__" && <SubcategoryTreeManagement />}
 
         {/* SELLERS TAB */}
         {tab === "sellers" && <SellerManagement />}
