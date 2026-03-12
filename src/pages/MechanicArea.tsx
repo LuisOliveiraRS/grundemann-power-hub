@@ -622,10 +622,7 @@ const MechanicArea = () => {
         </div>
       </div>
 
-      <WhatsAppButton />
-      <AIAssistant />
-      <Footer />
-    </div>
+    </Layout>
   );
 };
 
