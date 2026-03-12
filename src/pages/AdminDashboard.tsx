@@ -31,6 +31,8 @@ import PriceResearch from "@/components/PriceResearch";
 import CatalogManagement from "@/components/CatalogManagement";
 import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import ExplodedViewManagement from "@/components/ExplodedViewManagement";
+import AdminReports from "@/components/AdminReports";
+import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
