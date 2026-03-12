@@ -2194,7 +2194,7 @@ const AdminDashboard = () => {
             </div>
             <ResellerContentManagement />
           </div>
-        )
+        )}
 
 
         {tab === "appearance" && (
