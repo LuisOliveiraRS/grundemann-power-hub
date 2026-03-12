@@ -13,6 +13,7 @@ import Layout from "@/components/Layout";
 import CategoryNav from "@/components/CategoryNav";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
 import ReferralProgram from "@/components/ReferralProgram";
+import QuotePrintSheet from "@/components/QuotePrintSheet";
 import { syncPaymentStatus } from "@/lib/paymentSync";
 
 interface Profile {
