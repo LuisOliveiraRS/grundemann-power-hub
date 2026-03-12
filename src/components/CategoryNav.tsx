@@ -34,7 +34,9 @@ const CategoryNav = () => {
   const [categories, setCategories] = useState<DBCategory[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [allProducts, setAllProducts] = useState<FeaturedProduct[]>([]);
   const [openCat, setOpenCat] = useState<string | null>(null);
+  const [hoveredSub, setHoveredSub] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
   // Extract numeric HP from subcategory name for sorting
