@@ -99,6 +99,7 @@ const MechanicArea = () => {
       setMechanic(mechRes.data as MechanicProfile);
       setCompanyName(mechRes.data.company_name || "");
       setCnpj(mechRes.data.cnpj || "");
+      setInscricaoEstadual((mechRes.data as any).inscricao_estadual || "");
       setSpecialty(mechRes.data.specialty || "");
 
       const [orderRes, catalogRes, videoRes, quotesRes] = await Promise.all([
