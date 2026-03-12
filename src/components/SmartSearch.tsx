@@ -10,6 +10,7 @@ interface Suggestion {
   extra?: string;
   image?: string | null;
   price?: number;
+  hp?: string;
 }
 
 const SmartSearch = () => {
