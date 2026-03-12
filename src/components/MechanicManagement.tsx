@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Wrench, Search, CheckCircle2, XCircle, Trash2, Loader2, Plus, UserPlus, Edit, ChevronDown, ChevronUp, Save, X } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
+import { buildWhatsAppUrl } from "@/lib/whatsappUtils";
 
 interface MechanicRow {
   id: string;
