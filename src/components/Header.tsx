@@ -13,7 +13,7 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-  const { user, isAdmin, isSeller, signOut } = useAuth();
+  const { user, isAdmin, isSeller, userName, partnerType, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
