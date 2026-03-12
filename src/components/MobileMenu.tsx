@@ -108,7 +108,7 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Minha Conta</p>
+                  <p className="text-sm font-semibold text-foreground">{userName || "Minha Conta"}</p>
                   <p className="text-xs text-muted-foreground truncate max-w-[200px]">{user.email}</p>
                 </div>
               </button>

@@ -129,7 +129,7 @@ const About = () => {
                 <Clock className="h-5 w-5 text-primary mt-0.5" />
                 <div>
                   <p className="font-heading font-bold text-sm">Horário</p>
-                  <p className="text-sm text-muted-foreground">Seg a Sex: 8h às 18h<br />Sáb: 8h às 12h</p>
+                  <p className="text-sm text-muted-foreground">Seg a Sex: 8h às 18h</p>
                 </div>
               </div>
             </div>

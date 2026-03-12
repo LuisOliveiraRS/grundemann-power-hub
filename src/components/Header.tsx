@@ -84,7 +84,7 @@ const Header = () => {
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <User className="h-5 w-5" />
-                  <span>Minha Conta</span>
+                  <span>{userName || "Minha Conta"}</span>
                 </button>
                 <button
                   onClick={async () => { await signOut(); navigate("/"); }}
