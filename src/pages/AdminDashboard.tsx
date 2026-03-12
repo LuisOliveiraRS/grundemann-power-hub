@@ -1769,7 +1769,7 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-1.5">
                               <span className="text-muted-foreground text-xs">{c.phone}</span>
                               {hasPhone && (
-                                <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
+                                <a href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#25D366] text-white hover:bg-[#1da851] transition-colors"
                                   title="WhatsApp"
                                   onClick={e => e.stopPropagation()}
