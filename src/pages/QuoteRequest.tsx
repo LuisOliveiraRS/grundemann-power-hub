@@ -196,6 +196,27 @@ const QuoteRequest = () => {
 
   if (submitted) return (
     <Layout>
+      {/* Hidden print area */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <div ref={printRef}>
+          <QuotePrintSheet quote={{
+            id: submittedQuoteId || "",
+            created_at: new Date().toISOString(),
+            customer_name: form.name,
+            customer_email: form.email,
+            customer_phone: form.phone,
+            customer_company: form.company,
+            message: form.message,
+            total_estimated: total,
+            items: items.map(i => ({
+              product_name: i.product_name,
+              product_sku: i.product_sku,
+              quantity: i.quantity,
+              unit_price: i.unit_price,
+            })),
+          }} />
+        </div>
+      </div>
       <div className="flex-1 flex items-center justify-center py-16">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -204,7 +225,10 @@ const QuoteRequest = () => {
           <h2 className="font-heading text-2xl font-bold mb-2">Orçamento Enviado!</h2>
           <p className="text-muted-foreground mb-2">Recebemos sua solicitação e entraremos em contato em breve.</p>
           <p className="text-sm text-muted-foreground mb-6">Você pode acompanhar o status na sua área de cliente.</p>
-          <div className="flex gap-3 justify-center">
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Button onClick={printQuote} variant="outline" className="gap-2">
+              <Printer className="h-4 w-4" /> Imprimir Orçamento
+            </Button>
             <Button onClick={() => navigate("/produtos")}>Continuar Comprando</Button>
             <Button variant="outline" onClick={() => navigate("/minha-conta")}>Meus Orçamentos</Button>
           </div>
