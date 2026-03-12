@@ -311,6 +311,29 @@ const ClientDashboard = () => {
 
   return (
     <Layout>
+      {/* Hidden print area for quotes */}
+      {printingQuote && (
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <div ref={printRef}>
+            <QuotePrintSheet quote={{
+              id: printingQuote.id,
+              created_at: printingQuote.created_at,
+              customer_name: printingQuote.customer_name || profile.full_name,
+              customer_email: printingQuote.customer_email || profile.email,
+              customer_phone: printingQuote.customer_phone || profile.phone,
+              customer_company: printingQuote.customer_company || profile.company_name,
+              message: printingQuote.message,
+              total_estimated: printingQuote.total_estimated,
+              items: (printingQuote.items || []).map(i => ({
+                product_name: i.product_name,
+                product_sku: i.product_sku,
+                quantity: i.quantity,
+                unit_price: i.unit_price,
+              })),
+            }} />
+          </div>
+        </div>
+      )}
       <div className="flex-1 bg-muted/50">
         <div className="container py-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Minha Conta</h1>
