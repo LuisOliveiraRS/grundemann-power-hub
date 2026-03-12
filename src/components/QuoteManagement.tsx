@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Search, ChevronDown, ChevronUp, Package, DollarSign, Clock, CheckCircle, MessageCircle, Printer } from "lucide-react";
+import { FileText, Search, ChevronDown, ChevronUp, DollarSign, Clock, CheckCircle, MessageCircle, Printer, Send } from "lucide-react";
 import { buildWhatsAppUrl } from "@/lib/whatsappUtils";
 import QuotePrintSheet from "@/components/QuotePrintSheet";
 
@@ -55,6 +55,8 @@ const QuoteManagement = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
   const printRef = useRef<HTMLDivElement>(null);
   const [printingQuote, setPrintingQuote] = useState<Quote | null>(null);
 
@@ -74,13 +76,51 @@ const QuoteManagement = () => {
   };
 
   const updateStatus = async (quoteId: string, status: string) => {
+    const quote = quotes.find(q => q.id === quoteId);
     await supabase.from("quotes").update({ status } as any).eq("id", quoteId);
+    
+    // Send notification to the client
+    if (quote?.user_id) {
+      await supabase.from("notifications").insert({
+        user_id: quote.user_id,
+        title: `Orçamento #${quoteId.slice(0, 8)} - ${statusLabels[status] || status}`,
+        message: `Seu orçamento foi atualizado para: ${statusLabels[status] || status}. Acesse sua conta para mais detalhes.`,
+        type: "quote",
+        link: "/minha-conta",
+      });
+    }
+    
     toast({ title: `Status atualizado para: ${statusLabels[status]}` });
     loadQuotes();
   };
 
-  const updateNotes = async (quoteId: string, notes: string) => {
-    await supabase.from("quotes").update({ admin_notes: notes } as any).eq("id", quoteId);
+  const sendResponse = async (quoteId: string) => {
+    if (!responseText.trim()) {
+      toast({ title: "Digite uma resposta", variant: "destructive" });
+      return;
+    }
+    const quote = quotes.find(q => q.id === quoteId);
+    
+    await supabase.from("quotes").update({ 
+      admin_notes: responseText,
+      status: "quoted",
+    } as any).eq("id", quoteId);
+
+    // Send notification to the client
+    if (quote?.user_id) {
+      await supabase.from("notifications").insert({
+        user_id: quote.user_id,
+        title: `Orçamento #${quoteId.slice(0, 8)} respondido! 📋`,
+        message: `Sua solicitação de orçamento foi respondida pela Gründemann. Acesse sua conta para ver os detalhes.`,
+        type: "quote",
+        link: "/minha-conta",
+      });
+    }
+
+    toast({ title: "Resposta enviada e cliente notificado!" });
+    setRespondingId(null);
+    setResponseText("");
+    loadQuotes();
   };
 
   const printQuote = async (quote: Quote) => {
@@ -94,7 +134,7 @@ const QuoteManagement = () => {
       const printContent = printRef.current;
       if (!printContent) return;
       const win = window.open("", "_blank");
-      if (!win) { toast({ title: "Erro", description: "Permita pop-ups para imprimir.", variant: "destructive" }); return; }
+      if (!win) { toast({ title: "Permita pop-ups para imprimir.", variant: "destructive" }); return; }
       win.document.write(`<!DOCTYPE html><html><head><title>Orçamento #${quote.id.slice(0, 8)}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
       win.document.close();
       win.focus();
@@ -142,7 +182,7 @@ const QuoteManagement = () => {
 
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold">Orçamentos</h1>
-        <p className="text-muted-foreground mt-1">Gerencie solicitações de orçamento</p>
+        <p className="text-muted-foreground mt-1">Gerencie solicitações de orçamento e responda aos clientes</p>
       </div>
 
       {/* Stats */}
@@ -230,18 +270,50 @@ const QuoteManagement = () => {
                   </div>
                 )}
 
-                {/* Admin notes */}
-                <div className="mb-4">
-                  <label className="text-sm font-medium mb-1 block">Notas internas</label>
-                  <Textarea
-                    defaultValue={quote.admin_notes}
-                    onBlur={e => updateNotes(quote.id, e.target.value)}
-                    placeholder="Adicione observações..."
-                    rows={2}
-                  />
+                {/* Existing admin notes */}
+                {quote.admin_notes && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4">
+                    <p className="text-xs font-bold text-primary mb-1">Resposta anterior:</p>
+                    <p className="text-sm">{quote.admin_notes}</p>
+                  </div>
+                )}
+
+                {/* Response form */}
+                <div className="bg-background border border-border rounded-lg p-4 mb-4">
+                  <label className="text-sm font-bold mb-2 block flex items-center gap-2">
+                    <Send className="h-4 w-4 text-primary" /> Responder ao cliente
+                  </label>
+                  {respondingId === quote.id ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={responseText}
+                        onChange={e => setResponseText(e.target.value)}
+                        placeholder="Digite sua resposta ao orçamento... (valores, prazos, condições)"
+                        rows={3}
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => sendResponse(quote.id)} className="gap-1.5">
+                          <Send className="h-4 w-4" /> Enviar Resposta
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => { setRespondingId(null); setResponseText(""); }}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setRespondingId(quote.id); setResponseText(quote.admin_notes || ""); }}
+                      className="gap-1.5"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {quote.admin_notes ? "Editar Resposta" : "Responder Orçamento"}
+                    </Button>
+                  )}
                 </div>
 
-                {/* Status buttons + WhatsApp + Print */}
+                {/* Status buttons + Print + WhatsApp */}
                 <div className="flex flex-wrap items-center gap-2">
                   {Object.entries(statusLabels).map(([k, v]) => (
                     <Button key={k} variant={quote.status === k ? "default" : "outline"} size="sm" onClick={() => updateStatus(quote.id, k)}>
@@ -249,8 +321,7 @@ const QuoteManagement = () => {
                     </Button>
                   ))}
                   <Button size="sm" variant="outline" onClick={() => printQuote(quote)} className="gap-1.5">
-                    <Printer className="h-4 w-4" />
-                    Imprimir PDF
+                    <Printer className="h-4 w-4" /> Imprimir PDF
                   </Button>
                   {quote.customer_phone && (() => {
                     const waUrl = buildWhatsAppUrl(
@@ -260,8 +331,7 @@ const QuoteManagement = () => {
                     return waUrl ? (
                       <a href={waUrl} target="_blank" rel="noopener noreferrer">
                         <Button type="button" size="sm" className="bg-[hsl(142,70%,45%)] hover:bg-[hsl(142,70%,40%)] text-white gap-1.5">
-                          <MessageCircle className="h-4 w-4" />
-                          Responder via WhatsApp
+                          <MessageCircle className="h-4 w-4" /> WhatsApp
                         </Button>
                       </a>
                     ) : null;

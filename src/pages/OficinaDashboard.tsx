@@ -12,6 +12,7 @@ import { User, Phone, Mail, MapPin, Building2, Download, FileText, ShoppingCart,
 import Layout from "@/components/Layout";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
 import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
+import UserQuotesList from "@/components/UserQuotesList";
 
 interface PartnerProfile {
   id: string;
@@ -338,28 +339,15 @@ const OficinaDashboard = () => {
 
         {/* Quotes */}
         {activeTab === "orcamentos" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-xl font-bold">Meus Orçamentos</h2>
-              <Button onClick={() => navigate("/orcamento")}>Novo Orçamento</Button>
-            </div>
-            {quotes.length === 0 ? (
-              <Card><CardContent className="py-8 text-center text-muted-foreground"><FileText className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum orçamento.</p><Button variant="outline" className="mt-3" onClick={() => navigate("/orcamento")}>Solicitar Orçamento</Button></CardContent></Card>
-            ) : quotes.map((quote) => (
-              <Card key={quote.id}>
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-sm">Orçamento #{quote.id.slice(0, 8)}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(quote.created_at).toLocaleDateString("pt-BR")}</p>
-                    </div>
-                    <Badge variant="outline">{quoteStatusLabel[quote.status] || quote.status}</Badge>
-                  </div>
-                  {quote.quote_items?.map((item: any) => <p key={item.id} className="text-xs text-muted-foreground">{item.quantity}x {item.product_name}</p>)}
-                  {quote.total_estimated > 0 && <p className="text-sm font-bold mt-2">Total: R$ {Number(quote.total_estimated).toFixed(2)}</p>}
-                </CardContent>
-              </Card>
-            ))}
+          <div>
+            <h2 className="font-heading text-xl font-bold mb-4">Meus Orçamentos</h2>
+            <UserQuotesList
+              quotes={quotes.map((q: any) => ({ ...q, items: q.quote_items || [] }))}
+              profileName={fullName}
+              profileEmail={profile?.email || ""}
+              profilePhone={phone}
+              profileCompany={partner.company_name}
+            />
           </div>
         )}
       </div>
