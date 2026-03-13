@@ -71,6 +71,20 @@ const Auth = () => {
     if (!redirect) checkAuth();
   }, []);
 
+  const syncGuestCart = async (userId: string) => {
+    const guestItems = getGuestCart();
+    if (guestItems.length === 0) return;
+    for (const item of guestItems) {
+      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", userId).eq("product_id", item.product_id).maybeSingle();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + item.quantity }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: userId, product_id: item.product_id, quantity: item.quantity });
+      }
+    }
+    clearGuestCart();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
