@@ -1736,19 +1736,41 @@ const AdminDashboard = () => {
 
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
               <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
-                <Search className="h-4 w-4" /> Busca
+                <Search className="h-4 w-4" /> Busca e Filtros
               </div>
               <div className="flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[250px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-9" placeholder="Buscar por nome, email, telefone ou CPF/CNPJ..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
                 </div>
-                {clientSearch && (
-                  <Button variant="ghost" size="sm" onClick={() => setClientSearch("")}>
+                <select className="h-10 border border-input rounded-md px-3 text-sm bg-background min-w-[160px]" value={clientRoleFilter} onChange={(e) => setClientRoleFilter(e.target.value)}>
+                  <option value="">Todos os tipos</option>
+                  <option value="admin">Administradores</option>
+                  <option value="seller">Vendedores</option>
+                  <option value="revendedor">Revendedores</option>
+                  <option value="oficina">Oficinas</option>
+                  <option value="mecanico">Mecânicos</option>
+                  <option value="cliente">Clientes</option>
+                </select>
+                {(clientSearch || clientRoleFilter) && (
+                  <Button variant="ghost" size="sm" onClick={() => { setClientSearch(""); setClientRoleFilter(""); }}>
                     <X className="h-4 w-4 mr-1" /> Limpar
                   </Button>
                 )}
               </div>
+            </div>
+
+            {/* Role stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+              {["admin", "seller", "revendedor", "oficina", "mecanico", "cliente"].map(role => {
+                const count = clients.filter(c => getUserRoleType(c.user_id) === role).length;
+                return (
+                  <button key={role} onClick={() => setClientRoleFilter(clientRoleFilter === role ? "" : role)} className={`bg-card rounded-xl border p-3 text-center transition-all hover:shadow-md ${clientRoleFilter === role ? "border-primary shadow-md" : "border-border"}`}>
+                    <Badge className={`${roleTypeColor[role]} text-[10px] mb-1`}>{roleTypeLabel[role]}</Badge>
+                    <p className="font-heading font-bold text-lg">{count}</p>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
