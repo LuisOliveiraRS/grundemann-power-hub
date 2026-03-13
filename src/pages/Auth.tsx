@@ -183,7 +183,19 @@ const Auth = () => {
 
         await syncGuestCart(data.user.id);
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
-        navigate(redirect || "/");
+        
+        // Redirect to the correct dashboard based on user type
+        if (redirect) {
+          navigate(redirect);
+        } else {
+          const dashboardMap: Record<UserType, string> = {
+            cliente: "/minha-conta",
+            mecanico: "/mecanico",
+            oficina: "/oficina",
+            revendedor: "/revendedor",
+          };
+          navigate(dashboardMap[userType]);
+        }
       }
     }
     setLoading(false);
