@@ -1794,6 +1794,7 @@ const AdminDashboard = () => {
                       const phoneClean = normalizeWhatsAppPhone(c.phone);
                       const hasPhone = phoneClean.length >= 12;
                       const isExpanded = expandedClientId === c.user_id;
+                      const roleType = getUserRoleType(c.user_id);
                       return (
                       <React.Fragment key={c.user_id}>
                       <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => toggleClientExpand(c.user_id)}>
@@ -1808,6 +1809,9 @@ const AdminDashboard = () => {
                               {c.cpf_cnpj && <span className="text-[10px] text-muted-foreground block font-mono">{c.cpf_cnpj}</span>}
                             </div>
                           </div>
+                        </td>
+                        <td className="p-3.5">
+                          <Badge className={`${roleTypeColor[roleType] || ""} text-[10px] border-0`}>{roleTypeLabel[roleType] || roleType}</Badge>
                         </td>
                         <td className="p-3.5 text-muted-foreground text-xs">{c.email}</td>
                         <td className="p-3.5">
