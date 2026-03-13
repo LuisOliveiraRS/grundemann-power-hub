@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Gift, Eye, EyeOff, User, Wrench, Building2, Store } from "lucide-react";
 import Layout from "@/components/Layout";
 import logo from "@/assets/logo-grundemann.png";
+import { getGuestCart, clearGuestCart } from "@/lib/guestCart";
 
 type UserType = "cliente" | "mecanico" | "oficina" | "revendedor";
 
