@@ -293,6 +293,8 @@ const MechanicArea = () => {
     { id: "identificador", label: "Identificar Peça", icon: Wrench },
   ];
 
+  const calculatorCard = { section: "calculator" as any, label: "Calculadora de Carga", desc: "Dimensione a carga ideal para o gerador", icon: Calculator };
+
   return (
     <Layout>
       {/* Top bar */}
