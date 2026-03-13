@@ -181,6 +181,7 @@ const Auth = () => {
           });
         }
 
+        await syncGuestCart(data.user.id);
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
         navigate(redirect || "/");
       }
