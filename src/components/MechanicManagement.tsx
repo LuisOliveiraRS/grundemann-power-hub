@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Wrench, Search, CheckCircle2, XCircle, Trash2, Loader2, Plus, UserPlus, Edit, ChevronDown, ChevronUp, Save, X } from "lucide-react";
+import { Wrench, Search, CheckCircle2, XCircle, Trash2, Loader2, Plus, UserPlus, Edit, Save, X, Users, Clock, ShieldCheck } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { buildWhatsAppUrl } from "@/lib/whatsappUtils";
 
@@ -83,12 +83,6 @@ const MechanicManagement = () => {
     } else {
       toast({ title: "Aprovação revogada!" });
     }
-    load();
-  };
-
-  const updateDiscount = async (id: string, rate: number) => {
-    await supabase.from("mechanics").update({ discount_rate: rate }).eq("id", id);
-    toast({ title: "Desconto atualizado!" });
     load();
   };
 
@@ -193,54 +187,79 @@ const MechanicManagement = () => {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
+  const partnerTypeLabel = (type: string) => {
+    const map: Record<string, string> = { mecanico: "Mecânico", oficina: "Oficina", revendedor: "Revendedor" };
+    return map[type] || type;
+  };
+
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
-            <Wrench className="h-8 w-8 text-primary" /> Gestão de Parceiros
-          </h1>
-          <p className="text-muted-foreground mt-1">Mecânicos, Oficinas e Revendedores — Aprove, edite e gerencie</p>
+    <div className="space-y-6">
+      {/* Dark Top Bar */}
+      <div className="bg-foreground rounded-xl p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+              <Wrench className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-heading text-lg font-bold text-background">Gestão de Parceiros</h1>
+              <p className="text-background/60 text-xs">Mecânicos, Oficinas e Revendedores — Aprove, edite e gerencie</p>
+            </div>
+          </div>
+          <Button onClick={() => setShowAddForm(!showAddForm)} size="sm">
+            <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Parceiro
+          </Button>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)}>
-          <UserPlus className="h-4 w-4 mr-2" /> Cadastrar Parceiro
-        </Button>
       </div>
 
+      {/* Add Form */}
       {showAddForm && (
-        <div className="bg-card rounded-xl border border-border p-5 mb-6">
-          <h3 className="font-heading font-bold text-sm mb-4">Cadastro Manual de Mecânico</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div><label className="text-xs text-muted-foreground">Email do Usuário *</label><Input value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} placeholder="usuario@email.com" /></div>
-            <div><label className="text-xs text-muted-foreground">Nome Completo</label><Input value={addForm.full_name} onChange={e => setAddForm({ ...addForm, full_name: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground">Telefone</label><Input value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
-            <div><label className="text-xs text-muted-foreground">Oficina/Empresa</label><Input value={addForm.company_name} onChange={e => setAddForm({ ...addForm, company_name: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground">CNPJ</label><Input value={addForm.cnpj} onChange={e => setAddForm({ ...addForm, cnpj: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground">Inscrição Estadual (IE)</label><Input value={addForm.inscricao_estadual} onChange={e => setAddForm({ ...addForm, inscricao_estadual: e.target.value })} placeholder="IE" /></div>
-            <div><label className="text-xs text-muted-foreground">Especialidade</label><Input value={addForm.specialty} onChange={e => setAddForm({ ...addForm, specialty: e.target.value })} /></div>
-            <div><label className="text-xs text-muted-foreground">Desconto %</label><Input type="number" min="0" max="50" value={addForm.discount_rate} onChange={e => setAddForm({ ...addForm, discount_rate: e.target.value })} /></div>
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Button onClick={addMechanicManual} disabled={addingMechanic}>{addingMechanic ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}Cadastrar e Aprovar</Button>
-            <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancelar</Button>
-          </div>
-        </div>
+        <Card className="border-primary/20">
+          <CardContent className="p-5">
+            <h3 className="font-heading font-bold text-sm mb-4">Cadastro Manual de Mecânico</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div><label className="text-xs text-muted-foreground">Email do Usuário *</label><Input value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })} placeholder="usuario@email.com" /></div>
+              <div><label className="text-xs text-muted-foreground">Nome Completo</label><Input value={addForm.full_name} onChange={e => setAddForm({ ...addForm, full_name: e.target.value })} /></div>
+              <div><label className="text-xs text-muted-foreground">Telefone</label><Input value={addForm.phone} onChange={e => setAddForm({ ...addForm, phone: e.target.value })} placeholder="(00) 00000-0000" /></div>
+              <div><label className="text-xs text-muted-foreground">Oficina/Empresa</label><Input value={addForm.company_name} onChange={e => setAddForm({ ...addForm, company_name: e.target.value })} /></div>
+              <div><label className="text-xs text-muted-foreground">CNPJ</label><Input value={addForm.cnpj} onChange={e => setAddForm({ ...addForm, cnpj: e.target.value })} /></div>
+              <div><label className="text-xs text-muted-foreground">Inscrição Estadual (IE)</label><Input value={addForm.inscricao_estadual} onChange={e => setAddForm({ ...addForm, inscricao_estadual: e.target.value })} placeholder="IE" /></div>
+              <div><label className="text-xs text-muted-foreground">Especialidade</label><Input value={addForm.specialty} onChange={e => setAddForm({ ...addForm, specialty: e.target.value })} /></div>
+              <div><label className="text-xs text-muted-foreground">Desconto %</label><Input type="number" min="0" max="50" value={addForm.discount_rate} onChange={e => setAddForm({ ...addForm, discount_rate: e.target.value })} /></div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={addMechanicManual} disabled={addingMechanic}>{addingMechanic ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}Cadastrar e Aprovar</Button>
+              <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total", count: mechanics.length, color: "text-primary" },
-          { label: "Aprovados", count: approvedCount, color: "text-primary" },
-          { label: "Pendentes", count: pendingCount, color: "text-destructive" },
-        ].map(s => (
-          <div key={s.label} className="bg-card rounded-xl border border-border p-4">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className={`text-2xl font-heading font-bold ${s.color}`}>{s.count}</p>
-          </div>
+          { label: "Total de Parceiros", value: mechanics.length, icon: Users, bg: "bg-primary/10", color: "text-primary" },
+          { label: "Aprovados", value: approvedCount, icon: ShieldCheck, bg: "bg-primary/10", color: "text-primary" },
+          { label: "Pendentes", value: pendingCount, icon: Clock, bg: "bg-destructive/10", color: "text-destructive" },
+        ].map(kpi => (
+          <Card key={kpi.label} className="border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`rounded-lg p-2.5 ${kpi.bg}`}>
+                  <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                  <p className="font-heading font-bold text-2xl">{kpi.value}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Buscar por nome, email, oficina..." value={search} onChange={e => setSearch(e.target.value)} />
@@ -252,82 +271,86 @@ const MechanicManagement = () => {
         </select>
       </div>
 
+      {/* Partner List */}
       <div className="space-y-3">
         {filtered.map(m => (
-          <div key={m.id} className="bg-card rounded-xl border border-border p-5">
-            {editingId === m.id ? (
-              /* Edit Form */
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-heading font-bold text-lg">Editar Ficha</h3>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => saveEdit(m)} disabled={savingEdit}>
-                      {savingEdit ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Salvar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="h-4 w-4" /></Button>
+          <Card key={m.id} className="border-border hover:border-primary/20 transition-colors">
+            <CardContent className="p-5">
+              {editingId === m.id ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-heading font-bold text-lg">Editar Ficha</h3>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => saveEdit(m)} disabled={savingEdit}>
+                        {savingEdit ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />} Salvar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div><Label className="text-xs">Nome Completo</Label><Input value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
+                    <div><Label className="text-xs">Telefone</Label><Input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+                    <div><Label className="text-xs">Oficina/Empresa</Label><Input value={editForm.company_name} onChange={e => setEditForm({ ...editForm, company_name: e.target.value })} /></div>
+                    <div><Label className="text-xs">CNPJ</Label><Input value={editForm.cnpj} onChange={e => setEditForm({ ...editForm, cnpj: e.target.value })} /></div>
+                    <div><Label className="text-xs">Inscrição Estadual (IE)</Label><Input value={editForm.inscricao_estadual} onChange={e => setEditForm({ ...editForm, inscricao_estadual: e.target.value })} /></div>
+                    <div><Label className="text-xs">Especialidade</Label><Input value={editForm.specialty} onChange={e => setEditForm({ ...editForm, specialty: e.target.value })} /></div>
+                    <div><Label className="text-xs">Desconto %</Label><Input type="number" min="0" max="50" value={editForm.discount_rate} onChange={e => setEditForm({ ...editForm, discount_rate: e.target.value })} /></div>
+                    <div><Label className="text-xs">Endereço</Label><Input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} /></div>
+                    <div><Label className="text-xs">Bairro</Label><Input value={editForm.neighborhood} onChange={e => setEditForm({ ...editForm, neighborhood: e.target.value })} /></div>
+                    <div><Label className="text-xs">Cidade</Label><Input value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })} /></div>
+                    <div><Label className="text-xs">Estado</Label><Input value={editForm.state} onChange={e => setEditForm({ ...editForm, state: e.target.value })} /></div>
+                    <div><Label className="text-xs">CEP</Label><Input value={editForm.zip_code} onChange={e => setEditForm({ ...editForm, zip_code: e.target.value })} /></div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div><Label className="text-xs">Nome Completo</Label><Input value={editForm.full_name} onChange={e => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
-                  <div><Label className="text-xs">Telefone</Label><Input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} /></div>
-                  <div><Label className="text-xs">Oficina/Empresa</Label><Input value={editForm.company_name} onChange={e => setEditForm({ ...editForm, company_name: e.target.value })} /></div>
-                  <div><Label className="text-xs">CNPJ</Label><Input value={editForm.cnpj} onChange={e => setEditForm({ ...editForm, cnpj: e.target.value })} /></div>
-                  <div><Label className="text-xs">Inscrição Estadual (IE)</Label><Input value={editForm.inscricao_estadual} onChange={e => setEditForm({ ...editForm, inscricao_estadual: e.target.value })} /></div>
-                  <div><Label className="text-xs">Especialidade</Label><Input value={editForm.specialty} onChange={e => setEditForm({ ...editForm, specialty: e.target.value })} /></div>
-                  <div><Label className="text-xs">Desconto %</Label><Input type="number" min="0" max="50" value={editForm.discount_rate} onChange={e => setEditForm({ ...editForm, discount_rate: e.target.value })} /></div>
-                  <div><Label className="text-xs">Endereço</Label><Input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} /></div>
-                  <div><Label className="text-xs">Bairro</Label><Input value={editForm.neighborhood} onChange={e => setEditForm({ ...editForm, neighborhood: e.target.value })} /></div>
-                  <div><Label className="text-xs">Cidade</Label><Input value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })} /></div>
-                  <div><Label className="text-xs">Estado</Label><Input value={editForm.state} onChange={e => setEditForm({ ...editForm, state: e.target.value })} /></div>
-                  <div><Label className="text-xs">CEP</Label><Input value={editForm.zip_code} onChange={e => setEditForm({ ...editForm, zip_code: e.target.value })} /></div>
-                </div>
-              </div>
-            ) : (
-              /* View Card */
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-heading font-bold text-foreground">{m.profile?.full_name || "Sem nome"}</p>
-                    <Badge className={m.is_approved ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}>
-                      {m.is_approved ? "Aprovado" : "Pendente"}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs capitalize">{(m as any).partner_type || "mecanico"}</Badge>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Wrench className="h-4 w-4 text-primary" />
+                      </div>
+                      <p className="font-heading font-bold text-foreground">{m.profile?.full_name || "Sem nome"}</p>
+                      <Badge className={m.is_approved ? "bg-primary/20 text-primary border-0" : "bg-destructive/20 text-destructive border-0"}>
+                        {m.is_approved ? "Aprovado" : "Pendente"}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs capitalize">{partnerTypeLabel((m as any).partner_type || "mecanico")}</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground ml-10">
+                      <p>📧 {m.profile?.email || "—"}</p>
+                      <p>📱 {m.profile?.phone || "—"}</p>
+                      <p>🏢 {m.company_name || "—"}</p>
+                      <p>📄 CNPJ: {m.cnpj || "—"}</p>
+                      <p>📋 IE: {(m as any).inscricao_estadual || "—"}</p>
+                      <p>🔧 {m.specialty || "—"}</p>
+                      <p>📍 {[m.profile?.city, m.profile?.state].filter(Boolean).join(" - ") || "—"}</p>
+                      <p>💰 Desconto: <span className="font-semibold text-primary">{m.discount_rate}%</span></p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 ml-10">Cadastro: {new Date(m.created_at).toLocaleDateString("pt-BR")}</p>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
-                    <p>📧 {m.profile?.email || "—"}</p>
-                    <p>📱 {m.profile?.phone || "—"}</p>
-                    <p>🏢 {m.company_name || "—"}</p>
-                    <p>📄 CNPJ: {m.cnpj || "—"}</p>
-                    <p>📋 IE: {(m as any).inscricao_estadual || "—"}</p>
-                    <p>🔧 {m.specialty || "—"}</p>
-                    <p>📍 {[m.profile?.city, m.profile?.state].filter(Boolean).join(" - ") || "—"}</p>
-                    <p>💰 Desconto: {m.discount_rate}%</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Cadastro: {new Date(m.created_at).toLocaleDateString("pt-BR")}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={() => startEdit(m)}>
-                    <Edit className="h-4 w-4 mr-1" /> Editar
-                  </Button>
-                  <Button size="sm" variant={m.is_approved ? "outline" : "default"} onClick={() => toggleApproval(m)}>
-                    {m.is_approved ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                    {m.is_approved ? "Revogar" : "Aprovar"}
-                  </Button>
-                  {getWhatsAppUrl(m) && (
-                    <Button asChild size="sm" className="bg-[#25D366] hover:bg-accent text-white hover:text-accent-foreground transition-colors">
-                      <a href={getWhatsAppUrl(m)!} target="_blank" rel="noopener noreferrer">
-                        <WhatsAppIcon className="h-4 w-4 mr-1" />
-                        WhatsApp
-                      </a>
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => startEdit(m)}>
+                      <Edit className="h-4 w-4 mr-1" /> Editar
                     </Button>
-                  )}
-                  <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                    <Button size="sm" variant={m.is_approved ? "outline" : "default"} onClick={() => toggleApproval(m)}>
+                      {m.is_approved ? <XCircle className="h-4 w-4 mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                      {m.is_approved ? "Revogar" : "Aprovar"}
+                    </Button>
+                    {getWhatsAppUrl(m) && (
+                      <Button asChild size="sm" className="bg-[#25D366] hover:bg-accent text-white hover:text-accent-foreground transition-colors">
+                        <a href={getWhatsAppUrl(m)!} target="_blank" rel="noopener noreferrer">
+                          <WhatsAppIcon className="h-4 w-4 mr-1" />
+                          WhatsApp
+                        </a>
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </CardContent>
+          </Card>
         ))}
         {filtered.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">Nenhum mecânico encontrado.</div>
