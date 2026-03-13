@@ -94,6 +94,7 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (loginData.user) {
+        await syncGuestCart(loginData.user.id);
         if (redirect) {
           navigate(redirect);
         } else {
