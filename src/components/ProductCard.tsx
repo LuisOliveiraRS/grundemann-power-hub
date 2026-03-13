@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "@/components/FavoriteButton";
-
+import { addToGuestCart } from "@/lib/guestCart";
 interface ProductCardProps {
   id?: string;
   name: string;
