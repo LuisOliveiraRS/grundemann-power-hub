@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import {
   User, Download, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2,
-  Building2, BookOpen, Search, Video, Package, BarChart3, DollarSign, LogOut, Wrench,
+  Building2, BookOpen, Search, Video, Package, BarChart3, DollarSign, LogOut, Wrench, Calculator,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
