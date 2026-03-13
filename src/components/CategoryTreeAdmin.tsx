@@ -121,13 +121,20 @@ const CategoryTreeAdmin = () => {
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= siblings.length) return;
 
-    const other = siblings[swapIdx];
-    const tempOrder = item.display_order;
+    // First normalize all siblings to sequential order to avoid conflicts
+    const updates = siblings.map((s, i) => 
+      supabase.from("menu_categories").update({ display_order: i * 10 }).eq("id", s.id)
+    );
+    await Promise.all(updates);
 
-    await Promise.all([
-      supabase.from("menu_categories").update({ display_order: other.display_order }).eq("id", id),
-      supabase.from("menu_categories").update({ display_order: tempOrder }).eq("id", other.id),
-    ]);
+    // Now swap the two items
+    const newSiblings = [...siblings];
+    [newSiblings[idx], newSiblings[swapIdx]] = [newSiblings[swapIdx], newSiblings[idx]];
+    
+    const swapUpdates = newSiblings.map((s, i) =>
+      supabase.from("menu_categories").update({ display_order: i * 10 }).eq("id", s.id)
+    );
+    await Promise.all(swapUpdates);
     loadData();
   };
 

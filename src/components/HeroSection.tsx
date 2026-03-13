@@ -93,18 +93,20 @@ const HeroSection = () => {
               <br />
               <span className="text-background">ESTACIONÁRIOS COM</span>
               <br />
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={phraseIndex}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-primary inline-block"
-                >
-                  {IMPACT_PHRASES[phraseIndex]}
-                </motion.span>
-              </AnimatePresence>
+              <span className="relative inline-block h-[1.2em] min-w-[280px] md:min-w-[400px] align-bottom">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={phraseIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-primary absolute left-0 top-0 whitespace-nowrap"
+                  >
+                    {IMPACT_PHRASES[phraseIndex]}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
             </h1>
 
             <p className="mt-5 text-base md:text-lg text-background/70 max-w-lg leading-relaxed">
