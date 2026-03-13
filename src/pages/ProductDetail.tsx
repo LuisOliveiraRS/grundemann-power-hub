@@ -21,6 +21,7 @@ import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import AIAssistant from "@/components/AIAssistant";
 import ProductCard from "@/components/ProductCard";
 import RecentlyViewed, { addToRecentlyViewed } from "@/components/RecentlyViewed";
+import { addToGuestCart } from "@/lib/guestCart";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
