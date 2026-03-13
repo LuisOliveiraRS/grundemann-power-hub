@@ -8,6 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import MobileMenu from "@/components/MobileMenu";
 import logo from "@/assets/logo-grundemann.png";
 import { supabase } from "@/integrations/supabase/client";
+import { getGuestCartCount } from "@/lib/guestCart";
 
 const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
@@ -16,35 +17,43 @@ const Header = () => {
   const { user, isAdmin, isSeller, userName, partnerType, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const loadCartCount = async () => {
+    if (user) {
+      const { data } = await supabase
+        .from("cart_items")
+        .select("quantity")
+        .eq("user_id", user.id);
+      const total = (data || []).reduce((s, i) => s + (i.quantity || 1), 0);
+      setCartCount(total);
+    } else {
+      setCartCount(getGuestCartCount());
+    }
+  };
+
   useEffect(() => {
-    if (!user) { setCartCount(0); return; }
     loadCartCount();
 
-    const channel = supabase
-      .channel(`cart-count-${user.id}`)
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "cart_items",
-        filter: `user_id=eq.${user.id}`,
-      }, () => loadCartCount())
-      .subscribe();
+    if (user) {
+      const channel = supabase
+        .channel(`cart-count-${user.id}`)
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "cart_items",
+          filter: `user_id=eq.${user.id}`,
+        }, () => loadCartCount())
+        .subscribe();
 
-    const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
-    window.addEventListener("open-cart-drawer", handleOpenCart);
+      const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
+      window.addEventListener("open-cart-drawer", handleOpenCart);
 
-    return () => { supabase.removeChannel(channel); window.removeEventListener("open-cart-drawer", handleOpenCart); };
+      return () => { supabase.removeChannel(channel); window.removeEventListener("open-cart-drawer", handleOpenCart); };
+    } else {
+      const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
+      window.addEventListener("open-cart-drawer", handleOpenCart);
+      return () => { window.removeEventListener("open-cart-drawer", handleOpenCart); };
+    }
   }, [user]);
-
-  const loadCartCount = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("cart_items")
-      .select("quantity")
-      .eq("user_id", user.id);
-    const total = (data || []).reduce((s, i) => s + (i.quantity || 1), 0);
-    setCartCount(total);
-  };
 
   return (
     <>

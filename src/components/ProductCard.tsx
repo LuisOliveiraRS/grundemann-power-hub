@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "@/components/FavoriteButton";
-
+import { addToGuestCart } from "@/lib/guestCart";
 interface ProductCardProps {
   id?: string;
   name: string;
@@ -25,20 +25,21 @@ const ProductCard = ({ id, name, image, price, oldPrice, installments, sku, stoc
 
   const addToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) { navigate("/auth"); return; }
     if (!id) return;
-    const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", id).maybeSingle();
-    let error;
-    if (existing) {
-      ({ error } = await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id));
+    if (user) {
+      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", id).maybeSingle();
+      let error;
+      if (existing) {
+        ({ error } = await supabase.from("cart_items").update({ quantity: existing.quantity + 1 }).eq("id", existing.id));
+      } else {
+        ({ error } = await supabase.from("cart_items").insert({ user_id: user.id, product_id: id, quantity: 1 }));
+      }
+      if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     } else {
-      ({ error } = await supabase.from("cart_items").insert({ user_id: user.id, product_id: id, quantity: 1 }));
+      addToGuestCart({ product_id: id, quantity: 1, product: { name, price, image_url: image } });
     }
-    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else {
-      toast({ title: "Adicionado ao carrinho!" });
-      window.dispatchEvent(new CustomEvent("open-cart-drawer"));
-    }
+    toast({ title: "Adicionado ao carrinho!" });
+    window.dispatchEvent(new CustomEvent("open-cart-drawer"));
   };
 
   const discount = oldPrice ? Math.round((1 - price / oldPrice) * 100) : 0;

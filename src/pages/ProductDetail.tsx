@@ -21,6 +21,7 @@ import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import AIAssistant from "@/components/AIAssistant";
 import ProductCard from "@/components/ProductCard";
 import RecentlyViewed, { addToRecentlyViewed } from "@/components/RecentlyViewed";
+import { addToGuestCart } from "@/lib/guestCart";
 
 interface Product {
   id: string; name: string; description: string | null; sku: string | null;
@@ -96,13 +97,16 @@ const ProductDetail = () => {
   };
 
   const addToCart = async () => {
-    if (!user) { navigate("/auth"); return; }
     if (!product) return;
-    const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).single();
-    if (existing) {
-      await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id);
+    if (user) {
+      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).single();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
+      }
     } else {
-      await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
+      addToGuestCart({ product_id: product.id, quantity, product: { name: product.name, price: product.price, image_url: product.image_url } });
     }
     toast({ title: `${quantity}x ${product.name} adicionado ao carrinho!` });
     window.dispatchEvent(new CustomEvent("open-cart-drawer"));
@@ -284,6 +288,7 @@ const ProductDetail = () => {
                       <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                     </Button>
                     <Button size="lg" variant="outline" className="text-base" onClick={() => {
+                      if (!user) { navigate("/auth"); return; }
                       const saved = JSON.parse(localStorage.getItem("quote_items") || "[]");
                       const existing = saved.find((i: any) => i.product_id === product.id);
                       if (existing) { existing.quantity += quantity; }

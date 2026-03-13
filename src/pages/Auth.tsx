@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Gift, Eye, EyeOff, User, Wrench, Building2, Store } from "lucide-react";
 import Layout from "@/components/Layout";
 import logo from "@/assets/logo-grundemann.png";
+import { getGuestCart, clearGuestCart } from "@/lib/guestCart";
 
 type UserType = "cliente" | "mecanico" | "oficina" | "revendedor";
 
@@ -70,6 +71,20 @@ const Auth = () => {
     if (!redirect) checkAuth();
   }, []);
 
+  const syncGuestCart = async (userId: string) => {
+    const guestItems = getGuestCart();
+    if (guestItems.length === 0) return;
+    for (const item of guestItems) {
+      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", userId).eq("product_id", item.product_id).maybeSingle();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + item.quantity }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: userId, product_id: item.product_id, quantity: item.quantity });
+      }
+    }
+    clearGuestCart();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -79,6 +94,7 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (loginData.user) {
+        await syncGuestCart(loginData.user.id);
         if (redirect) {
           navigate(redirect);
         } else {
@@ -165,6 +181,7 @@ const Auth = () => {
           });
         }
 
+        await syncGuestCart(data.user.id);
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
         navigate(redirect || "/");
       }
