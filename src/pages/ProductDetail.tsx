@@ -97,13 +97,16 @@ const ProductDetail = () => {
   };
 
   const addToCart = async () => {
-    if (!user) { navigate("/auth"); return; }
     if (!product) return;
-    const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).single();
-    if (existing) {
-      await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id);
+    if (user) {
+      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).single();
+      if (existing) {
+        await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id);
+      } else {
+        await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
+      }
     } else {
-      await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
+      addToGuestCart({ product_id: product.id, quantity, product: { name: product.name, price: product.price, image_url: product.image_url } });
     }
     toast({ title: `${quantity}x ${product.name} adicionado ao carrinho!` });
     window.dispatchEvent(new CustomEvent("open-cart-drawer"));
