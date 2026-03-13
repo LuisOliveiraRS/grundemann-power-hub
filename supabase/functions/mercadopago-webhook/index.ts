@@ -209,6 +209,85 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Register commission for sellers
+      const sellerId = order.seller_id;
+      if (sellerId) {
+        // Check if commission already exists for this order
+        const { data: existingComm } = await supabase
+          .from("sale_commissions")
+          .select("id")
+          .eq("order_id", orderId)
+          .maybeSingle();
+
+        if (!existingComm) {
+          const { data: seller } = await supabase
+            .from("sellers")
+            .select("id, commission_rate")
+            .eq("id", sellerId)
+            .maybeSingle();
+
+          if (seller) {
+            const commissionAmount = Number(order.total_amount) * (Number(seller.commission_rate) / 100);
+            await supabase.from("sale_commissions").insert({
+              order_id: orderId,
+              seller_id: seller.id,
+              order_total: Number(order.total_amount),
+              commission_rate: Number(seller.commission_rate),
+              commission_amount: commissionAmount,
+              status: "pending",
+            });
+
+            // Update seller totals
+            await supabase.rpc("update_seller_totals_noop", {}).catch(() => {});
+            // Fallback: manual update
+            const { data: currentSeller } = await supabase
+              .from("sellers")
+              .select("total_sales, total_commission")
+              .eq("id", seller.id)
+              .single();
+            if (currentSeller) {
+              await supabase.from("sellers").update({
+                total_sales: Number(currentSeller.total_sales) + Number(order.total_amount),
+                total_commission: Number(currentSeller.total_commission) + commissionAmount,
+              }).eq("id", seller.id);
+            }
+          }
+        }
+      } else {
+        // If no seller_id on order, assign to the first active seller (default behavior)
+        const { data: defaultSeller } = await supabase
+          .from("sellers")
+          .select("id, commission_rate, total_sales, total_commission")
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+
+        if (defaultSeller) {
+          const { data: existingComm } = await supabase
+            .from("sale_commissions")
+            .select("id")
+            .eq("order_id", orderId)
+            .maybeSingle();
+
+          if (!existingComm) {
+            const commissionAmount = Number(order.total_amount) * (Number(defaultSeller.commission_rate) / 100);
+            await supabase.from("sale_commissions").insert({
+              order_id: orderId,
+              seller_id: defaultSeller.id,
+              order_total: Number(order.total_amount),
+              commission_rate: Number(defaultSeller.commission_rate),
+              commission_amount: commissionAmount,
+              status: "pending",
+            });
+
+            await supabase.from("sellers").update({
+              total_sales: Number(defaultSeller.total_sales) + Number(order.total_amount),
+              total_commission: Number(defaultSeller.total_commission) + commissionAmount,
+            }).eq("id", defaultSeller.id);
+          }
+        }
+      }
+
       const { data: orderItems } = await supabase
         .from("order_items")
         .select("product_id, quantity")

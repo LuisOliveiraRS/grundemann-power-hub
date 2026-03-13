@@ -1,4 +1,4 @@
-import { Phone, MessageCircle, Package, ShoppingCart, Wrench, Calculator, Store } from "lucide-react";
+import { Phone, MessageCircle, Package, ShoppingCart, Wrench, Store } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const TopBar = () => {
@@ -17,10 +17,6 @@ const TopBar = () => {
           <span className="text-topbar-foreground/80 text-xs">CNPJ: 48.530.708/0001-80</span>
         </div>
         <div className="flex items-center gap-6">
-          <Link to="/calculadora-de-carga" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-            <Calculator className="h-3.5 w-3.5" />
-            <span>Calculadora de Carga</span>
-          </Link>
           <Link to="/parceiros/revendedor" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity animate-pulse text-accent font-bold">
             <Store className="h-3.5 w-3.5" />
             <span>Revendedores</span>

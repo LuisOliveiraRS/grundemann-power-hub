@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import {
   Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2,
   User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video, Package,
-  BarChart3, DollarSign, TrendingUp, LogOut,
+  BarChart3, DollarSign, TrendingUp, LogOut, Calculator,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import PartIdentifier from "@/components/PartIdentifier";
@@ -293,6 +293,8 @@ const MechanicArea = () => {
     { id: "identificador", label: "Identificar Peça", icon: Wrench },
   ];
 
+  const calculatorCard = { section: "calculator" as any, label: "Calculadora de Carga", desc: "Dimensione a carga ideal para o gerador", icon: Calculator };
+
   return (
     <Layout>
       {/* Top bar */}
@@ -397,6 +399,17 @@ const MechanicArea = () => {
                       </CardContent>
                     </Card>
                   ))}
+                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => navigate("/calculadora-de-carga")}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
+                        <Calculator className="h-7 w-7 text-accent-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-lg">Calculadora de Carga</h3>
+                        <p className="text-sm text-muted-foreground">Dimensione a carga ideal para o gerador</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {/* Recent orders */}

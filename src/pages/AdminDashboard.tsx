@@ -120,6 +120,8 @@ const AdminDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [clients, setClients] = useState<ProfileFull[]>([]);
+  const [clientRoles, setClientRoles] = useState<{ user_id: string; role: string }[]>([]);
+  const [clientMechanics, setClientMechanics] = useState<{ user_id: string; partner_type: string }[]>([]);
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, pendingOrders: 0, totalClients: 0 });
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -142,6 +144,7 @@ const AdminDashboard = () => {
 
   // Client filters & editing
   const [clientSearch, setClientSearch] = useState("");
+  const [clientRoleFilter, setClientRoleFilter] = useState("");
   const [editingClient, setEditingClient] = useState<Partial<ProfileFull> | null>(null);
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const [clientOrderItems, setClientOrderItems] = useState<Record<string, OrderItem[]>>({});
@@ -240,7 +243,7 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
@@ -249,6 +252,8 @@ const AdminDashboard = () => {
       supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
+      supabase.from("user_roles").select("user_id, role"),
+      supabase.from("mechanics").select("user_id, partner_type"),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
@@ -261,6 +266,8 @@ const AdminDashboard = () => {
     const subs = (subRes.data || []) as Subcategory[];
     const tests = (testRes.data || []) as Testimonial[];
     setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests); setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
+    setClientRoles((rolesRes.data || []) as { user_id: string; role: string }[]);
+    setClientMechanics((mechRes.data || []) as { user_id: string; partner_type: string }[]);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
@@ -799,7 +806,21 @@ const AdminDashboard = () => {
     return true;
   });
 
+  const getUserRoleType = (userId: string): string => {
+    const roles = clientRoles.filter(r => r.user_id === userId);
+    if (roles.some(r => r.role === "admin")) return "admin";
+    if (roles.some(r => r.role === "seller")) return "seller";
+    const mech = clientMechanics.find(m => m.user_id === userId);
+    if (mech) return mech.partner_type || "mecanico";
+    return "cliente";
+  };
+
+  const roleTypeLabel: Record<string, string> = { admin: "Admin", seller: "Vendedor", revendedor: "Revendedor", oficina: "Oficina", mecanico: "Mecânico", cliente: "Cliente" };
+  const roleTypeColor: Record<string, string> = { admin: "bg-destructive/20 text-destructive", seller: "bg-primary/20 text-primary", revendedor: "bg-accent/20 text-accent-foreground", oficina: "bg-secondary/20 text-secondary-foreground", mecanico: "bg-primary/15 text-primary", cliente: "bg-muted text-muted-foreground" };
+
   const filteredClients = clients.filter(c => {
+    const roleType = getUserRoleType(c.user_id);
+    if (clientRoleFilter && roleType !== clientRoleFilter) return false;
     if (!clientSearch) return true;
     const s = clientSearch.toLowerCase();
     return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s) || (c.cpf_cnpj || "").toLowerCase().includes(s);
@@ -1715,19 +1736,41 @@ const AdminDashboard = () => {
 
             <div className="bg-card rounded-xl border border-border p-4 mb-4">
               <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
-                <Search className="h-4 w-4" /> Busca
+                <Search className="h-4 w-4" /> Busca e Filtros
               </div>
               <div className="flex flex-wrap gap-3">
                 <div className="relative flex-1 min-w-[250px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-9" placeholder="Buscar por nome, email, telefone ou CPF/CNPJ..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
                 </div>
-                {clientSearch && (
-                  <Button variant="ghost" size="sm" onClick={() => setClientSearch("")}>
+                <select className="h-10 border border-input rounded-md px-3 text-sm bg-background min-w-[160px]" value={clientRoleFilter} onChange={(e) => setClientRoleFilter(e.target.value)}>
+                  <option value="">Todos os tipos</option>
+                  <option value="admin">Administradores</option>
+                  <option value="seller">Vendedores</option>
+                  <option value="revendedor">Revendedores</option>
+                  <option value="oficina">Oficinas</option>
+                  <option value="mecanico">Mecânicos</option>
+                  <option value="cliente">Clientes</option>
+                </select>
+                {(clientSearch || clientRoleFilter) && (
+                  <Button variant="ghost" size="sm" onClick={() => { setClientSearch(""); setClientRoleFilter(""); }}>
                     <X className="h-4 w-4 mr-1" /> Limpar
                   </Button>
                 )}
               </div>
+            </div>
+
+            {/* Role stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+              {["admin", "seller", "revendedor", "oficina", "mecanico", "cliente"].map(role => {
+                const count = clients.filter(c => getUserRoleType(c.user_id) === role).length;
+                return (
+                  <button key={role} onClick={() => setClientRoleFilter(clientRoleFilter === role ? "" : role)} className={`bg-card rounded-xl border p-3 text-center transition-all hover:shadow-md ${clientRoleFilter === role ? "border-primary shadow-md" : "border-border"}`}>
+                    <Badge className={`${roleTypeColor[role]} text-[10px] mb-1`}>{roleTypeLabel[role]}</Badge>
+                    <p className="font-heading font-bold text-lg">{count}</p>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
@@ -1736,6 +1779,7 @@ const AdminDashboard = () => {
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nome</th>
+                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Tipo</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Email</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telefone</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Compras</th>
@@ -1750,6 +1794,7 @@ const AdminDashboard = () => {
                       const phoneClean = normalizeWhatsAppPhone(c.phone);
                       const hasPhone = phoneClean.length >= 12;
                       const isExpanded = expandedClientId === c.user_id;
+                      const roleType = getUserRoleType(c.user_id);
                       return (
                       <React.Fragment key={c.user_id}>
                       <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => toggleClientExpand(c.user_id)}>
@@ -1764,6 +1809,9 @@ const AdminDashboard = () => {
                               {c.cpf_cnpj && <span className="text-[10px] text-muted-foreground block font-mono">{c.cpf_cnpj}</span>}
                             </div>
                           </div>
+                        </td>
+                        <td className="p-3.5">
+                          <Badge className={`${roleTypeColor[roleType] || ""} text-[10px] border-0`}>{roleTypeLabel[roleType] || roleType}</Badge>
                         </td>
                         <td className="p-3.5 text-muted-foreground text-xs">{c.email}</td>
                         <td className="p-3.5">
