@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import {
   Wrench, ShieldCheck, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2,
   User, Phone, Mail, MapPin, Building2, Download, BookOpen, Search, Video, Package,
-  BarChart3, DollarSign, TrendingUp, LogOut,
+  BarChart3, DollarSign, TrendingUp, LogOut, Calculator,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import PartIdentifier from "@/components/PartIdentifier";
