@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Search, UserPlus, Trash2, Crown, Users, Briefcase } from "lucide-react";
+import { Shield, Search, UserPlus, Trash2, Crown, Users, Briefcase, Plus } from "lucide-react";
 
 interface UserRole {
   id: string;
@@ -31,6 +31,8 @@ const roleColors: Record<string, string> = {
   user: "bg-muted text-muted-foreground",
 };
 
+const allRoles = ["admin", "seller", "user"] as const;
+
 const UserRoleManagement = () => {
   const { toast } = useToast();
   const [roles, setRoles] = useState<UserRole[]>([]);
@@ -39,6 +41,8 @@ const UserRoleManagement = () => {
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<string>("admin");
   const [adding, setAdding] = useState(false);
+  const [addingRoleFor, setAddingRoleFor] = useState<string | null>(null);
+  const [selectedNewRole, setSelectedNewRole] = useState<string>("seller");
 
   useEffect(() => { loadRoles(); }, []);
 
@@ -46,7 +50,6 @@ const UserRoleManagement = () => {
     const { data } = await supabase.from("user_roles").select("*");
     if (!data) { setLoading(false); return; }
 
-    // Load profiles for each user
     const userIds = [...new Set(data.map(r => r.user_id))];
     const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds);
 
@@ -66,7 +69,6 @@ const UserRoleManagement = () => {
     }
     setAdding(true);
 
-    // Find user by email in profiles
     const { data: profile } = await supabase.from("profiles").select("user_id").eq("email", newEmail.trim()).single();
     if (!profile) {
       toast({ title: "Usuário não encontrado", description: "O email informado não está cadastrado.", variant: "destructive" });
@@ -74,7 +76,6 @@ const UserRoleManagement = () => {
       return;
     }
 
-    // Check if role already exists
     const existing = roles.find(r => r.user_id === profile.user_id && r.role === newRole);
     if (existing) {
       toast({ title: "Este usuário já possui essa permissão", variant: "destructive" });
@@ -94,6 +95,27 @@ const UserRoleManagement = () => {
       setNewEmail("");
     }
     setAdding(false);
+    loadRoles();
+  };
+
+  const addRoleToUser = async (userId: string, role: string) => {
+    const existing = roles.find(r => r.user_id === userId && r.role === role);
+    if (existing) {
+      toast({ title: "Usuário já possui essa permissão", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: userId,
+      role: role as any,
+    });
+
+    if (error) {
+      toast({ title: "Erro ao adicionar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Permissão ${roleLabels[role]} adicionada!` });
+      setAddingRoleFor(null);
+    }
     loadRoles();
   };
 
@@ -136,7 +158,7 @@ const UserRoleManagement = () => {
         <h1 className="font-heading text-3xl font-bold flex items-center gap-3">
           <Shield className="h-8 w-8 text-primary" /> Gerenciar Permissões
         </h1>
-        <p className="text-muted-foreground mt-1">Adicione administradores, vendedores e gerencie permissões do sistema</p>
+        <p className="text-muted-foreground mt-1">Adicione, edite ou remova permissões de qualquer usuário do sistema</p>
       </div>
 
       {/* Add new role */}
@@ -192,34 +214,69 @@ const UserRoleManagement = () => {
 
       {/* Users list */}
       <div className="space-y-3">
-        {filtered.map(u => (
-          <div key={u.userId} className="bg-card rounded-xl border border-border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-heading font-bold text-sm">{u.profile?.full_name || "Sem nome"}</p>
-                <p className="text-xs text-muted-foreground">{u.profile?.email || u.userId.slice(0, 8)}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {u.roles.map(r => {
-                  const Icon = roleIcons[r.role] || Users;
-                  return (
-                    <div key={r.id} className="flex items-center gap-1">
-                      <Badge className={roleColors[r.role] || ""}>
-                        <Icon className="h-3 w-3 mr-1" />
-                        {roleLabels[r.role] || r.role}
-                      </Badge>
-                      {r.role !== "user" && (
-                        <button onClick={() => removeRole(r.id, r.role)} className="p-1 hover:bg-destructive/10 rounded transition-colors">
+        {filtered.map(u => {
+          const userRoleNames = u.roles.map(r => r.role);
+          const missingRoles = allRoles.filter(r => !userRoleNames.includes(r));
+          const isAddingForThis = addingRoleFor === u.userId;
+
+          return (
+            <div key={u.userId} className="bg-card rounded-xl border border-border p-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <p className="font-heading font-bold text-sm">{u.profile?.full_name || "Sem nome"}</p>
+                  <p className="text-xs text-muted-foreground">{u.profile?.email || u.userId.slice(0, 8)}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {u.roles.map(r => {
+                    const Icon = roleIcons[r.role] || Users;
+                    return (
+                      <div key={r.id} className="flex items-center gap-1">
+                        <Badge className={roleColors[r.role] || ""}>
+                          <Icon className="h-3 w-3 mr-1" />
+                          {roleLabels[r.role] || r.role}
+                        </Badge>
+                        <button onClick={() => removeRole(r.id, r.role)} className="p-1 hover:bg-destructive/10 rounded transition-colors" title="Remover permissão">
                           <Trash2 className="h-3 w-3 text-destructive" />
                         </button>
-                      )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Add role inline */}
+                  {missingRoles.length > 0 && !isAddingForThis && (
+                    <button
+                      onClick={() => { setAddingRoleFor(u.userId); setSelectedNewRole(missingRoles[0]); }}
+                      className="p-1.5 hover:bg-primary/10 rounded-lg transition-colors border border-dashed border-primary/30"
+                      title="Adicionar permissão"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-primary" />
+                    </button>
+                  )}
+
+                  {isAddingForThis && (
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        className="h-7 border border-input rounded px-2 text-xs bg-background"
+                        value={selectedNewRole}
+                        onChange={e => setSelectedNewRole(e.target.value)}
+                      >
+                        {missingRoles.map(r => (
+                          <option key={r} value={r}>{roleLabels[r]}</option>
+                        ))}
+                      </select>
+                      <Button size="sm" className="h-7 text-xs px-2" onClick={() => addRoleToUser(u.userId, selectedNewRole)}>
+                        Adicionar
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => setAddingRoleFor(null)}>
+                        ✕
+                      </Button>
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {filtered.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">Nenhum usuário encontrado.</div>
         )}
