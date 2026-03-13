@@ -161,7 +161,7 @@ const RevendedorDashboard = () => {
     { id: "compras" as const, label: "Compras", icon: ShoppingCart },
     { id: "catalogos" as const, label: "Catálogos PDF", icon: Download },
     { id: "orcamentos" as const, label: "Orçamentos", icon: FileText },
-  ];
+  ] as const;
 
   return (
     <Layout>
