@@ -278,6 +278,17 @@ const OficinaDashboard = () => {
                       </CardContent>
                     </Card>
                   ))}
+                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => navigate("/calculadora-de-carga")}>
+                    <CardContent className="p-6 flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
+                        <Calculator className="h-7 w-7 text-accent-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-bold text-lg">Calculadora de Carga</h3>
+                        <p className="text-sm text-muted-foreground">Dimensione a carga ideal para o gerador</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {orders.length > 0 && (
