@@ -806,7 +806,21 @@ const AdminDashboard = () => {
     return true;
   });
 
+  const getUserRoleType = (userId: string): string => {
+    const roles = clientRoles.filter(r => r.user_id === userId);
+    if (roles.some(r => r.role === "admin")) return "admin";
+    if (roles.some(r => r.role === "seller")) return "seller";
+    const mech = clientMechanics.find(m => m.user_id === userId);
+    if (mech) return mech.partner_type || "mecanico";
+    return "cliente";
+  };
+
+  const roleTypeLabel: Record<string, string> = { admin: "Admin", seller: "Vendedor", revendedor: "Revendedor", oficina: "Oficina", mecanico: "Mecânico", cliente: "Cliente" };
+  const roleTypeColor: Record<string, string> = { admin: "bg-destructive/20 text-destructive", seller: "bg-primary/20 text-primary", revendedor: "bg-accent/20 text-accent-foreground", oficina: "bg-secondary/20 text-secondary-foreground", mecanico: "bg-primary/15 text-primary", cliente: "bg-muted text-muted-foreground" };
+
   const filteredClients = clients.filter(c => {
+    const roleType = getUserRoleType(c.user_id);
+    if (clientRoleFilter && roleType !== clientRoleFilter) return false;
     if (!clientSearch) return true;
     const s = clientSearch.toLowerCase();
     return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s) || (c.cpf_cnpj || "").toLowerCase().includes(s);
