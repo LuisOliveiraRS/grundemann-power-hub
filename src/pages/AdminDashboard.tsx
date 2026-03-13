@@ -1857,7 +1857,7 @@ const AdminDashboard = () => {
                       {/* Expanded: purchase details */}
                       {isExpanded && clientOrders.length > 0 && (
                         <tr>
-                          <td colSpan={6} className="p-0">
+                          <td colSpan={7} className="p-0">
                             <div className="bg-muted/30 border-t border-b border-border px-6 py-4">
                               <h4 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
                                 <ShoppingCart className="h-4 w-4 text-primary" /> Histórico de Compras
@@ -1894,7 +1894,7 @@ const AdminDashboard = () => {
                       </React.Fragment>
                       );
                     })}
-                    {filteredClients.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
+                    {filteredClients.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</td></tr>}
                   </tbody>
                 </table>
               </div>
