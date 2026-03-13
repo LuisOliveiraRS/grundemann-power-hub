@@ -1779,6 +1779,7 @@ const AdminDashboard = () => {
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nome</th>
+                      <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Tipo</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Email</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telefone</th>
                       <th className="text-left p-3.5 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Compras</th>
