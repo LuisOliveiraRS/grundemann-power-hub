@@ -120,6 +120,8 @@ const AdminDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [clients, setClients] = useState<ProfileFull[]>([]);
+  const [clientRoles, setClientRoles] = useState<{ user_id: string; role: string }[]>([]);
+  const [clientMechanics, setClientMechanics] = useState<{ user_id: string; partner_type: string }[]>([]);
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, pendingOrders: 0, totalClients: 0 });
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
