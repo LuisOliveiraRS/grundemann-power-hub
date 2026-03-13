@@ -288,6 +288,7 @@ const ProductDetail = () => {
                       <ShoppingCart className="h-5 w-5 mr-2" /> Adicionar ao Carrinho
                     </Button>
                     <Button size="lg" variant="outline" className="text-base" onClick={() => {
+                      if (!user) { navigate("/auth"); return; }
                       const saved = JSON.parse(localStorage.getItem("quote_items") || "[]");
                       const existing = saved.find((i: any) => i.product_id === product.id);
                       if (existing) { existing.quantity += quantity; }
