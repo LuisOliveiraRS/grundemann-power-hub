@@ -243,7 +243,7 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
@@ -252,6 +252,8 @@ const AdminDashboard = () => {
       supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
+      supabase.from("user_roles").select("user_id, role"),
+      supabase.from("mechanics").select("user_id, partner_type"),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
@@ -264,6 +266,8 @@ const AdminDashboard = () => {
     const subs = (subRes.data || []) as Subcategory[];
     const tests = (testRes.data || []) as Testimonial[];
     setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests); setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
+    setClientRoles((rolesRes.data || []) as { user_id: string; role: string }[]);
+    setClientMechanics((mechRes.data || []) as { user_id: string; partner_type: string }[]);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
