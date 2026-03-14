@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,7 +9,7 @@ interface AuthContextType {
   isSeller: boolean;
   isLoading: boolean;
   userName: string;
-  partnerType: string | null; // 'mecanico' | 'oficina' | 'revendedor' | null
+  partnerType: string | null;
   isApprovedPartner: boolean;
   signOut: () => Promise<void>;
 }
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [partnerType, setPartnerType] = useState<string | null>(null);
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
 
-  const checkRoles = async (userId: string) => {
+  const checkRoles = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
@@ -46,16 +46,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const roles = (data || []).map((r: any) => r.role);
     setIsAdmin(roles.includes("admin"));
     setIsSeller(roles.includes("seller"));
-  };
+  }, []);
 
-  const loadProfile = async (userId: string) => {
+  const loadProfile = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name")
       .eq("user_id", userId)
       .single();
     if (profile?.full_name) {
-      setUserName(profile.full_name.split(" ")[0]); // First name only
+      setUserName(profile.full_name.split(" ")[0]);
     }
 
     const { data: mechanic } = await supabase
@@ -70,43 +70,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setPartnerType(null);
       setIsApprovedPartner(false);
     }
-  };
+  }, []);
+
+  const handleSession = useCallback(async (newSession: Session | null) => {
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
+    if (newSession?.user) {
+      await Promise.all([
+        checkRoles(newSession.user.id),
+        loadProfile(newSession.user.id),
+      ]);
+    } else {
+      setIsAdmin(false);
+      setIsSeller(false);
+      setUserName("");
+      setPartnerType(null);
+      setIsApprovedPartner(false);
+    }
+    setIsLoading(false);
+  }, [checkRoles, loadProfile]);
 
   useEffect(() => {
+    let initialized = false;
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!initialized) {
+        initialized = true;
+        handleSession(session);
+      }
+    });
+
+    // Listen for auth changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await checkRoles(session.user.id);
-          await loadProfile(session.user.id);
+        if (initialized) {
+          // After initial load, handle state changes
+          handleSession(session);
         } else {
-          setIsAdmin(false);
-          setIsSeller(false);
-          setUserName("");
-          setPartnerType(null);
-          setIsApprovedPartner(false);
+          // First event - mark as initialized and handle
+          initialized = true;
+          handleSession(session);
         }
-        setIsLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await checkRoles(session.user.id);
-        await loadProfile(session.user.id);
-      }
-      setIsLoading(false);
-    });
-
     return () => subscription.unsubscribe();
-  }, []);
+  }, [handleSession]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isLoading, userName, partnerType, isApprovedPartner, signOut }}>

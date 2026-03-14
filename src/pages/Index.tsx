@@ -80,20 +80,20 @@ const Index = () => {
       ) : (
         <div className="min-h-screen flex flex-col">
           <Helmet>
-            <title>Grundemann Power Hub | Peças e Geradores de Energia</title>
+            <title>Grundemann Geradores | Peças e Geradores de Energia</title>
             <meta name="description" content="Loja especializada em peças para motores estacionários, geradores de energia e equipamentos industriais. Entrega para todo o Brasil com garantia." />
-            <meta property="og:title" content="Grundemann Power Hub | Peças e Geradores de Energia" />
+            <meta property="og:title" content="Grundemann Geradores | Peças e Geradores de Energia" />
             <meta property="og:description" content="Peças para motores estacionários, geradores e equipamentos industriais com garantia e entrega nacional." />
             <meta property="og:type" content="website" />
-            <meta property="og:url" content="https://grundemann-power-hub.lovable.app" />
+            <meta property="og:url" content="https://grundemann.com.br" />
             <meta name="twitter:card" content="summary_large_image" />
-            <link rel="canonical" href="https://grundemann-power-hub.lovable.app" />
+            <link rel="canonical" href="https://grundemann.com.br" />
             <script type="application/ld+json">{JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Store",
-              "name": "Grundemann Power Hub",
+              "name": "Grundemann Geradores",
               "description": "Loja especializada em peças para motores estacionários e geradores de energia",
-              "url": "https://grundemann-power-hub.lovable.app",
+              "url": "https://grundemann.com.br",
               "telephone": "+55-51-98182-5748",
               "address": { "@type": "PostalAddress", "addressLocality": "São Leopoldo", "addressRegion": "RS", "addressCountry": "BR" },
               "priceRange": "$$"
