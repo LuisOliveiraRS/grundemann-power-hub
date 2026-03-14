@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
-import { Wrench, Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Wrench, Phone, Mail, MapPin, Clock, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import logoGrundemann from "@/assets/logo-grundemann.png";
 import bgMaintenance from "@/assets/bg-maintenance.jpg";
 
