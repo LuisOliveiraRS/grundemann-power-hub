@@ -17,11 +17,11 @@ const TopBar = () => {
           <span className="text-topbar-foreground/80 text-xs">CNPJ: 48.530.708/0001-80</span>
         </div>
         <div className="flex items-center gap-6">
-          <Link to="/parceiros/revendedor" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity animate-pulse text-accent font-bold">
+          <Link to="/parceiros/revendedor" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity text-accent font-bold animate-topbar-pulse-a">
             <Store className="h-3.5 w-3.5" />
             <span>Revendedores</span>
           </Link>
-          <Link to="/parceiros/oficina-mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity animate-pulse text-accent font-bold">
+          <Link to="/parceiros/oficina-mecanico" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity text-accent font-bold animate-topbar-pulse-b">
             <Wrench className="h-3.5 w-3.5" />
             <span>Oficinas e Mecânicos</span>
           </Link>

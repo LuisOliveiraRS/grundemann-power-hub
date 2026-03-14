@@ -133,39 +133,49 @@ const AllProducts = () => {
                 <option value="price_asc">Menor Preço</option>
                 <option value="price_desc">Maior Preço</option>
               </select>
-              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-                <SlidersHorizontal className="h-4 w-4 mr-1" /> Filtros
-                {activeFilters > 0 && <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">{activeFilters}</Badge>}
-              </Button>
             </div>
           </div>
 
-          {showFilters && (
-            <div className="bg-card rounded-xl border border-border p-5 mb-6">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-                <Input placeholder="Busca" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-9 text-sm" />
-                <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}>
-                  <option value="">Todas categorias</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-                <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedBrand} onChange={e => { setSelectedBrand(e.target.value); setPage(1); }}>
-                  <option value="">Todas marcas</option>
-                  {brands.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-                <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedHp} onChange={e => { setSelectedHp(e.target.value); setPage(1); }}>
-                  <option value="">Todos HP</option>
-                  {hps.map(h => <option key={h} value={h}>{h} HP</option>)}
-                </select>
-                <Input type="number" placeholder="Preço mín" value={priceMin} onChange={e => { setPriceMin(e.target.value); setPage(1); }} className="h-9 text-sm" />
-                <Input type="number" placeholder="Preço máx" value={priceMax} onChange={e => { setPriceMax(e.target.value); setPage(1); }} className="h-9 text-sm" />
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={inStockOnly} onChange={e => { setInStockOnly(e.target.checked); setPage(1); }} className="rounded border-input" />
-                  <span className="text-xs">Em estoque</span>
-                  <Button variant="ghost" size="sm" onClick={clearFilters}><X className="h-3.5 w-3.5" /></Button>
-                </div>
+          {/* Always-visible filter bar */}
+          <div className="bg-card rounded-xl border border-border p-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+              <Input placeholder="🔍 Buscar produto..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-9 text-sm" />
+              <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}>
+                <option value="">📂 Todas categorias</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedBrand} onChange={e => { setSelectedBrand(e.target.value); setPage(1); }}>
+                <option value="">🏷️ Todas marcas</option>
+                {brands.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedHp} onChange={e => { setSelectedHp(e.target.value); setPage(1); }}>
+                <option value="">⚡ Todos HP</option>
+                {hps.map(h => <option key={h} value={h}>{h} HP</option>)}
+              </select>
+              <Input type="number" placeholder="Preço mín" value={priceMin} onChange={e => { setPriceMin(e.target.value); setPage(1); }} className="h-9 text-sm" />
+              <Input type="number" placeholder="Preço máx" value={priceMax} onChange={e => { setPriceMax(e.target.value); setPage(1); }} className="h-9 text-sm" />
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={inStockOnly} onChange={e => { setInStockOnly(e.target.checked); setPage(1); }} className="rounded border-input" id="stock-filter" />
+                <label htmlFor="stock-filter" className="text-xs whitespace-nowrap cursor-pointer">Em estoque</label>
+                {activeFilters > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-destructive hover:text-destructive">
+                    <X className="h-3.5 w-3.5 mr-1" /> Limpar
+                  </Button>
+                )}
               </div>
             </div>
-          )}
+            {activeFilters > 0 && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                <span className="text-xs text-muted-foreground">Filtros ativos:</span>
+                {selectedCategory && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedCategory(""); setPage(1); }}>{categories.find(c => c.id === selectedCategory)?.name} ✕</Badge>}
+                {selectedBrand && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedBrand(""); setPage(1); }}>{selectedBrand} ✕</Badge>}
+                {selectedHp && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedHp(""); setPage(1); }}>{selectedHp} HP ✕</Badge>}
+                {priceMin && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setPriceMin(""); setPage(1); }}>Min R${priceMin} ✕</Badge>}
+                {priceMax && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setPriceMax(""); setPage(1); }}>Max R${priceMax} ✕</Badge>}
+                {inStockOnly && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setInStockOnly(false); setPage(1); }}>Em estoque ✕</Badge>}
+              </div>
+            )}
+          </div>
 
           {loading ? (
             <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
