@@ -207,6 +207,8 @@ const CartDrawer = forwardRef<HTMLDivElement, CartDrawerProps>(({ open, onOpenCh
       </AnimatePresence>
     </>
   );
-};
+});
+
+CartDrawer.displayName = "CartDrawer";
 
 export default CartDrawer;

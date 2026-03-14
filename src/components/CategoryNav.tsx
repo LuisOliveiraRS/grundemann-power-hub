@@ -214,7 +214,9 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
       </div>
     </nav>
   );
-};
+});
+
+CategoryNav.displayName = "CategoryNav";
 
 function findNodeById(root: MenuCategoryNode, id: string): MenuCategoryNode | null {
   if (root.id === id) return root;
