@@ -21,6 +21,8 @@ import MobileContactBar from "@/components/MobileContactBar";
 import GuaranteeSection from "@/components/GuaranteeSection";
 
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
+const HeroKraft = lazy(() => import("@/components/HeroKraft"));
+const KraftProductShowcase = lazy(() => import("@/components/KraftProductShowcase"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const HomeFAQ = lazy(() => import("@/components/HomeFAQ"));
 
