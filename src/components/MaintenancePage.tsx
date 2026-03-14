@@ -6,8 +6,20 @@ import logoGrundemann from "@/assets/logo-grundemann.png";
 import bgMaintenance from "@/assets/bg-maintenance.jpg";
 
 const MaintenancePage = () => {
+  const { isAdmin } = useAuth();
+
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-secondary">
+      {/* Admin return button */}
+      {isAdmin && (
+        <Link
+          to="/admin"
+          className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white/70 hover:text-white text-xs font-medium px-3 py-2 rounded-lg transition-all"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          Painel Admin
+        </Link>
+      )}
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
