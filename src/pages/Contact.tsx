@@ -30,16 +30,16 @@ const Contact = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
-        <title>Contato | Grundemann Power Hub</title>
-        <meta name="description" content="Entre em contato com a Grundemann Power Hub. Atendimento por telefone, WhatsApp e email para peças de motores e geradores." />
-        <meta property="og:title" content="Contato | Grundemann Power Hub" />
+        <title>Contato | Grundemann Geradores</title>
+        <meta name="description" content="Entre em contato com a Grundemann Geradores. Atendimento por telefone, WhatsApp e email para peças de motores e geradores." />
+        <meta property="og:title" content="Contato | Grundemann Geradores" />
         <meta property="og:description" content="Fale conosco sobre peças para motores estacionários e geradores de energia." />
-        <link rel="canonical" href="https://grundemann-power-hub.lovable.app/contato" />
+        <link rel="canonical" href="https://grundemann.com.br/contato" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ContactPage",
-          "name": "Contato Grundemann Power Hub",
-          "url": "https://grundemann-power-hub.lovable.app/contato"
+          "name": "Contato Grundemann Geradores",
+          "url": "https://grundemann.com.br/contato"
         })}</script>
       </Helmet>
       <TopBar />
