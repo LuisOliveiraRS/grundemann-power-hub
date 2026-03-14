@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Fuel, Wrench, Settings, Zap, ShieldCheck, Cog, ChevronDown, ChevronRight, Star, Sparkles } from "lucide-react";
