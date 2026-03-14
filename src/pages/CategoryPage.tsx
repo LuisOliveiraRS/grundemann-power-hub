@@ -10,7 +10,7 @@ import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEOBreadcrumb from "@/components/SEOBreadcrumb";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Fuel, Zap, Cog, Wrench, Settings, ShieldCheck, Battery, Disc, Filter, Fan, Gauge, Plug, CircuitBoard, Hammer, PenTool, Cylinder, Box, Package, Layers, Cpu, RotateCcw, Thermometer, Droplets, Flame, Weight, Ruler, Bolt } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Product {
