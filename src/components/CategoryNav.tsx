@@ -21,7 +21,7 @@ interface FeaturedProduct {
   menu_category_id: string | null;
 }
 
-const CategoryNav = () => {
+const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref) => {
   const { tree, loading } = useMenuCategories();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [allProducts, setAllProducts] = useState<FeaturedProduct[]>([]);
