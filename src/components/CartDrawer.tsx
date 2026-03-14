@@ -21,7 +21,7 @@ interface CartDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
+const CartDrawer = forwardRef<HTMLDivElement, CartDrawerProps>(({ open, onOpenChange }, _ref) => {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [guestItems, setGuestItems] = useState<GuestCartItem[]>([]);
