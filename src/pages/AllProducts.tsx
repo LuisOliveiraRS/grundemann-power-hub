@@ -133,10 +133,6 @@ const AllProducts = () => {
                 <option value="price_asc">Menor Preço</option>
                 <option value="price_desc">Maior Preço</option>
               </select>
-              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-                <SlidersHorizontal className="h-4 w-4 mr-1" /> Filtros
-                {activeFilters > 0 && <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">{activeFilters}</Badge>}
-              </Button>
             </div>
           </div>
 

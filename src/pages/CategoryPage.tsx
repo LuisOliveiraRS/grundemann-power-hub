@@ -147,25 +147,28 @@ const CategoryPage = () => {
                 <div className="mb-8">
                   <h2 className="font-heading text-lg font-bold mb-4">Subcategorias</h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {childCategories.map(child => (
-                      <Link
-                        key={child.id}
-                        to={`/categoria/${child.fullPath}`}
-                        className="group flex flex-col items-center gap-2 rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all text-center"
-                      >
-                        {child.image_url ? (
-                          <img src={child.image_url} alt={child.name} className="h-16 w-16 object-contain rounded-lg" />
-                        ) : (
-                          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <span className="text-primary font-bold text-lg">{child.name.charAt(0)}</span>
-                          </div>
-                        )}
-                        <span className="font-heading text-sm font-semibold">{child.name}</span>
-                        {child.children.length > 0 && (
-                          <span className="text-xs text-muted-foreground">{child.children.length} subcategorias</span>
-                        )}
-                      </Link>
-                    ))}
+                    {childCategories.map(child => {
+                      const SubIcon = getSubcategoryIcon(child.name, child.slug);
+                      return (
+                        <Link
+                          key={child.id}
+                          to={`/categoria/${child.fullPath}`}
+                          className="group flex flex-col items-center gap-2 rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all text-center"
+                        >
+                          {child.image_url ? (
+                            <img src={child.image_url} alt={child.name} className="h-16 w-16 object-contain rounded-lg" />
+                          ) : (
+                            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <SubIcon className="h-7 w-7 text-primary" />
+                            </div>
+                          )}
+                          <span className="font-heading text-sm font-semibold">{child.name}</span>
+                          {child.children.length > 0 && (
+                            <span className="text-xs text-muted-foreground">{child.children.length} subcategorias</span>
+                          )}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               )}

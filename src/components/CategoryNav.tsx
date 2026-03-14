@@ -138,6 +138,7 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                             to={`/categoria/${sub.fullPath}`}
                             onClick={() => setOpenCat(null)}
                             onMouseEnter={() => setHoveredSub(sub.id)}
+                            onMouseLeave={() => {}}
                             className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
                             style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
                           >
