@@ -78,10 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => {
-            checkRoles(session.user.id);
-            loadProfile(session.user.id);
-          }, 0);
+          await checkRoles(session.user.id);
+          await loadProfile(session.user.id);
         } else {
           setIsAdmin(false);
           setIsSeller(false);
@@ -93,12 +91,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkRoles(session.user.id);
-        loadProfile(session.user.id);
+        await checkRoles(session.user.id);
+        await loadProfile(session.user.id);
       }
       setIsLoading(false);
     });
