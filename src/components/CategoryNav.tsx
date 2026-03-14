@@ -210,6 +210,7 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
               <span>Ver Todos</span>
             </Link>
           </li>
+          <CatalogMenuItem />
         </ul>
       </div>
     </nav>
