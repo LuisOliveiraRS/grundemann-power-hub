@@ -16,10 +16,10 @@ const Terms = () => (
       <script type="application/ld+json">{JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Termos de Uso | Grundemann Power Hub",
+        "name": "Termos de Uso | Grundemann Geradores",
         "description": "Condições de compra, pagamento, entrega e garantia de peças para motores e geradores.",
-        "url": "https://grundemann-power-hub.lovable.app/termos",
-        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+        "url": "https://grundemann.com.br/termos",
+        "publisher": { "@type": "Organization", "name": "Grundemann Geradores" }
       })}</script>
     </Helmet>
     <TopBar /><Header /><CategoryNav />
