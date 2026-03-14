@@ -23,6 +23,32 @@ interface Product {
   sku: string | null;
 }
 
+const subcategoryIconMap: Record<string, any> = {
+  "cabecote": Cpu, "pistao": Cylinder, "bloco": Box, "motor": Cog,
+  "volante": RotateCcw, "virabrequim": RotateCcw,
+  "carburador": Droplets, "injecao": Droplets,
+  "filtro": Filter, "escape": Fan, "retratil": Plug,
+  "tampa": Disc, "acelerador": Gauge, "tanque": Droplets,
+  "combustivel": Flame, "carenagem": Layers, "partida": Zap,
+  "oleo": Droplets, "vela": Flame, "correia": RotateCcw,
+  "rolamento": RotateCcw, "junta": Layers, "reparo": Wrench,
+  "kit": Package, "bateria": Battery, "regulador": CircuitBoard,
+  "bobina": CircuitBoard, "estator": CircuitBoard,
+  "parafuso": Bolt, "mangueira": Thermometer,
+  "gerador": Fuel, "diesel": Fuel, "gasolina": Zap,
+  "semi": RotateCcw, "bivolt": Zap, "monofasico": Zap, "trifasico": Zap,
+  "ferramenta": Hammer, "peca": Cog, "componente": Cog,
+  "acessorio": Settings, "servico": ShieldCheck,
+};
+
+const getSubcategoryIcon = (name: string, slug: string): any => {
+  const lower = (name + " " + slug).toLowerCase();
+  for (const [key, icon] of Object.entries(subcategoryIconMap)) {
+    if (lower.includes(key)) return icon;
+  }
+  return Cog;
+};
+
 const CategoryPage = () => {
   const { "*": slugPath } = useParams();
   const navigate = useNavigate();
