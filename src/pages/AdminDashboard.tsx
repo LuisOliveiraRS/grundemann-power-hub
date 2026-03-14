@@ -1686,7 +1686,7 @@ const AdminDashboard = () => {
               </div>
               <div className="flex gap-3">
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent("Olá! Promoção especial da Gründemann Geradores! Confira nossos produtos: https://grundemann-power-hub.lovable.app/produtos")}`}
+                  href={`https://wa.me/?text=${encodeURIComponent("Olá! Promoção especial da Gründemann Geradores! Confira nossos produtos: https://grundemann.com.br/produtos")}`}
                   target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white text-sm font-semibold transition-colors shadow-md"
                 >

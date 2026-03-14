@@ -12,7 +12,7 @@ interface SEOBreadcrumbProps {
 }
 
 const SEOBreadcrumb = ({ items }: SEOBreadcrumbProps) => {
-  const baseUrl = "https://grundemann-power-hub.lovable.app";
+  const baseUrl = "https://grundemann.com.br";
 
   const jsonLd = {
     "@context": "https://schema.org",

@@ -8,18 +8,18 @@ import Footer from "@/components/Footer";
 const Terms = () => (
   <div className="min-h-screen flex flex-col">
     <Helmet>
-      <title>Termos de Uso | Grundemann Power Hub</title>
-      <meta name="description" content="Termos de uso da Grundemann Power Hub. Condições de compra, pagamento, entrega, garantia e trocas de peças para motores estacionários e geradores de energia." />
-      <meta property="og:title" content="Termos de Uso | Grundemann Power Hub" />
+      <title>Termos de Uso | Grundemann Geradores</title>
+      <meta name="description" content="Termos de uso da Grundemann Geradores. Condições de compra, pagamento, entrega, garantia e trocas de peças para motores estacionários e geradores de energia." />
+      <meta property="og:title" content="Termos de Uso | Grundemann Geradores" />
       <meta property="og:description" content="Condições de compra, pagamento, entrega e garantia de peças para motores e geradores." />
-      <link rel="canonical" href="https://grundemann-power-hub.lovable.app/termos" />
+      <link rel="canonical" href="https://grundemann.com.br/termos" />
       <script type="application/ld+json">{JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Termos de Uso | Grundemann Power Hub",
+        "name": "Termos de Uso | Grundemann Geradores",
         "description": "Condições de compra, pagamento, entrega e garantia de peças para motores e geradores.",
-        "url": "https://grundemann-power-hub.lovable.app/termos",
-        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+        "url": "https://grundemann.com.br/termos",
+        "publisher": { "@type": "Organization", "name": "Grundemann Geradores" }
       })}</script>
     </Helmet>
     <TopBar /><Header /><CategoryNav />

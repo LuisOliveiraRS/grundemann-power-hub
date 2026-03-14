@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2, ShoppingCart, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,7 @@ interface CartDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
+const CartDrawer = forwardRef<HTMLDivElement, CartDrawerProps>(({ open, onOpenChange }, _ref) => {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [guestItems, setGuestItems] = useState<GuestCartItem[]>([]);
@@ -207,6 +207,8 @@ const CartDrawer = ({ open, onOpenChange }: CartDrawerProps) => {
       </AnimatePresence>
     </>
   );
-};
+});
+
+CartDrawer.displayName = "CartDrawer";
 
 export default CartDrawer;

@@ -116,7 +116,7 @@ const AllProducts = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
-        <title>{`${pageTitle} | Grundemann Power Hub`}</title>
+        <title>{`${pageTitle} | Grundemann Geradores`}</title>
       </Helmet>
       <TopBar /><Header /><CategoryNav />
       <div className="flex-1">

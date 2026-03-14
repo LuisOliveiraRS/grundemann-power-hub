@@ -107,12 +107,12 @@ const CategoryPage = () => {
     <div className="min-h-screen flex flex-col">
       {currentNode && (
         <Helmet>
-          <title>{`${title} | Grundemann Power Hub`}</title>
-          <meta name="description" content={description || `Compre ${title} na Grundemann Power Hub. Peças para motores estacionários com qualidade e garantia.`} />
-          <meta property="og:title" content={`${title} | Grundemann Power Hub`} />
+          <title>{`${title} | Grundemann Geradores`}</title>
+          <meta name="description" content={description || `Compre ${title} na Grundemann Geradores. Peças para motores estacionários com qualidade e garantia.`} />
+          <meta property="og:title" content={`${title} | Grundemann Geradores`} />
           <meta property="og:description" content={description || `Peças e equipamentos da categoria ${title}`} />
           <meta property="og:type" content="website" />
-          <link rel="canonical" href={`https://grundemann-power-hub.lovable.app/categoria/${slugPath}`} />
+          <link rel="canonical" href={`https://grundemann.com.br/categoria/${slugPath}`} />
         </Helmet>
       )}
       <TopBar /><Header /><CategoryNav />

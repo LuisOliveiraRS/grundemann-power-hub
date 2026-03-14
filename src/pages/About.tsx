@@ -10,18 +10,18 @@ const About = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
-        <title>Quem Somos | Grundemann Power Hub</title>
-        <meta name="description" content="Conheça a Grundemann Power Hub. Há mais de 15 anos oferecendo peças para motores estacionários e geradores de energia para todo o Brasil." />
-        <meta property="og:title" content="Quem Somos | Grundemann Power Hub" />
+        <title>Quem Somos | Grundemann Geradores</title>
+        <meta name="description" content="Conheça a Grundemann Geradores. Há mais de 15 anos oferecendo peças para motores estacionários e geradores de energia para todo o Brasil." />
+        <meta property="og:title" content="Quem Somos | Grundemann Geradores" />
         <meta property="og:description" content="Há mais de 15 anos oferecendo soluções em geradores de energia para todo o Brasil." />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://grundemann-power-hub.lovable.app/quem-somos" />
+        <link rel="canonical" href="https://grundemann.com.br/quem-somos" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          "name": "Sobre a Grundemann Power Hub",
+          "name": "Sobre a Grundemann Geradores",
           "description": "Há mais de 15 anos oferecendo soluções em geradores de energia",
-          "url": "https://grundemann-power-hub.lovable.app/quem-somos"
+          "url": "https://grundemann.com.br/quem-somos"
         })}</script>
       </Helmet>
       <TopBar />

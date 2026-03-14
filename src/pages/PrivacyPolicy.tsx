@@ -8,18 +8,18 @@ import Footer from "@/components/Footer";
 const PrivacyPolicy = () => (
   <div className="min-h-screen flex flex-col">
     <Helmet>
-      <title>Política de Privacidade | Grundemann Power Hub</title>
-      <meta name="description" content="Política de privacidade da Grundemann Power Hub. Saiba como protegemos seus dados pessoais conforme a LGPD em compras de peças e geradores de energia." />
-      <meta property="og:title" content="Política de Privacidade | Grundemann Power Hub" />
+      <title>Política de Privacidade | Grundemann Geradores</title>
+      <meta name="description" content="Política de privacidade da Grundemann Geradores. Saiba como protegemos seus dados pessoais conforme a LGPD em compras de peças e geradores de energia." />
+      <meta property="og:title" content="Política de Privacidade | Grundemann Geradores" />
       <meta property="og:description" content="Como protegemos seus dados pessoais conforme a LGPD na compra de peças e geradores." />
-      <link rel="canonical" href="https://grundemann-power-hub.lovable.app/privacidade" />
+      <link rel="canonical" href="https://grundemann.com.br/privacidade" />
       <script type="application/ld+json">{JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Política de Privacidade | Grundemann Power Hub",
+        "name": "Política de Privacidade | Grundemann Geradores",
         "description": "Como protegemos seus dados pessoais conforme a LGPD na compra de peças e geradores.",
-        "url": "https://grundemann-power-hub.lovable.app/privacidade",
-        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+        "url": "https://grundemann.com.br/privacidade",
+        "publisher": { "@type": "Organization", "name": "Grundemann Geradores" }
       })}</script>
     </Helmet>
     <TopBar /><Header /><CategoryNav />

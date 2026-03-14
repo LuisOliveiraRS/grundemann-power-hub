@@ -80,7 +80,7 @@ const TechnicalCenter = () => {
         <Helmet>
           <title>{selectedArticle.title} | Central Técnica Grundemann</title>
           <meta name="description" content={selectedArticle.excerpt} />
-          <link rel="canonical" href={`https://grundemann-power-hub.lovable.app/central-tecnica/${selectedArticle.slug}`} />
+          <link rel="canonical" href={`https://grundemann.com.br/central-tecnica/${selectedArticle.slug}`} />
         </Helmet>
         <TopBar />
         <Header />
@@ -166,7 +166,7 @@ const TechnicalCenter = () => {
       <Helmet>
         <title>Central Técnica | Grundemann - Artigos e Guias de Motores Estacionários</title>
         <meta name="description" content="Artigos técnicos sobre manutenção, diagnóstico e reparo de motores estacionários. Guias completos para mecânicos e proprietários." />
-        <link rel="canonical" href="https://grundemann-power-hub.lovable.app/central-tecnica" />
+        <link rel="canonical" href="https://grundemann.com.br/central-tecnica" />
       </Helmet>
       <TopBar />
       <Header />

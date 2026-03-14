@@ -53,7 +53,7 @@ const SEOBatchGenerator = () => {
           const hpStr = p.hp ? ` ${p.hp}HP` : "";
           
           // Generate SEO data locally (no AI needed for basic SEO)
-          const metaTitle = `${p.name}${hpStr}${brandStr} | Grundemann Power Hub`.slice(0, 60);
+          const metaTitle = `${p.name}${hpStr}${brandStr} | Grundemann Geradores`.slice(0, 60);
           const metaDesc = `Compre ${p.name}${hpStr}${brandStr}${category ? ` - ${category}` : ""} para motores estacionários. Entrega para todo o Brasil com garantia. ${p.sku ? `Cód: ${p.sku}` : ""}`.slice(0, 160).trim();
 
           const { error } = await supabase

@@ -24,7 +24,7 @@ const resolveOrigin = (req: Request) => {
     }
   }
 
-  return "https://grundemann-power-hub.lovable.app";
+  return "https://grundemann.com.br";
 };
 
 Deno.serve(async (req) => {

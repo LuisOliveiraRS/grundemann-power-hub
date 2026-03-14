@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const baseUrl = "https://grundemann-power-hub.lovable.app";
+  const baseUrl = "https://grundemann.com.br";
 
   // Static pages
   const staticPages = [

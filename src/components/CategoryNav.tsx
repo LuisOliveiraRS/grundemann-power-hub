@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Fuel, Wrench, Settings, Zap, ShieldCheck, Cog, ChevronDown, ChevronRight, Star, Sparkles } from "lucide-react";
@@ -21,7 +21,7 @@ interface FeaturedProduct {
   menu_category_id: string | null;
 }
 
-const CategoryNav = () => {
+const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref) => {
   const { tree, loading } = useMenuCategories();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [allProducts, setAllProducts] = useState<FeaturedProduct[]>([]);
@@ -214,7 +214,9 @@ const CategoryNav = () => {
       </div>
     </nav>
   );
-};
+});
+
+CategoryNav.displayName = "CategoryNav";
 
 function findNodeById(root: MenuCategoryNode, id: string): MenuCategoryNode | null {
   if (root.id === id) return root;
