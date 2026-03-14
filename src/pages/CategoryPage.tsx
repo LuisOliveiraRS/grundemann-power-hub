@@ -107,8 +107,8 @@ const CategoryPage = () => {
     <div className="min-h-screen flex flex-col">
       {currentNode && (
         <Helmet>
-          <title>{`${title} | Grundemann Power Hub`}</title>
-          <meta name="description" content={description || `Compre ${title} na Grundemann Power Hub. Peças para motores estacionários com qualidade e garantia.`} />
+          <title>{`${title} | Grundemann Geradores`}</title>
+          <meta name="description" content={description || `Compre ${title} na Grundemann Geradores. Peças para motores estacionários com qualidade e garantia.`} />
           <meta property="og:title" content={`${title} | Grundemann Geradores`} />
           <meta property="og:description" content={description || `Peças e equipamentos da categoria ${title}`} />
           <meta property="og:type" content="website" />

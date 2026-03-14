@@ -9,18 +9,18 @@ import { ArrowLeftRight, Clock, CheckCircle, Phone } from "lucide-react";
 const Returns = () => (
   <div className="min-h-screen flex flex-col">
     <Helmet>
-      <title>Trocas e Devoluções | Grundemann Power Hub</title>
-      <meta name="description" content="Política de trocas e devoluções da Grundemann Power Hub. Direito de arrependimento em 7 dias, troca por defeito em 30 dias para peças e geradores de energia." />
-      <meta property="og:title" content="Trocas e Devoluções | Grundemann Power Hub" />
+      <title>Trocas e Devoluções | Grundemann Geradores</title>
+      <meta name="description" content="Política de trocas e devoluções da Grundemann Geradores. Direito de arrependimento em 7 dias, troca por defeito em 30 dias para peças e geradores de energia." />
+      <meta property="og:title" content="Trocas e Devoluções | Grundemann Geradores" />
       <meta property="og:description" content="Política de trocas e devoluções para peças de motores estacionários e geradores." />
-      <link rel="canonical" href="https://grundemann-power-hub.lovable.app/trocas-e-devolucoes" />
+      <link rel="canonical" href="https://grundemann.com.br/trocas-e-devolucoes" />
       <script type="application/ld+json">{JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebPage",
-        "name": "Trocas e Devoluções | Grundemann Power Hub",
+        "name": "Trocas e Devoluções | Grundemann Geradores",
         "description": "Política de trocas e devoluções para peças de motores estacionários e geradores de energia.",
-        "url": "https://grundemann-power-hub.lovable.app/trocas-e-devolucoes",
-        "publisher": { "@type": "Organization", "name": "Grundemann Power Hub" }
+        "url": "https://grundemann.com.br/trocas-e-devolucoes",
+        "publisher": { "@type": "Organization", "name": "Grundemann Geradores" }
       })}</script>
     </Helmet>
     <TopBar /><Header /><CategoryNav />

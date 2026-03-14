@@ -38,7 +38,7 @@ const ProductSEO = ({ name, description, sku, price, image, brand, category, sto
       priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       seller: {
         "@type": "Organization",
-        name: "Grundemann Power Hub",
+        name: "Grundemann Geradores",
       },
     },
   };
