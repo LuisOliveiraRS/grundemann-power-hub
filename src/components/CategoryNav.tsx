@@ -250,14 +250,14 @@ const CatalogMenuItem = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const openCatalog = async (fileUrl: string) => {
+  const openCatalog = (fileUrl: string) => {
     setOpen(false);
-    // file_url stores just the path in the bucket — generate a signed URL
-    const { data } = await supabase.storage
+    const { data } = supabase.storage
       .from("technical-catalogs")
-      .createSignedUrl(fileUrl, 60 * 60); // 1 hour
-    if (data?.signedUrl) {
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      .getPublicUrl(fileUrl);
+
+    if (data.publicUrl) {
+      window.open(data.publicUrl, "_blank", "noopener,noreferrer");
     }
   };
 
