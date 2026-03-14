@@ -132,20 +132,20 @@
 
 /* Alternating topbar pulse */
 @keyframes topbarPulseA {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0.4; }
+  0%, 40% { opacity: 1; }
+  50%, 90% { opacity: 0.45; }
   100% { opacity: 1; }
 }
 @keyframes topbarPulseB {
-  0%, 45% { opacity: 0.4; }
-  50%, 95% { opacity: 1; }
-  100% { opacity: 0.4; }
+  0%, 40% { opacity: 0.45; }
+  50%, 90% { opacity: 1; }
+  100% { opacity: 0.45; }
 }
 .animate-topbar-pulse-a {
-  animation: topbarPulseA 3s ease-in-out infinite;
+  animation: topbarPulseA 6s ease-in-out infinite;
 }
 .animate-topbar-pulse-b {
-  animation: topbarPulseB 3s ease-in-out infinite;
+  animation: topbarPulseB 6s ease-in-out infinite;
 }
 
 /* Smooth scrolling */
