@@ -229,17 +229,17 @@ function findNodeById(root: MenuCategoryNode, id: string): MenuCategoryNode | nu
   return null;
 }
 
-interface Catalog { id: string; title: string; category: string; file_url: string; }
+interface CatalogItem { id: string; title: string; file_url: string; }
 
 const CatalogMenuItem = () => {
-  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [catalogs, setCatalogs] = useState<CatalogItem[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
-    supabase.from("technical_catalogs").select("id, title, category, file_url")
-      .eq("is_active", true).order("category").order("title")
-      .then(({ data }) => setCatalogs(data || []));
+    supabase.from("technical_catalogs").select("id, title, file_url")
+      .eq("is_active", true).order("title")
+      .then(({ data }) => setCatalogs((data || []) as CatalogItem[]));
   }, []);
 
   useEffect(() => {
@@ -250,10 +250,16 @@ const CatalogMenuItem = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const grouped = catalogs.reduce<Record<string, Catalog[]>>((acc, c) => {
-    (acc[c.category] = acc[c.category] || []).push(c);
-    return acc;
-  }, {});
+  const openCatalog = async (fileUrl: string) => {
+    setOpen(false);
+    // file_url stores just the path in the bucket — generate a signed URL
+    const { data } = await supabase.storage
+      .from("technical-catalogs")
+      .createSignedUrl(fileUrl, 60 * 60); // 1 hour
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <li
@@ -273,27 +279,17 @@ const CatalogMenuItem = () => {
         </span>
       </button>
       {open && catalogs.length > 0 && (
-        <div className="absolute top-full right-0 min-w-[320px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+        <div className="absolute top-full right-0 min-w-[280px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
           <div className="py-2 max-h-[400px] overflow-y-auto">
-            <p className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">Catálogos Técnicos</p>
-            {Object.entries(grouped).map(([category, items]) => (
-              <div key={category}>
-                <p className="px-4 pt-2 pb-1 text-[11px] font-bold text-primary uppercase tracking-wider">{category}</p>
-                {items.map(cat => (
-                  <a
-                    key={cat.id}
-                    href={cat.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    <Download className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">{cat.title}</span>
-                    <ExternalLink className="h-3 w-3 ml-auto flex-shrink-0 opacity-50" />
-                  </a>
-                ))}
-              </div>
+            {catalogs.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => openCatalog(cat.file_url)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors w-full text-left"
+              >
+                <BookOpen className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">{cat.title}</span>
+              </button>
             ))}
           </div>
         </div>
