@@ -23,6 +23,7 @@ import GuaranteeSection from "@/components/GuaranteeSection";
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
 const HeroKraft = lazy(() => import("@/components/HeroKraft"));
 const KraftProductShowcase = lazy(() => import("@/components/KraftProductShowcase"));
+const MaintenancePage = lazy(() => import("@/components/MaintenancePage"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const HomeFAQ = lazy(() => import("@/components/HomeFAQ"));
 
@@ -71,106 +72,114 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Helmet>
-        <title>Grundemann Power Hub | Peças e Geradores de Energia</title>
-        <meta name="description" content="Loja especializada em peças para motores estacionários, geradores de energia e equipamentos industriais. Entrega para todo o Brasil com garantia." />
-        <meta property="og:title" content="Grundemann Power Hub | Peças e Geradores de Energia" />
-        <meta property="og:description" content="Peças para motores estacionários, geradores e equipamentos industriais com garantia e entrega nacional." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://grundemann-power-hub.lovable.app" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href="https://grundemann-power-hub.lovable.app" />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Store",
-          "name": "Grundemann Power Hub",
-          "description": "Loja especializada em peças para motores estacionários e geradores de energia",
-          "url": "https://grundemann-power-hub.lovable.app",
-          "telephone": "+55-51-98182-5748",
-          "address": { "@type": "PostalAddress", "addressLocality": "São Leopoldo", "addressRegion": "RS", "addressCountry": "BR" },
-          "priceRange": "$$"
-        })}</script>
-      </Helmet>
-      <TopBar />
-      <Header />
-      <CategoryNav />
-      {heroMode === "kraft_style" ? (
-        <>
-          <Suspense fallback={<SectionLoader />}>
-            <HeroKraft />
-          </Suspense>
-          <BenefitsBar />
-          <Suspense fallback={<SectionLoader />}>
-            <KraftProductShowcase />
-          </Suspense>
-          <PartsFinder />
-          <TabbedProducts />
-          <SocialProof />
-          <GuaranteeSection />
-          <TechnicalCenterTeaser />
-        </>
+    <>
+      {heroMode === "maintenance" ? (
+        <Suspense fallback={<SectionLoader />}>
+          <MaintenancePage />
+        </Suspense>
       ) : (
-        <>
-          {heroMode === "rotating_banner" ? (
-            <Suspense fallback={<SectionLoader />}>
-              <HeroBanner />
-            </Suspense>
+        <div className="min-h-screen flex flex-col">
+          <Helmet>
+            <title>Grundemann Power Hub | Peças e Geradores de Energia</title>
+            <meta name="description" content="Loja especializada em peças para motores estacionários, geradores de energia e equipamentos industriais. Entrega para todo o Brasil com garantia." />
+            <meta property="og:title" content="Grundemann Power Hub | Peças e Geradores de Energia" />
+            <meta property="og:description" content="Peças para motores estacionários, geradores e equipamentos industriais com garantia e entrega nacional." />
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content="https://grundemann-power-hub.lovable.app" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <link rel="canonical" href="https://grundemann-power-hub.lovable.app" />
+            <script type="application/ld+json">{JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Store",
+              "name": "Grundemann Power Hub",
+              "description": "Loja especializada em peças para motores estacionários e geradores de energia",
+              "url": "https://grundemann-power-hub.lovable.app",
+              "telephone": "+55-51-98182-5748",
+              "address": { "@type": "PostalAddress", "addressLocality": "São Leopoldo", "addressRegion": "RS", "addressCountry": "BR" },
+              "priceRange": "$$"
+            })}</script>
+          </Helmet>
+          <TopBar />
+          <Header />
+          <CategoryNav />
+          {heroMode === "kraft_style" ? (
+            <>
+              <Suspense fallback={<SectionLoader />}>
+                <HeroKraft />
+              </Suspense>
+              <BenefitsBar />
+              <Suspense fallback={<SectionLoader />}>
+                <KraftProductShowcase />
+              </Suspense>
+              <PartsFinder />
+              <TabbedProducts />
+              <SocialProof />
+              <GuaranteeSection />
+              <TechnicalCenterTeaser />
+            </>
           ) : (
-            <HeroSection />
+            <>
+              {heroMode === "rotating_banner" ? (
+                <Suspense fallback={<SectionLoader />}>
+                  <HeroBanner />
+                </Suspense>
+              ) : (
+                <HeroSection />
+              )}
+              <BenefitsBar />
+              <PartsFinder />
+              <TabbedProducts />
+              {heroMode !== "rotating_banner" && (
+                <Suspense fallback={<SectionLoader />}>
+                  <HeroBanner />
+                </Suspense>
+              )}
+              <SocialProof />
+              <GuaranteeSection />
+              <TechnicalCenterTeaser />
+            </>
           )}
-          <BenefitsBar />
-          <PartsFinder />
-          <TabbedProducts />
-          {heroMode !== "rotating_banner" && (
-            <Suspense fallback={<SectionLoader />}>
-              <HeroBanner />
-            </Suspense>
-          )}
-          <SocialProof />
-          <GuaranteeSection />
-          <TechnicalCenterTeaser />
-        </>
-      )}
 
-      {/* Mechanic Partner CTA */}
-      <section className="py-12 bg-gradient-to-r from-secondary to-secondary/80">
-        <div className="container text-center">
-          <div className="max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-background/10 rounded-full px-4 py-1.5 mb-4">
-              <BadgeCheck className="h-5 w-5 text-accent" />
-              <span className="text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
+          {/* Mechanic Partner CTA */}
+          <section className="py-12 bg-gradient-to-r from-secondary to-secondary/80">
+            <div className="container text-center">
+              <div className="max-w-2xl mx-auto">
+                <div className="inline-flex items-center gap-2 bg-background/10 rounded-full px-4 py-1.5 mb-4">
+                  <BadgeCheck className="h-5 w-5 text-accent" />
+                  <span className="text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
+                </div>
+                <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Revendedores, Oficinas e Mecânicos<br className="hidden md:block" />Cadastre-se aqui.</h2>
+                <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para parceiros profissionais.</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link to="/parceiros/revendedor" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
+                    <BadgeCheck className="h-5 w-5" />
+                    Sou Revendedor
+                  </Link>
+                  <Link to="/parceiros/oficina-mecanico" className="inline-flex items-center gap-2 bg-background text-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-background/90 transition-colors shadow-lg hover:shadow-xl border border-border">
+                    <Wrench className="h-5 w-5" />
+                    Sou Oficina / Mecânico
+                  </Link>
+                </div>
+              </div>
             </div>
-            <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Revendedores, Oficinas e Mecânicos<br className="hidden md:block" />Cadastre-se aqui.</h2>
-            <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para parceiros profissionais.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/parceiros/revendedor" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
-                <BadgeCheck className="h-5 w-5" />
-                Sou Revendedor
-              </Link>
-              <Link to="/parceiros/oficina-mecanico" className="inline-flex items-center gap-2 bg-background text-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-background/90 transition-colors shadow-lg hover:shadow-xl border border-border">
-                <Wrench className="h-5 w-5" />
-                Sou Oficina / Mecânico
-              </Link>
-            </div>
-          </div>
+          </section>
+
+          <CategoriesSection />
+          <Suspense fallback={<SectionLoader />}>
+            <TestimonialsSection />
+          </Suspense>
+          <Suspense fallback={<SectionLoader />}>
+            <HomeFAQ />
+          </Suspense>
+          <WhatsAppButton />
+          <AIAssistant />
+          <FirstVisitPopup />
+          <AbandonedCartReminder />
+          <Footer />
+          <MobileContactBar />
         </div>
-      </section>
-
-      <CategoriesSection />
-      <Suspense fallback={<SectionLoader />}>
-        <TestimonialsSection />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <HomeFAQ />
-      </Suspense>
-      <WhatsAppButton />
-      <AIAssistant />
-      <FirstVisitPopup />
-      <AbandonedCartReminder />
-      <Footer />
-      <MobileContactBar />
-    </div>
+      )}
+    </>
   );
 };
 

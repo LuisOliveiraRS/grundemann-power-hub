@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Monitor, Image, Layout, Loader2 } from "lucide-react";
+import { Monitor, Image, Layout, Loader2, Construction } from "lucide-react";
 
-type HeroMode = "product_showcase" | "rotating_banner" | "kraft_style";
+type HeroMode = "product_showcase" | "rotating_banner" | "kraft_style" | "maintenance";
 
 const OPTIONS: { value: HeroMode; label: string; description: string; icon: typeof Monitor }[] = [
   {
@@ -23,6 +23,12 @@ const OPTIONS: { value: HeroMode; label: string; description: string; icon: type
     label: "Fullscreen Imersivo",
     description: "Hero fullscreen com imagem industrial, texto em destaque e produtos em layout alternado. Visual premium e moderno.",
     icon: Layout,
+  },
+  {
+    value: "maintenance",
+    label: "Modo Manutenção",
+    description: "Exibe página de manutenção com logo, contato e previsão de retorno. Ideal quando o site está em atualização.",
+    icon: Construction,
   },
 ];
 
@@ -76,7 +82,7 @@ const AppearanceSettings = () => {
         <p className="text-sm text-muted-foreground">Escolha qual capa será exibida na home do site.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {OPTIONS.map((opt) => {
           const active = heroMode === opt.value;
           const Icon = opt.icon;
