@@ -21,6 +21,8 @@ import MobileContactBar from "@/components/MobileContactBar";
 import GuaranteeSection from "@/components/GuaranteeSection";
 
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
+const HeroKraft = lazy(() => import("@/components/HeroKraft"));
+const KraftProductShowcase = lazy(() => import("@/components/KraftProductShowcase"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const HomeFAQ = lazy(() => import("@/components/HomeFAQ"));
 
@@ -93,24 +95,43 @@ const Index = () => {
       <TopBar />
       <Header />
       <CategoryNav />
-      {heroMode === "rotating_banner" ? (
-        <Suspense fallback={<SectionLoader />}>
-          <HeroBanner />
-        </Suspense>
+      {heroMode === "kraft_style" ? (
+        <>
+          <Suspense fallback={<SectionLoader />}>
+            <HeroKraft />
+          </Suspense>
+          <BenefitsBar />
+          <Suspense fallback={<SectionLoader />}>
+            <KraftProductShowcase />
+          </Suspense>
+          <PartsFinder />
+          <TabbedProducts />
+          <SocialProof />
+          <GuaranteeSection />
+          <TechnicalCenterTeaser />
+        </>
       ) : (
-        <HeroSection />
+        <>
+          {heroMode === "rotating_banner" ? (
+            <Suspense fallback={<SectionLoader />}>
+              <HeroBanner />
+            </Suspense>
+          ) : (
+            <HeroSection />
+          )}
+          <BenefitsBar />
+          <PartsFinder />
+          <TabbedProducts />
+          {heroMode !== "rotating_banner" && (
+            <Suspense fallback={<SectionLoader />}>
+              <HeroBanner />
+            </Suspense>
+          )}
+          <SocialProof />
+          <GuaranteeSection />
+          <TechnicalCenterTeaser />
+        </>
       )}
-      <BenefitsBar />
-      <PartsFinder />
-      <TabbedProducts />
-      {heroMode !== "rotating_banner" && (
-        <Suspense fallback={<SectionLoader />}>
-          <HeroBanner />
-        </Suspense>
-      )}
-      <SocialProof />
-      <GuaranteeSection />
-      <TechnicalCenterTeaser />
 
       {/* Mechanic Partner CTA */}
       <section className="py-12 bg-gradient-to-r from-secondary to-secondary/80">
