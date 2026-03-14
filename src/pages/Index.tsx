@@ -23,6 +23,7 @@ import GuaranteeSection from "@/components/GuaranteeSection";
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
 const HeroKraft = lazy(() => import("@/components/HeroKraft"));
 const KraftProductShowcase = lazy(() => import("@/components/KraftProductShowcase"));
+const MaintenancePage = lazy(() => import("@/components/MaintenancePage"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const HomeFAQ = lazy(() => import("@/components/HomeFAQ"));
 
