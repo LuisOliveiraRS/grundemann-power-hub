@@ -16,8 +16,8 @@ interface ProductSEOProps {
 }
 
 const ProductSEO = ({ name, description, sku, price, image, brand, category, stockQuantity, metaTitle, metaDescription, reviewCount, avgRating }: ProductSEOProps) => {
-  const title = metaTitle || `${name} | Grundemann Power Hub`;
-  const desc = metaDescription || description?.slice(0, 160) || `Compre ${name} na Grundemann Power Hub. Peças para motores estacionários com qualidade e garantia.`;
+  const title = metaTitle || `${name} | Grundemann Geradores`;
+  const desc = metaDescription || description?.slice(0, 160) || `Compre ${name} na Grundemann Geradores. Peças para motores estacionários com qualidade e garantia.`;
   const url = typeof window !== "undefined" ? window.location.href : "";
 
   const jsonLd: any = {
