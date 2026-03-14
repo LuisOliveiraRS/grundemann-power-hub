@@ -228,4 +228,77 @@ function findNodeById(root: MenuCategoryNode, id: string): MenuCategoryNode | nu
   return null;
 }
 
+interface Catalog { id: string; title: string; category: string; file_url: string; }
+
+const CatalogMenuItem = () => {
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    supabase.from("technical_catalogs").select("id, title, category, file_url")
+      .eq("is_active", true).order("category").order("title")
+      .then(({ data }) => setCatalogs(data || []));
+  }, []);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const grouped = catalogs.reduce<Record<string, Catalog[]>>((acc, c) => {
+    (acc[c.category] = acc[c.category] || []).push(c);
+    return acc;
+  }, {});
+
+  return (
+    <li
+      ref={ref}
+      className="relative group"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex flex-col items-center gap-1 px-4 py-3 text-nav-foreground transition-colors text-xs font-semibold uppercase tracking-wide whitespace-nowrap w-full ${open ? "bg-primary-foreground/15" : "hover:bg-primary-foreground/10"}`}
+      >
+        <BookOpen className="h-5 w-5" />
+        <span className="flex items-center gap-1">
+          Catálogos
+          <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        </span>
+      </button>
+      {open && catalogs.length > 0 && (
+        <div className="absolute top-full right-0 min-w-[320px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+          <div className="py-2 max-h-[400px] overflow-y-auto">
+            <p className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">Catálogos Técnicos</p>
+            {Object.entries(grouped).map(([category, items]) => (
+              <div key={category}>
+                <p className="px-4 pt-2 pb-1 text-[11px] font-bold text-primary uppercase tracking-wider">{category}</p>
+                {items.map(cat => (
+                  <a
+                    key={cat.id}
+                    href={cat.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    <Download className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{cat.title}</span>
+                    <ExternalLink className="h-3 w-3 ml-auto flex-shrink-0 opacity-50" />
+                  </a>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+};
+
 export default CategoryNav;
