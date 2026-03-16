@@ -19,7 +19,7 @@ interface Product {
   id: string; name: string; price: number; original_price: number | null;
   image_url: string | null; stock_quantity: number; sku: string | null;
   category_id: string | null; brand: string | null; hp: string | null;
-  engine_model: string | null;
+  engine_model: string | null; fuel_type: string | null; slug: string | null;
 }
 
 interface Category { id: string; name: string; slug: string; }
