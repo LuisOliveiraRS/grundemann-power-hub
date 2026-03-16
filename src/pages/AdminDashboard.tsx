@@ -48,7 +48,7 @@ interface Product {
   is_active: boolean; is_featured: boolean; free_shipping?: boolean; category_id: string | null;
   subcategory_id?: string | null; image_url: string | null; created_at: string;
   additional_images?: string[] | null; video_url?: string | null;
-  reseller_id?: string | null;
+  reseller_id?: string | null; fuel_type?: string | null; slug?: string | null;
 }
 
 interface ResellerOption {
