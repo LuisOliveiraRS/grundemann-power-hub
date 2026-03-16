@@ -177,6 +177,7 @@ const AdminDashboard = () => {
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
     extra_category_ids: [] as string[], menu_category_id: "", reseller_id: "",
+    fuel_type: "", slug: "",
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
