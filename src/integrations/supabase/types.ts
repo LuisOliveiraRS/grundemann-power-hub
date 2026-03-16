@@ -971,6 +971,7 @@ export type Database = {
           documents: string[] | null
           engine_model: string | null
           free_shipping: boolean
+          fuel_type: string | null
           height_cm: number | null
           hp: string | null
           id: string
@@ -987,6 +988,7 @@ export type Database = {
           price: number
           reseller_id: string | null
           sku: string | null
+          slug: string | null
           specifications: Json | null
           stock_quantity: number
           subcategory_id: string | null
@@ -1005,6 +1007,7 @@ export type Database = {
           documents?: string[] | null
           engine_model?: string | null
           free_shipping?: boolean
+          fuel_type?: string | null
           height_cm?: number | null
           hp?: string | null
           id?: string
@@ -1021,6 +1024,7 @@ export type Database = {
           price?: number
           reseller_id?: string | null
           sku?: string | null
+          slug?: string | null
           specifications?: Json | null
           stock_quantity?: number
           subcategory_id?: string | null
@@ -1039,6 +1043,7 @@ export type Database = {
           documents?: string[] | null
           engine_model?: string | null
           free_shipping?: boolean
+          fuel_type?: string | null
           height_cm?: number | null
           hp?: string | null
           id?: string
@@ -1055,6 +1060,7 @@ export type Database = {
           price?: number
           reseller_id?: string | null
           sku?: string | null
+          slug?: string | null
           specifications?: Json | null
           stock_quantity?: number
           subcategory_id?: string | null
