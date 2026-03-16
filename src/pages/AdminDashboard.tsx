@@ -1229,6 +1229,26 @@ const AdminDashboard = () => {
                       />
                       <p className="text-xs text-muted-foreground mt-1">Define onde o produto aparece no menu de navegação superior</p>
                     </div>
+                    {/* Reseller assignment */}
+                    <div className="md:col-span-2">
+                      <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Revendedor?</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        value={productForm.reseller_id}
+                        onChange={e => setProductForm({ ...productForm, reseller_id: e.target.value })}
+                      >
+                        <option value="">Não — Produto próprio</option>
+                        {resellers.map(r => {
+                          const profile = clients.find(c => c.user_id === r.user_id);
+                          return (
+                            <option key={r.id} value={r.id}>
+                              Sim — {r.company_name || profile?.full_name || "Revendedor"}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <p className="text-xs text-muted-foreground mt-1">Associa o produto a um revendedor para relatórios e controle de estoque</p>
+                    </div>
                     <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
                     <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>
                     <div><Label>Estoque</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} /></div>
