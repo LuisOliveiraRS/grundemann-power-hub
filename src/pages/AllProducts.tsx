@@ -106,10 +106,10 @@ const AllProducts = () => {
   const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
   const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
-  const activeFilters = [selectedCategory, selectedBrand, selectedHp, priceMin, priceMax, inStockOnly ? "stock" : ""].filter(Boolean).length;
+  const activeFilters = [selectedCategory, selectedBrand, selectedHp, selectedFuel, priceMin, priceMax, inStockOnly ? "stock" : ""].filter(Boolean).length;
 
   const clearFilters = () => {
-    setSelectedCategory(""); setSelectedBrand(""); setSelectedHp("");
+    setSelectedCategory(""); setSelectedBrand(""); setSelectedHp(""); setSelectedFuel("");
     setPriceMin(""); setPriceMax(""); setSearch(""); setInStockOnly(false); setPage(1);
   };
 
