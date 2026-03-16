@@ -137,6 +137,7 @@ const AdminDashboard = () => {
   const printRef = useRef<HTMLDivElement>(null);
   const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [resellers, setResellers] = useState<ResellerOption[]>([]);
 
   // Product filters
   const [productSearch, setProductSearch] = useState("");
