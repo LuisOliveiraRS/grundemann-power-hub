@@ -35,6 +35,7 @@ import AdminReports from "@/components/AdminReports";
 import ResellerContentManagement from "@/components/ResellerContentManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
+import MenuCategoryPicker from "@/components/MenuCategoryPicker";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
