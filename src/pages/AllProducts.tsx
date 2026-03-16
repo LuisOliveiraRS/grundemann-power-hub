@@ -154,6 +154,13 @@ const AllProducts = () => {
                 <option value="">⚡ Todos HP</option>
                 {hps.map(h => <option key={h} value={h}>{h} HP</option>)}
               </select>
+              <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedFuel} onChange={e => { setSelectedFuel(e.target.value); setPage(1); }}>
+                <option value="">🔥 Combustível</option>
+                <option value="gasolina">Gasolina</option>
+                <option value="diesel">Diesel</option>
+                <option value="gas">Gás (GLP)</option>
+                <option value="bifuel">Bifuel</option>
+              </select>
               <Input type="number" placeholder="Preço mín" value={priceMin} onChange={e => { setPriceMin(e.target.value); setPage(1); }} className="h-9 text-sm" />
               <Input type="number" placeholder="Preço máx" value={priceMax} onChange={e => { setPriceMax(e.target.value); setPage(1); }} className="h-9 text-sm" />
               <div className="flex items-center gap-2">
