@@ -81,6 +81,7 @@ const AllProducts = () => {
     }
     if (selectedBrand && p.brand !== selectedBrand) return false;
     if (selectedHp && p.hp !== selectedHp) return false;
+    if (selectedFuel && p.fuel_type !== selectedFuel) return false;
     if (priceMin && p.price < parseFloat(priceMin)) return false;
     if (priceMax && p.price > parseFloat(priceMax)) return false;
     if (inStockOnly && p.stock_quantity <= 0) return false;
