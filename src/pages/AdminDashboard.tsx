@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift, BookOpen, Globe, Paintbrush, FileText
+  LayoutDashboard, Package, ShoppingCart, Users, LogOut, Plus, Trash2, Edit, Tag, Eye, EyeOff, Search, ChevronDown, ChevronUp, X, Upload, ImageIcon, TrendingUp, DollarSign, AlertTriangle, Clock, Filter, SlidersHorizontal, FolderTree, Printer, RefreshCw, Video, Star, MessageSquare, Truck, FileUp, Download, CheckSquare, Square, Wand2, Loader2, BarChart3, FileDown, Megaphone, Wrench, Mail, Gift, BookOpen, Globe, Paintbrush, FileText, Store
 } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { BarChart3 as BarChart3Icon, Boxes } from "lucide-react";
@@ -48,6 +48,13 @@ interface Product {
   is_active: boolean; is_featured: boolean; free_shipping?: boolean; category_id: string | null;
   subcategory_id?: string | null; image_url: string | null; created_at: string;
   additional_images?: string[] | null; video_url?: string | null;
+  reseller_id?: string | null;
+}
+
+interface ResellerOption {
+  id: string;
+  company_name: string;
+  user_id: string;
 }
 
 interface PaymentInfo {
@@ -130,6 +137,7 @@ const AdminDashboard = () => {
   const printRef = useRef<HTMLDivElement>(null);
   const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [resellers, setResellers] = useState<ResellerOption[]>([]);
 
   // Product filters
   const [productSearch, setProductSearch] = useState("");
@@ -168,7 +176,7 @@ const AdminDashboard = () => {
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
-    extra_category_ids: [] as string[], menu_category_id: "",
+    extra_category_ids: [] as string[], menu_category_id: "", reseller_id: "",
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -244,7 +252,7 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes] = await Promise.all([
+    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes, resellerRes] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
@@ -255,6 +263,7 @@ const AdminDashboard = () => {
       supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("mechanics").select("user_id, partner_type"),
+      supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
@@ -269,6 +278,7 @@ const AdminDashboard = () => {
     setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests); setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
     setClientRoles((rolesRes.data || []) as { user_id: string; role: string }[]);
     setClientMechanics((mechRes.data || []) as { user_id: string; partner_type: string }[]);
+    setResellers((resellerRes.data || []) as ResellerOption[]);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
@@ -347,6 +357,7 @@ const AdminDashboard = () => {
       height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
       menu_category_id: productForm.menu_category_id || null,
+      reseller_id: productForm.reseller_id || null,
     };
     let productId = editingProduct?.id;
     if (productId) {
@@ -371,7 +382,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -470,6 +481,7 @@ const AdminDashboard = () => {
       length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
       extra_category_ids: linkedCatIds,
       menu_category_id: (p as any).menu_category_id || "",
+      reseller_id: (p as any).reseller_id || "",
     });
     setTab("products");
   };
@@ -1216,6 +1228,26 @@ const AdminDashboard = () => {
                         label="Categoria do Menu (Navegação)"
                       />
                       <p className="text-xs text-muted-foreground mt-1">Define onde o produto aparece no menu de navegação superior</p>
+                    </div>
+                    {/* Reseller assignment */}
+                    <div className="md:col-span-2">
+                      <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Revendedor?</Label>
+                      <select
+                        className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        value={productForm.reseller_id}
+                        onChange={e => setProductForm({ ...productForm, reseller_id: e.target.value })}
+                      >
+                        <option value="">Não — Produto próprio</option>
+                        {resellers.map(r => {
+                          const profile = clients.find(c => c.user_id === r.user_id);
+                          return (
+                            <option key={r.id} value={r.id}>
+                              Sim — {r.company_name || profile?.full_name || "Revendedor"}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <p className="text-xs text-muted-foreground mt-1">Associa o produto a um revendedor para relatórios e controle de estoque</p>
                     </div>
                     <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
                     <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>

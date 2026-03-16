@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { User, Phone, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, Store, TrendingUp, BarChart3, DollarSign, Printer, LogOut, Calculator } from "lucide-react";
 import Layout from "@/components/Layout";
 import UserQuotesList from "@/components/UserQuotesList";
+import ResellerProductsReport from "@/components/ResellerProductsReport";
 
 interface PartnerProfile {
   id: string;
@@ -49,7 +50,7 @@ const RevendedorDashboard = () => {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "meus-produtos">("overview");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -157,6 +158,7 @@ const RevendedorDashboard = () => {
 
   const sidebarItems = [
     { id: "overview" as const, label: "Painel", icon: BarChart3 },
+    { id: "meus-produtos" as const, label: "Meus Produtos", icon: Package },
     { id: "perfil" as const, label: "Meu Perfil", icon: User },
     { id: "compras" as const, label: "Compras", icon: ShoppingCart },
     { id: "catalogos" as const, label: "Catálogos PDF", icon: Download },
@@ -421,6 +423,14 @@ const RevendedorDashboard = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Reseller Products Report */}
+            {activeSection === "meus-produtos" && (
+              <div>
+                <h2 className="font-heading text-xl font-bold mb-4">Meus Produtos & Relatório de Vendas</h2>
+                <ResellerProductsReport resellerId={partner.id} />
               </div>
             )}
 

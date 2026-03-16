@@ -985,6 +985,7 @@ export type Database = {
           name: string
           original_price: number | null
           price: number
+          reseller_id: string | null
           sku: string | null
           specifications: Json | null
           stock_quantity: number
@@ -1018,6 +1019,7 @@ export type Database = {
           name: string
           original_price?: number | null
           price?: number
+          reseller_id?: string | null
           sku?: string | null
           specifications?: Json | null
           stock_quantity?: number
@@ -1051,6 +1053,7 @@ export type Database = {
           name?: string
           original_price?: number | null
           price?: number
+          reseller_id?: string | null
           sku?: string | null
           specifications?: Json | null
           stock_quantity?: number
@@ -1073,6 +1076,13 @@ export type Database = {
             columns: ["menu_category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "mechanics"
             referencedColumns: ["id"]
           },
           {
