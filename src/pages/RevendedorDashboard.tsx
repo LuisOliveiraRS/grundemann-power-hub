@@ -158,6 +158,7 @@ const RevendedorDashboard = () => {
 
   const sidebarItems = [
     { id: "overview" as const, label: "Painel", icon: BarChart3 },
+    { id: "meus-produtos" as const, label: "Meus Produtos", icon: Package },
     { id: "perfil" as const, label: "Meu Perfil", icon: User },
     { id: "compras" as const, label: "Compras", icon: ShoppingCart },
     { id: "catalogos" as const, label: "Catálogos PDF", icon: Download },
