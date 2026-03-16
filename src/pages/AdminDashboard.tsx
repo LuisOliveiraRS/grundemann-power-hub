@@ -359,6 +359,8 @@ const AdminDashboard = () => {
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
       menu_category_id: productForm.menu_category_id || null,
       reseller_id: productForm.reseller_id || null,
+      fuel_type: productForm.fuel_type || null,
+      slug: productForm.slug || null,
     };
     let productId = editingProduct?.id;
     if (productId) {
