@@ -44,6 +44,7 @@ const AllProducts = () => {
   const [priceMax, setPriceMax] = useState(searchParams.get("preco_max") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("ordem") || "name");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [selectedFuel, setSelectedFuel] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => { loadData(); }, []);
