@@ -1209,6 +1209,14 @@ const AdminDashboard = () => {
                         )}
                       </div>
                     )}
+                    <div className="md:col-span-2">
+                      <MenuCategoryPicker
+                        value={productForm.menu_category_id}
+                        onChange={(id) => setProductForm({ ...productForm, menu_category_id: id })}
+                        label="Categoria do Menu (Navegação)"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Define onde o produto aparece no menu de navegação superior</p>
+                    </div>
                     <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
                     <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>
                     <div><Label>Estoque</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} /></div>
