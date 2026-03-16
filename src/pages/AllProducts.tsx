@@ -140,7 +140,7 @@ const AllProducts = () => {
 
           {/* Always-visible filter bar */}
           <div className="bg-card rounded-xl border border-border p-4 mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <Input placeholder="🔍 Buscar produto..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-9 text-sm" />
               <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}>
                 <option value="">📂 Todas categorias</option>
