@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { User, Phone, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, Store, TrendingUp, BarChart3, DollarSign, Printer, LogOut, Calculator } from "lucide-react";
 import Layout from "@/components/Layout";
 import UserQuotesList from "@/components/UserQuotesList";
+import ResellerProductsReport from "@/components/ResellerProductsReport";
 
 interface PartnerProfile {
   id: string;
