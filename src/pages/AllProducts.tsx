@@ -60,7 +60,7 @@ const AllProducts = () => {
 
   const loadData = async () => {
     const [p, c, l] = await Promise.all([
-      supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku, category_id, brand, hp, engine_model").eq("is_active", true).order("name"),
+      supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku, category_id, brand, hp, engine_model, fuel_type, slug").eq("is_active", true).order("name"),
       supabase.from("categories").select("*").order("name"),
       supabase.from("product_categories").select("product_id, category_id"),
     ]);
