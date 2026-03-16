@@ -495,6 +495,8 @@ const AdminDashboard = () => {
       extra_category_ids: linkedCatIds,
       menu_category_id: (p as any).menu_category_id || "",
       reseller_id: (p as any).reseller_id || "",
+      fuel_type: (p as any).fuel_type || "",
+      slug: (p as any).slug || "",
     });
     setTab("products");
   };
