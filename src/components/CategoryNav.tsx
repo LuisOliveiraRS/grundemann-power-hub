@@ -28,6 +28,28 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
   const [openCat, setOpenCat] = useState<string | null>(null);
   const [hoveredSub, setHoveredSub] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const closeMenu = () => {
+    clearCloseTimeout();
+    setOpenCat(null);
+    setHoveredSub(null);
+  };
+
+  const scheduleCloseMenu = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenCat(null);
+      setHoveredSub(null);
+    }, 140);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -46,11 +68,14 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenCat(null); setHoveredSub(null);
+        closeMenu();
       }
     };
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      clearCloseTimeout();
+    };
   }, []);
 
   const getDescendantIds = (node: MenuCategoryNode): string[] => {
@@ -97,12 +122,24 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
               <li
                 key={cat.id}
                 className="relative group"
-                onMouseEnter={() => { if (hasDropdown) { setOpenCat(cat.id); setHoveredSub(null); } }}
-                onMouseLeave={() => { if (hasDropdown) { setOpenCat(null); setHoveredSub(null); } }}
+                onMouseEnter={() => {
+                  clearCloseTimeout();
+                  if (hasDropdown) {
+                    setOpenCat(cat.id);
+                    setHoveredSub(null);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (hasDropdown) scheduleCloseMenu();
+                }}
               >
                 {hasDropdown ? (
                   <button
-                    onClick={() => { setOpenCat(isOpen ? null : cat.id); setHoveredSub(null); }}
+                    onClick={() => {
+                      clearCloseTimeout();
+                      setOpenCat(isOpen ? null : cat.id);
+                      setHoveredSub(null);
+                    }}
                     className={`flex flex-col items-center gap-1 px-4 py-3 text-nav-foreground transition-colors text-xs font-semibold uppercase tracking-wide whitespace-nowrap w-full ${isOpen ? "bg-primary-foreground/15" : "hover:bg-primary-foreground/10"}`}
                   >
                     <Icon className="h-5 w-5" />
@@ -122,12 +159,16 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                 )}
 
                 {hasDropdown && isOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[500px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                  <div
+                    className="absolute top-full left-1/2 -translate-x-1/2 min-w-[500px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+                    onMouseEnter={clearCloseTimeout}
+                    onMouseLeave={scheduleCloseMenu}
+                  >
                     <div className="flex">
                       <div className="w-1/2 border-r border-border py-2 max-h-[400px] overflow-y-auto">
                         <Link
                           to={`/categoria/${cat.fullPath}`}
-                          onClick={() => setOpenCat(null)}
+                          onClick={closeMenu}
                           className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors font-bold border-b border-border"
                         >
                           Ver todos em {cat.name}
@@ -136,9 +177,11 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                           <Link
                             key={sub.id}
                             to={`/categoria/${sub.fullPath}`}
-                            onClick={() => setOpenCat(null)}
-                            onMouseEnter={() => setHoveredSub(sub.id)}
-                            onMouseLeave={() => {}}
+                            onClick={closeMenu}
+                            onMouseEnter={() => {
+                              clearCloseTimeout();
+                              setHoveredSub(sub.id);
+                            }}
                             className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
                             style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
                           >
