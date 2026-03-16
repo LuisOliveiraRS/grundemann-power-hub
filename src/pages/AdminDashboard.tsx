@@ -357,6 +357,7 @@ const AdminDashboard = () => {
       height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
       menu_category_id: productForm.menu_category_id || null,
+      reseller_id: productForm.reseller_id || null,
     };
     let productId = editingProduct?.id;
     if (productId) {
