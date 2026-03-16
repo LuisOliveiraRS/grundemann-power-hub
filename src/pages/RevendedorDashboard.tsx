@@ -426,6 +426,14 @@ const RevendedorDashboard = () => {
               </div>
             )}
 
+            {/* Reseller Products Report */}
+            {activeSection === "meus-produtos" && (
+              <div>
+                <h2 className="font-heading text-xl font-bold mb-4">Meus Produtos & Relatório de Vendas</h2>
+                <ResellerProductsReport resellerId={partner.id} />
+              </div>
+            )}
+
             {/* Quotes */}
             {activeSection === "orcamentos" && (
               <div>
