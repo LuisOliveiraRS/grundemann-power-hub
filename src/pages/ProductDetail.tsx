@@ -64,7 +64,8 @@ const ProductDetail = () => {
   useEffect(() => { if (id) loadProduct(); }, [id]);
 
   const loadProduct = async () => {
-    const { data } = await supabase.from("products").select("*").eq("id", id).single();
+    const col = isUUID(id || "") ? "id" : "slug";
+    const { data } = await supabase.from("products").select("*").eq(col, id).single();
     if (data) {
       const p = data as Product;
       setProduct(p);

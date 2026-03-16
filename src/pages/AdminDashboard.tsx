@@ -1337,8 +1337,8 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Brand, HP, Engine Model */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Brand, HP, Engine Model, Fuel Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <Label>Marca</Label>
                         <Input value={productForm.brand} onChange={e => setProductForm({ ...productForm, brand: e.target.value })} placeholder="Ex: Honda, Branco..." className="mt-1" />
@@ -1351,6 +1351,37 @@ const AdminDashboard = () => {
                         <Label>Modelo do Motor</Label>
                         <Input value={productForm.engine_model} onChange={e => setProductForm({ ...productForm, engine_model: e.target.value })} placeholder="Ex: GX160, GX200..." className="mt-1" />
                       </div>
+                      <div>
+                        <Label>Tipo de Combustível</Label>
+                        <select
+                          className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={productForm.fuel_type}
+                          onChange={e => setProductForm({ ...productForm, fuel_type: e.target.value })}
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="gasolina">Gasolina</option>
+                          <option value="diesel">Diesel</option>
+                          <option value="gas">Gás (GLP)</option>
+                          <option value="bifuel">Bifuel</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Slug */}
+                    <div>
+                      <Label>URL Amigável (Slug)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={productForm.slug}
+                          onChange={e => setProductForm({ ...productForm, slug: e.target.value })}
+                          placeholder="ex: carburador-gerador-6-5hp"
+                          className="flex-1 font-mono text-xs"
+                        />
+                        <Button type="button" variant="outline" size="sm" onClick={() => setProductForm(prev => ({ ...prev, slug: generateSlug(prev.name) }))}>
+                          Gerar
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">URL: /produto/{productForm.slug || "..."}</p>
                     </div>
 
                     {/* Weight & Dimensions */}
