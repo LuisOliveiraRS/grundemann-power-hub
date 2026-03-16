@@ -278,6 +278,7 @@ const AdminDashboard = () => {
     setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls); setSubcategories(subs); setTestimonials(tests); setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
     setClientRoles((rolesRes.data || []) as { user_id: string; role: string }[]);
     setClientMechanics((mechRes.data || []) as { user_id: string; partner_type: string }[]);
+    setResellers((resellerRes.data || []) as ResellerOption[]);
     setStats({
       totalProducts: prods.length, totalOrders: ords.length,
       revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
