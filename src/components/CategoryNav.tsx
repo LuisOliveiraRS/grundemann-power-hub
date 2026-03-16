@@ -28,6 +28,28 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
   const [openCat, setOpenCat] = useState<string | null>(null);
   const [hoveredSub, setHoveredSub] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const closeMenu = () => {
+    clearCloseTimeout();
+    setOpenCat(null);
+    setHoveredSub(null);
+  };
+
+  const scheduleCloseMenu = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpenCat(null);
+      setHoveredSub(null);
+    }, 140);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -46,11 +68,14 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenCat(null); setHoveredSub(null);
+        closeMenu();
       }
     };
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      clearCloseTimeout();
+    };
   }, []);
 
   const getDescendantIds = (node: MenuCategoryNode): string[] => {
