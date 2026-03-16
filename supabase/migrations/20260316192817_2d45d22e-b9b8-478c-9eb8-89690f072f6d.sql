@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN reseller_id uuid REFERENCES public.mechanics(id) ON DELETE SET NULL DEFAULT NULL;
