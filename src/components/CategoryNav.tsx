@@ -160,12 +160,12 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
 
                 {hasDropdown && isOpen && (
                   <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 min-w-[500px] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+                    className="absolute top-full left-1/2 -translate-x-1/2 w-[720px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
                     onMouseEnter={clearCloseTimeout}
                     onMouseLeave={scheduleCloseMenu}
                   >
-                    <div className="flex">
-                      <div className="w-1/2 border-r border-border py-2 max-h-[400px] overflow-y-auto">
+                    <div className="grid grid-cols-[minmax(0,1fr)_320px] items-stretch">
+                      <div className="min-w-0 border-r border-border py-2 max-h-[400px] overflow-y-auto">
                         <Link
                           to={`/categoria/${cat.fullPath}`}
                           onClick={closeMenu}
@@ -194,7 +194,7 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                         ))}
                       </div>
 
-                      <div className="w-1/2 p-3 space-y-2">
+                      <div className="min-w-0 min-h-[260px] p-3 space-y-2">
                         {(() => {
                           const hoveredNode = hoveredSub ? findNodeById(cat, hoveredSub) : null;
                           const displayProducts = hoveredNode ? getProductsForNode(hoveredNode, allProducts) : catProducts;
