@@ -35,6 +35,7 @@ import AdminReports from "@/components/AdminReports";
 import ResellerContentManagement from "@/components/ResellerContentManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
+import MenuCategoryPicker from "@/components/MenuCategoryPicker";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-grundemann.png";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
@@ -167,7 +168,7 @@ const AdminDashboard = () => {
     additional_images: [] as string[], video_url: "", brand: "", hp: "", engine_model: "",
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
-    extra_category_ids: [] as string[],
+    extra_category_ids: [] as string[], menu_category_id: "",
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -345,6 +346,7 @@ const AdminDashboard = () => {
       width_cm: productForm.width_cm ? parseFloat(productForm.width_cm) : null,
       height_cm: productForm.height_cm ? parseFloat(productForm.height_cm) : null,
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
+      menu_category_id: productForm.menu_category_id || null,
     };
     let productId = editingProduct?.id;
     if (productId) {
@@ -369,7 +371,7 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [] });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "" });
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -467,6 +469,7 @@ const AdminDashboard = () => {
       height_cm: (p as any).height_cm ? String((p as any).height_cm) : "",
       length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
       extra_category_ids: linkedCatIds,
+      menu_category_id: (p as any).menu_category_id || "",
     });
     setTab("products");
   };
@@ -1206,6 +1209,14 @@ const AdminDashboard = () => {
                         )}
                       </div>
                     )}
+                    <div className="md:col-span-2">
+                      <MenuCategoryPicker
+                        value={productForm.menu_category_id}
+                        onChange={(id) => setProductForm({ ...productForm, menu_category_id: id })}
+                        label="Categoria do Menu (Navegação)"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Define onde o produto aparece no menu de navegação superior</p>
+                    </div>
                     <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} /></div>
                     <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={productForm.original_price} onChange={(e) => setProductForm({ ...productForm, original_price: e.target.value })} placeholder="Preço anterior" /></div>
                     <div><Label>Estoque</Label><Input type="number" value={productForm.stock_quantity} onChange={(e) => setProductForm({ ...productForm, stock_quantity: e.target.value })} /></div>
