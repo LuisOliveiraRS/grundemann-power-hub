@@ -179,6 +179,7 @@ const AllProducts = () => {
                 {selectedCategory && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedCategory(""); setPage(1); }}>{categories.find(c => c.id === selectedCategory)?.name} ✕</Badge>}
                 {selectedBrand && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedBrand(""); setPage(1); }}>{selectedBrand} ✕</Badge>}
                 {selectedHp && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedHp(""); setPage(1); }}>{selectedHp} HP ✕</Badge>}
+                {selectedFuel && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedFuel(""); setPage(1); }}>{selectedFuel} ✕</Badge>}
                 {priceMin && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setPriceMin(""); setPage(1); }}>Min R${priceMin} ✕</Badge>}
                 {priceMax && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setPriceMax(""); setPage(1); }}>Max R${priceMax} ✕</Badge>}
                 {inStockOnly && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setInStockOnly(false); setPage(1); }}>Em estoque ✕</Badge>}
