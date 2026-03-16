@@ -42,8 +42,10 @@ const faqItems = [
   { q: "Como saber se a peça é compatível com meu motor?", a: "Verifique a seção 'Compatível Com' na página do produto ou entre em contato pelo WhatsApp para confirmar." },
 ];
 
+const isUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { idOrSlug: id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -62,7 +64,8 @@ const ProductDetail = () => {
   useEffect(() => { if (id) loadProduct(); }, [id]);
 
   const loadProduct = async () => {
-    const { data } = await supabase.from("products").select("*").eq("id", id).single();
+    const col = isUUID(id || "") ? "id" : "slug";
+    const { data } = await supabase.from("products").select("*").eq(col, id).single();
     if (data) {
       const p = data as Product;
       setProduct(p);

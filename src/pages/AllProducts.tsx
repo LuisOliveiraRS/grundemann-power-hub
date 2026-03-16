@@ -19,7 +19,7 @@ interface Product {
   id: string; name: string; price: number; original_price: number | null;
   image_url: string | null; stock_quantity: number; sku: string | null;
   category_id: string | null; brand: string | null; hp: string | null;
-  engine_model: string | null;
+  engine_model: string | null; fuel_type: string | null; slug: string | null;
 }
 
 interface Category { id: string; name: string; slug: string; }
@@ -44,6 +44,7 @@ const AllProducts = () => {
   const [priceMax, setPriceMax] = useState(searchParams.get("preco_max") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("ordem") || "name");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [selectedFuel, setSelectedFuel] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => { loadData(); }, []);
@@ -59,7 +60,7 @@ const AllProducts = () => {
 
   const loadData = async () => {
     const [p, c, l] = await Promise.all([
-      supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku, category_id, brand, hp, engine_model").eq("is_active", true).order("name"),
+      supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku, category_id, brand, hp, engine_model, fuel_type, slug").eq("is_active", true).order("name"),
       supabase.from("categories").select("*").order("name"),
       supabase.from("product_categories").select("product_id, category_id"),
     ]);
@@ -80,6 +81,7 @@ const AllProducts = () => {
     }
     if (selectedBrand && p.brand !== selectedBrand) return false;
     if (selectedHp && p.hp !== selectedHp) return false;
+    if (selectedFuel && p.fuel_type !== selectedFuel) return false;
     if (priceMin && p.price < parseFloat(priceMin)) return false;
     if (priceMax && p.price > parseFloat(priceMax)) return false;
     if (inStockOnly && p.stock_quantity <= 0) return false;
@@ -104,10 +106,10 @@ const AllProducts = () => {
   const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
   const paginated = sorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
-  const activeFilters = [selectedCategory, selectedBrand, selectedHp, priceMin, priceMax, inStockOnly ? "stock" : ""].filter(Boolean).length;
+  const activeFilters = [selectedCategory, selectedBrand, selectedHp, selectedFuel, priceMin, priceMax, inStockOnly ? "stock" : ""].filter(Boolean).length;
 
   const clearFilters = () => {
-    setSelectedCategory(""); setSelectedBrand(""); setSelectedHp("");
+    setSelectedCategory(""); setSelectedBrand(""); setSelectedHp(""); setSelectedFuel("");
     setPriceMin(""); setPriceMax(""); setSearch(""); setInStockOnly(false); setPage(1);
   };
 
@@ -138,7 +140,7 @@ const AllProducts = () => {
 
           {/* Always-visible filter bar */}
           <div className="bg-card rounded-xl border border-border p-4 mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <Input placeholder="🔍 Buscar produto..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-9 text-sm" />
               <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}>
                 <option value="">📂 Todas categorias</option>
@@ -151,6 +153,13 @@ const AllProducts = () => {
               <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedHp} onChange={e => { setSelectedHp(e.target.value); setPage(1); }}>
                 <option value="">⚡ Todos HP</option>
                 {hps.map(h => <option key={h} value={h}>{h} HP</option>)}
+              </select>
+              <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedFuel} onChange={e => { setSelectedFuel(e.target.value); setPage(1); }}>
+                <option value="">🔥 Combustível</option>
+                <option value="gasolina">Gasolina</option>
+                <option value="diesel">Diesel</option>
+                <option value="gas">Gás (GLP)</option>
+                <option value="bifuel">Bifuel</option>
               </select>
               <Input type="number" placeholder="Preço mín" value={priceMin} onChange={e => { setPriceMin(e.target.value); setPage(1); }} className="h-9 text-sm" />
               <Input type="number" placeholder="Preço máx" value={priceMax} onChange={e => { setPriceMax(e.target.value); setPage(1); }} className="h-9 text-sm" />
@@ -170,6 +179,7 @@ const AllProducts = () => {
                 {selectedCategory && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedCategory(""); setPage(1); }}>{categories.find(c => c.id === selectedCategory)?.name} ✕</Badge>}
                 {selectedBrand && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedBrand(""); setPage(1); }}>{selectedBrand} ✕</Badge>}
                 {selectedHp && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedHp(""); setPage(1); }}>{selectedHp} HP ✕</Badge>}
+                {selectedFuel && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedFuel(""); setPage(1); }}>{selectedFuel} ✕</Badge>}
                 {priceMin && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setPriceMin(""); setPage(1); }}>Min R${priceMin} ✕</Badge>}
                 {priceMax && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setPriceMax(""); setPage(1); }}>Max R${priceMax} ✕</Badge>}
                 {inStockOnly && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setInStockOnly(false); setPage(1); }}>Em estoque ✕</Badge>}

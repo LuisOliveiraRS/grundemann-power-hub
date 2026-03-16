@@ -48,7 +48,7 @@ interface Product {
   is_active: boolean; is_featured: boolean; free_shipping?: boolean; category_id: string | null;
   subcategory_id?: string | null; image_url: string | null; created_at: string;
   additional_images?: string[] | null; video_url?: string | null;
-  reseller_id?: string | null;
+  reseller_id?: string | null; fuel_type?: string | null; slug?: string | null;
 }
 
 interface ResellerOption {
@@ -177,6 +177,7 @@ const AdminDashboard = () => {
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
     extra_category_ids: [] as string[], menu_category_id: "", reseller_id: "",
+    fuel_type: "", slug: "",
   });
 
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -358,6 +359,8 @@ const AdminDashboard = () => {
       length_cm: productForm.length_cm ? parseFloat(productForm.length_cm) : null,
       menu_category_id: productForm.menu_category_id || null,
       reseller_id: productForm.reseller_id || null,
+      fuel_type: productForm.fuel_type || null,
+      slug: productForm.slug || null,
     };
     let productId = editingProduct?.id;
     if (productId) {
@@ -382,7 +385,17 @@ const AdminDashboard = () => {
     setEditingProduct(null); resetProductForm(); loadAll();
   };
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "" });
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  };
 
   const deleteProduct = async (id: string) => {
     if (!confirm("Excluir este produto?")) return;
@@ -482,6 +495,8 @@ const AdminDashboard = () => {
       extra_category_ids: linkedCatIds,
       menu_category_id: (p as any).menu_category_id || "",
       reseller_id: (p as any).reseller_id || "",
+      fuel_type: (p as any).fuel_type || "",
+      slug: (p as any).slug || "",
     });
     setTab("products");
   };
@@ -1322,8 +1337,8 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Brand, HP, Engine Model */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Brand, HP, Engine Model, Fuel Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <Label>Marca</Label>
                         <Input value={productForm.brand} onChange={e => setProductForm({ ...productForm, brand: e.target.value })} placeholder="Ex: Honda, Branco..." className="mt-1" />
@@ -1336,6 +1351,37 @@ const AdminDashboard = () => {
                         <Label>Modelo do Motor</Label>
                         <Input value={productForm.engine_model} onChange={e => setProductForm({ ...productForm, engine_model: e.target.value })} placeholder="Ex: GX160, GX200..." className="mt-1" />
                       </div>
+                      <div>
+                        <Label>Tipo de Combustível</Label>
+                        <select
+                          className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={productForm.fuel_type}
+                          onChange={e => setProductForm({ ...productForm, fuel_type: e.target.value })}
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="gasolina">Gasolina</option>
+                          <option value="diesel">Diesel</option>
+                          <option value="gas">Gás (GLP)</option>
+                          <option value="bifuel">Bifuel</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Slug */}
+                    <div>
+                      <Label>URL Amigável (Slug)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={productForm.slug}
+                          onChange={e => setProductForm({ ...productForm, slug: e.target.value })}
+                          placeholder="ex: carburador-gerador-6-5hp"
+                          className="flex-1 font-mono text-xs"
+                        />
+                        <Button type="button" variant="outline" size="sm" onClick={() => setProductForm(prev => ({ ...prev, slug: generateSlug(prev.name) }))}>
+                          Gerar
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">URL: /produto/{productForm.slug || "..."}</p>
                     </div>
 
                     {/* Weight & Dimensions */}
