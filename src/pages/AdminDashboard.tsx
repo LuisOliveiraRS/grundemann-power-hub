@@ -469,6 +469,7 @@ const AdminDashboard = () => {
       height_cm: (p as any).height_cm ? String((p as any).height_cm) : "",
       length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
       extra_category_ids: linkedCatIds,
+      menu_category_id: (p as any).menu_category_id || "",
     });
     setTab("products");
   };
