@@ -481,6 +481,7 @@ const AdminDashboard = () => {
       length_cm: (p as any).length_cm ? String((p as any).length_cm) : "",
       extra_category_ids: linkedCatIds,
       menu_category_id: (p as any).menu_category_id || "",
+      reseller_id: (p as any).reseller_id || "",
     });
     setTab("products");
   };
