@@ -155,7 +155,7 @@ const CategoryPage = () => {
           {currentNode && <SEOBreadcrumb items={breadcrumbItems} />}
 
           {treeLoading || loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+            <ProductGridSkeleton count={8} />
           ) : !currentNode ? (
             <p className="text-center text-muted-foreground py-12">Categoria não encontrada.</p>
           ) : (

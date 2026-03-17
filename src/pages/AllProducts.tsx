@@ -188,7 +188,7 @@ const AllProducts = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+            <ProductGridSkeleton count={8} />
           ) : paginated.length === 0 ? (
             <div className="text-center py-12"><p className="text-muted-foreground mb-4">Nenhum produto encontrado.</p></div>
           ) : (
