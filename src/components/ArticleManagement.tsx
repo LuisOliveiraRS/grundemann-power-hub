@@ -75,6 +75,7 @@ const ArticleManagement = () => {
       title: a.title, slug: a.slug, excerpt: a.excerpt, content: a.content,
       category: a.category, tags: a.tags.join(", "), read_time: a.read_time,
       is_published: a.is_published, image_url: a.image_url || "",
+      problem_id: a.problem_id || "", model_id: a.model_id || "",
     });
   };
 
