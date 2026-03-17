@@ -90,6 +90,7 @@ const CategoryTreeAdmin = () => {
       description: editForm.description,
       icon: editForm.icon,
       image_url: editForm.image_url,
+      external_url: editForm.external_url || null,
     }).eq("id", id);
     if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
     toast({ title: "Atualizado!" });
