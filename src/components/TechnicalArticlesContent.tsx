@@ -17,6 +17,8 @@ interface Article {
   tags: string[];
   content: string;
   image_url: string | null;
+  problem_id: string | null;
+  model_id: string | null;
 }
 
 const categoryColors: Record<string, string> = {
