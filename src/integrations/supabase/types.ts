@@ -1043,6 +1043,7 @@ export type Database = {
           specifications: Json | null
           stock_quantity: number
           subcategory_id: string | null
+          tags: string[] | null
           updated_at: string
           video_url: string | null
           weight_kg: number | null
@@ -1079,6 +1080,7 @@ export type Database = {
           specifications?: Json | null
           stock_quantity?: number
           subcategory_id?: string | null
+          tags?: string[] | null
           updated_at?: string
           video_url?: string | null
           weight_kg?: number | null
@@ -1115,6 +1117,7 @@ export type Database = {
           specifications?: Json | null
           stock_quantity?: number
           subcategory_id?: string | null
+          tags?: string[] | null
           updated_at?: string
           video_url?: string | null
           weight_kg?: number | null
@@ -1823,6 +1826,20 @@ export type Database = {
         Args: { p_order_id: string; p_reseller_id: string }
         Returns: Json
       }
+      fuzzy_search_products: {
+        Args: { hp_filter?: string; result_limit?: number; search_term: string }
+        Returns: {
+          brand: string
+          hp: string
+          id: string
+          image_url: string
+          name: string
+          price: number
+          similarity_score: number
+          sku: string
+          tags: string[]
+        }[]
+      }
       get_available_stock: { Args: { p_product_id: string }; Returns: number }
       get_user_points: { Args: { p_user_id: string }; Returns: number }
       has_role: {
@@ -1867,6 +1884,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "user" | "seller"
