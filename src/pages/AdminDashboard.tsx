@@ -180,12 +180,30 @@ const AdminDashboard = () => {
         {tab === "orders" && <AdminOrdersTab orders={orders} onReload={loadAll} />}
 
         {tab === "categories" && (
-          <div>
-            <div className="mb-8">
-              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Tag className="h-8 w-8 text-primary" /> Gestão de Categorias</h1>
-              <p className="text-muted-foreground mt-1">Sistema hierárquico unificado com níveis ilimitados de subcategorias</p>
+          <div className="space-y-10">
+            {/* Menu do Site */}
+            <div>
+              <div className="mb-6">
+                <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Tag className="h-8 w-8 text-primary" /> Categorias do Menu do Site</h1>
+                <p className="text-muted-foreground mt-1">Árvore hierárquica que define o menu de navegação superior. Os produtos são vinculados aqui para aparecerem no site.</p>
+              </div>
+              <CategoryTreeAdmin />
             </div>
-            <CategoryTreeAdmin />
+
+            {/* Separador */}
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center"><span className="bg-background px-4 text-sm font-medium text-muted-foreground">Classificação Interna (Filtros & Relatórios)</span></div>
+            </div>
+
+            {/* Classificação interna */}
+            <div>
+              <div className="mb-6">
+                <h2 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><Boxes className="h-7 w-7 text-muted-foreground" /> Categorias de Classificação</h2>
+                <p className="text-muted-foreground mt-1 text-sm">Categorias internas usadas para filtros, relatórios e agrupamentos de e-commerce. Independem do menu do site.</p>
+              </div>
+              <SubcategoryTreeManagement />
+            </div>
           </div>
         )}
 
