@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Package, Tag, Zap, X } from "lucide-react";
+import { Search, Package, Tag, Zap, X, Stethoscope, Cpu } from "lucide-react";
 
 interface Suggestion {
-  type: "product" | "category";
+  type: "product" | "category" | "diagnostic" | "model";
   id: string;
   name: string;
   extra?: string;
