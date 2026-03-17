@@ -38,6 +38,7 @@ import AdminReports from "@/components/AdminReports";
 import ResellerContentManagement from "@/components/ResellerContentManagement";
 import ProductResellerManager from "@/components/admin/ProductResellerManager";
 import CompatibilityManager from "@/components/admin/CompatibilityManager";
+import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 
@@ -423,6 +424,16 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Cadastre modelos de geradores e vincule peças compatíveis</p>
             </div>
             <CompatibilityManager />
+          </div>
+        )}
+
+        {tab === "diagnostics" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Wrench className="h-8 w-8 text-primary" /> Diagnóstico & Kits de Manutenção</h1>
+              <p className="text-muted-foreground mt-1">Gerencie problemas de diagnóstico, causas, tags de produtos e kits inteligentes</p>
+            </div>
+            <DiagnosticManagement />
           </div>
         )}
       </main>

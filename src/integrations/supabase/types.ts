@@ -106,6 +106,106 @@ export type Database = {
         }
         Relationships: []
       }
+      diagnostic_causes: {
+        Row: {
+          cause_text: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          problem_id: string
+        }
+        Insert: {
+          cause_text: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          problem_id: string
+        }
+        Update: {
+          cause_text?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          problem_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_causes_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diagnostic_problems: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      diagnostic_product_tags: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          problem_id: string
+          search_tag: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          problem_id: string
+          search_tag: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          problem_id?: string
+          search_tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_product_tags_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_coupons: {
         Row: {
           code: string
@@ -333,6 +433,45 @@ export type Database = {
         }
         Relationships: []
       }
+      kit_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          kit_id: string
+          product_id: string
+          quantity: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kit_id: string
+          product_id: string
+          quantity?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kit_id?: string
+          product_id?: string
+          quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_items_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_kits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kit_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_points: {
         Row: {
           created_at: string
@@ -367,6 +506,63 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_kits: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          discount_pct: number | null
+          id: string
+          is_active: boolean | null
+          kit_type: string
+          model_id: string | null
+          name: string
+          problem_id: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          discount_pct?: number | null
+          id?: string
+          is_active?: boolean | null
+          kit_type?: string
+          model_id?: string | null
+          name: string
+          problem_id?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          discount_pct?: number | null
+          id?: string
+          is_active?: boolean | null
+          kit_type?: string
+          model_id?: string | null
+          name?: string
+          problem_id?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_kits_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "generator_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_kits_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_problems"
             referencedColumns: ["id"]
           },
         ]

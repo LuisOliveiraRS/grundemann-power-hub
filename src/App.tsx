@@ -34,6 +34,7 @@ const TechnicalCenter = lazy(() => import("./pages/TechnicalCenter"));
 const ExplodedCatalog = lazy(() => import("./pages/ExplodedCatalog"));
 const GeneratorCalculator = lazy(() => import("./pages/GeneratorCalculator"));
 const ExplodedViews = lazy(() => import("./pages/ExplodedViews"));
+const GeneratorDiagnostic = lazy(() => import("./pages/GeneratorDiagnostic"));
 const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const PaymentPending = lazy(() => import("./pages/PaymentPending"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
@@ -100,6 +101,8 @@ const App = () => (
                     <Route path="/catalogo-interativo" element={<ExplodedCatalog />} />
                     <Route path="/calculadora-de-carga" element={<GeneratorCalculator />} />
                     <Route path="/vistas-explodidas" element={<ExplodedViews />} />
+                    <Route path="/diagnostico" element={<GeneratorDiagnostic />} />
+                    <Route path="/diagnostico/:slug" element={<GeneratorDiagnostic />} />
                     <Route path="/pedido-confirmado" element={<ProtectedRoute><OrderConfirmed /></ProtectedRoute>} />
                     <Route path="/pagamento-pendente" element={<ProtectedRoute><PaymentPending /></ProtectedRoute>} />
                     <Route path="/pagamento-erro" element={<ProtectedRoute><PaymentError /></ProtectedRoute>} />
