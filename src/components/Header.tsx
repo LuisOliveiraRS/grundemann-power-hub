@@ -34,6 +34,9 @@ const Header = () => {
   useEffect(() => {
     loadCartCount();
 
+    const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
+    window.addEventListener("open-cart-drawer", handleOpenCart);
+
     if (user) {
       const channel = supabase
         .channel(`cart-count-${user.id}`)
@@ -45,15 +48,10 @@ const Header = () => {
         }, () => loadCartCount())
         .subscribe();
 
-      const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
-      window.addEventListener("open-cart-drawer", handleOpenCart);
-
       return () => { supabase.removeChannel(channel); window.removeEventListener("open-cart-drawer", handleOpenCart); };
-    } else {
-      const handleOpenCart = () => { setCartOpen(true); loadCartCount(); };
-      window.addEventListener("open-cart-drawer", handleOpenCart);
-      return () => { window.removeEventListener("open-cart-drawer", handleOpenCart); };
     }
+
+    return () => { window.removeEventListener("open-cart-drawer", handleOpenCart); };
   }, [user]);
 
   return (

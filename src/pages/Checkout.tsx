@@ -86,15 +86,17 @@ const Checkout = () => {
   }, [user]);
 
   const loadCart = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("cart_items")
       .select("id, product_id, quantity, products(name, price, image_url)")
       .eq("user_id", user!.id);
+    if (error) { toast({ title: "Erro ao carregar carrinho", description: error.message, variant: "destructive" }); return; }
     if (data) setItems(data.map((d: any) => ({ ...d, product: d.products })));
   };
 
   const loadProfile = async () => {
-    const { data } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
+    const { data, error } = await supabase.from("profiles").select("*").eq("user_id", user!.id).single();
+    if (error) { console.error("Erro ao carregar perfil:", error.message); return; }
     if (data) {
       setShipping({
         full_name: data.full_name || "", phone: data.phone || "",
@@ -107,13 +109,13 @@ const Checkout = () => {
   };
 
   const loadCoupons = async () => {
-    if (!user) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("discount_coupons")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user!.id)
       .eq("is_used", false)
       .order("created_at", { ascending: false });
+    if (error) { console.error("Erro ao carregar cupons:", error.message); return; }
     if (data) {
       const valid = (data as Coupon[]).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
       setAvailableCoupons(valid);
@@ -122,12 +124,14 @@ const Checkout = () => {
 
   const updateQty = async (id: string, quantity: number) => {
     if (quantity < 1) return removeItem(id);
-    await supabase.from("cart_items").update({ quantity }).eq("id", id);
+    const { error } = await supabase.from("cart_items").update({ quantity }).eq("id", id);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     loadCart();
   };
 
   const removeItem = async (id: string) => {
-    await supabase.from("cart_items").delete().eq("id", id);
+    const { error } = await supabase.from("cart_items").delete().eq("id", id);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     loadCart();
   };
 
@@ -328,7 +332,6 @@ const Checkout = () => {
     setPaymentLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
 
       const { data, error } = await supabase.functions.invoke("create-payment", {
         body: { order_id: orderId },
