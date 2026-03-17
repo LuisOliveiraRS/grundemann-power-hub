@@ -183,25 +183,37 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                         >
                           Ver todos em {cat.name}
                         </Link>
-                        {subs.map(({ node: sub, depth }) => (
-                          <Link
-                            key={sub.id}
-                            to={`/categoria/${sub.fullPath}`}
-                            onClick={closeMenu}
-                            onMouseEnter={() => {
-                              clearCloseTimeout();
-                              setHoveredSub(sub.id);
-                            }}
-                            className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
-                            style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
-                          >
-                            {depth > 0 && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />}
-                            <span className={depth === 0 ? "font-semibold" : ""}>{sub.name}</span>
-                            {sub.children.length > 0 && (
-                              <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground flex-shrink-0" />
-                            )}
-                          </Link>
-                        ))}
+                        {subs.map(({ node: sub, depth }) => {
+                          const isExternal = !!sub.external_url;
+                          const linkProps = isExternal
+                            ? { as: "a" as const, href: sub.external_url!, target: "_blank", rel: "noopener noreferrer" }
+                            : {};
+                          const Comp = isExternal ? "a" : Link;
+                          const compProps = isExternal
+                            ? { href: sub.external_url!, target: "_blank", rel: "noopener noreferrer" }
+                            : { to: `/categoria/${sub.fullPath}` };
+
+                          return (
+                            <Comp
+                              key={sub.id}
+                              {...(compProps as any)}
+                              onClick={closeMenu}
+                              onMouseEnter={() => {
+                                clearCloseTimeout();
+                                setHoveredSub(sub.id);
+                              }}
+                              className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
+                              style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
+                            >
+                              {depth > 0 && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />}
+                              <span className={depth === 0 ? "font-semibold" : ""}>{sub.name}</span>
+                              {isExternal && <ExternalLink className="h-3 w-3 ml-1 text-muted-foreground flex-shrink-0" />}
+                              {!isExternal && sub.children.length > 0 && (
+                                <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground flex-shrink-0" />
+                              )}
+                            </Comp>
+                          );
+                        })}
                       </div>
 
                       <div className="min-w-0 min-h-[260px] p-3 space-y-2">
