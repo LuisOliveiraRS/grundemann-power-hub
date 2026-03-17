@@ -82,7 +82,11 @@ const ArticleManagement = () => {
   const save = async () => {
     const slug = form.slug || generateSlug(form.title);
     const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
-    const payload = { ...form, slug, tags, image_url: form.image_url || null };
+    const payload = {
+      ...form, slug, tags, image_url: form.image_url || null,
+      problem_id: form.problem_id || null,
+      model_id: form.model_id || null,
+    };
 
     if (editing) {
       const { error } = await supabase.from("technical_articles").update(payload).eq("id", editing.id);
