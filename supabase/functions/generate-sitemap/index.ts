@@ -45,6 +45,18 @@ Deno.serve(async (req) => {
     .select("slug, created_at")
     .eq("is_visible", true);
 
+  // Fetch diagnostic problems for SEO pages
+  const { data: problems } = await supabase
+    .from("diagnostic_problems")
+    .select("slug, updated_at")
+    .eq("is_active", true);
+
+  // Fetch generator models for SEO pages
+  const { data: models } = await supabase
+    .from("generator_models")
+    .select("name, brand, updated_at")
+    .eq("is_active", true);
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 `;
