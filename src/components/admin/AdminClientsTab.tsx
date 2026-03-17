@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Plus, Trash2, Edit, Search, ChevronDown, ChevronUp, X, Users, ShoppingCart,
+  Plus, Trash2, Edit, Search, ChevronDown, ChevronUp, X, Users, ShoppingCart, UserCog,
 } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { normalizeWhatsAppPhone } from "@/lib/whatsappUtils";
@@ -28,6 +29,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
   const [clientRoleFilter, setClientRoleFilter] = useState("");
   const [editingClient, setEditingClient] = useState<Partial<ProfileFull> | null>(null);
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+  const [editingRolesFor, setEditingRolesFor] = useState<string | null>(null);
   const [clientOrderItems, setClientOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [clientForm, setClientForm] = useState({
     full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
@@ -37,18 +39,31 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
 
   const resetClientForm = () => setClientForm({ full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "", address: "", address_number: "", address_complement: "", neighborhood: "", city: "", state: "", zip_code: "", notes: "" });
 
-  const getUserRoleType = (userId: string): string => {
-    const roles = clientRoles.filter(r => r.user_id === userId);
-    if (roles.some(r => r.role === "admin")) return "admin";
-    if (roles.some(r => r.role === "seller")) return "seller";
+  // All users are "cliente" by default; they can also have additional roles
+  const getUserRoles = (userId: string): string[] => {
+    const roles: string[] = ["cliente"]; // everyone is a client
+    const userRoles = clientRoles.filter(r => r.user_id === userId);
+    if (userRoles.some(r => r.role === "admin")) roles.push("admin");
+    if (userRoles.some(r => r.role === "seller")) roles.push("seller");
     const mech = clientMechanics.find(m => m.user_id === userId);
-    if (mech) return mech.partner_type || "mecanico";
+    if (mech) roles.push(mech.partner_type || "mecanico");
+    return [...new Set(roles)];
+  };
+
+  const getUserPrimaryRole = (userId: string): string => {
+    const roles = getUserRoles(userId);
+    // Return the "highest" role for badge display
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("seller")) return "seller";
+    if (roles.includes("revendedor")) return "revendedor";
+    if (roles.includes("oficina")) return "oficina";
+    if (roles.includes("mecanico")) return "mecanico";
     return "cliente";
   };
 
   const filteredClients = clients.filter(c => {
-    const roleType = getUserRoleType(c.user_id);
-    if (clientRoleFilter && roleType !== clientRoleFilter) return false;
+    const roles = getUserRoles(c.user_id);
+    if (clientRoleFilter && !roles.includes(clientRoleFilter)) return false;
     if (!clientSearch) return true;
     const s = clientSearch.toLowerCase();
     return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s) || (c.cpf_cnpj || "").toLowerCase().includes(s);
