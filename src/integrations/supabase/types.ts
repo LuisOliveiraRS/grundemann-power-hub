@@ -1498,6 +1498,60 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_reservations: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          quantity: number
+          released_at: string | null
+          reserved_at: string
+          status: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          quantity: number
+          released_at?: string | null
+          reserved_at?: string
+          status?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          quantity?: number
+          released_at?: string | null
+          reserved_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_reservations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_reservations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcategories: {
         Row: {
           category_id: string
@@ -1716,6 +1770,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_stock_reservation: { Args: { p_order_id: string }; Returns: Json }
+      get_available_stock: { Args: { p_product_id: string }; Returns: number }
       get_user_points: { Args: { p_user_id: string }; Returns: number }
       has_role: {
         Args: {
@@ -1728,6 +1784,12 @@ export type Database = {
       process_referral: {
         Args: { p_referral_code: string; p_referred_id: string }
         Returns: boolean
+      }
+      release_expired_reservations: { Args: never; Returns: number }
+      release_stock_reservation: { Args: { p_order_id: string }; Returns: Json }
+      reserve_stock: {
+        Args: { p_items: Json; p_order_id: string }
+        Returns: Json
       }
       search_articles: {
         Args: { search_query: string }

@@ -275,6 +275,36 @@ const Checkout = () => {
       notes: "Pedido criado pelo cliente",
     });
 
+    // Reserve stock transactionally
+    const stockItems = items
+      .filter(i => i.product_id)
+      .map(i => ({ product_id: i.product_id, quantity: i.quantity }));
+
+    if (stockItems.length > 0) {
+      const { error: stockError } = await supabase.rpc("reserve_stock", {
+        p_order_id: order.id,
+        p_items: stockItems,
+      });
+
+      if (stockError) {
+        console.error("Stock reservation failed:", stockError);
+        // Cancel the order since stock is unavailable
+        await supabase.from("orders").update({ status: "cancelled" as any }).eq("id", order.id);
+        await supabase.from("order_status_history").insert({
+          order_id: order.id,
+          status: "cancelled" as any,
+          notes: "Cancelado automaticamente: estoque insuficiente",
+        });
+        toast({
+          title: "Estoque insuficiente",
+          description: "Um ou mais produtos não possuem estoque disponível. Atualize seu carrinho.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+    }
+
     // Mark coupon as used
     if (appliedCoupon) {
       const isRewardCoupon = availableCoupons.some(c => c.id === appliedCoupon.id);
