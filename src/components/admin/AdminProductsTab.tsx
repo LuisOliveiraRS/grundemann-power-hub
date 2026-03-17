@@ -107,6 +107,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       reseller_id: productForm.reseller_id || null,
       fuel_type: productForm.fuel_type || null,
       slug: productForm.slug || null,
+      tags: productForm.tags ? productForm.tags.split(",").map(t => t.trim().toLowerCase()).filter(Boolean) : [],
     };
     let productId = editingProduct?.id;
     if (productId) {
