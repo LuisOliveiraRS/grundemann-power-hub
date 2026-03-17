@@ -40,6 +40,7 @@ import ProductResellerManager from "@/components/admin/ProductResellerManager";
 import CompatibilityManager from "@/components/admin/CompatibilityManager";
 import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
+import IntelligentAnalytics from "@/components/admin/IntelligentAnalytics";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 
 import type {
