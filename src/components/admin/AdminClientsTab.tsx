@@ -188,7 +188,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
       {/* Role stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         {["admin", "seller", "revendedor", "oficina", "mecanico", "cliente"].map(role => {
-          const count = clients.filter(c => getUserRoleType(c.user_id) === role).length;
+          const count = clients.filter(c => getUserRoles(c.user_id).includes(role)).length;
           return (
             <button key={role} onClick={() => setClientRoleFilter(clientRoleFilter === role ? "" : role)} className={`bg-card rounded-xl border p-3 text-center transition-all hover:shadow-md ${clientRoleFilter === role ? "border-primary shadow-md" : "border-border"}`}>
               <Badge className={`${roleTypeColor[role]} text-[10px] mb-1`}>{roleTypeLabel[role]}</Badge>
