@@ -148,6 +148,60 @@ const TechnicalArticlesContent = () => {
               ))}
             </div>
           </div>
+
+          {/* Linked problem */}
+          {linkedProblem && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <button
+                onClick={() => navigate(`/problema/${linkedProblem.slug}`)}
+                className="flex items-center gap-3 p-4 rounded-xl border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors w-full text-left"
+              >
+                <Stethoscope className="h-5 w-5 text-destructive flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Problema Relacionado</p>
+                  <p className="font-heading font-bold text-foreground">{linkedProblem.name}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+              </button>
+            </div>
+          )}
+
+          {/* Linked model */}
+          {linkedModel && (
+            <div className="mt-4">
+              <button
+                onClick={() => {
+                  const slug = `${(linkedModel.brand || "").toLowerCase()}-${linkedModel.name.toLowerCase()}`
+                    .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+                  navigate(`/pecas/${slug}`);
+                }}
+                className="flex items-center gap-3 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors w-full text-left"
+              >
+                <Cpu className="h-5 w-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Modelo Relacionado</p>
+                  <p className="font-heading font-bold text-foreground">{linkedModel.brand ? `${linkedModel.brand} ` : ""}{linkedModel.name}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+              </button>
+            </div>
+          )}
+
+          {/* Related products */}
+          {relatedProducts.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <h3 className="font-heading font-bold mb-3 flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Produtos Relacionados</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {relatedProducts.map((p: any) => (
+                  <button key={p.id} onClick={() => navigate(`/produto/${p.slug || p.id}`)} className="rounded-lg border border-border p-3 hover:shadow-md hover:border-primary/30 transition-all text-left group">
+                    {p.image_url && <img src={p.image_url} alt={p.name} className="w-full aspect-square object-contain rounded-lg mb-2" loading="lazy" />}
+                    <p className="text-xs font-semibold line-clamp-2 group-hover:text-primary transition-colors">{p.name}</p>
+                    <p className="text-sm font-bold text-primary mt-1">R$ {Number(p.price).toFixed(2).replace(".", ",")}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </article>
     );
