@@ -21,7 +21,12 @@ interface Article {
   is_published: boolean;
   image_url: string | null;
   created_at: string;
+  problem_id: string | null;
+  model_id: string | null;
 }
+
+interface DiagProblem { id: string; name: string; }
+interface GenModel { id: string; name: string; brand: string | null; }
 
 const ArticleManagement = () => {
   const { toast } = useToast();
@@ -29,9 +34,12 @@ const ArticleManagement = () => {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Article | null>(null);
   const [creating, setCreating] = useState(false);
+  const [problems, setProblems] = useState<DiagProblem[]>([]);
+  const [models, setModels] = useState<GenModel[]>([]);
   const [form, setForm] = useState({
     title: "", slug: "", excerpt: "", content: "", category: "Manutenção",
     tags: "", read_time: "5 min", is_published: false, image_url: "",
+    problem_id: "", model_id: "",
   });
 
   const fetchArticles = async () => {
@@ -39,7 +47,16 @@ const ArticleManagement = () => {
     setArticles((data as any[]) || []);
   };
 
-  useEffect(() => { fetchArticles(); }, []);
+  useEffect(() => { fetchArticles(); fetchLinkedData(); }, []);
+
+  const fetchLinkedData = async () => {
+    const [pRes, mRes] = await Promise.all([
+      supabase.from("diagnostic_problems").select("id, name").eq("is_active", true).order("display_order"),
+      supabase.from("generator_models").select("id, name, brand").eq("is_active", true).order("name"),
+    ]);
+    setProblems((pRes.data || []) as DiagProblem[]);
+    setModels((mRes.data || []) as GenModel[]);
+  };
 
   const generateSlug = (title: string) =>
     title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -48,7 +65,7 @@ const ArticleManagement = () => {
   const openCreate = () => {
     setEditing(null);
     setCreating(true);
-    setForm({ title: "", slug: "", excerpt: "", content: "", category: "Manutenção", tags: "", read_time: "5 min", is_published: false, image_url: "" });
+    setForm({ title: "", slug: "", excerpt: "", content: "", category: "Manutenção", tags: "", read_time: "5 min", is_published: false, image_url: "", problem_id: "", model_id: "" });
   };
 
   const openEdit = (a: Article) => {
@@ -58,13 +75,18 @@ const ArticleManagement = () => {
       title: a.title, slug: a.slug, excerpt: a.excerpt, content: a.content,
       category: a.category, tags: a.tags.join(", "), read_time: a.read_time,
       is_published: a.is_published, image_url: a.image_url || "",
+      problem_id: a.problem_id || "", model_id: a.model_id || "",
     });
   };
 
   const save = async () => {
     const slug = form.slug || generateSlug(form.title);
     const tags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
-    const payload = { ...form, slug, tags, image_url: form.image_url || null };
+    const payload = {
+      ...form, slug, tags, image_url: form.image_url || null,
+      problem_id: form.problem_id || null,
+      model_id: form.model_id || null,
+    };
 
     if (editing) {
       const { error } = await supabase.from("technical_articles").update(payload).eq("id", editing.id);
@@ -127,6 +149,20 @@ const ArticleManagement = () => {
           <div className="md:col-span-2">
             <Label>URL da Imagem (opcional)</Label>
             <Input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} />
+          </div>
+          <div>
+            <Label>Problema Vinculado (opcional)</Label>
+            <select className="h-10 w-full border border-input rounded-md px-3 text-sm bg-background" value={form.problem_id} onChange={e => setForm({ ...form, problem_id: e.target.value })}>
+              <option value="">Nenhum</option>
+              {problems.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Modelo Vinculado (opcional)</Label>
+            <select className="h-10 w-full border border-input rounded-md px-3 text-sm bg-background" value={form.model_id} onChange={e => setForm({ ...form, model_id: e.target.value })}>
+              <option value="">Nenhum</option>
+              {models.map(m => <option key={m.id} value={m.id}>{m.brand ? `${m.brand} ` : ""}{m.name}</option>)}
+            </select>
           </div>
         </div>
         <div>

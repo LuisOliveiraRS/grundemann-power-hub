@@ -45,6 +45,9 @@ const ModelSEO = () => {
     if (!found) { setLoading(false); return; }
     setModel(found);
 
+    // Log search for analytics
+    supabase.from("model_search_logs").insert({ model_id: found.id, model_name: found.name }).then(() => {});
+
     // Load products for this model
     const [prodsRes, kitsRes] = await Promise.all([
       supabase

@@ -38,6 +38,9 @@ const DiagnosticSEO = () => {
     if (!prob) { setLoading(false); return; }
     setProblem(prob);
 
+    // Log search for analytics (fire and forget)
+    supabase.from("diagnostic_search_logs").insert({ problem_id: prob.id, problem_slug: prob.slug }).then(() => {});
+
     const [causesRes, tagsRes, kitsRes] = await Promise.all([
       supabase.from("diagnostic_causes").select("*").eq("problem_id", prob.id).order("display_order"),
       supabase.from("diagnostic_product_tags").select("*").eq("problem_id", prob.id),
