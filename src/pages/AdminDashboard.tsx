@@ -437,6 +437,16 @@ const AdminDashboard = () => {
             <DiagnosticManagement />
           </div>
         )}
+
+        {tab === "intelligence" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><TrendingUp className="h-8 w-8 text-primary" /> Painel Inteligente</h1>
+              <p className="text-muted-foreground mt-1">Problemas mais pesquisados, modelos mais buscados, peças mais vendidas e insights da IA</p>
+            </div>
+            <IntelligentAnalytics />
+          </div>
+        )}
       </main>
     </div>
   );
