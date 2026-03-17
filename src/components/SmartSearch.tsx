@@ -122,7 +122,7 @@ const SmartSearch = () => {
   };
 
   return (
-    <div ref={ref} className="relative flex-1 max-w-xl z-[60]" role="combobox" aria-expanded={open} aria-haspopup="listbox">
+    <div ref={ref} className="relative flex-1 max-w-xl z-[60]" role="combobox" aria-expanded={open} aria-haspopup="listbox" style={{ position: 'relative' }}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <input
