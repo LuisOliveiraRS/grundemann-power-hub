@@ -86,7 +86,18 @@ const ProductDetail = () => {
         );
       }
       
-      // Load compatible products (same engine_model or HP)
+      // Load compatible products from product_models table
+      promises.push(
+        supabase.from("product_models").select("model_id, notes, generator_models(id, name, brand, hp, engine_type)")
+          .eq("product_id", data.id)
+          .then(({ data: pm }) => {
+            if (pm && pm.length > 0) {
+              setCompatibleModels(pm.map((r: any) => ({ ...r.generator_models, notes: r.notes })));
+            }
+          })
+      );
+
+      // Load compatible products (same engine_model or HP) as fallback
       if (data.engine_model || data.hp) {
         let query = supabase.from("products").select("id, name, price, original_price, image_url, sku, stock_quantity")
           .eq("is_active", true).neq("id", data.id).limit(4);

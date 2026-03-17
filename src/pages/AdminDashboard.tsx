@@ -408,6 +408,16 @@ const AdminDashboard = () => {
         )}
 
         {tab === "site-report" && <SiteFeatureReport />}
+
+        {tab === "compatibility" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Cpu className="h-8 w-8 text-primary" /> Compatibilidade de Peças</h1>
+              <p className="text-muted-foreground mt-1">Cadastre modelos de geradores e vincule peças compatíveis</p>
+            </div>
+            <CompatibilityManager />
+          </div>
+        )}
       </main>
     </div>
   );
