@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
 import ProductCard from "@/components/ProductCard";
+import ProductGridSkeleton from "@/components/ProductSkeletons";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
