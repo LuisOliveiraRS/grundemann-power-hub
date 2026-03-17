@@ -235,6 +235,8 @@ const SmartSearch = () => {
                       <p className="text-sm font-medium truncate">{s.name}</p>
                       {s.extra && <p className="text-xs text-muted-foreground truncate">{s.extra}</p>}
                       {s.type === "category" && <p className="text-xs text-primary font-medium">Ver categoria →</p>}
+                      {s.type === "diagnostic" && <p className="text-xs text-destructive font-medium">Ver diagnóstico →</p>}
+                      {s.type === "model" && <p className="text-xs text-primary font-medium">Ver peças compatíveis →</p>}
                     </div>
                     {s.type === "product" && s.price !== undefined && (
                       <span className="text-sm font-bold text-price flex-shrink-0">
