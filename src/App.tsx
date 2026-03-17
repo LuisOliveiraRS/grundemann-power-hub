@@ -105,6 +105,8 @@ const App = () => (
                     <Route path="/vistas-explodidas" element={<ExplodedViews />} />
                     <Route path="/diagnostico" element={<GeneratorDiagnostic />} />
                     <Route path="/diagnostico/:slug" element={<GeneratorDiagnostic />} />
+                    <Route path="/problema/:slug" element={<DiagnosticSEO />} />
+                    <Route path="/pecas/:slug" element={<ModelSEO />} />
                     <Route path="/pedido-confirmado" element={<ProtectedRoute><OrderConfirmed /></ProtectedRoute>} />
                     <Route path="/pagamento-pendente" element={<ProtectedRoute><PaymentPending /></ProtectedRoute>} />
                     <Route path="/pagamento-erro" element={<ProtectedRoute><PaymentError /></ProtectedRoute>} />
