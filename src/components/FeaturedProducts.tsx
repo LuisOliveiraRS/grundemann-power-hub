@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "./ProductCard";
+import ProductGridSkeleton from "./ProductSkeletons";
 
 interface Product {
   id: string;
