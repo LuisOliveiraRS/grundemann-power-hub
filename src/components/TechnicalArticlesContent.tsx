@@ -71,6 +71,31 @@ const TechnicalArticlesContent = () => {
   });
   const categories = [...new Set(allArticles.map(a => a.category))];
 
+  // Load linked data when article is selected
+  useEffect(() => {
+    if (!selectedArticle) {
+      setLinkedProblem(null); setLinkedModel(null); setRelatedProducts([]);
+      return;
+    }
+    const loadLinked = async () => {
+      if (selectedArticle.problem_id) {
+        const { data } = await supabase.from("diagnostic_problems").select("id, name, slug").eq("id", selectedArticle.problem_id).single();
+        setLinkedProblem(data);
+      }
+      if (selectedArticle.model_id) {
+        const { data } = await supabase.from("generator_models").select("id, name, brand").eq("id", selectedArticle.model_id).single();
+        setLinkedModel(data);
+      }
+      // Find related products from tags
+      if (selectedArticle.tags.length > 0) {
+        const orConds = selectedArticle.tags.slice(0, 3).map(t => `name.ilike.%${t}%,tags.cs.{${t}}`).join(",");
+        const { data } = await supabase.from("products").select("id, name, price, image_url, slug").eq("is_active", true).or(orConds).limit(4);
+        setRelatedProducts(data || []);
+      }
+    };
+    loadLinked();
+  }, [selectedArticle]);
+
   if (selectedArticle) {
     return (
       <article>
