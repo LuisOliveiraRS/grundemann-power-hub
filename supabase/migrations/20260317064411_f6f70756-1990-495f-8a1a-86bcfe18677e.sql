@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_categories ADD COLUMN IF NOT EXISTS external_url text DEFAULT NULL;
