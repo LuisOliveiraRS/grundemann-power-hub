@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Button } from "@/components/ui/button";
+import { ProductDetailSkeleton } from "@/components/ProductSkeletons";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -158,7 +159,7 @@ const ProductDetail = () => {
   if (loading) return (
     <div className="min-h-screen flex flex-col">
       <TopBar /><Header /><CategoryNav />
-      <div className="flex-1 flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+      <ProductDetailSkeleton />
       <Footer />
     </div>
   );

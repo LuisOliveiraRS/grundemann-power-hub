@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "./ProductCard";
+import ProductGridSkeleton from "./ProductSkeletons";
 
 interface Product {
   id: string;
@@ -33,7 +34,7 @@ const FeaturedProducts = () => {
           Destaques
         </h2>
         {loading ? (
-          <div className="flex justify-center py-8"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+          <ProductGridSkeleton count={8} />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {products.map(p => (

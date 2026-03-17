@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import ProductCard from "@/components/ProductCard";
+import ProductGridSkeleton from "@/components/ProductSkeletons";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
@@ -188,7 +189,7 @@ const AllProducts = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+            <ProductGridSkeleton count={8} />
           ) : paginated.length === 0 ? (
             <div className="text-center py-12"><p className="text-muted-foreground mb-4">Nenhum produto encontrado.</p></div>
           ) : (

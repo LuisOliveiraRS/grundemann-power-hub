@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
 import ProductCard from "@/components/ProductCard";
+import ProductGridSkeleton from "@/components/ProductSkeletons";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import CategoryNav from "@/components/CategoryNav";
@@ -155,7 +156,7 @@ const CategoryPage = () => {
           {currentNode && <SEOBreadcrumb items={breadcrumbItems} />}
 
           {treeLoading || loading ? (
-            <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
+            <ProductGridSkeleton count={8} />
           ) : !currentNode ? (
             <p className="text-center text-muted-foreground py-12">Categoria não encontrada.</p>
           ) : (
