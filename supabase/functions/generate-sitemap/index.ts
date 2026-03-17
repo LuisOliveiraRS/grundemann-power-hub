@@ -81,6 +81,29 @@ Deno.serve(async (req) => {
     }
   }
 
+  if (problems) {
+    for (const prob of problems) {
+      xml += `  <url>
+    <loc>${baseUrl}/problema/${prob.slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+    }
+  }
+
+  if (models) {
+    for (const m of models) {
+      const slug = `${(m.brand || "").toLowerCase()}-${m.name.toLowerCase()}`
+        .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      xml += `  <url>
+    <loc>${baseUrl}/pecas/${slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    }
+
   if (products) {
     for (const p of products) {
       const lastmod = p.updated_at ? new Date(p.updated_at).toISOString().split("T")[0] : "";
