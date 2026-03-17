@@ -258,6 +258,45 @@ export type Database = {
           },
         ]
       }
+      generator_models: {
+        Row: {
+          brand: string | null
+          created_at: string
+          description: string | null
+          displacement_cc: string | null
+          engine_type: string | null
+          hp: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          description?: string | null
+          displacement_cc?: string | null
+          engine_type?: string | null
+          hp?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          description?: string | null
+          displacement_cc?: string | null
+          engine_type?: string | null
+          hp?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       import_logs: {
         Row: {
           created_at: string
@@ -915,6 +954,45 @@ export type Database = {
             columns: ["subcategory_id"]
             isOneToOne: false
             referencedRelation: "subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_models: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string
+          notes: string | null
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id: string
+          notes?: string | null
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string
+          notes?: string | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "generator_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_models_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -1883,6 +1961,22 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      search_compatible_products: {
+        Args: { model_search: string; result_limit?: number }
+        Returns: {
+          compatibility_notes: string
+          match_score: number
+          model_brand: string
+          model_id: string
+          model_name: string
+          product_hp: string
+          product_id: string
+          product_image: string
+          product_name: string
+          product_price: number
+          product_sku: string
+        }[]
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
