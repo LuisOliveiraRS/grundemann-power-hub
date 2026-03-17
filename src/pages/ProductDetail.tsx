@@ -58,6 +58,7 @@ const ProductDetail = () => {
   const [showVideo, setShowVideo] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [compatibleProducts, setCompatibleProducts] = useState<any[]>([]);
+  const [compatibleModels, setCompatibleModels] = useState<any[]>([]);
   const [zoomedImage, setZoomedImage] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
 
