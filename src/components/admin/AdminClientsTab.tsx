@@ -220,7 +220,8 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
                 const phoneClean = normalizeWhatsAppPhone(c.phone);
                 const hasPhone = phoneClean.length >= 12;
                 const isExpanded = expandedClientId === c.user_id;
-                const roleType = getUserRoleType(c.user_id);
+                const userRoles = getUserRoles(c.user_id);
+                const roleType = getUserPrimaryRole(c.user_id);
                 return (
                   <React.Fragment key={c.user_id}>
                     <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => toggleClientExpand(c.user_id)}>
