@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Plus, Trash2, Edit, Eye, EyeOff, Search, X, Upload, ImageIcon,
   SlidersHorizontal, RefreshCw, Video, Download, CheckSquare, Square,
-  Wand2, Loader2, FileUp, Package, Store,
+  Wand2, Loader2, FileUp, Package, Store, Tag,
 } from "lucide-react";
 import MenuCategoryPicker from "@/components/MenuCategoryPicker";
 import type { Product, Category, Subcategory, ResellerOption, ProductCategoryLink, ProfileFull } from "@/types/admin";
