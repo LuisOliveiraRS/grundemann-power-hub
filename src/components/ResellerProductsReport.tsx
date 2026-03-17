@@ -241,7 +241,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                     <td className="p-3 text-right"><span className="text-sm font-semibold">{sales?.total_qty || 0}</span></td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">R$ {(sales?.total_value || 0).toFixed(2).replace(".", ",")}</span></td>
                     <td className="p-3">
-                      {p.stock_quantity <= 0 ? (
+                      {(p.reseller_stock ?? p.stock_quantity) <= 0 ? (
                         <Badge variant="destructive" className="text-xs">Sem estoque</Badge>
                       ) : p.is_active ? (
                         <Badge className="bg-primary/20 text-primary text-xs">Ativo</Badge>
