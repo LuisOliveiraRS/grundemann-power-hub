@@ -14,6 +14,8 @@ interface ResellerProduct {
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
+  reseller_stock?: number | null;
+  custom_price?: number | null;
 }
 
 interface SalesData {
@@ -40,14 +42,38 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
   const loadData = async () => {
     setLoading(true);
 
-    // Get products belonging to this reseller
-    const { data: prods } = await supabase
-      .from("products")
-      .select("id, name, sku, price, stock_quantity, image_url, is_active")
-      .eq("reseller_id", resellerId)
-      .order("name");
+    // Get products from legacy reseller_id AND new product_resellers table
+    const [legacyRes, newLinksRes] = await Promise.all([
+      supabase.from("products").select("id, name, sku, price, stock_quantity, image_url, is_active").eq("reseller_id", resellerId).order("name"),
+      supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, is_active").eq("reseller_id", resellerId).eq("is_active", true),
+    ]);
 
-    const productList = (prods || []) as ResellerProduct[];
+    const legacyProducts = (legacyRes.data || []) as ResellerProduct[];
+    const newLinks = (newLinksRes.data || []) as any[];
+
+    // Fetch products from new links that aren't already in legacy
+    const legacyIds = new Set(legacyProducts.map(p => p.id));
+    const newProductIds = newLinks.map(l => l.product_id).filter(id => !legacyIds.has(id));
+
+    let extraProducts: ResellerProduct[] = [];
+    if (newProductIds.length > 0) {
+      const { data } = await supabase.from("products").select("id, name, sku, price, stock_quantity, image_url, is_active").in("id", newProductIds);
+      extraProducts = (data || []) as ResellerProduct[];
+    }
+
+    // Merge: enrich all products with reseller-specific stock/price
+    const allProducts = [...legacyProducts, ...extraProducts].map(p => {
+      const link = newLinks.find(l => l.product_id === p.id);
+      return {
+        ...p,
+        reseller_stock: link?.stock_quantity ?? null,
+        custom_price: link?.custom_price ?? null,
+      };
+    });
+
+    // Deduplicate by id
+    const seen = new Set<string>();
+    const productList = allProducts.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
     setProducts(productList);
 
     if (productList.length > 0) {
@@ -108,7 +134,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
   );
 
   const totalProducts = products.length;
-  const totalStock = products.reduce((s, p) => s + p.stock_quantity, 0);
+  const totalStock = products.reduce((s, p) => s + (p.reseller_stock ?? p.stock_quantity), 0);
   const totalSold = salesData.reduce((s, d) => s + d.total_qty, 0);
   const totalRevenue = salesData.reduce((s, d) => s + d.total_value, 0);
 
@@ -201,16 +227,21 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                     </td>
                     <td className="p-3"><p className="text-sm font-medium line-clamp-1">{p.name}</p></td>
                     <td className="p-3"><span className="text-xs font-mono text-muted-foreground">{p.sku || "—"}</span></td>
-                    <td className="p-3 text-right"><span className="text-sm">R$ {p.price.toFixed(2).replace(".", ",")}</span></td>
+                    <td className="p-3 text-right"><span className="text-sm">R$ {(p.custom_price ?? p.price).toFixed(2).replace(".", ",")}</span></td>
                     <td className="p-3 text-right">
-                      <span className={`text-sm font-bold ${p.stock_quantity <= 0 ? "text-destructive" : p.stock_quantity <= 5 ? "text-yellow-600" : ""}`}>
-                        {p.stock_quantity}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-sm font-bold ${(p.reseller_stock ?? p.stock_quantity) <= 0 ? "text-destructive" : (p.reseller_stock ?? p.stock_quantity) <= 5 ? "text-yellow-600" : ""}`}>
+                          {p.reseller_stock ?? p.stock_quantity}
+                        </span>
+                        {p.reseller_stock !== null && p.reseller_stock !== undefined && (
+                          <span className="text-[10px] text-muted-foreground">Geral: {p.stock_quantity}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">{sales?.total_qty || 0}</span></td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">R$ {(sales?.total_value || 0).toFixed(2).replace(".", ",")}</span></td>
                     <td className="p-3">
-                      {p.stock_quantity <= 0 ? (
+                      {(p.reseller_stock ?? p.stock_quantity) <= 0 ? (
                         <Badge variant="destructive" className="text-xs">Sem estoque</Badge>
                       ) : p.is_active ? (
                         <Badge className="bg-primary/20 text-primary text-xs">Ativo</Badge>
