@@ -104,16 +104,22 @@ const AdminDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [toast]);
 
-  // Auto-sync pending orders
+  // Auto-sync pending orders — throttled: max 3 at a time, every 15s to avoid API spam
   useEffect(() => {
     const pendingOrderIds = orders.filter(o => o.status === "pending").map(o => o.id);
     if (pendingOrderIds.length === 0) return;
+    let syncIndex = 0;
+    const BATCH_SIZE = 3;
     const interval = window.setInterval(async () => {
       try {
-        await Promise.all(pendingOrderIds.map(id => syncPaymentStatus(id)));
+        const batch = pendingOrderIds.slice(syncIndex, syncIndex + BATCH_SIZE);
+        if (batch.length === 0) { syncIndex = 0; return; }
+        await Promise.all(batch.map(id => syncPaymentStatus(id)));
+        syncIndex += BATCH_SIZE;
+        if (syncIndex >= pendingOrderIds.length) syncIndex = 0;
         await loadAll();
       } catch (error) { console.error("Admin payment sync error:", error); }
-    }, 5000);
+    }, 15000);
     return () => window.clearInterval(interval);
   }, [orders]);
 
