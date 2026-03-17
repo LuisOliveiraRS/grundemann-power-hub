@@ -148,6 +148,16 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                       <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                     </span>
                   </button>
+                ) : cat.external_url ? (
+                  <a
+                    href={cat.external_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1 px-4 py-3 text-nav-foreground hover:bg-primary-foreground/10 transition-colors text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="flex items-center gap-1">{cat.name} <ExternalLink className="h-2.5 w-2.5" /></span>
+                  </a>
                 ) : (
                   <Link
                     to={`/categoria/${cat.fullPath}`}
