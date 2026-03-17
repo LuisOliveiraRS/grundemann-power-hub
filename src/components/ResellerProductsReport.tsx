@@ -227,11 +227,16 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                     </td>
                     <td className="p-3"><p className="text-sm font-medium line-clamp-1">{p.name}</p></td>
                     <td className="p-3"><span className="text-xs font-mono text-muted-foreground">{p.sku || "—"}</span></td>
-                    <td className="p-3 text-right"><span className="text-sm">R$ {p.price.toFixed(2).replace(".", ",")}</span></td>
+                    <td className="p-3 text-right"><span className="text-sm">R$ {(p.custom_price ?? p.price).toFixed(2).replace(".", ",")}</span></td>
                     <td className="p-3 text-right">
-                      <span className={`text-sm font-bold ${p.stock_quantity <= 0 ? "text-destructive" : p.stock_quantity <= 5 ? "text-yellow-600" : ""}`}>
-                        {p.stock_quantity}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-sm font-bold ${(p.reseller_stock ?? p.stock_quantity) <= 0 ? "text-destructive" : (p.reseller_stock ?? p.stock_quantity) <= 5 ? "text-yellow-600" : ""}`}>
+                          {p.reseller_stock ?? p.stock_quantity}
+                        </span>
+                        {p.reseller_stock !== null && p.reseller_stock !== undefined && (
+                          <span className="text-[10px] text-muted-foreground">Geral: {p.stock_quantity}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">{sales?.total_qty || 0}</span></td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">R$ {(sales?.total_value || 0).toFixed(2).replace(".", ",")}</span></td>
