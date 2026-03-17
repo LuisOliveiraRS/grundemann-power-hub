@@ -14,6 +14,8 @@ interface ResellerProduct {
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
+  reseller_stock?: number | null;
+  custom_price?: number | null;
 }
 
 interface SalesData {
