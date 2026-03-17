@@ -108,7 +108,7 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
   if (loading) return null;
 
   return (
-    <nav className="bg-nav sticky top-0 z-40 shadow-md" ref={navRef}>
+    <nav className="bg-nav sticky top-0 z-30 shadow-md" ref={navRef}>
       <div className="container">
         <ul className="flex flex-wrap items-center justify-center md:justify-between">
           {tree.map(cat => {

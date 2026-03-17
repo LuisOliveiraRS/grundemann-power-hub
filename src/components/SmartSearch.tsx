@@ -168,7 +168,7 @@ const SmartSearch = () => {
       </div>
 
       {open && (
-        <ul className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[70] overflow-hidden max-h-[400px] overflow-y-auto" role="listbox">
+        <ul className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[100] overflow-hidden max-h-[400px] overflow-y-auto" role="listbox">
           {loading && (
             <li className="p-3 text-center text-muted-foreground text-sm">Buscando...</li>
           )}
