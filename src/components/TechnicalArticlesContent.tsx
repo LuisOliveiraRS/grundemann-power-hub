@@ -28,12 +28,16 @@ const categoryColors: Record<string, string> = {
 };
 
 const TechnicalArticlesContent = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [allArticles, setAllArticles] = useState<Article[]>([]);
   const [searchResults, setSearchResults] = useState<Article[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [linkedProblem, setLinkedProblem] = useState<any>(null);
+  const [linkedModel, setLinkedModel] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchArticles = async () => {
