@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,15 @@ import type {
   ProfileFull, Testimonial, PaymentInfo, ProductCategoryLink, ResellerOption,
 } from "@/types/admin";
 
+// Which data sets each tab needs
+const TAB_DATA_DEPS: Record<string, string[]> = {
+  dashboard: ["products", "orders", "categories", "testimonials", "stats"],
+  products: ["products", "categories", "subcategories", "resellers", "clients", "productCategoryLinks"],
+  orders: ["orders"],
+  clients: ["clients", "orders", "clientRoles", "clientMechanics"],
+  testimonials: ["testimonials"],
+};
+
 const AdminDashboard = () => {
   const { toast } = useToast();
   const [tab, setTab] = useState<AdminTab>("dashboard");
@@ -66,9 +75,128 @@ const AdminDashboard = () => {
   const [resellers, setResellers] = useState<ResellerOption[]>([]);
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, pendingOrders: 0, totalClients: 0 });
 
-  useEffect(() => { loadAll(); }, []);
+  // Track which datasets have been loaded to avoid redundant fetches
+  const loadedSets = useRef<Set<string>>(new Set());
 
-  // Realtime subscriptions
+  // Individual data loaders
+  const loaders: Record<string, () => Promise<void>> = {
+    products: async () => {
+      const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false }).limit(5000);
+      const prods = (data || []) as Product[];
+      setProducts(prods);
+      return;
+    },
+    orders: async () => {
+      const [ordRes, payRes] = await Promise.all([
+        supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000),
+        supabase.from("payments").select("*").order("created_at", { ascending: false }).limit(5000),
+      ]);
+      const payments = (payRes.data || []) as PaymentInfo[];
+      const ords = ((ordRes.data || []) as OrderWithItems[]).map(o => ({
+        ...o,
+        payment: payments.find(p => p.order_id === o.id) || null,
+      }));
+      setOrders(ords);
+    },
+    categories: async () => {
+      const { data } = await supabase.from("categories").select("*").order("name").limit(500);
+      setCategories((data || []) as Category[]);
+    },
+    subcategories: async () => {
+      const { data } = await supabase.from("subcategories").select("*").order("name").limit(500);
+      setSubcategories((data || []) as Subcategory[]);
+    },
+    clients: async () => {
+      const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(5000);
+      setClients((data || []) as ProfileFull[]);
+    },
+    testimonials: async () => {
+      const { data } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(1000);
+      setTestimonials((data || []) as Testimonial[]);
+    },
+    productCategoryLinks: async () => {
+      const { data } = await supabase.from("product_categories").select("product_id, category_id, subcategory_id").limit(10000);
+      setProductCategoryLinks((data || []) as ProductCategoryLink[]);
+    },
+    clientRoles: async () => {
+      const { data } = await supabase.from("user_roles").select("user_id, role").limit(5000);
+      setClientRoles((data || []) as { user_id: string; role: string }[]);
+    },
+    clientMechanics: async () => {
+      const { data } = await supabase.from("mechanics").select("user_id, partner_type").limit(1000);
+      setClientMechanics((data || []) as { user_id: string; partner_type: string }[]);
+    },
+    resellers: async () => {
+      const { data } = await supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true).limit(500);
+      setResellers((data || []) as ResellerOption[]);
+    },
+  };
+
+  // Load only the datasets required by the current tab (if not already loaded)
+  const loadForTab = useCallback(async (activeTab: string, force = false) => {
+    const deps = TAB_DATA_DEPS[activeTab];
+    if (!deps) return; // Self-contained tabs don't need shared data
+
+    const toLoad = force
+      ? deps.filter(d => d !== "stats")
+      : deps.filter(d => d !== "stats" && !loadedSets.current.has(d));
+
+    if (toLoad.length === 0 && !force) {
+      // Stats always need recalculation when dashboard is shown
+      if (activeTab === "dashboard") recalcStats();
+      return;
+    }
+
+    await Promise.all(toLoad.map(key => {
+      if (loaders[key]) {
+        loadedSets.current.add(key);
+        return loaders[key]();
+      }
+      return Promise.resolve();
+    }));
+
+    // Recalc stats after data loads
+    if (deps.includes("stats")) {
+      // Small delay to let state settle — use a ref-based approach for real values
+      setTimeout(() => recalcStats(), 50);
+    }
+  }, []);
+
+  const recalcStats = () => {
+    setStats(prev => {
+      // We need to access latest state — this runs after setState batching
+      return prev;
+    });
+    // Use functional updaters to access latest state
+    setProducts(prods => {
+      setOrders(ords => {
+        setClients(cls => {
+          setStats({
+            totalProducts: prods.length,
+            totalOrders: ords.length,
+            revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
+            pendingOrders: ords.filter(o => o.status === "pending").length,
+            totalClients: cls.length,
+          });
+          return cls;
+        });
+        return ords;
+      });
+      return prods;
+    });
+  };
+
+  // Reload all data for current tab (used by child components via onReload)
+  const reloadCurrentTab = useCallback(async () => {
+    await loadForTab(tab, true);
+  }, [tab, loadForTab]);
+
+  // Load data when tab changes
+  useEffect(() => {
+    loadForTab(tab);
+  }, [tab, loadForTab]);
+
+  // Realtime subscriptions — only update relevant state, no full reload
   useEffect(() => {
     const channel = supabase
       .channel('admin-realtime-orders')
@@ -87,10 +215,13 @@ const AdminDashboard = () => {
           });
           if (newRow.status === 'confirmed' && oldRow?.status !== 'confirmed') {
             toast({ title: "💰 Pedido confirmado!", description: `Pedido #${newRow.id.substring(0, 8)} foi pago e confirmado.` });
-            void loadAll();
+            // Only reload orders, not everything
+            loadedSets.current.delete("orders");
+            loadForTab(tab);
           }
         } else if (payload.eventType === 'INSERT') {
-          void loadAll();
+          loadedSets.current.delete("orders");
+          loadForTab(tab);
           toast({ title: "🛒 Novo pedido!", description: `Novo pedido #${newRow.id.substring(0, 8)} recebido.` });
         }
       })
@@ -99,15 +230,16 @@ const AdminDashboard = () => {
           const newRow = payload.new as any;
           if (newRow.status === 'approved') {
             toast({ title: "✅ Pagamento aprovado!", description: `Pagamento confirmado via ${newRow.payment_method || 'Mercado Pago'}.` });
-            void loadAll();
+            loadedSets.current.delete("orders");
+            loadForTab(tab);
           }
         }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [toast]);
+  }, [toast, tab, loadForTab]);
 
-  // Auto-sync pending orders — throttled: max 3 at a time, every 15s to avoid API spam
+  // Auto-sync pending orders — throttled
   useEffect(() => {
     const pendingOrderIds = orders.filter(o => o.status === "pending").map(o => o.id);
     if (pendingOrderIds.length === 0) return;
@@ -120,50 +252,13 @@ const AdminDashboard = () => {
         await Promise.all(batch.map(id => syncPaymentStatus(id)));
         syncIndex += BATCH_SIZE;
         if (syncIndex >= pendingOrderIds.length) syncIndex = 0;
-        await loadAll();
+        // Only invalidate orders
+        loadedSets.current.delete("orders");
+        loadForTab(tab);
       } catch (error) { console.error("Admin payment sync error:", error); }
     }, 15000);
     return () => window.clearInterval(interval);
-  }, [orders]);
-
-  const loadAll = async () => {
-    // FIX: Use explicit limits to avoid hitting default 1000-row cap on large tables
-    const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes, resellerRes] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }).limit(5000),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000),
-      supabase.from("categories").select("*").order("name").limit(500),
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(5000),
-      supabase.from("subcategories").select("*").order("name").limit(500),
-      supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(1000),
-      supabase.from("payments").select("*").order("created_at", { ascending: false }).limit(5000),
-      supabase.from("product_categories").select("product_id, category_id, subcategory_id").limit(10000),
-      supabase.from("user_roles").select("user_id, role").limit(5000),
-      supabase.from("mechanics").select("user_id, partner_type").limit(1000),
-      supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true).limit(500),
-    ]);
-    const prods = (prodRes.data || []) as Product[];
-    const payments = (payRes.data || []) as PaymentInfo[];
-    const ords = ((ordRes.data || []) as OrderWithItems[]).map(o => ({
-      ...o,
-      payment: payments.find(p => p.order_id === o.id) || null,
-    }));
-    const cats = (catRes.data || []) as Category[];
-    const cls = (clientRes.data || []) as ProfileFull[];
-    const subs = (subRes.data || []) as Subcategory[];
-    const tests = (testRes.data || []) as Testimonial[];
-    setProducts(prods); setOrders(ords); setCategories(cats); setClients(cls);
-    setSubcategories(subs); setTestimonials(tests);
-    setProductCategoryLinks((pcLinksRes.data || []) as ProductCategoryLink[]);
-    setClientRoles((rolesRes.data || []) as { user_id: string; role: string }[]);
-    setClientMechanics((mechRes.data || []) as { user_id: string; partner_type: string }[]);
-    setResellers((resellerRes.data || []) as ResellerOption[]);
-    setStats({
-      totalProducts: prods.length, totalOrders: ords.length,
-      revenue: ords.filter(o => o.status !== "cancelled").reduce((s, o) => s + Number(o.total_amount), 0),
-      pendingOrders: ords.filter(o => o.status === "pending").length,
-      totalClients: cls.length,
-    });
-  };
+  }, [orders, tab, loadForTab]);
 
   return (
     <div className="min-h-screen flex bg-muted/50">
@@ -175,14 +270,13 @@ const AdminDashboard = () => {
         )}
 
         {tab === "products" && (
-          <AdminProductsTab products={products} categories={categories} subcategories={subcategories} resellers={resellers} clients={clients} productCategoryLinks={productCategoryLinks} onReload={loadAll} />
+          <AdminProductsTab products={products} categories={categories} subcategories={subcategories} resellers={resellers} clients={clients} productCategoryLinks={productCategoryLinks} onReload={reloadCurrentTab} />
         )}
 
-        {tab === "orders" && <AdminOrdersTab orders={orders} onReload={loadAll} />}
+        {tab === "orders" && <AdminOrdersTab orders={orders} onReload={reloadCurrentTab} />}
 
         {tab === "categories" && (
           <div className="space-y-10">
-            {/* Menu do Site */}
             <div>
               <div className="mb-6">
                 <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Tag className="h-8 w-8 text-primary" /> Categorias do Menu do Site</h1>
@@ -190,14 +284,10 @@ const AdminDashboard = () => {
               </div>
               <CategoryTreeAdmin />
             </div>
-
-            {/* Separador */}
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
               <div className="relative flex justify-center"><span className="bg-background px-4 text-sm font-medium text-muted-foreground">Classificação Interna (Filtros & Relatórios)</span></div>
             </div>
-
-            {/* Classificação interna */}
             <div>
               <div className="mb-6">
                 <h2 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><Boxes className="h-7 w-7 text-muted-foreground" /> Categorias de Classificação</h2>
@@ -209,10 +299,10 @@ const AdminDashboard = () => {
         )}
 
         {tab === "clients" && (
-          <AdminClientsTab clients={clients} orders={orders} clientRoles={clientRoles} clientMechanics={clientMechanics} onReload={loadAll} />
+          <AdminClientsTab clients={clients} orders={orders} clientRoles={clientRoles} clientMechanics={clientMechanics} onReload={reloadCurrentTab} />
         )}
 
-        {tab === "testimonials" && <AdminTestimonialsTab testimonials={testimonials} onReload={loadAll} />}
+        {tab === "testimonials" && <AdminTestimonialsTab testimonials={testimonials} onReload={reloadCurrentTab} />}
 
         {tab === "reports" && <AdminReports />}
         {tab === "sellers" && <SellerManagement />}
@@ -230,7 +320,6 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* MECHANICS HUB TAB */}
         {tab === "mechanics" && (
           <div>
             <div className="mb-8">
