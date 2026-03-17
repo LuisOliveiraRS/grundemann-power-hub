@@ -65,7 +65,7 @@ const ArticleManagement = () => {
   const openCreate = () => {
     setEditing(null);
     setCreating(true);
-    setForm({ title: "", slug: "", excerpt: "", content: "", category: "Manutenção", tags: "", read_time: "5 min", is_published: false, image_url: "" });
+    setForm({ title: "", slug: "", excerpt: "", content: "", category: "Manutenção", tags: "", read_time: "5 min", is_published: false, image_url: "", problem_id: "", model_id: "" });
   };
 
   const openEdit = (a: Article) => {
