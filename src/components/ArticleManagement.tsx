@@ -34,9 +34,12 @@ const ArticleManagement = () => {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Article | null>(null);
   const [creating, setCreating] = useState(false);
+  const [problems, setProblems] = useState<DiagProblem[]>([]);
+  const [models, setModels] = useState<GenModel[]>([]);
   const [form, setForm] = useState({
     title: "", slug: "", excerpt: "", content: "", category: "Manutenção",
     tags: "", read_time: "5 min", is_published: false, image_url: "",
+    problem_id: "", model_id: "",
   });
 
   const fetchArticles = async () => {
