@@ -14,7 +14,7 @@ import {
 interface MenuCat {
   id: string; name: string; slug: string; parent_id: string | null;
   display_order: number; icon: string; image_url: string;
-  description: string; is_active: boolean;
+  description: string; is_active: boolean; external_url: string | null;
 }
 
 const CategoryTreeAdmin = () => {
