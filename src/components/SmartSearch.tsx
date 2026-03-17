@@ -137,6 +137,8 @@ const SmartSearch = () => {
     setQuery("");
     setActiveHp(null);
     if (s.type === "product") navigate(`/produto/${s.id}`);
+    else if (s.type === "diagnostic") navigate(`/problema/${s.id}`);
+    else if (s.type === "model") navigate(`/pecas/${s.id}`);
     else navigate(`/categoria/${s.id}`);
   };
 
