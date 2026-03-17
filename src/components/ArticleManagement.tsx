@@ -150,6 +150,20 @@ const ArticleManagement = () => {
             <Label>URL da Imagem (opcional)</Label>
             <Input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} />
           </div>
+          <div>
+            <Label>Problema Vinculado (opcional)</Label>
+            <select className="h-10 w-full border border-input rounded-md px-3 text-sm bg-background" value={form.problem_id} onChange={e => setForm({ ...form, problem_id: e.target.value })}>
+              <option value="">Nenhum</option>
+              {problems.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Modelo Vinculado (opcional)</Label>
+            <select className="h-10 w-full border border-input rounded-md px-3 text-sm bg-background" value={form.model_id} onChange={e => setForm({ ...form, model_id: e.target.value })}>
+              <option value="">Nenhum</option>
+              {models.map(m => <option key={m.id} value={m.id}>{m.brand ? `${m.brand} ` : ""}{m.name}</option>)}
+            </select>
+          </div>
         </div>
         <div>
           <Label>Resumo</Label>
