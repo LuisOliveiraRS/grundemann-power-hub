@@ -41,7 +41,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
     extra_category_ids: [] as string[], menu_category_id: "", reseller_id: "",
-    fuel_type: "", slug: "",
+    fuel_type: "", slug: "", tags: "",
   });
 
   const [productSearch, setProductSearch] = useState("");
