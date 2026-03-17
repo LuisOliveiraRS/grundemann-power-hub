@@ -919,6 +919,54 @@ export type Database = {
           },
         ]
       }
+      product_resellers: {
+        Row: {
+          created_at: string
+          custom_price: number | null
+          id: string
+          is_active: boolean
+          product_id: string
+          reseller_id: string
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_price?: number | null
+          id?: string
+          is_active?: boolean
+          product_id: string
+          reseller_id: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_price?: number | null
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          reseller_id?: string
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_resellers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_resellers_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "mechanics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           comment: string
@@ -1771,6 +1819,10 @@ export type Database = {
     }
     Functions: {
       confirm_stock_reservation: { Args: { p_order_id: string }; Returns: Json }
+      decrease_reseller_stock: {
+        Args: { p_order_id: string; p_reseller_id: string }
+        Returns: Json
+      }
       get_available_stock: { Args: { p_product_id: string }; Returns: number }
       get_user_points: { Args: { p_user_id: string }; Returns: number }
       has_role: {
