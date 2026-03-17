@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import DiagnosticProblemSelector from "@/components/diagnostic/DiagnosticProblemSelector";
 import DiagnosticResults from "@/components/diagnostic/DiagnosticResults";
-import { SEOBreadcrumb } from "@/components/SEOBreadcrumb";
+import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import {
   Power, RefreshCw, Zap, AlertTriangle, TrendingDown, Fuel, Volume2,
 } from "lucide-react";
