@@ -9,6 +9,7 @@ import CategoryNav from "@/components/CategoryNav";
 import HeroSection from "@/components/HeroSection";
 import BenefitsBar from "@/components/BenefitsBar";
 import PartsFinder from "@/components/PartsFinder";
+import ModelSearch from "@/components/ModelSearch";
 import TabbedProducts from "@/components/TabbedProducts";
 import SocialProof from "@/components/SocialProof";
 import CategoriesSection from "@/components/CategoriesSection";
