@@ -55,7 +55,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
   const [aiImageProgress, setAiImageProgress] = useState(0);
   const [aiImageTotal, setAiImageTotal] = useState(0);
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "", tags: "" });
 
   const getCategoryName = (id: string | null) => categories.find(c => c.id === id)?.name || "—";
   const getSubcatName = (id: string | null) => subcategories.find(s => s.id === id)?.name || null;
