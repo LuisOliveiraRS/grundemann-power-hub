@@ -29,6 +29,7 @@ const sideItems = [
   { key: "seo" as const, label: "SEO", icon: Globe },
   { key: "shipping" as const, label: "Frete", icon: Truck },
   { key: "stock" as const, label: "Estoque & ML", icon: Boxes },
+  { key: "product-resellers" as const, label: "Produto × Revendedor", icon: Store },
   { key: "subscribers" as const, label: "Leads & Cupons", icon: Mail },
   { key: "rewards" as const, label: "Fidelidade", icon: Gift },
   { key: "analytics" as const, label: "Analytics", icon: TrendingUp },
