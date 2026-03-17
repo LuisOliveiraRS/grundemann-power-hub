@@ -80,7 +80,7 @@ const CategoryTreeAdmin = () => {
 
   const startEdit = (item: MenuCat) => {
     setEditing(item.id);
-    setEditForm({ name: item.name, slug: item.slug, description: item.description, icon: item.icon, image_url: item.image_url });
+    setEditForm({ name: item.name, slug: item.slug, description: item.description, icon: item.icon, image_url: item.image_url, external_url: item.external_url || "" });
   };
 
   const saveEdit = async (id: string) => {
