@@ -235,7 +235,19 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
                           </div>
                         </div>
                       </td>
-                      <td className="p-3.5"><Badge className={`${roleTypeColor[roleType] || ""} text-[10px] border-0`}>{roleTypeLabel[roleType] || roleType}</Badge></td>
+                      <td className="p-3.5">
+                        <div className="flex flex-wrap gap-1">
+                          {userRoles.map(r => (
+                            <Badge key={r} className={`${roleTypeColor[r] || ""} text-[10px] border-0`}>{roleTypeLabel[r] || r}</Badge>
+                          ))}
+                          <button onClick={(e) => { e.stopPropagation(); setEditingRolesFor(editingRolesFor === c.user_id ? null : c.user_id); }} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted hover:bg-primary/20 transition-colors" title="Editar categorias">
+                            <UserCog className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                        {editingRolesFor === c.user_id && (
+                          <RoleEditor userId={c.user_id} currentRoles={clientRoles} currentMechanics={clientMechanics} onSave={() => { setEditingRolesFor(null); onReload(); }} />
+                        )}
+                      </td>
                       <td className="p-3.5 text-muted-foreground text-xs">{c.email}</td>
                       <td className="p-3.5">
                         {c.phone ? (
