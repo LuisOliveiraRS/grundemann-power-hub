@@ -274,6 +274,16 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {tab === "product-resellers" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Store className="h-8 w-8 text-primary" /> Produto × Revendedor</h1>
+              <p className="text-muted-foreground mt-1">Vincule produtos a revendedores com estoque individual e preço personalizado</p>
+            </div>
+            <ProductResellerManager />
+          </div>
+        )}
+
         {tab === "subscribers" && (
           <div>
             <div className="mb-8">
