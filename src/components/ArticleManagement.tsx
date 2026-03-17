@@ -21,7 +21,12 @@ interface Article {
   is_published: boolean;
   image_url: string | null;
   created_at: string;
+  problem_id: string | null;
+  model_id: string | null;
 }
+
+interface DiagProblem { id: string; name: string; }
+interface GenModel { id: string; name: string; brand: string | null; }
 
 const ArticleManagement = () => {
   const { toast } = useToast();
