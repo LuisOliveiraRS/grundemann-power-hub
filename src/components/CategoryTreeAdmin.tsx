@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronRight, ChevronDown, Plus, Trash2, Edit, FolderTree,
-  Save, X, GripVertical, Eye, EyeOff, ArrowUp, ArrowDown,
+  Save, X, GripVertical, Eye, EyeOff, ArrowUp, ArrowDown, ExternalLink,
 } from "lucide-react";
 
 interface MenuCat {
