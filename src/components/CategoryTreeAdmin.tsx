@@ -185,6 +185,7 @@ const CategoryTreeAdmin = () => {
                       <Input value={editForm.icon} onChange={e => setEditForm({ ...editForm, icon: e.target.value })} placeholder="Ícone (ex: Fuel)" className="h-8 text-sm" />
                       <Input value={editForm.image_url} onChange={e => setEditForm({ ...editForm, image_url: e.target.value })} placeholder="URL da imagem" className="h-8 text-sm" />
                     </div>
+                    <Input value={editForm.external_url} onChange={e => setEditForm({ ...editForm, external_url: e.target.value })} placeholder="Link externo (ex: https://exemplo.com) — deixe vazio para link interno" className="h-8 text-sm" />
                     <Input value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder="Descrição" className="h-8 text-sm" />
                     <div className="flex gap-2">
                       <Button size="sm" className="h-7 text-xs" onClick={() => saveEdit(item.id)}><Save className="h-3 w-3 mr-1" /> Salvar</Button>
