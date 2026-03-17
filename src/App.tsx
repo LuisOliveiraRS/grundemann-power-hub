@@ -41,6 +41,8 @@ const PaymentError = lazy(() => import("./pages/PaymentError"));
 const RevendedorDashboard = lazy(() => import("./pages/RevendedorDashboard"));
 const OficinaDashboard = lazy(() => import("./pages/OficinaDashboard"));
 const PartnerLogin = lazy(() => import("./pages/PartnerLogin"));
+const DiagnosticSEO = lazy(() => import("./pages/DiagnosticSEO"));
+const ModelSEO = lazy(() => import("./pages/ModelSEO"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
