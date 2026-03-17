@@ -72,7 +72,7 @@ const CategoryTreeAdmin = () => {
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Categoria criada!" });
     setAddingTo(null);
-    setNewForm({ name: "", slug: "", description: "", icon: "", image_url: "" });
+    setNewForm({ name: "", slug: "", description: "", icon: "", image_url: "", external_url: "" });
     if (parentId) setExpanded(prev => new Set(prev).add(parentId));
     loadData();
   };
