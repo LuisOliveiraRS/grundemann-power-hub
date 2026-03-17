@@ -17,7 +17,6 @@ const normalizePaymentStatus = (status?: string | null) => {
     refunded: "refunded",
     charged_back: "refunded",
   };
-
   return statusMap[status || ""] || "pending";
 };
 
@@ -56,11 +55,7 @@ const parseWebhookEvent = (reqUrl: string, body: Record<string, any>) => {
 
   const eventType = bodyType || action || queryType || "unknown";
 
-  return {
-    eventType,
-    isPaymentEvent,
-    paymentId,
-  };
+  return { eventType, isPaymentEvent, paymentId };
 };
 
 Deno.serve(async (req) => {
@@ -74,12 +69,7 @@ Deno.serve(async (req) => {
 
     const bodyText = await req.text();
     let body: Record<string, any> = {};
-
-    try {
-      body = bodyText ? JSON.parse(bodyText) : {};
-    } catch {
-      body = {};
-    }
+    try { body = bodyText ? JSON.parse(bodyText) : {}; } catch { body = {}; }
 
     const { eventType, isPaymentEvent, paymentId } = parseWebhookEvent(req.url, body);
 
@@ -138,7 +128,7 @@ Deno.serve(async (req) => {
 
     const { data: order } = await supabase
       .from("orders")
-      .select("id, user_id, status, total_amount")
+      .select("id, user_id, status, total_amount, seller_id")
       .eq("id", orderId)
       .maybeSingle();
 
@@ -167,10 +157,7 @@ Deno.serve(async (req) => {
     };
 
     if (latestPayment?.id) {
-      await supabase
-        .from("payments")
-        .update(paymentPayload)
-        .eq("id", latestPayment.id);
+      await supabase.from("payments").update(paymentPayload).eq("id", latestPayment.id);
     } else {
       await supabase.from("payments").insert({
         order_id: orderId,
@@ -179,7 +166,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ========== PAYMENT APPROVED ==========
     if (paymentStatus === "approved" && !isConfirmedOrderStatus(order.status)) {
+      // Confirm stock reservation (decreases actual stock)
+      const { error: stockError } = await supabase.rpc("confirm_stock_reservation", {
+        p_order_id: orderId,
+      });
+      if (stockError) {
+        console.error("Stock confirmation error (falling back to manual):", stockError);
+        // Fallback: manual stock decrease for orders without reservations
+        const { data: orderItems } = await supabase
+          .from("order_items")
+          .select("product_id, quantity")
+          .eq("order_id", orderId);
+        for (const item of orderItems || []) {
+          if (!item.product_id) continue;
+          const { data: product } = await supabase
+            .from("products")
+            .select("stock_quantity")
+            .eq("id", item.product_id)
+            .single();
+          if (product) {
+            await supabase.from("products")
+              .update({ stock_quantity: Math.max(0, Number(product.stock_quantity) - Number(item.quantity)) })
+              .eq("id", item.product_id);
+          }
+        }
+      }
+
       await supabase.from("orders").update({ status: "confirmed" }).eq("id", orderId);
 
       await supabase.from("order_status_history").insert({
@@ -199,7 +213,7 @@ Deno.serve(async (req) => {
       const { data: adminRoles } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
       if (adminRoles?.length) {
         await supabase.from("notifications").insert(
-          adminRoles.map((admin) => ({
+          adminRoles.map((admin: any) => ({
             user_id: admin.user_id,
             title: "💰 Novo pagamento confirmado!",
             message: `Pedido #${orderId.substring(0, 8)} — R$ ${Number(order.total_amount).toFixed(2).replace(".", ",")} pago via ${payment.payment_type_id || "MP"}.`,
@@ -212,39 +226,21 @@ Deno.serve(async (req) => {
       // Register commission for sellers
       const sellerId = order.seller_id;
       if (sellerId) {
-        // Check if commission already exists for this order
         const { data: existingComm } = await supabase
-          .from("sale_commissions")
-          .select("id")
-          .eq("order_id", orderId)
-          .maybeSingle();
-
+          .from("sale_commissions").select("id").eq("order_id", orderId).maybeSingle();
         if (!existingComm) {
           const { data: seller } = await supabase
-            .from("sellers")
-            .select("id, commission_rate")
-            .eq("id", sellerId)
-            .maybeSingle();
-
+            .from("sellers").select("id, commission_rate").eq("id", sellerId).maybeSingle();
           if (seller) {
             const commissionAmount = Number(order.total_amount) * (Number(seller.commission_rate) / 100);
             await supabase.from("sale_commissions").insert({
-              order_id: orderId,
-              seller_id: seller.id,
+              order_id: orderId, seller_id: seller.id,
               order_total: Number(order.total_amount),
               commission_rate: Number(seller.commission_rate),
-              commission_amount: commissionAmount,
-              status: "pending",
+              commission_amount: commissionAmount, status: "pending",
             });
-
-            // Update seller totals
-            await supabase.rpc("update_seller_totals_noop", {}).catch(() => {});
-            // Fallback: manual update
             const { data: currentSeller } = await supabase
-              .from("sellers")
-              .select("total_sales, total_commission")
-              .eq("id", seller.id)
-              .single();
+              .from("sellers").select("total_sales, total_commission").eq("id", seller.id).single();
             if (currentSeller) {
               await supabase.from("sellers").update({
                 total_sales: Number(currentSeller.total_sales) + Number(order.total_amount),
@@ -254,32 +250,21 @@ Deno.serve(async (req) => {
           }
         }
       } else {
-        // If no seller_id on order, assign to the first active seller (default behavior)
         const { data: defaultSeller } = await supabase
           .from("sellers")
           .select("id, commission_rate, total_sales, total_commission")
-          .eq("is_active", true)
-          .limit(1)
-          .maybeSingle();
-
+          .eq("is_active", true).limit(1).maybeSingle();
         if (defaultSeller) {
           const { data: existingComm } = await supabase
-            .from("sale_commissions")
-            .select("id")
-            .eq("order_id", orderId)
-            .maybeSingle();
-
+            .from("sale_commissions").select("id").eq("order_id", orderId).maybeSingle();
           if (!existingComm) {
             const commissionAmount = Number(order.total_amount) * (Number(defaultSeller.commission_rate) / 100);
             await supabase.from("sale_commissions").insert({
-              order_id: orderId,
-              seller_id: defaultSeller.id,
+              order_id: orderId, seller_id: defaultSeller.id,
               order_total: Number(order.total_amount),
               commission_rate: Number(defaultSeller.commission_rate),
-              commission_amount: commissionAmount,
-              status: "pending",
+              commission_amount: commissionAmount, status: "pending",
             });
-
             await supabase.from("sellers").update({
               total_sales: Number(defaultSeller.total_sales) + Number(order.total_amount),
               total_commission: Number(defaultSeller.total_commission) + commissionAmount,
@@ -287,30 +272,15 @@ Deno.serve(async (req) => {
           }
         }
       }
-
-      const { data: orderItems } = await supabase
-        .from("order_items")
-        .select("product_id, quantity")
-        .eq("order_id", orderId);
-
-      for (const item of orderItems || []) {
-        if (!item.product_id) continue;
-        const { data: product } = await supabase
-          .from("products")
-          .select("stock_quantity")
-          .eq("id", item.product_id)
-          .single();
-
-        if (product) {
-          await supabase
-            .from("products")
-            .update({ stock_quantity: Math.max(0, Number(product.stock_quantity) - Number(item.quantity)) })
-            .eq("id", item.product_id);
-        }
-      }
     }
 
+    // ========== PAYMENT CANCELLED/REJECTED ==========
     if (isCancelledPaymentStatus(paymentStatus) && order.status === "pending") {
+      // Release stock reservations
+      await supabase.rpc("release_stock_reservation", { p_order_id: orderId }).catch((err: any) => {
+        console.error("Stock release error:", err);
+      });
+
       await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
 
       await supabase.from("order_status_history").insert({
