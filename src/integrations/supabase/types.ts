@@ -206,6 +206,38 @@ export type Database = {
           },
         ]
       }
+      diagnostic_search_logs: {
+        Row: {
+          created_at: string
+          id: string
+          model_search: string | null
+          problem_id: string | null
+          problem_slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_search?: string | null
+          problem_id?: string | null
+          problem_slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_search?: string | null
+          problem_id?: string | null
+          problem_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnostic_search_logs_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_coupons: {
         Row: {
           code: string
@@ -838,6 +870,35 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_search_logs: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string | null
+          model_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id?: string | null
+          model_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string | null
+          model_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_search_logs_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "generator_models"
             referencedColumns: ["id"]
           },
         ]
@@ -1934,6 +1995,8 @@ export type Database = {
           id: string
           image_url: string | null
           is_published: boolean
+          model_id: string | null
+          problem_id: string | null
           read_time: string
           search_vector: unknown
           slug: string
@@ -1949,6 +2012,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_published?: boolean
+          model_id?: string | null
+          problem_id?: string | null
           read_time?: string
           search_vector?: unknown
           slug: string
@@ -1964,6 +2029,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_published?: boolean
+          model_id?: string | null
+          problem_id?: string | null
           read_time?: string
           search_vector?: unknown
           slug?: string
@@ -1971,7 +2038,22 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "technical_articles_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "generator_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_articles_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostic_problems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       technical_catalogs: {
         Row: {
@@ -2144,6 +2226,8 @@ export type Database = {
           id: string
           image_url: string | null
           is_published: boolean
+          model_id: string | null
+          problem_id: string | null
           read_time: string
           search_vector: unknown
           slug: string
