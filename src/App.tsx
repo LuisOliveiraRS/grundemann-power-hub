@@ -41,6 +41,8 @@ const PaymentError = lazy(() => import("./pages/PaymentError"));
 const RevendedorDashboard = lazy(() => import("./pages/RevendedorDashboard"));
 const OficinaDashboard = lazy(() => import("./pages/OficinaDashboard"));
 const PartnerLogin = lazy(() => import("./pages/PartnerLogin"));
+const DiagnosticSEO = lazy(() => import("./pages/DiagnosticSEO"));
+const ModelSEO = lazy(() => import("./pages/ModelSEO"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +105,8 @@ const App = () => (
                     <Route path="/vistas-explodidas" element={<ExplodedViews />} />
                     <Route path="/diagnostico" element={<GeneratorDiagnostic />} />
                     <Route path="/diagnostico/:slug" element={<GeneratorDiagnostic />} />
+                    <Route path="/problema/:slug" element={<DiagnosticSEO />} />
+                    <Route path="/pecas/:slug" element={<ModelSEO />} />
                     <Route path="/pedido-confirmado" element={<ProtectedRoute><OrderConfirmed /></ProtectedRoute>} />
                     <Route path="/pagamento-pendente" element={<ProtectedRoute><PaymentPending /></ProtectedRoute>} />
                     <Route path="/pagamento-erro" element={<ProtectedRoute><PaymentError /></ProtectedRoute>} />

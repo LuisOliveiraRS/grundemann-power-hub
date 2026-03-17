@@ -21,6 +21,7 @@ import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import AIAssistant from "@/components/AIAssistant";
 import ProductCard from "@/components/ProductCard";
 import RecentlyViewed, { addToRecentlyViewed } from "@/components/RecentlyViewed";
+import ProductRecommendations from "@/components/ProductRecommendations";
 import { addToGuestCart } from "@/lib/guestCart";
 
 interface Product {
@@ -410,6 +411,9 @@ const ProductDetail = () => {
               </div>
             </div>
           )}
+
+          {/* Smart Recommendations */}
+          <ProductRecommendations productId={product.id} productName={product.name} categoryId={product.category_id} />
 
           {/* Product Reviews */}
           <ProductReviews productId={product.id} productName={product.name} />

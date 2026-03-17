@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Package, Tag, Zap, X } from "lucide-react";
+import { Search, Package, Tag, Zap, X, Stethoscope, Cpu } from "lucide-react";
 
 interface Suggestion {
-  type: "product" | "category";
+  type: "product" | "category" | "diagnostic" | "model";
   id: string;
   name: string;
   extra?: string;
@@ -41,7 +41,7 @@ const SmartSearch = () => {
 
     const searchTerm = q.length >= 2 ? q : "";
 
-    const [prodRes, catRes] = await Promise.all([
+    const [prodRes, catRes, diagRes, modelRes] = await Promise.all([
       supabase.rpc("fuzzy_search_products", {
         search_term: searchTerm,
         hp_filter: hpFilter || null,
@@ -50,9 +50,32 @@ const SmartSearch = () => {
       searchTerm.length >= 2
         ? supabase.from("menu_categories").select("id, name, slug").ilike("name", `%${searchTerm}%`).eq("is_active", true).limit(4)
         : Promise.resolve({ data: [] }),
+      searchTerm.length >= 2
+        ? supabase.from("diagnostic_problems").select("id, name, slug, description").eq("is_active", true).or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`).limit(3)
+        : Promise.resolve({ data: [] }),
+      searchTerm.length >= 2
+        ? supabase.from("generator_models").select("id, name, brand, hp").eq("is_active", true).or(`name.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%`).limit(4)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const results: Suggestion[] = [];
+
+    // Diagnostic problems first
+    (diagRes.data || []).forEach((d: any) => results.push({
+      type: "diagnostic", id: d.slug, name: d.name, extra: d.description?.slice(0, 60),
+    }));
+
+    // Models
+    (modelRes.data || []).forEach((m: any) => {
+      const modelSlug = `${(m.brand || "").toLowerCase()}-${m.name.toLowerCase()}`
+        .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      results.push({
+        type: "model", id: modelSlug, name: m.name,
+        extra: [m.brand, m.hp ? `${m.hp}HP` : null].filter(Boolean).join(" · "),
+      });
+    });
+
+    // Categories
     (catRes.data || []).forEach((c: any) => results.push({ type: "category", id: c.slug, name: c.name }));
 
     const prods = (prodRes.data || []) as any[];
@@ -114,6 +137,8 @@ const SmartSearch = () => {
     setQuery("");
     setActiveHp(null);
     if (s.type === "product") navigate(`/produto/${s.id}`);
+    else if (s.type === "diagnostic") navigate(`/problema/${s.id}`);
+    else if (s.type === "model") navigate(`/pecas/${s.id}`);
     else navigate(`/categoria/${s.id}`);
   };
 
@@ -193,6 +218,14 @@ const SmartSearch = () => {
                           <Package className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )
+                    ) : s.type === "diagnostic" ? (
+                      <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                        <Stethoscope className="h-5 w-5 text-destructive" />
+                      </div>
+                    ) : s.type === "model" ? (
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Cpu className="h-5 w-5 text-primary" />
+                      </div>
                     ) : (
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Tag className="h-5 w-5 text-primary" />
@@ -202,6 +235,8 @@ const SmartSearch = () => {
                       <p className="text-sm font-medium truncate">{s.name}</p>
                       {s.extra && <p className="text-xs text-muted-foreground truncate">{s.extra}</p>}
                       {s.type === "category" && <p className="text-xs text-primary font-medium">Ver categoria →</p>}
+                      {s.type === "diagnostic" && <p className="text-xs text-destructive font-medium">Ver diagnóstico →</p>}
+                      {s.type === "model" && <p className="text-xs text-primary font-medium">Ver peças compatíveis →</p>}
                     </div>
                     {s.type === "product" && s.price !== undefined && (
                       <span className="text-sm font-bold text-price flex-shrink-0">

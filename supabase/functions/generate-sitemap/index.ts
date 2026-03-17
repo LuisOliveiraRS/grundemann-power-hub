@@ -45,6 +45,18 @@ Deno.serve(async (req) => {
     .select("slug, created_at")
     .eq("is_visible", true);
 
+  // Fetch diagnostic problems for SEO pages
+  const { data: problems } = await supabase
+    .from("diagnostic_problems")
+    .select("slug, updated_at")
+    .eq("is_active", true);
+
+  // Fetch generator models for SEO pages
+  const { data: models } = await supabase
+    .from("generator_models")
+    .select("name, brand, updated_at")
+    .eq("is_active", true);
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 `;
@@ -68,6 +80,29 @@ Deno.serve(async (req) => {
 `;
     }
   }
+
+  if (problems) {
+    for (const prob of problems) {
+      xml += `  <url>
+    <loc>${baseUrl}/problema/${prob.slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+    }
+  }
+
+  if (models) {
+    for (const m of models) {
+      const slug = `${(m.brand || "").toLowerCase()}-${m.name.toLowerCase()}`
+        .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      xml += `  <url>
+    <loc>${baseUrl}/pecas/${slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    }
 
   if (products) {
     for (const p of products) {
