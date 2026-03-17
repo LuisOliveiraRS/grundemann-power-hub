@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut, Tag, MessageSquare,
   TrendingUp, DollarSign, Globe, Megaphone, Wrench, Mail, Gift,
-  BookOpen, Paintbrush, FileText, Truck, Boxes, BarChart3, Store
+  BookOpen, Paintbrush, FileText, Truck, Boxes, BarChart3, Store, Cpu
 } from "lucide-react";
 import logo from "@/assets/logo-grundemann.png";
 import type { AdminTab } from "@/types/admin";
@@ -30,6 +30,7 @@ const sideItems = [
   { key: "shipping" as const, label: "Frete", icon: Truck },
   { key: "stock" as const, label: "Estoque & ML", icon: Boxes },
   { key: "product-resellers" as const, label: "Produto × Revendedor", icon: Store },
+  { key: "compatibility" as const, label: "Compatibilidade", icon: Cpu },
   { key: "subscribers" as const, label: "Leads & Cupons", icon: Mail },
   { key: "rewards" as const, label: "Fidelidade", icon: Gift },
   { key: "analytics" as const, label: "Analytics", icon: TrendingUp },

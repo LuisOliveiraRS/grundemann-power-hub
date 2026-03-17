@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   ChevronUp, Video, BookOpen, FileText, Package, FileUp, Download, Users, Wrench,
-  Megaphone, Globe, Truck, Boxes, Mail, Gift, TrendingUp, DollarSign, Tag, Paintbrush, BarChart3, Store,
+  Megaphone, Globe, Truck, Boxes, Mail, Gift, TrendingUp, DollarSign, Tag, Paintbrush, BarChart3, Store, Cpu,
 } from "lucide-react";
 import { syncPaymentStatus } from "@/lib/paymentSync";
 
@@ -37,6 +37,7 @@ import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
 import ResellerContentManagement from "@/components/ResellerContentManagement";
 import ProductResellerManager from "@/components/admin/ProductResellerManager";
+import CompatibilityManager from "@/components/admin/CompatibilityManager";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 
@@ -407,6 +408,16 @@ const AdminDashboard = () => {
         )}
 
         {tab === "site-report" && <SiteFeatureReport />}
+
+        {tab === "compatibility" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Cpu className="h-8 w-8 text-primary" /> Compatibilidade de Peças</h1>
+              <p className="text-muted-foreground mt-1">Cadastre modelos de geradores e vincule peças compatíveis</p>
+            </div>
+            <CompatibilityManager />
+          </div>
+        )}
       </main>
     </div>
   );

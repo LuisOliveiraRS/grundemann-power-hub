@@ -9,6 +9,7 @@ import CategoryNav from "@/components/CategoryNav";
 import HeroSection from "@/components/HeroSection";
 import BenefitsBar from "@/components/BenefitsBar";
 import PartsFinder from "@/components/PartsFinder";
+import ModelSearch from "@/components/ModelSearch";
 import TabbedProducts from "@/components/TabbedProducts";
 import SocialProof from "@/components/SocialProof";
 import CategoriesSection from "@/components/CategoriesSection";
@@ -112,6 +113,7 @@ const Index = () => {
                 <KraftProductShowcase />
               </Suspense>
               <PartsFinder />
+              <ModelSearch />
               <TabbedProducts />
               <SocialProof />
               <GuaranteeSection />
@@ -128,6 +130,7 @@ const Index = () => {
               )}
               <BenefitsBar />
               <PartsFinder />
+              <ModelSearch />
               <TabbedProducts />
               {heroMode !== "rotating_banner" && (
                 <Suspense fallback={<SectionLoader />}>
