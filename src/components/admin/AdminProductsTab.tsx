@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Plus, Trash2, Edit, Eye, EyeOff, Search, X, Upload, ImageIcon,
   SlidersHorizontal, RefreshCw, Video, Download, CheckSquare, Square,
-  Wand2, Loader2, FileUp, Package, Store,
+  Wand2, Loader2, FileUp, Package, Store, Tag,
 } from "lucide-react";
 import MenuCategoryPicker from "@/components/MenuCategoryPicker";
 import type { Product, Category, Subcategory, ResellerOption, ProductCategoryLink, ProfileFull } from "@/types/admin";
@@ -41,7 +41,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     specifications: "" as string, documents: [] as string[],
     weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
     extra_category_ids: [] as string[], menu_category_id: "", reseller_id: "",
-    fuel_type: "", slug: "",
+    fuel_type: "", slug: "", tags: "",
   });
 
   const [productSearch, setProductSearch] = useState("");
@@ -55,7 +55,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
   const [aiImageProgress, setAiImageProgress] = useState(0);
   const [aiImageTotal, setAiImageTotal] = useState(0);
 
-  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "" });
+  const resetProductForm = () => setProductForm({ name: "", description: "", sku: "", price: "", original_price: "", stock_quantity: "", category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false, image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "", specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "", extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "", tags: "" });
 
   const getCategoryName = (id: string | null) => categories.find(c => c.id === id)?.name || "—";
   const getSubcatName = (id: string | null) => subcategories.find(s => s.id === id)?.name || null;
@@ -107,6 +107,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       reseller_id: productForm.reseller_id || null,
       fuel_type: productForm.fuel_type || null,
       slug: productForm.slug || null,
+      tags: productForm.tags ? productForm.tags.split(",").map(t => t.trim().toLowerCase()).filter(Boolean) : [],
     };
     let productId = editingProduct?.id;
     if (productId) {
@@ -164,6 +165,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       reseller_id: p.reseller_id || "",
       fuel_type: p.fuel_type || "",
       slug: p.slug || "",
+      tags: (p.tags || []).join(", "),
     });
   };
 
@@ -393,6 +395,12 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
                   <Button type="button" variant="outline" size="sm" onClick={() => setProductForm(prev => ({ ...prev, slug: generateSlug(prev.name) }))}>Gerar</Button>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1">URL: /produto/{productForm.slug || "..."}</p>
+              </div>
+              {/* Tags for search */}
+              <div className="md:col-span-2">
+                <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Tags de Busca</Label>
+                <Input value={productForm.tags} onChange={e => setProductForm({ ...productForm, tags: e.target.value })} placeholder="carburador, 6.5hp, 168f, gerador, gasolina" className="mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Separe as tags por vírgula. Melhora a busca fuzzy e por palavras-chave.</p>
               </div>
               {/* Weight & Dimensions */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

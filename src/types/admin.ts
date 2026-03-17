@@ -8,7 +8,7 @@ export interface Product {
   menu_category_id?: string | null; brand?: string | null; hp?: string | null;
   engine_model?: string | null; specifications?: any; documents?: string[] | null;
   weight_kg?: number | null; width_cm?: number | null; height_cm?: number | null;
-  length_cm?: number | null;
+  length_cm?: number | null; tags?: string[] | null;
 }
 
 export interface ResellerOption {
