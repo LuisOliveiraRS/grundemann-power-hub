@@ -66,9 +66,16 @@ const ProductDetail = () => {
   useEffect(() => { if (id) loadProduct(); }, [id]);
 
   const loadProduct = async () => {
+    setLoading(true);
     const col = isUUID(id || "") ? "id" : "slug";
-    const { data } = await supabase.from("products").select("*").eq(col, id).single();
-    if (data) {
+    const { data, error } = await supabase.from("products").select("*").eq(col, id).single();
+    if (error || !data) {
+      console.error("Erro ao carregar produto:", error?.message);
+      setProduct(null);
+      setLoading(false);
+      return;
+    }
+    {
       const p = data as Product;
       setProduct(p);
       setSelectedImage(p.image_url);
