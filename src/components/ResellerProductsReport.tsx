@@ -134,7 +134,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
   );
 
   const totalProducts = products.length;
-  const totalStock = products.reduce((s, p) => s + p.stock_quantity, 0);
+  const totalStock = products.reduce((s, p) => s + (p.reseller_stock ?? p.stock_quantity), 0);
   const totalSold = salesData.reduce((s, d) => s + d.total_qty, 0);
   const totalRevenue = salesData.reduce((s, d) => s + d.total_value, 0);
 
