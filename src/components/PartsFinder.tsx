@@ -47,15 +47,14 @@ const PartsFinder = () => {
 
   const searchByHp = async () => {
     setLoading(true);
-    const hp = selectedHp!;
-    const { data } = await supabase
-      .from("products")
-      .select("id, name, price, image_url, sku, hp")
-      .eq("is_active", true)
-      .or(`hp.ilike.%${hp}%,name.ilike.%${hp}hp%,name.ilike.%${hp} hp%,engine_model.ilike.%${hp}%`)
-      .limit(12);
-    
-    setResults(data || []);
+    const { data } = await supabase.rpc("fuzzy_search_products", {
+      search_term: "",
+      hp_filter: selectedHp,
+      result_limit: 12,
+    });
+    setResults((data || []).map((p: any) => ({
+      id: p.id, name: p.name, price: p.price, image_url: p.image_url, sku: p.sku, hp: p.hp,
+    })));
     setLoading(false);
   };
 
