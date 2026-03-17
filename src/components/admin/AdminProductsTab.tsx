@@ -266,41 +266,58 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
             <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2"><Label>Nome do Produto *</Label><Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="Ex: Gerador Diesel 100kVA" /></div>
               <div><Label>Código / SKU</Label><Input value={productForm.sku} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} placeholder="Ex: GEN-DSL-100" /></div>
-              <div>
-                <Label>Categoria</Label>
-                <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.category_id} onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value, subcategory_id: "" })}>
-                  <option value="">Sem categoria</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              {productForm.category_id && getCatSubcats(productForm.category_id).length > 0 && (
-                <div>
-                  <Label>Subcategoria</Label>
-                  <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.subcategory_id} onChange={(e) => setProductForm({ ...productForm, subcategory_id: e.target.value })}>
-                    <option value="">Sem subcategoria</option>
-                    {getCatSubcats(productForm.category_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+              {/* ── SEÇÃO: Classificação do Produto ── */}
+              <div className="md:col-span-2 rounded-lg border border-border bg-muted/30 p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Tag className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Classificação do Produto</span>
+                  <span className="text-xs text-muted-foreground ml-1">— Organização interna para filtros e relatórios</span>
                 </div>
-              )}
-              {categories.filter(c => c.id !== productForm.category_id).length > 0 && (
-                <div className="md:col-span-2">
-                  <Label>Categorias Adicionais</Label>
-                  <div className="flex flex-wrap gap-2 mt-1 p-3 border border-input rounded-md bg-background">
-                    {categories.filter(c => c.id !== productForm.category_id).map(c => (
-                      <label key={c.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
-                        <input type="checkbox" checked={productForm.extra_category_ids.includes(c.id)} onChange={(e) => {
-                          const ids = e.target.checked ? [...productForm.extra_category_ids, c.id] : productForm.extra_category_ids.filter(id => id !== c.id);
-                          setProductForm({ ...productForm, extra_category_ids: ids });
-                        }} className="rounded border-input" />
-                        {c.name}
-                      </label>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Categoria Principal</Label>
+                    <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.category_id} onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value, subcategory_id: "" })}>
+                      <option value="">Sem categoria</option>
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
                   </div>
+                  {productForm.category_id && getCatSubcats(productForm.category_id).length > 0 && (
+                    <div>
+                      <Label>Subcategoria</Label>
+                      <select className="w-full h-10 border border-input rounded-md px-3 text-sm bg-background" value={productForm.subcategory_id} onChange={(e) => setProductForm({ ...productForm, subcategory_id: e.target.value })}>
+                        <option value="">Sem subcategoria</option>
+                        {getCatSubcats(productForm.category_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="md:col-span-2">
-                <MenuCategoryPicker value={productForm.menu_category_id} onChange={(id) => setProductForm({ ...productForm, menu_category_id: id })} label="Categoria do Menu (Navegação)" />
-                <p className="text-xs text-muted-foreground mt-1">Define onde o produto aparece no menu de navegação superior</p>
+                {categories.filter(c => c.id !== productForm.category_id).length > 0 && (
+                  <div>
+                    <Label className="text-xs">Categorias Adicionais (opcional)</Label>
+                    <div className="flex flex-wrap gap-2 mt-1 p-2.5 border border-input rounded-md bg-background">
+                      {categories.filter(c => c.id !== productForm.category_id).map(c => (
+                        <label key={c.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                          <input type="checkbox" checked={productForm.extra_category_ids.includes(c.id)} onChange={(e) => {
+                            const ids = e.target.checked ? [...productForm.extra_category_ids, c.id] : productForm.extra_category_ids.filter(id => id !== c.id);
+                            setProductForm({ ...productForm, extra_category_ids: ids });
+                          }} className="rounded border-input" />
+                          {c.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── SEÇÃO: Posição no Menu do Site ── */}
+              <div className="md:col-span-2 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Package className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Posição no Menu do Site</span>
+                  <span className="text-xs text-muted-foreground ml-1">— Onde o produto aparece no menu de navegação</span>
+                </div>
+                <MenuCategoryPicker value={productForm.menu_category_id} onChange={(id) => setProductForm({ ...productForm, menu_category_id: id })} label="Categoria do Menu" />
+                <p className="text-[11px] text-muted-foreground mt-1.5">Selecione a posição na árvore de navegação do site. Independe da classificação acima.</p>
               </div>
               <div className="md:col-span-2">
                 <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Revendedor?</Label>
