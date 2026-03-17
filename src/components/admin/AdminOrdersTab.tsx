@@ -99,10 +99,10 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
 
   const deleteOrder = async (id: string) => {
     if (!confirm("Excluir este pedido e todos os seus itens?")) return;
-    // FIX: Release stock reservations before deleting
-    await supabase.rpc("release_stock_reservation", { p_order_id: id }).catch(() => {});
-    await supabase.from("payments").delete().eq("order_id", id).catch(() => {});
-    await supabase.from("stock_reservations").delete().eq("order_id", id).catch(() => {});
+    // Release stock reservations before deleting
+    await supabase.rpc("release_stock_reservation", { p_order_id: id });
+    await supabase.from("payments").delete().eq("order_id", id);
+    await supabase.from("stock_reservations").delete().eq("order_id", id);
     await supabase.from("order_status_history").delete().eq("order_id", id);
     await supabase.from("order_items").delete().eq("order_id", id);
     await supabase.from("orders").delete().eq("id", id);
@@ -113,9 +113,9 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
     if (selectedOrders.size === 0) return;
     if (!confirm(`Excluir ${selectedOrders.size} pedidos selecionados?`)) return;
     for (const id of Array.from(selectedOrders)) {
-      await supabase.rpc("release_stock_reservation", { p_order_id: id }).catch(() => {});
-      await supabase.from("payments").delete().eq("order_id", id).catch(() => {});
-      await supabase.from("stock_reservations").delete().eq("order_id", id).catch(() => {});
+      await supabase.rpc("release_stock_reservation", { p_order_id: id });
+      await supabase.from("payments").delete().eq("order_id", id);
+      await supabase.from("stock_reservations").delete().eq("order_id", id);
       await supabase.from("order_status_history").delete().eq("order_id", id);
       await supabase.from("order_items").delete().eq("order_id", id);
       await supabase.from("orders").delete().eq("id", id);
