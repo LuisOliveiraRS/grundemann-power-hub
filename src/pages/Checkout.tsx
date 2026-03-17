@@ -332,7 +332,6 @@ const Checkout = () => {
     setPaymentLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
 
       const { data, error } = await supabase.functions.invoke("create-payment", {
         body: { order_id: orderId },
