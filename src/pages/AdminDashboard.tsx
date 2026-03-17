@@ -37,6 +37,7 @@ import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
 import ResellerContentManagement from "@/components/ResellerContentManagement";
 import ProductResellerManager from "@/components/admin/ProductResellerManager";
+import CompatibilityManager from "@/components/admin/CompatibilityManager";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 
