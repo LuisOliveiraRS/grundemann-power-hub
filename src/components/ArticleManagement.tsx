@@ -47,7 +47,16 @@ const ArticleManagement = () => {
     setArticles((data as any[]) || []);
   };
 
-  useEffect(() => { fetchArticles(); }, []);
+  useEffect(() => { fetchArticles(); fetchLinkedData(); }, []);
+
+  const fetchLinkedData = async () => {
+    const [pRes, mRes] = await Promise.all([
+      supabase.from("diagnostic_problems").select("id, name").eq("is_active", true).order("display_order"),
+      supabase.from("generator_models").select("id, name, brand").eq("is_active", true).order("name"),
+    ]);
+    setProblems((pRes.data || []) as DiagProblem[]);
+    setModels((mRes.data || []) as GenModel[]);
+  };
 
   const generateSlug = (title: string) =>
     title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
