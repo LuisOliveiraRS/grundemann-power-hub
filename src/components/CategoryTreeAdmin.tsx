@@ -265,6 +265,7 @@ const CategoryTreeAdmin = () => {
               <Input value={newForm.icon} onChange={e => setNewForm({ ...newForm, icon: e.target.value })} placeholder="Ícone (opcional)" className="h-8 text-sm" />
               <Input value={newForm.description} onChange={e => setNewForm({ ...newForm, description: e.target.value })} placeholder="Descrição (opcional)" className="h-8 text-sm" />
             </div>
+            <Input value={newForm.external_url} onChange={e => setNewForm({ ...newForm, external_url: e.target.value })} placeholder="Link externo (opcional, ex: https://exemplo.com)" className="h-8 text-sm" />
             <div className="flex gap-2">
               <Button size="sm" className="h-7 text-xs" onClick={addCategory}>Criar</Button>
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingTo(null)}>Cancelar</Button>
