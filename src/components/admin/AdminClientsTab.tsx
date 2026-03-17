@@ -326,4 +326,72 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
   );
 };
 
+// Inline role editor component
+const RoleEditor = ({ userId, currentRoles, currentMechanics, onSave }: {
+  userId: string;
+  currentRoles: { user_id: string; role: string }[];
+  currentMechanics: { user_id: string; partner_type: string }[];
+  onSave: () => void;
+}) => {
+  const { toast } = useToast();
+  const userRoles = currentRoles.filter(r => r.user_id === userId);
+  const userMech = currentMechanics.find(m => m.user_id === userId);
+
+  const hasRole = (role: string) => userRoles.some(r => r.role === role);
+  const hasPartnerType = (type: string) => userMech?.partner_type === type;
+
+  const toggleSystemRole = async (role: "admin" | "seller") => {
+    if (hasRole(role)) {
+      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+      toast({ title: `Role "${roleTypeLabel[role]}" removida` });
+    } else {
+      await supabase.from("user_roles").insert({ user_id: userId, role });
+      toast({ title: `Role "${roleTypeLabel[role]}" adicionada` });
+    }
+    onSave();
+  };
+
+  const togglePartnerType = async (type: string) => {
+    if (userMech) {
+      if (hasPartnerType(type)) {
+        // Remove mechanic record
+        await supabase.from("mechanics").delete().eq("user_id", userId);
+        toast({ title: `Parceria "${roleTypeLabel[type]}" removida` });
+      } else {
+        // Update partner type
+        await supabase.from("mechanics").update({ partner_type: type }).eq("user_id", userId);
+        toast({ title: `Tipo alterado para "${roleTypeLabel[type]}"` });
+      }
+    } else {
+      // Create mechanic record
+      await supabase.from("mechanics").insert({ user_id: userId, partner_type: type });
+      toast({ title: `Parceria "${roleTypeLabel[type]}" adicionada` });
+    }
+    onSave();
+  };
+
+  return (
+    <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border space-y-2" onClick={e => e.stopPropagation()}>
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Editar Categorias do Usuário</p>
+      <div className="flex flex-wrap gap-2">
+        <Badge className="bg-muted text-muted-foreground text-[10px] border-0 cursor-default">Cliente ✓</Badge>
+        {(["admin", "seller"] as const).map(role => (
+          <button key={role} onClick={() => toggleSystemRole(role)}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border transition-all ${hasRole(role) ? `${roleTypeColor[role]} border-transparent` : "bg-background text-muted-foreground border-border hover:border-primary/50"}`}
+          >
+            {roleTypeLabel[role]} {hasRole(role) ? "✓" : "+"}
+          </button>
+        ))}
+        {(["mecanico", "revendedor", "oficina"] as const).map(type => (
+          <button key={type} onClick={() => togglePartnerType(type)}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border transition-all ${hasPartnerType(type) ? `${roleTypeColor[type]} border-transparent` : "bg-background text-muted-foreground border-border hover:border-primary/50"}`}
+          >
+            {roleTypeLabel[type]} {hasPartnerType(type) ? "✓" : "+"}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default AdminClientsTab;
