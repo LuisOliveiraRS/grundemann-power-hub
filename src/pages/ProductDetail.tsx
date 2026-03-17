@@ -378,11 +378,30 @@ const ProductDetail = () => {
             </div>
           </div>
 
+          {/* Compatible Models (from product_models) */}
+          {compatibleModels.length > 0 && (
+            <div className="mt-14 border-t border-border pt-8">
+              <h2 className="font-heading text-2xl font-bold mb-4 flex items-center gap-2">
+                <Cpu className="h-6 w-6 text-primary" /> Compatível Com
+              </h2>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {compatibleModels.map((m: any) => (
+                  <Badge key={m.id} variant="secondary" className="text-sm py-1.5 px-3 gap-1.5">
+                    <Cpu className="h-3.5 w-3.5" />
+                    {m.name}
+                    {m.brand && <span className="text-muted-foreground">({m.brand})</span>}
+                    {m.hp && <span className="text-muted-foreground">· {m.hp}HP</span>}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Compatible Products */}
           {compatibleProducts.length > 0 && (
-            <div className="mt-14 border-t border-border pt-8">
+            <div className={`${compatibleModels.length > 0 ? "mt-6" : "mt-14 border-t border-border pt-8"}`}>
               <h2 className="font-heading text-2xl font-bold mb-6 flex items-center gap-2">
-                <Cpu className="h-6 w-6 text-primary" /> Peças Compatíveis
+                <Package className="h-6 w-6 text-primary" /> Peças Compatíveis
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {compatibleProducts.map((p: any) => (
