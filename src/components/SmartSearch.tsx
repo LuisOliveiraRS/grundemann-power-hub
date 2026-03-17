@@ -41,7 +41,7 @@ const SmartSearch = () => {
 
     const searchTerm = q.length >= 2 ? q : "";
 
-    const [prodRes, catRes] = await Promise.all([
+    const [prodRes, catRes, diagRes, modelRes] = await Promise.all([
       supabase.rpc("fuzzy_search_products", {
         search_term: searchTerm,
         hp_filter: hpFilter || null,
@@ -50,9 +50,32 @@ const SmartSearch = () => {
       searchTerm.length >= 2
         ? supabase.from("menu_categories").select("id, name, slug").ilike("name", `%${searchTerm}%`).eq("is_active", true).limit(4)
         : Promise.resolve({ data: [] }),
+      searchTerm.length >= 2
+        ? supabase.from("diagnostic_problems").select("id, name, slug, description").eq("is_active", true).or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`).limit(3)
+        : Promise.resolve({ data: [] }),
+      searchTerm.length >= 2
+        ? supabase.from("generator_models").select("id, name, brand, hp").eq("is_active", true).or(`name.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%`).limit(4)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const results: Suggestion[] = [];
+
+    // Diagnostic problems first
+    (diagRes.data || []).forEach((d: any) => results.push({
+      type: "diagnostic", id: d.slug, name: d.name, extra: d.description?.slice(0, 60),
+    }));
+
+    // Models
+    (modelRes.data || []).forEach((m: any) => {
+      const modelSlug = `${(m.brand || "").toLowerCase()}-${m.name.toLowerCase()}`
+        .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      results.push({
+        type: "model", id: modelSlug, name: m.name,
+        extra: [m.brand, m.hp ? `${m.hp}HP` : null].filter(Boolean).join(" · "),
+      });
+    });
+
+    // Categories
     (catRes.data || []).forEach((c: any) => results.push({ type: "category", id: c.slug, name: c.name }));
 
     const prods = (prodRes.data || []) as any[];
