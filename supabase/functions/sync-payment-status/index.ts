@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 
     const { data: order, error: orderError } = await adminSupabase
       .from("orders")
-      .select("id, user_id, status, total_amount")
+      .select("id, user_id, status, total_amount, seller_id")
       .eq("id", order_id)
       .single();
 
@@ -155,7 +155,54 @@ Deno.serve(async (req) => {
 
     let resolvedOrderStatus = order.status;
 
+    // ========== PAYMENT APPROVED ==========
     if (normalizedPaymentStatus === "approved" && !isConfirmedOrderStatus(order.status)) {
+      // FIX: Use transactional confirm_stock_reservation RPC instead of manual stock decrease
+      // This prevents double-deduction when webhook already confirmed the reservation
+      const { error: stockError } = await adminSupabase.rpc("confirm_stock_reservation", {
+        p_order_id: order_id,
+      });
+
+      if (stockError) {
+        console.error("Stock confirmation error (reservation may not exist, falling back):", stockError);
+        // Fallback: Check if stock was already decreased by webhook
+        const { data: existingReservations } = await adminSupabase
+          .from("stock_reservations")
+          .select("id, status")
+          .eq("order_id", order_id);
+
+        const hasConfirmed = existingReservations?.some(r => r.status === "confirmed");
+        
+        if (!hasConfirmed) {
+          // No confirmed reservations — safe to do manual decrease as last resort
+          const { data: orderItems } = await adminSupabase
+            .from("order_items")
+            .select("product_id, quantity")
+            .eq("order_id", order_id);
+          for (const item of orderItems || []) {
+            if (!item.product_id) continue;
+            const { data: product } = await adminSupabase
+              .from("products")
+              .select("stock_quantity")
+              .eq("id", item.product_id)
+              .single();
+            if (product) {
+              await adminSupabase.from("products")
+                .update({ stock_quantity: Math.max(0, Number(product.stock_quantity) - Number(item.quantity)) })
+                .eq("id", item.product_id);
+            }
+          }
+        }
+      }
+
+      // FIX: Also decrease reseller stock if order has a seller_id
+      if (order.seller_id) {
+        await adminSupabase.rpc("decrease_reseller_stock", {
+          p_order_id: order_id,
+          p_reseller_id: order.seller_id,
+        }).catch((err: any) => console.error("Reseller stock decrease error:", err));
+      }
+
       await adminSupabase.from("orders").update({ status: "confirmed" }).eq("id", order_id);
       resolvedOrderStatus = "confirmed";
 
@@ -185,30 +232,15 @@ Deno.serve(async (req) => {
           }))
         );
       }
-
-      const { data: orderItems } = await adminSupabase
-        .from("order_items")
-        .select("product_id, quantity")
-        .eq("order_id", order_id);
-
-      for (const item of orderItems || []) {
-        if (!item.product_id) continue;
-        const { data: product } = await adminSupabase
-          .from("products")
-          .select("stock_quantity")
-          .eq("id", item.product_id)
-          .single();
-
-        if (product) {
-          await adminSupabase
-            .from("products")
-            .update({ stock_quantity: Math.max(0, Number(product.stock_quantity) - Number(item.quantity)) })
-            .eq("id", item.product_id);
-        }
-      }
     }
 
+    // ========== PAYMENT CANCELLED/REJECTED ==========
     if (isCancelledPaymentStatus(normalizedPaymentStatus) && order.status === "pending") {
+      // FIX: Release stock reservations
+      await adminSupabase.rpc("release_stock_reservation", { p_order_id: order_id }).catch((err: any) => {
+        console.error("Stock release error:", err);
+      });
+
       await adminSupabase.from("orders").update({ status: "cancelled" }).eq("id", order_id);
       resolvedOrderStatus = "cancelled";
 

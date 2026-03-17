@@ -124,18 +124,19 @@ const AdminDashboard = () => {
   }, [orders]);
 
   const loadAll = async () => {
+    // FIX: Use explicit limits to avoid hitting default 1000-row cap on large tables
     const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes, resellerRes] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("categories").select("*").order("name"),
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("subcategories").select("*").order("name"),
-      supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
-      supabase.from("payments").select("*").order("created_at", { ascending: false }),
-      supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
-      supabase.from("user_roles").select("user_id, role"),
-      supabase.from("mechanics").select("user_id, partner_type"),
-      supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true),
+      supabase.from("products").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("categories").select("*").order("name").limit(500),
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("subcategories").select("*").order("name").limit(500),
+      supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("payments").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("product_categories").select("product_id, category_id, subcategory_id").limit(10000),
+      supabase.from("user_roles").select("user_id, role").limit(5000),
+      supabase.from("mechanics").select("user_id, partner_type").limit(1000),
+      supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true).limit(500),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
