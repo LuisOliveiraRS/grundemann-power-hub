@@ -42,6 +42,7 @@ import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import IntelligentAnalytics from "@/components/admin/IntelligentAnalytics";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
+import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
 
 import type {
   AdminTab, Product, OrderWithItems, Category, Subcategory,
