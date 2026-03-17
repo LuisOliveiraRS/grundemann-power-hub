@@ -86,8 +86,13 @@ const StockManagement = () => {
     if (entries.length === 0) return;
     setSaving(true);
 
-    for (const [id, qty] of entries) {
-      await supabase.from("products").update({ stock_quantity: qty }).eq("id", id);
+    // Batch updates in parallel (max 10 concurrent) instead of sequential
+    const BATCH = 10;
+    for (let i = 0; i < entries.length; i += BATCH) {
+      const batch = entries.slice(i, i + BATCH);
+      await Promise.all(
+        batch.map(([id, qty]) => supabase.from("products").update({ stock_quantity: qty }).eq("id", id))
+      );
     }
 
     toast({ title: "Estoque atualizado", description: `${entries.length} produtos atualizados.` });

@@ -104,32 +104,39 @@ const AdminDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [toast]);
 
-  // Auto-sync pending orders
+  // Auto-sync pending orders — throttled: max 3 at a time, every 15s to avoid API spam
   useEffect(() => {
     const pendingOrderIds = orders.filter(o => o.status === "pending").map(o => o.id);
     if (pendingOrderIds.length === 0) return;
+    let syncIndex = 0;
+    const BATCH_SIZE = 3;
     const interval = window.setInterval(async () => {
       try {
-        await Promise.all(pendingOrderIds.map(id => syncPaymentStatus(id)));
+        const batch = pendingOrderIds.slice(syncIndex, syncIndex + BATCH_SIZE);
+        if (batch.length === 0) { syncIndex = 0; return; }
+        await Promise.all(batch.map(id => syncPaymentStatus(id)));
+        syncIndex += BATCH_SIZE;
+        if (syncIndex >= pendingOrderIds.length) syncIndex = 0;
         await loadAll();
       } catch (error) { console.error("Admin payment sync error:", error); }
-    }, 5000);
+    }, 15000);
     return () => window.clearInterval(interval);
   }, [orders]);
 
   const loadAll = async () => {
+    // FIX: Use explicit limits to avoid hitting default 1000-row cap on large tables
     const [prodRes, ordRes, catRes, clientRes, subRes, testRes, payRes, pcLinksRes, rolesRes, mechRes, resellerRes] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("categories").select("*").order("name"),
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("subcategories").select("*").order("name"),
-      supabase.from("testimonials").select("*").order("created_at", { ascending: false }),
-      supabase.from("payments").select("*").order("created_at", { ascending: false }),
-      supabase.from("product_categories").select("product_id, category_id, subcategory_id"),
-      supabase.from("user_roles").select("user_id, role"),
-      supabase.from("mechanics").select("user_id, partner_type"),
-      supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true),
+      supabase.from("products").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("categories").select("*").order("name").limit(500),
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("subcategories").select("*").order("name").limit(500),
+      supabase.from("testimonials").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("payments").select("*").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("product_categories").select("product_id, category_id, subcategory_id").limit(10000),
+      supabase.from("user_roles").select("user_id, role").limit(5000),
+      supabase.from("mechanics").select("user_id, partner_type").limit(1000),
+      supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true).limit(500),
     ]);
     const prods = (prodRes.data || []) as Product[];
     const payments = (payRes.data || []) as PaymentInfo[];
