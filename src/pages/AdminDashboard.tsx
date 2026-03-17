@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   ChevronUp, Video, BookOpen, FileText, Package, FileUp, Download, Users, Wrench,
-  Megaphone, Globe, Truck, Boxes, Mail, Gift, TrendingUp, DollarSign, Tag, Paintbrush, BarChart3, Store,
+  Megaphone, Globe, Truck, Boxes, Mail, Gift, TrendingUp, DollarSign, Tag, Paintbrush, BarChart3, Store, Cpu,
 } from "lucide-react";
 import { syncPaymentStatus } from "@/lib/paymentSync";
 
