@@ -198,6 +198,7 @@ const CategoryTreeAdmin = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold truncate">{item.name}</span>
                         <Badge variant="outline" className="text-[10px] px-1.5 flex-shrink-0">/{item.slug}</Badge>
+                        {item.external_url && <Badge variant="secondary" className="text-[10px] px-1.5 flex-shrink-0 bg-accent/20 text-accent-foreground"><ExternalLink className="h-2.5 w-2.5 mr-0.5" /> Externo</Badge>}
                         {!item.is_active && <Badge variant="secondary" className="text-[10px]"><EyeOff className="h-2.5 w-2.5 mr-0.5" /> Oculta</Badge>}
                         {item.icon && <Badge variant="outline" className="text-[10px]">{item.icon}</Badge>}
                       </div>
