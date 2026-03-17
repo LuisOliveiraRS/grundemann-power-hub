@@ -165,6 +165,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       reseller_id: p.reseller_id || "",
       fuel_type: p.fuel_type || "",
       slug: p.slug || "",
+      tags: (p.tags || []).join(", "),
     });
   };
 
