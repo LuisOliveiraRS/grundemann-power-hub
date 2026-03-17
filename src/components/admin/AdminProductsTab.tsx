@@ -396,6 +396,12 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-1">URL: /produto/{productForm.slug || "..."}</p>
               </div>
+              {/* Tags for search */}
+              <div className="md:col-span-2">
+                <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Tags de Busca</Label>
+                <Input value={productForm.tags} onChange={e => setProductForm({ ...productForm, tags: e.target.value })} placeholder="carburador, 6.5hp, 168f, gerador, gasolina" className="mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Separe as tags por vírgula. Melhora a busca fuzzy e por palavras-chave.</p>
+              </div>
               {/* Weight & Dimensions */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div><Label>Peso (kg)</Label><Input type="number" step="0.01" value={productForm.weight_kg} onChange={e => setProductForm({ ...productForm, weight_kg: e.target.value })} placeholder="Ex: 2.5" className="mt-1" /></div>
