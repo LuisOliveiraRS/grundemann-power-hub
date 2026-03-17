@@ -11,6 +11,7 @@ interface Suggestion {
   image?: string | null;
   price?: number;
   hp?: string;
+  score?: number;
 }
 
 const HP_FILTERS = ["5", "7", "8", "9", "10", "13", "15"];
@@ -37,23 +38,17 @@ const SmartSearch = () => {
   const search = async (q: string, hpFilter?: string | null) => {
     if (q.length < 2 && !hpFilter) { setSuggestions([]); return; }
     setLoading(true);
-    const term = `%${q}%`;
 
-    let prodQuery = supabase.from("products").select("id, name, sku, image_url, brand, hp, price")
-      .eq("is_active", true);
-
-    if (q.length >= 2) {
-      prodQuery = prodQuery.or(`name.ilike.${term},sku.ilike.${term},brand.ilike.${term},description.ilike.${term},engine_model.ilike.${term},hp.ilike.${term}`);
-    }
-
-    if (hpFilter) {
-      prodQuery = prodQuery.eq("hp", hpFilter);
-    }
+    const searchTerm = q.length >= 2 ? q : "";
 
     const [prodRes, catRes] = await Promise.all([
-      prodQuery.order("hp", { ascending: true }).limit(20),
-      q.length >= 2
-        ? supabase.from("menu_categories").select("id, name, slug").ilike("name", term).eq("is_active", true).limit(4)
+      supabase.rpc("fuzzy_search_products", {
+        search_term: searchTerm,
+        hp_filter: hpFilter || null,
+        result_limit: 20,
+      }),
+      searchTerm.length >= 2
+        ? supabase.from("menu_categories").select("id, name, slug").ilike("name", `%${searchTerm}%`).eq("is_active", true).limit(4)
         : Promise.resolve({ data: [] }),
     ]);
 
@@ -66,6 +61,7 @@ const SmartSearch = () => {
       extra: [p.sku, p.brand, p.hp ? `${p.hp}HP` : null].filter(Boolean).join(" · "),
       image: p.image_url,
       hp: p.hp || undefined,
+      score: p.similarity_score,
     }));
 
     setSuggestions(results);
@@ -127,7 +123,7 @@ const SmartSearch = () => {
         <div className="relative">
           <input
             type="search"
-            placeholder="Buscar por nome, SKU, marca, motor..."
+            placeholder="Buscar por nome, SKU, marca, motor, tags..."
             value={query}
             onChange={e => handleChange(e.target.value)}
             onFocus={() => suggestions.length > 0 && setOpen(true)}

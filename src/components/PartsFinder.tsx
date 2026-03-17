@@ -63,22 +63,17 @@ const PartsFinder = () => {
     const partType = partTypes.find(p => p.label === selectedPart);
     const searchTerm = partType?.search || selectedPart || "";
 
-    const { data } = await supabase
-      .from("products")
-      .select("id, name, price, image_url, sku, hp")
-      .eq("is_active", true)
-      .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
-      .limit(12);
-
-    // Filter by HP
-    const filtered = (data || []).filter((p: any) => {
-      if (!selectedHp) return true;
-      const nameMatch = p.name?.toLowerCase().includes(`${selectedHp}hp`) || p.name?.toLowerCase().includes(`${selectedHp} hp`);
-      const hpMatch = p.hp === selectedHp || p.hp === `${selectedHp}hp` || p.hp === `${selectedHp}HP`;
-      return nameMatch || hpMatch;
+    const { data } = await supabase.rpc("fuzzy_search_products", {
+      search_term: searchTerm,
+      hp_filter: selectedHp,
+      result_limit: 12,
     });
 
-    setResults(filtered.length > 0 ? filtered : (data || []).slice(0, 4));
+    const mapped = (data || []).map((p: any) => ({
+      id: p.id, name: p.name, price: p.price, image_url: p.image_url, sku: p.sku, hp: p.hp,
+    }));
+
+    setResults(mapped);
     setLoading(false);
   };
 
