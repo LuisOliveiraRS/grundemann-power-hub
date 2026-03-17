@@ -22,9 +22,9 @@ const CategoryTreeAdmin = () => {
   const [items, setItems] = useState<MenuCat[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "" });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "", external_url: "" });
   const [addingTo, setAddingTo] = useState<string | null>(null); // parent_id or "__root__"
-  const [newForm, setNewForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "" });
+  const [newForm, setNewForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "", external_url: "" });
 
   useEffect(() => { loadData(); }, []);
 
