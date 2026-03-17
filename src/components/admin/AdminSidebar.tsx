@@ -32,6 +32,7 @@ const sideItems = [
   { key: "product-resellers" as const, label: "Produto × Revendedor", icon: Store },
   { key: "compatibility" as const, label: "Compatibilidade", icon: Cpu },
   { key: "diagnostics" as const, label: "Diagnóstico & Kits", icon: Stethoscope },
+  { key: "intelligence" as const, label: "Inteligência", icon: Brain },
   { key: "subscribers" as const, label: "Leads & Cupons", icon: Mail },
   { key: "rewards" as const, label: "Fidelidade", icon: Gift },
   { key: "analytics" as const, label: "Analytics", icon: TrendingUp },
