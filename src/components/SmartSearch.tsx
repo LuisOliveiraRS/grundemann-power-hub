@@ -218,6 +218,14 @@ const SmartSearch = () => {
                           <Package className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )
+                    ) : s.type === "diagnostic" ? (
+                      <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                        <Stethoscope className="h-5 w-5 text-destructive" />
+                      </div>
+                    ) : s.type === "model" ? (
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Cpu className="h-5 w-5 text-primary" />
+                      </div>
                     ) : (
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Tag className="h-5 w-5 text-primary" />
