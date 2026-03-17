@@ -67,6 +67,7 @@ const CategoryTreeAdmin = () => {
       icon: newForm.icon || "",
       image_url: newForm.image_url || "",
       description: newForm.description || "",
+      external_url: newForm.external_url || null,
     });
 
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
