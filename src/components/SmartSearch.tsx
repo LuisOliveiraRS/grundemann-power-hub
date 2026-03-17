@@ -14,7 +14,7 @@ interface Suggestion {
   score?: number;
 }
 
-const HP_FILTERS = ["5", "7", "8", "9", "10", "13", "15"];
+const HP_FILTERS = ["5", "7", "8", "9", "10", "13", "15", "16", "18", "20"];
 
 const SmartSearch = () => {
   const [query, setQuery] = useState("");
