@@ -113,6 +113,7 @@ const Index = () => {
                 <KraftProductShowcase />
               </Suspense>
               <PartsFinder />
+              <ModelSearch />
               <TabbedProducts />
               <SocialProof />
               <GuaranteeSection />
