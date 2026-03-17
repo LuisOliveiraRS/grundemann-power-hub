@@ -130,6 +130,7 @@ const Index = () => {
               )}
               <BenefitsBar />
               <PartsFinder />
+              <ModelSearch />
               <TabbedProducts />
               {heroMode !== "rotating_banner" && (
                 <Suspense fallback={<SectionLoader />}>
