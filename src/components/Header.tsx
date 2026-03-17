@@ -19,10 +19,11 @@ const Header = () => {
 
   const loadCartCount = async () => {
     if (user) {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("cart_items")
         .select("quantity")
         .eq("user_id", user.id);
+      if (error) { console.error("Erro ao carregar carrinho:", error.message); return; }
       const total = (data || []).reduce((s, i) => s + (i.quantity || 1), 0);
       setCartCount(total);
     } else {

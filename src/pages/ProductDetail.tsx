@@ -66,9 +66,16 @@ const ProductDetail = () => {
   useEffect(() => { if (id) loadProduct(); }, [id]);
 
   const loadProduct = async () => {
+    setLoading(true);
     const col = isUUID(id || "") ? "id" : "slug";
-    const { data } = await supabase.from("products").select("*").eq(col, id).single();
-    if (data) {
+    const { data, error } = await supabase.from("products").select("*").eq(col, id).single();
+    if (error || !data) {
+      console.error("Erro ao carregar produto:", error?.message);
+      setProduct(null);
+      setLoading(false);
+      return;
+    }
+    {
       const p = data as Product;
       setProduct(p);
       setSelectedImage(p.image_url);
@@ -115,12 +122,14 @@ const ProductDetail = () => {
   const addToCart = async () => {
     if (!product) return;
     if (user) {
-      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).single();
+      const { data: existing } = await supabase.from("cart_items").select("id, quantity").eq("user_id", user.id).eq("product_id", product.id).maybeSingle();
+      let error;
       if (existing) {
-        await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id);
+        ({ error } = await supabase.from("cart_items").update({ quantity: existing.quantity + quantity }).eq("id", existing.id));
       } else {
-        await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity });
+        ({ error } = await supabase.from("cart_items").insert({ user_id: user.id, product_id: product.id, quantity }));
       }
+      if (error) { toast({ title: "Erro ao adicionar", description: error.message, variant: "destructive" }); return; }
     } else {
       addToGuestCart({ product_id: product.id, quantity, product: { name: product.name, price: product.price, image_url: product.image_url } });
     }

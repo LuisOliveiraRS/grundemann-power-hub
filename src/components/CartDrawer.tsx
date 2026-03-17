@@ -35,10 +35,11 @@ const CartDrawer = forwardRef<HTMLDivElement, CartDrawerProps>(({ open, onOpenCh
   }, [open, user]);
 
   const loadCart = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("cart_items")
       .select("id, product_id, quantity, products(name, price, image_url)")
       .eq("user_id", user!.id);
+    if (error) { toast({ title: "Erro ao carregar carrinho", description: error.message, variant: "destructive" }); return; }
     if (data) {
       setItems(data.map((d: any) => ({ ...d, product: d.products })));
     }
@@ -46,12 +47,14 @@ const CartDrawer = forwardRef<HTMLDivElement, CartDrawerProps>(({ open, onOpenCh
 
   const updateQty = async (id: string, quantity: number) => {
     if (quantity < 1) return removeItem(id);
-    await supabase.from("cart_items").update({ quantity }).eq("id", id);
+    const { error } = await supabase.from("cart_items").update({ quantity }).eq("id", id);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     loadCart();
   };
 
   const removeItem = async (id: string) => {
-    await supabase.from("cart_items").delete().eq("id", id);
+    const { error } = await supabase.from("cart_items").delete().eq("id", id);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     loadCart();
   };
 
