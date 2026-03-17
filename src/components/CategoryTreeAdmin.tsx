@@ -8,13 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronRight, ChevronDown, Plus, Trash2, Edit, FolderTree,
-  Save, X, GripVertical, Eye, EyeOff, ArrowUp, ArrowDown,
+  Save, X, GripVertical, Eye, EyeOff, ArrowUp, ArrowDown, ExternalLink,
 } from "lucide-react";
 
 interface MenuCat {
   id: string; name: string; slug: string; parent_id: string | null;
   display_order: number; icon: string; image_url: string;
-  description: string; is_active: boolean;
+  description: string; is_active: boolean; external_url: string | null;
 }
 
 const CategoryTreeAdmin = () => {
@@ -22,9 +22,9 @@ const CategoryTreeAdmin = () => {
   const [items, setItems] = useState<MenuCat[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "" });
+  const [editForm, setEditForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "", external_url: "" });
   const [addingTo, setAddingTo] = useState<string | null>(null); // parent_id or "__root__"
-  const [newForm, setNewForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "" });
+  const [newForm, setNewForm] = useState({ name: "", slug: "", description: "", icon: "", image_url: "", external_url: "" });
 
   useEffect(() => { loadData(); }, []);
 
@@ -67,19 +67,20 @@ const CategoryTreeAdmin = () => {
       icon: newForm.icon || "",
       image_url: newForm.image_url || "",
       description: newForm.description || "",
+      external_url: newForm.external_url || null,
     });
 
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Categoria criada!" });
     setAddingTo(null);
-    setNewForm({ name: "", slug: "", description: "", icon: "", image_url: "" });
+    setNewForm({ name: "", slug: "", description: "", icon: "", image_url: "", external_url: "" });
     if (parentId) setExpanded(prev => new Set(prev).add(parentId));
     loadData();
   };
 
   const startEdit = (item: MenuCat) => {
     setEditing(item.id);
-    setEditForm({ name: item.name, slug: item.slug, description: item.description, icon: item.icon, image_url: item.image_url });
+    setEditForm({ name: item.name, slug: item.slug, description: item.description, icon: item.icon, image_url: item.image_url, external_url: item.external_url || "" });
   };
 
   const saveEdit = async (id: string) => {
@@ -89,6 +90,7 @@ const CategoryTreeAdmin = () => {
       description: editForm.description,
       icon: editForm.icon,
       image_url: editForm.image_url,
+      external_url: editForm.external_url || null,
     }).eq("id", id);
     if (error) { toast({ title: "Erro", variant: "destructive" }); return; }
     toast({ title: "Atualizado!" });
@@ -183,6 +185,7 @@ const CategoryTreeAdmin = () => {
                       <Input value={editForm.icon} onChange={e => setEditForm({ ...editForm, icon: e.target.value })} placeholder="Ícone (ex: Fuel)" className="h-8 text-sm" />
                       <Input value={editForm.image_url} onChange={e => setEditForm({ ...editForm, image_url: e.target.value })} placeholder="URL da imagem" className="h-8 text-sm" />
                     </div>
+                    <Input value={editForm.external_url} onChange={e => setEditForm({ ...editForm, external_url: e.target.value })} placeholder="Link externo (ex: https://exemplo.com) — deixe vazio para link interno" className="h-8 text-sm" />
                     <Input value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} placeholder="Descrição" className="h-8 text-sm" />
                     <div className="flex gap-2">
                       <Button size="sm" className="h-7 text-xs" onClick={() => saveEdit(item.id)}><Save className="h-3 w-3 mr-1" /> Salvar</Button>
@@ -195,6 +198,7 @@ const CategoryTreeAdmin = () => {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold truncate">{item.name}</span>
                         <Badge variant="outline" className="text-[10px] px-1.5 flex-shrink-0">/{item.slug}</Badge>
+                        {item.external_url && <Badge variant="secondary" className="text-[10px] px-1.5 flex-shrink-0 bg-accent/20 text-accent-foreground"><ExternalLink className="h-2.5 w-2.5 mr-0.5" /> Externo</Badge>}
                         {!item.is_active && <Badge variant="secondary" className="text-[10px]"><EyeOff className="h-2.5 w-2.5 mr-0.5" /> Oculta</Badge>}
                         {item.icon && <Badge variant="outline" className="text-[10px]">{item.icon}</Badge>}
                       </div>
@@ -261,6 +265,7 @@ const CategoryTreeAdmin = () => {
               <Input value={newForm.icon} onChange={e => setNewForm({ ...newForm, icon: e.target.value })} placeholder="Ícone (opcional)" className="h-8 text-sm" />
               <Input value={newForm.description} onChange={e => setNewForm({ ...newForm, description: e.target.value })} placeholder="Descrição (opcional)" className="h-8 text-sm" />
             </div>
+            <Input value={newForm.external_url} onChange={e => setNewForm({ ...newForm, external_url: e.target.value })} placeholder="Link externo (opcional, ex: https://exemplo.com)" className="h-8 text-sm" />
             <div className="flex gap-2">
               <Button size="sm" className="h-7 text-xs" onClick={addCategory}>Criar</Button>
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingTo(null)}>Cancelar</Button>

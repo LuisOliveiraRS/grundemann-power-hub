@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Plus, Trash2, Edit, Search, ChevronDown, ChevronUp, X, Users, ShoppingCart,
+  Plus, Trash2, Edit, Search, ChevronDown, ChevronUp, X, Users, ShoppingCart, UserCog,
 } from "lucide-react";
 import WhatsAppIcon from "@/components/WhatsAppIcon";
 import { normalizeWhatsAppPhone } from "@/lib/whatsappUtils";
@@ -28,6 +29,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
   const [clientRoleFilter, setClientRoleFilter] = useState("");
   const [editingClient, setEditingClient] = useState<Partial<ProfileFull> | null>(null);
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+  const [editingRolesFor, setEditingRolesFor] = useState<string | null>(null);
   const [clientOrderItems, setClientOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [clientForm, setClientForm] = useState({
     full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "",
@@ -37,18 +39,31 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
 
   const resetClientForm = () => setClientForm({ full_name: "", email: "", phone: "", cpf_cnpj: "", company_name: "", address: "", address_number: "", address_complement: "", neighborhood: "", city: "", state: "", zip_code: "", notes: "" });
 
-  const getUserRoleType = (userId: string): string => {
-    const roles = clientRoles.filter(r => r.user_id === userId);
-    if (roles.some(r => r.role === "admin")) return "admin";
-    if (roles.some(r => r.role === "seller")) return "seller";
+  // All users are "cliente" by default; they can also have additional roles
+  const getUserRoles = (userId: string): string[] => {
+    const roles: string[] = ["cliente"]; // everyone is a client
+    const userRoles = clientRoles.filter(r => r.user_id === userId);
+    if (userRoles.some(r => r.role === "admin")) roles.push("admin");
+    if (userRoles.some(r => r.role === "seller")) roles.push("seller");
     const mech = clientMechanics.find(m => m.user_id === userId);
-    if (mech) return mech.partner_type || "mecanico";
+    if (mech) roles.push(mech.partner_type || "mecanico");
+    return [...new Set(roles)];
+  };
+
+  const getUserPrimaryRole = (userId: string): string => {
+    const roles = getUserRoles(userId);
+    // Return the "highest" role for badge display
+    if (roles.includes("admin")) return "admin";
+    if (roles.includes("seller")) return "seller";
+    if (roles.includes("revendedor")) return "revendedor";
+    if (roles.includes("oficina")) return "oficina";
+    if (roles.includes("mecanico")) return "mecanico";
     return "cliente";
   };
 
   const filteredClients = clients.filter(c => {
-    const roleType = getUserRoleType(c.user_id);
-    if (clientRoleFilter && roleType !== clientRoleFilter) return false;
+    const roles = getUserRoles(c.user_id);
+    if (clientRoleFilter && !roles.includes(clientRoleFilter)) return false;
     if (!clientSearch) return true;
     const s = clientSearch.toLowerCase();
     return (c.full_name || "").toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s) || (c.phone || "").toLowerCase().includes(s) || (c.cpf_cnpj || "").toLowerCase().includes(s);
@@ -173,7 +188,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
       {/* Role stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         {["admin", "seller", "revendedor", "oficina", "mecanico", "cliente"].map(role => {
-          const count = clients.filter(c => getUserRoleType(c.user_id) === role).length;
+          const count = clients.filter(c => getUserRoles(c.user_id).includes(role)).length;
           return (
             <button key={role} onClick={() => setClientRoleFilter(clientRoleFilter === role ? "" : role)} className={`bg-card rounded-xl border p-3 text-center transition-all hover:shadow-md ${clientRoleFilter === role ? "border-primary shadow-md" : "border-border"}`}>
               <Badge className={`${roleTypeColor[role]} text-[10px] mb-1`}>{roleTypeLabel[role]}</Badge>
@@ -205,7 +220,8 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
                 const phoneClean = normalizeWhatsAppPhone(c.phone);
                 const hasPhone = phoneClean.length >= 12;
                 const isExpanded = expandedClientId === c.user_id;
-                const roleType = getUserRoleType(c.user_id);
+                const userRoles = getUserRoles(c.user_id);
+                const roleType = getUserPrimaryRole(c.user_id);
                 return (
                   <React.Fragment key={c.user_id}>
                     <tr className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => toggleClientExpand(c.user_id)}>
@@ -219,7 +235,19 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
                           </div>
                         </div>
                       </td>
-                      <td className="p-3.5"><Badge className={`${roleTypeColor[roleType] || ""} text-[10px] border-0`}>{roleTypeLabel[roleType] || roleType}</Badge></td>
+                      <td className="p-3.5">
+                        <div className="flex flex-wrap gap-1">
+                          {userRoles.map(r => (
+                            <Badge key={r} className={`${roleTypeColor[r] || ""} text-[10px] border-0`}>{roleTypeLabel[r] || r}</Badge>
+                          ))}
+                          <button onClick={(e) => { e.stopPropagation(); setEditingRolesFor(editingRolesFor === c.user_id ? null : c.user_id); }} className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted hover:bg-primary/20 transition-colors" title="Editar categorias">
+                            <UserCog className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                        {editingRolesFor === c.user_id && (
+                          <RoleEditor userId={c.user_id} currentRoles={clientRoles} currentMechanics={clientMechanics} onSave={() => { setEditingRolesFor(null); onReload(); }} />
+                        )}
+                      </td>
                       <td className="p-3.5 text-muted-foreground text-xs">{c.email}</td>
                       <td className="p-3.5">
                         {c.phone ? (
@@ -293,6 +321,74 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Inline role editor component
+const RoleEditor = ({ userId, currentRoles, currentMechanics, onSave }: {
+  userId: string;
+  currentRoles: { user_id: string; role: string }[];
+  currentMechanics: { user_id: string; partner_type: string }[];
+  onSave: () => void;
+}) => {
+  const { toast } = useToast();
+  const userRoles = currentRoles.filter(r => r.user_id === userId);
+  const userMech = currentMechanics.find(m => m.user_id === userId);
+
+  const hasRole = (role: string) => userRoles.some(r => r.role === role);
+  const hasPartnerType = (type: string) => userMech?.partner_type === type;
+
+  const toggleSystemRole = async (role: "admin" | "seller") => {
+    if (hasRole(role)) {
+      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+      toast({ title: `Role "${roleTypeLabel[role]}" removida` });
+    } else {
+      await supabase.from("user_roles").insert({ user_id: userId, role });
+      toast({ title: `Role "${roleTypeLabel[role]}" adicionada` });
+    }
+    onSave();
+  };
+
+  const togglePartnerType = async (type: string) => {
+    if (userMech) {
+      if (hasPartnerType(type)) {
+        // Remove mechanic record
+        await supabase.from("mechanics").delete().eq("user_id", userId);
+        toast({ title: `Parceria "${roleTypeLabel[type]}" removida` });
+      } else {
+        // Update partner type
+        await supabase.from("mechanics").update({ partner_type: type }).eq("user_id", userId);
+        toast({ title: `Tipo alterado para "${roleTypeLabel[type]}"` });
+      }
+    } else {
+      // Create mechanic record
+      await supabase.from("mechanics").insert({ user_id: userId, partner_type: type });
+      toast({ title: `Parceria "${roleTypeLabel[type]}" adicionada` });
+    }
+    onSave();
+  };
+
+  return (
+    <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border space-y-2" onClick={e => e.stopPropagation()}>
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Editar Categorias do Usuário</p>
+      <div className="flex flex-wrap gap-2">
+        <Badge className="bg-muted text-muted-foreground text-[10px] border-0 cursor-default">Cliente ✓</Badge>
+        {(["admin", "seller"] as const).map(role => (
+          <button key={role} onClick={() => toggleSystemRole(role)}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border transition-all ${hasRole(role) ? `${roleTypeColor[role]} border-transparent` : "bg-background text-muted-foreground border-border hover:border-primary/50"}`}
+          >
+            {roleTypeLabel[role]} {hasRole(role) ? "✓" : "+"}
+          </button>
+        ))}
+        {(["mecanico", "revendedor", "oficina"] as const).map(type => (
+          <button key={type} onClick={() => togglePartnerType(type)}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border transition-all ${hasPartnerType(type) ? `${roleTypeColor[type]} border-transparent` : "bg-background text-muted-foreground border-border hover:border-primary/50"}`}
+          >
+            {roleTypeLabel[type]} {hasPartnerType(type) ? "✓" : "+"}
+          </button>
+        ))}
       </div>
     </div>
   );

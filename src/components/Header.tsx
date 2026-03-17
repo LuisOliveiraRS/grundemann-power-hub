@@ -57,7 +57,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="border-b border-border bg-background relative z-40">
+      <header className="border-b border-border bg-background relative z-50">
         <div className="container flex items-center justify-between py-3 gap-3 md:gap-8">
           {/* Hamburger - mobile only */}
           <button

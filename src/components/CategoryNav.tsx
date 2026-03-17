@@ -108,7 +108,7 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
   if (loading) return null;
 
   return (
-    <nav className="bg-nav sticky top-0 z-40 shadow-md" ref={navRef}>
+    <nav className="bg-nav sticky top-0 z-30 shadow-md" ref={navRef}>
       <div className="container">
         <ul className="flex flex-wrap items-center justify-center md:justify-between">
           {tree.map(cat => {
@@ -148,6 +148,16 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                       <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                     </span>
                   </button>
+                ) : cat.external_url ? (
+                  <a
+                    href={cat.external_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1 px-4 py-3 text-nav-foreground hover:bg-primary-foreground/10 transition-colors text-xs font-semibold uppercase tracking-wide whitespace-nowrap"
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="flex items-center gap-1">{cat.name} <ExternalLink className="h-2.5 w-2.5" /></span>
+                  </a>
                 ) : (
                   <Link
                     to={`/categoria/${cat.fullPath}`}
@@ -173,25 +183,37 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                         >
                           Ver todos em {cat.name}
                         </Link>
-                        {subs.map(({ node: sub, depth }) => (
-                          <Link
-                            key={sub.id}
-                            to={`/categoria/${sub.fullPath}`}
-                            onClick={closeMenu}
-                            onMouseEnter={() => {
-                              clearCloseTimeout();
-                              setHoveredSub(sub.id);
-                            }}
-                            className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
-                            style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
-                          >
-                            {depth > 0 && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />}
-                            <span className={depth === 0 ? "font-semibold" : ""}>{sub.name}</span>
-                            {sub.children.length > 0 && (
-                              <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground flex-shrink-0" />
-                            )}
-                          </Link>
-                        ))}
+                        {subs.map(({ node: sub, depth }) => {
+                          const isExternal = !!sub.external_url;
+                          const linkProps = isExternal
+                            ? { as: "a" as const, href: sub.external_url!, target: "_blank", rel: "noopener noreferrer" }
+                            : {};
+                          const Comp = isExternal ? "a" : Link;
+                          const compProps = isExternal
+                            ? { href: sub.external_url!, target: "_blank", rel: "noopener noreferrer" }
+                            : { to: `/categoria/${sub.fullPath}` };
+
+                          return (
+                            <Comp
+                              key={sub.id}
+                              {...(compProps as any)}
+                              onClick={closeMenu}
+                              onMouseEnter={() => {
+                                clearCloseTimeout();
+                                setHoveredSub(sub.id);
+                              }}
+                              className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
+                              style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
+                            >
+                              {depth > 0 && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />}
+                              <span className={depth === 0 ? "font-semibold" : ""}>{sub.name}</span>
+                              {isExternal && <ExternalLink className="h-3 w-3 ml-1 text-muted-foreground flex-shrink-0" />}
+                              {!isExternal && sub.children.length > 0 && (
+                                <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground flex-shrink-0" />
+                              )}
+                            </Comp>
+                          );
+                        })}
                       </div>
 
                       <div className="min-w-0 min-h-[260px] p-3 space-y-2">

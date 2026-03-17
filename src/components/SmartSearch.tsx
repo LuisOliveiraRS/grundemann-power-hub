@@ -13,7 +13,7 @@ interface Suggestion {
   hp?: string;
 }
 
-const HP_FILTERS = ["5", "7", "8", "10", "13", "15"];
+const HP_FILTERS = ["5", "7", "8", "9", "10", "13", "15"];
 
 const SmartSearch = () => {
   const [query, setQuery] = useState("");
@@ -122,7 +122,7 @@ const SmartSearch = () => {
   };
 
   return (
-    <div ref={ref} className="relative flex-1 max-w-xl z-[60]" role="combobox" aria-expanded={open} aria-haspopup="listbox">
+    <div ref={ref} className="relative flex-1 max-w-xl z-[60]" role="combobox" aria-expanded={open} aria-haspopup="listbox" style={{ position: 'relative' }}>
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <input
@@ -168,7 +168,7 @@ const SmartSearch = () => {
       </div>
 
       {open && (
-        <ul className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[70] overflow-hidden max-h-[400px] overflow-y-auto" role="listbox">
+        <ul className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-[100] overflow-hidden max-h-[400px] overflow-y-auto" role="listbox">
           {loading && (
             <li className="p-3 text-center text-muted-foreground text-sm">Buscando...</li>
           )}

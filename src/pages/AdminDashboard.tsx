@@ -207,8 +207,8 @@ const AdminDashboard = () => {
               <div className="flex items-center gap-4 mb-2">
                 <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/70 p-4 shadow-lg"><Wrench className="h-10 w-10 text-primary-foreground" /></div>
                 <div>
-                  <h1 className="font-heading text-3xl font-black text-foreground">Área do Mecânico</h1>
-                  <p className="text-muted-foreground mt-0.5">Gerencie mecânicos, vídeos, artigos, catálogos e orçamentos</p>
+                  <h1 className="font-heading text-3xl font-black text-foreground">Área do Revendedor e Mecânico</h1>
+                  <p className="text-muted-foreground mt-0.5">Gerencie revendedores, mecânicos, vídeos, artigos, catálogos e orçamentos</p>
                 </div>
               </div>
             </div>

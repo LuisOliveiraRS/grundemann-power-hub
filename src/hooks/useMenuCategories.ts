@@ -12,6 +12,7 @@ export interface MenuCategory {
   description: string;
   is_active: boolean;
   created_at: string;
+  external_url: string | null;
 }
 
 export interface MenuCategoryNode extends MenuCategory {
