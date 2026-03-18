@@ -382,7 +382,7 @@ const RoleEditor = ({ userId, currentRoles, currentMechanics, onSave }: {
             {roleTypeLabel[role]} {hasRole(role) ? "✓" : "+"}
           </button>
         ))}
-        {(["mecanico", "revendedor", "oficina"] as const).map(type => (
+        {(["mecanico", "fornecedor", "oficina", "locadora"] as const).map(type => (
           <button key={type} onClick={() => togglePartnerType(type)}
             className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border transition-all ${hasPartnerType(type) ? `${roleTypeColor[type]} border-transparent` : "bg-background text-muted-foreground border-border hover:border-primary/50"}`}
           >
