@@ -55,7 +55,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
     // Return the "highest" role for badge display
     if (roles.includes("admin")) return "admin";
     if (roles.includes("seller")) return "seller";
-    if (roles.includes("revendedor")) return "revendedor";
+    if (roles.includes("fornecedor")) return "fornecedor";
     if (roles.includes("oficina")) return "oficina";
     if (roles.includes("mecanico")) return "mecanico";
     return "cliente";
@@ -178,7 +178,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
           <select className="h-10 border border-input rounded-md px-3 text-sm bg-background min-w-[160px]" value={clientRoleFilter} onChange={(e) => setClientRoleFilter(e.target.value)}>
             <option value="">Todos os tipos</option>
             <option value="admin">Administradores</option><option value="seller">Vendedores</option>
-            <option value="revendedor">Revendedores</option><option value="oficina">Oficinas</option>
+            <option value="fornecedor">Fornecedores</option><option value="oficina">Oficinas</option>
             <option value="mecanico">Mecânicos</option><option value="cliente">Clientes</option>
           </select>
           {(clientSearch || clientRoleFilter) && <Button variant="ghost" size="sm" onClick={() => { setClientSearch(""); setClientRoleFilter(""); }}><X className="h-4 w-4 mr-1" /> Limpar</Button>}
@@ -187,7 +187,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
 
       {/* Role stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-        {["admin", "seller", "revendedor", "oficina", "mecanico", "cliente"].map(role => {
+        {["admin", "seller", "fornecedor", "oficina", "mecanico", "cliente"].map(role => {
           const count = clients.filter(c => getUserRoles(c.user_id).includes(role)).length;
           return (
             <button key={role} onClick={() => setClientRoleFilter(clientRoleFilter === role ? "" : role)} className={`bg-card rounded-xl border p-3 text-center transition-all hover:shadow-md ${clientRoleFilter === role ? "border-primary shadow-md" : "border-border"}`}>
@@ -382,7 +382,7 @@ const RoleEditor = ({ userId, currentRoles, currentMechanics, onSave }: {
             {roleTypeLabel[role]} {hasRole(role) ? "✓" : "+"}
           </button>
         ))}
-        {(["mecanico", "revendedor", "oficina"] as const).map(type => (
+        {(["mecanico", "fornecedor", "oficina", "locadora"] as const).map(type => (
           <button key={type} onClick={() => togglePartnerType(type)}
             className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border transition-all ${hasPartnerType(type) ? `${roleTypeColor[type]} border-transparent` : "bg-background text-muted-foreground border-border hover:border-primary/50"}`}
           >

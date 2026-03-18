@@ -327,8 +327,8 @@ const AdminDashboard = () => {
               <div className="flex items-center gap-4 mb-2">
                 <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/70 p-4 shadow-lg"><Wrench className="h-10 w-10 text-primary-foreground" /></div>
                 <div>
-                  <h1 className="font-heading text-3xl font-black text-foreground">Área do Revendedor e Mecânico</h1>
-                  <p className="text-muted-foreground mt-0.5">Gerencie revendedores, mecânicos, vídeos, artigos, catálogos e orçamentos</p>
+                  <h1 className="font-heading text-3xl font-black text-foreground">Área do Fornecedor e Mecânico</h1>
+                  <p className="text-muted-foreground mt-0.5">Gerencie fornecedores, mecânicos, vídeos, artigos, catálogos e orçamentos</p>
                 </div>
               </div>
             </div>
@@ -340,8 +340,8 @@ const AdminDashboard = () => {
                 { key: "catalogs" as const, label: "Catálogos Técnicos", desc: "Catálogos PDF disponíveis para download", icon: FileText, gradient: "from-primary/15 to-primary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
                 { key: "exploded-views" as const, label: "Vistas Explodidas", desc: "Gerencie diagramas de vistas explodidas dos motores", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { key: "quotes" as const, label: "Orçamentos", desc: "Solicitações de orçamento dos clientes", icon: FileUp, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
-                { key: "reseller-content" as const, label: "Conteúdo Revendedor", desc: "PDFs, tabelas de preço e materiais para revendedores", icon: Download, gradient: "from-primary/15 to-secondary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
-                { key: "reseller-files" as const, label: "Arquivos de Revendedores", desc: "Aprovar, rejeitar e publicar arquivos enviados pelos revendedores", icon: FileUp, gradient: "from-accent/15 to-primary/5", iconBg: "bg-accent/20", iconColor: "text-accent-foreground", border: "border-accent/25" },
+                { key: "reseller-content" as const, label: "Conteúdo Fornecedor", desc: "PDFs, tabelas de preço e materiais para fornecedores", icon: Download, gradient: "from-primary/15 to-secondary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                { key: "reseller-files" as const, label: "Arquivos de Fornecedores", desc: "Aprovar, rejeitar e publicar arquivos enviados pelos fornecedores", icon: FileUp, gradient: "from-accent/15 to-primary/5", iconBg: "bg-accent/20", iconColor: "text-accent-foreground", border: "border-accent/25" },
               ].map((card) => (
                 <button key={card.key} onClick={() => setTab(card.key === "mechanic-list" ? "mechanics" : card.key as AdminTab)} className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden`}>
                   <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
@@ -353,7 +353,7 @@ const AdminDashboard = () => {
               ))}
             </div>
             <div className="bg-card rounded-2xl border border-border p-6">
-              <h2 className="font-heading font-bold text-lg text-foreground mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Gestão de Mecânicos</h2>
+              <h2 className="font-heading font-bold text-lg text-foreground mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Gestão de Parceiros</h2>
               <MechanicManagement />
             </div>
           </div>
@@ -397,8 +397,8 @@ const AdminDashboard = () => {
         {tab === "product-resellers" && (
           <div>
             <div className="mb-8">
-              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Store className="h-8 w-8 text-primary" /> Produto × Revendedor</h1>
-              <p className="text-muted-foreground mt-1">Vincule produtos a revendedores com estoque individual e preço personalizado</p>
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><Store className="h-8 w-8 text-primary" /> Produto × Fornecedor</h1>
+              <p className="text-muted-foreground mt-1">Vincule produtos a fornecedores com estoque individual e preço personalizado</p>
             </div>
             <ProductResellerManager />
           </div>
@@ -508,8 +508,8 @@ const AdminDashboard = () => {
             <div className="mb-6 flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5"><ChevronUp className="h-4 w-4 -rotate-90" /> Voltar</Button>
               <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><Store className="h-7 w-7 text-primary" /> Conteúdo para Revendedores</h1>
-                <p className="text-muted-foreground text-sm mt-0.5">Gerencie PDFs, tabelas de preço e materiais exclusivos para revendedores</p>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><Store className="h-7 w-7 text-primary" /> Conteúdo para Fornecedores</h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Gerencie PDFs, tabelas de preço e materiais exclusivos para fornecedores</p>
               </div>
             </div>
             <ResellerContentManagement />
@@ -521,8 +521,8 @@ const AdminDashboard = () => {
             <div className="mb-6 flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5"><ChevronUp className="h-4 w-4 -rotate-90" /> Voltar</Button>
               <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><FileUp className="h-7 w-7 text-primary" /> Arquivos de Revendedores</h1>
-                <p className="text-muted-foreground text-sm mt-0.5">Aprove, rejeite e publique arquivos enviados pelos revendedores no menu Catálogos</p>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><FileUp className="h-7 w-7 text-primary" /> Arquivos de Fornecedores</h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Aprove, rejeite e publique arquivos enviados pelos fornecedores no menu Catálogos</p>
               </div>
             </div>
             <ResellerFileApproval />

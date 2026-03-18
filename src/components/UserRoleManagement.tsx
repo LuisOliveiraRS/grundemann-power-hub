@@ -17,21 +17,33 @@ const roleLabels: Record<string, string> = {
   admin: "Administrador",
   seller: "Vendedor",
   user: "Usuário",
+  fornecedor: "Fornecedor",
+  mecanico: "Mecânico",
+  oficina: "Oficina",
+  locadora: "Locadora",
 };
 
 const roleIcons: Record<string, any> = {
   admin: Crown,
   seller: Briefcase,
   user: Users,
+  fornecedor: Briefcase,
+  mecanico: Briefcase,
+  oficina: Briefcase,
+  locadora: Briefcase,
 };
 
 const roleColors: Record<string, string> = {
   admin: "bg-destructive/20 text-destructive",
   seller: "bg-primary/20 text-primary",
   user: "bg-muted text-muted-foreground",
+  fornecedor: "bg-accent/20 text-accent-foreground",
+  mecanico: "bg-primary/15 text-primary",
+  oficina: "bg-secondary/20 text-secondary-foreground",
+  locadora: "bg-primary/20 text-primary",
 };
 
-const allRoles = ["admin", "seller", "user"] as const;
+const allRoles = ["admin", "seller", "user", "fornecedor", "mecanico", "oficina", "locadora"] as const;
 
 const UserRoleManagement = () => {
   const { toast } = useToast();

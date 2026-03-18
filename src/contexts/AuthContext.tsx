@@ -7,6 +7,10 @@ interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
   isSeller: boolean;
+  isFornecedor: boolean;
+  isMecanico: boolean;
+  isOficina: boolean;
+  isLocadora: boolean;
   isLoading: boolean;
   userName: string;
   partnerType: string | null;
@@ -19,6 +23,10 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isAdmin: false,
   isSeller: false,
+  isFornecedor: false,
+  isMecanico: false,
+  isOficina: false,
+  isLocadora: false,
   isLoading: true,
   userName: "",
   partnerType: null,
@@ -33,6 +41,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
+  const [isFornecedor, setIsFornecedor] = useState(false);
+  const [isMecanico, setIsMecanico] = useState(false);
+  const [isOficina, setIsOficina] = useState(false);
+  const [isLocadora, setIsLocadora] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState("");
   const [partnerType, setPartnerType] = useState<string | null>(null);
@@ -46,6 +58,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const roles = (data || []).map((r: any) => r.role);
     setIsAdmin(roles.includes("admin"));
     setIsSeller(roles.includes("seller"));
+    setIsFornecedor(roles.includes("fornecedor"));
+    setIsMecanico(roles.includes("mecanico"));
+    setIsOficina(roles.includes("oficina"));
+    setIsLocadora(roles.includes("locadora"));
   }, []);
 
   const loadProfile = useCallback(async (userId: string) => {
@@ -83,6 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setIsAdmin(false);
       setIsSeller(false);
+      setIsFornecedor(false);
+      setIsMecanico(false);
+      setIsOficina(false);
+      setIsLocadora(false);
       setUserName("");
       setPartnerType(null);
       setIsApprovedPartner(false);
@@ -130,7 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isLoading, userName, partnerType, isApprovedPartner, signOut }}>
+    <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isFornecedor, isMecanico, isOficina, isLocadora, isLoading, userName, partnerType, isApprovedPartner, signOut }}>
       {children}
     </AuthContext.Provider>
   );

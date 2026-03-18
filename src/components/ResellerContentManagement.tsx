@@ -33,7 +33,7 @@ const ResellerContentManagement = () => {
 
   const loadCatalogs = async () => {
     // We'll use technical_catalogs table but filter by a "reseller" category prefix
-    const { data } = await supabase.from("technical_catalogs").select("*").ilike("category", "Revendedor%").order("title");
+    const { data } = await supabase.from("technical_catalogs").select("*").ilike("category", "Fornecedor%").order("title");
     setCatalogs((data || []) as ResellerCatalog[]);
     setLoading(false);
   };
@@ -45,7 +45,7 @@ const ResellerContentManagement = () => {
     }
     setUploading(true);
     const ext = file.name.split(".").pop();
-    const fileName = `reseller-${Date.now()}.${ext}`;
+    const fileName = `fornecedor-${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage.from("technical-catalogs").upload(fileName, file);
     if (uploadErr) {
       toast({ title: "Erro no upload", description: uploadErr.message, variant: "destructive" });
@@ -58,7 +58,7 @@ const ResellerContentManagement = () => {
       file_url: fileName,
       file_name: file.name,
       file_size: file.size,
-      category: `Revendedor - ${form.category}`,
+      category: `Fornecedor - ${form.category}`,
       is_active: true,
     } as any);
     if (error) {
@@ -100,8 +100,8 @@ const ResellerContentManagement = () => {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-2xl font-bold">Conteúdos para Revendedores</h2>
-          <p className="text-muted-foreground text-sm">PDFs, tabelas de preço e materiais exclusivos para revendedores</p>
+          <h2 className="font-heading text-2xl font-bold">Conteúdos para Fornecedores</h2>
+          <p className="text-muted-foreground text-sm">PDFs, tabelas de preço e materiais exclusivos para fornecedores</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
           <Plus className="h-4 w-4 mr-2" /> Adicionar Conteúdo
@@ -154,7 +154,7 @@ const ResellerContentManagement = () => {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm">{catalog.title}</p>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge variant="outline" className="text-xs">{catalog.category.replace("Revendedor - ", "")}</Badge>
+                <Badge variant="outline" className="text-xs">{catalog.category.replace("Fornecedor - ", "")}</Badge>
                 {catalog.description && <span className="text-xs text-muted-foreground truncate">{catalog.description}</span>}
               </div>
             </div>
@@ -172,7 +172,7 @@ const ResellerContentManagement = () => {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">Nenhum conteúdo encontrado para revendedores.</div>
+          <div className="text-center py-12 text-muted-foreground">Nenhum conteúdo encontrado para fornecedores.</div>
         )}
       </div>
     </div>

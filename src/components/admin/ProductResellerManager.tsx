@@ -60,7 +60,7 @@ const ProductResellerManager = () => {
     setLoading(true);
     const [linksRes, resellersRes, productsRes] = await Promise.all([
       supabase.from("product_resellers").select("*").order("created_at", { ascending: false }),
-      supabase.from("mechanics").select("id, company_name, user_id, partner_type, is_approved").in("partner_type", ["revendedor", "oficina"]),
+      supabase.from("mechanics").select("id, company_name, user_id, partner_type, is_approved").in("partner_type", ["fornecedor", "oficina"]),
       supabase.from("products").select("id, name, sku, price, stock_quantity").eq("is_active", true).order("name"),
     ]);
 
@@ -75,7 +75,7 @@ const ProductResellerManager = () => {
         ...l,
         product_name: product?.name || "Produto removido",
         product_price: product?.price || 0,
-        reseller_name: allResellers.find(r => r.id === l.reseller_id)?.company_name || "Revendedor removido",
+        reseller_name: allResellers.find(r => r.id === l.reseller_id)?.company_name || "Fornecedor removido",
       };
     });
 
@@ -87,7 +87,7 @@ const ProductResellerManager = () => {
 
   const addLink = async () => {
     if (!selectedProduct || !selectedReseller) {
-      toast({ title: "Selecione produto e revendedor", variant: "destructive" });
+      toast({ title: "Selecione produto e fornecedor", variant: "destructive" });
       return;
     }
 
@@ -108,7 +108,7 @@ const ProductResellerManager = () => {
     if (error) {
       toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Produto vinculado ao revendedor! ✅" });
+      toast({ title: "Produto vinculado ao fornecedor! ✅" });
       setSelectedProduct("");
       setSelectedReseller("");
       setNewStock("0");
@@ -142,13 +142,13 @@ const ProductResellerManager = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Store className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-heading font-bold">Produto × Revendedor</h2>
+        <h2 className="text-lg font-heading font-bold">Produto × Fornecedor</h2>
         <Badge variant="secondary">{links.length} vínculos</Badge>
       </div>
 
       {/* Add new link */}
       <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-        <h3 className="text-sm font-bold">Vincular Produto a Revendedor</h3>
+        <h3 className="text-sm font-bold">Vincular Produto a Fornecedor</h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <select
             value={selectedProduct}
@@ -165,7 +165,7 @@ const ProductResellerManager = () => {
             onChange={e => setSelectedReseller(e.target.value)}
             className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="">Selecione revendedor...</option>
+            <option value="">Selecione fornecedor...</option>
             {resellers.filter(r => r.is_approved).map(r => (
               <option key={r.id} value={r.id}>{r.company_name || "Sem nome"} ({r.partner_type})</option>
             ))}
@@ -200,7 +200,7 @@ const ProductResellerManager = () => {
           onChange={e => setFilterReseller(e.target.value)}
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
         >
-          <option value="">Todos revendedores</option>
+          <option value="">Todos fornecedores</option>
           {resellers.map(r => (
             <option key={r.id} value={r.id}>{r.company_name || "Sem nome"}</option>
           ))}
@@ -214,10 +214,10 @@ const ProductResellerManager = () => {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left p-3 font-semibold">Produto</th>
-                <th className="text-left p-3 font-semibold">Revendedor</th>
+                <th className="text-left p-3 font-semibold">Fornecedor</th>
                 <th className="text-center p-3 font-semibold">Estoque</th>
                 <th className="text-center p-3 font-semibold">Preço Venda</th>
-                <th className="text-center p-3 font-semibold">Preço Revendedor</th>
+                <th className="text-center p-3 font-semibold">Preço Fornecedor</th>
                 <th className="text-center p-3 font-semibold">% Loja</th>
                 <th className="text-center p-3 font-semibold">Ativo</th>
                 <th className="text-center p-3 font-semibold">Ações</th>

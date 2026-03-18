@@ -188,7 +188,7 @@ const MechanicManagement = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const partnerTypeLabel = (type: string) => {
-    const map: Record<string, string> = { mecanico: "Mecânico", oficina: "Oficina", revendedor: "Revendedor" };
+    const map: Record<string, string> = { mecanico: "Mecânico", oficina: "Oficina", fornecedor: "Fornecedor", locadora: "Locadora" };
     return map[type] || type;
   };
 
@@ -203,7 +203,7 @@ const MechanicManagement = () => {
             </div>
             <div>
               <h1 className="font-heading text-lg font-bold text-background">Gestão de Parceiros</h1>
-              <p className="text-background/60 text-xs">Mecânicos, Oficinas e Revendedores — Aprove, edite e gerencie</p>
+              <p className="text-background/60 text-xs">Mecânicos, Oficinas, Fornecedores e Locadoras — Aprove, edite e gerencie</p>
             </div>
           </div>
           <Button onClick={() => setShowAddForm(!showAddForm)} size="sm">

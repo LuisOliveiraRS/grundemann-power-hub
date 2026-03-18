@@ -64,7 +64,7 @@ const ResellerFileUpload = () => {
     }
     setUploading(true);
     const ext = file.name.split(".").pop();
-    const fileName = `reseller-${user!.id}-${Date.now()}.${ext}`;
+    const fileName = `fornecedor-${user!.id}-${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage.from("technical-catalogs").upload(fileName, file);
     if (uploadErr) {
       toast({ title: "Erro no upload", description: uploadErr.message, variant: "destructive" });

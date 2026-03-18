@@ -92,12 +92,12 @@ const App = () => (
                     <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
                     <Route path="/admin/importar" element={<ProtectedRoute adminOnly><ProductImport /></ProtectedRoute>} />
                     <Route path="/admin/exportar-ml" element={<ProtectedRoute adminOnly><MLExport /></ProtectedRoute>} />
-                    <Route path="/vendedor" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
-                    <Route path="/fornecedor" element={<ProtectedRoute><FornecedorDashboard /></ProtectedRoute>} />
-                    <Route path="/oficina" element={<ProtectedRoute><OficinaDashboard /></ProtectedRoute>} />
-                    <Route path="/locadora" element={<ProtectedRoute><LocadoraDashboard /></ProtectedRoute>} />
+                    <Route path="/vendedor" element={<ProtectedRoute allowedRoles={["seller", "admin"]}><SellerDashboard /></ProtectedRoute>} />
+                    <Route path="/fornecedor" element={<ProtectedRoute allowedRoles={["fornecedor", "admin"]}><FornecedorDashboard /></ProtectedRoute>} />
+                    <Route path="/oficina" element={<ProtectedRoute allowedRoles={["oficina", "admin"]}><OficinaDashboard /></ProtectedRoute>} />
+                    <Route path="/locadora" element={<ProtectedRoute allowedRoles={["locadora", "admin"]}><LocadoraDashboard /></ProtectedRoute>} />
                     <Route path="/orcamento" element={<QuoteRequest />} />
-                    <Route path="/mecanico" element={<MechanicArea />} />
+                    <Route path="/mecanico" element={<ProtectedRoute allowedRoles={["mecanico", "admin"]}><MechanicArea /></ProtectedRoute>} />
                     <Route path="/parceiros" element={<PartnerLogin />} />
                     <Route path="/parceiros/:type" element={<PartnerLogin />} />
                     <Route path="/central-tecnica" element={<TechnicalCenter />} />
