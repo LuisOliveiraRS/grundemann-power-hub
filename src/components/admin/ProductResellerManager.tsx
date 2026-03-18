@@ -165,7 +165,7 @@ const ProductResellerManager = () => {
             onChange={e => setSelectedReseller(e.target.value)}
             className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="">Selecione revendedor...</option>
+            <option value="">Selecione fornecedor...</option>
             {resellers.filter(r => r.is_approved).map(r => (
               <option key={r.id} value={r.id}>{r.company_name || "Sem nome"} ({r.partner_type})</option>
             ))}
