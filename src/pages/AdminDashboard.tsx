@@ -516,6 +516,19 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {(tab as string) === "reseller-files" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5"><ChevronUp className="h-4 w-4 -rotate-90" /> Voltar</Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><FileUp className="h-7 w-7 text-primary" /> Arquivos de Revendedores</h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Aprove, rejeite e publique arquivos enviados pelos revendedores no menu Catálogos</p>
+              </div>
+            </div>
+            <ResellerFileApproval />
+          </div>
+        )}
+
         {tab === "appearance" && (
           <div>
             <div className="mb-8">
