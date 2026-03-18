@@ -53,6 +53,7 @@ export function productToFormState(p: Product, linkedCatIds: string[]): ProductF
     fuel_type: p.fuel_type || "",
     slug: p.slug || "",
     tags: (p.tags || []).join(", "),
+    reseller_price: "", store_commission_pct: "",
   };
 }
 
