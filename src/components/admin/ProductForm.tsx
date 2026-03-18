@@ -176,15 +176,15 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
 
           {/* Reseller */}
           <div className="md:col-span-2">
-            <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Revendedor?</Label>
+            <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Fornecedor?</Label>
             <select className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.reseller_id} onChange={e => setForm(prev => ({ ...prev, reseller_id: e.target.value }))}>
               <option value="">Não — Produto próprio</option>
               {resellers.map(r => {
                 const profile = clients.find(c => c.user_id === r.user_id);
-                return <option key={r.id} value={r.id}>Sim — {r.company_name || profile?.full_name || "Revendedor"}</option>;
+                return <option key={r.id} value={r.id}>Sim — {r.company_name || profile?.full_name || "Fornecedor"}</option>;
               })}
             </select>
-            <p className="text-xs text-muted-foreground mt-1">Associa o produto a um revendedor para relatórios e controle de estoque</p>
+            <p className="text-xs text-muted-foreground mt-1">Associa o produto a um fornecedor para relatórios e controle de estoque</p>
           </div>
 
           {/* Reseller pricing - shown when reseller is selected */}
