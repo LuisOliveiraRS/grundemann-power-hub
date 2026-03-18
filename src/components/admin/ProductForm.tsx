@@ -192,7 +192,7 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
             <div className="md:col-span-2 rounded-lg border border-accent/30 bg-accent/5 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Store className="h-4 w-4 text-accent-foreground" />
-                <span className="text-sm font-semibold text-foreground">Precificação do Revendedor</span>
+                <span className="text-sm font-semibold text-foreground">Precificação do Fornecedor</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
