@@ -41,6 +41,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
+  const [isFornecedor, setIsFornecedor] = useState(false);
+  const [isMecanico, setIsMecanico] = useState(false);
+  const [isOficina, setIsOficina] = useState(false);
+  const [isLocadora, setIsLocadora] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState("");
   const [partnerType, setPartnerType] = useState<string | null>(null);
@@ -54,6 +58,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const roles = (data || []).map((r: any) => r.role);
     setIsAdmin(roles.includes("admin"));
     setIsSeller(roles.includes("seller"));
+    setIsFornecedor(roles.includes("fornecedor"));
+    setIsMecanico(roles.includes("mecanico"));
+    setIsOficina(roles.includes("oficina"));
+    setIsLocadora(roles.includes("locadora"));
   }, []);
 
   const loadProfile = useCallback(async (userId: string) => {
