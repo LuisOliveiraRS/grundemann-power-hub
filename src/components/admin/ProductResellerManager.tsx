@@ -214,7 +214,7 @@ const ProductResellerManager = () => {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left p-3 font-semibold">Produto</th>
-                <th className="text-left p-3 font-semibold">Revendedor</th>
+                <th className="text-left p-3 font-semibold">Fornecedor</th>
                 <th className="text-center p-3 font-semibold">Estoque</th>
                 <th className="text-center p-3 font-semibold">Preço Venda</th>
                 <th className="text-center p-3 font-semibold">Preço Revendedor</th>
