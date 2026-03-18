@@ -58,7 +58,7 @@ const ResellerContentManagement = () => {
       file_url: fileName,
       file_name: file.name,
       file_size: file.size,
-      category: `Revendedor - ${form.category}`,
+      category: `Fornecedor - ${form.category}`,
       is_active: true,
     } as any);
     if (error) {
