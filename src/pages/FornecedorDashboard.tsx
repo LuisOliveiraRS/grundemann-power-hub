@@ -39,7 +39,7 @@ interface UserProfile {
   cpf_cnpj: string | null;
 }
 
-const RevendedorDashboard = () => {
+const FornecedorDashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
