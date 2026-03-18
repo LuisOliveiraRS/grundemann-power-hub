@@ -19,6 +19,7 @@ export interface ProductFormState {
   documents: string[]; weight_kg: string; width_cm: string; height_cm: string; length_cm: string;
   extra_category_ids: string[]; menu_category_id: string; reseller_id: string; fuel_type: string;
   slug: string; tags: string;
+  reseller_price: string; store_commission_pct: string;
 }
 
 export const emptyProductForm: ProductFormState = {
@@ -27,6 +28,7 @@ export const emptyProductForm: ProductFormState = {
   image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "",
   specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
   extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "", tags: "",
+  reseller_price: "", store_commission_pct: "",
 };
 
 export function productToFormState(p: Product, linkedCatIds: string[]): ProductFormState {
