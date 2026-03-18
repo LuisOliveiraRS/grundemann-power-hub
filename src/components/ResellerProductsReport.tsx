@@ -71,6 +71,8 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
         ...p,
         reseller_stock: link?.stock_quantity ?? null,
         custom_price: link?.custom_price ?? null,
+        reseller_price: link?.reseller_price ?? null,
+        store_commission_pct: link?.store_commission_pct ?? null,
       };
     });
 
