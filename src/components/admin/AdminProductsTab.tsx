@@ -84,9 +84,31 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       productId = newProd.id;
       toast({ title: "Produto criado!" });
     }
+    // Save extra category links
     await supabase.from("product_categories").delete().eq("product_id", productId);
     const extraLinks = productForm.extra_category_ids.filter(Boolean).map(catId => ({ product_id: productId!, category_id: catId }));
     if (extraLinks.length > 0) await supabase.from("product_categories").insert(extraLinks);
+
+    // Save reseller pricing to product_resellers if reseller is set
+    if (productForm.reseller_id && productId) {
+      const resellerPrice = productForm.reseller_price ? parseFloat(productForm.reseller_price) : null;
+      const commissionPct = productForm.store_commission_pct ? parseFloat(productForm.store_commission_pct) : null;
+      const { data: existing } = await supabase.from("product_resellers")
+        .select("id").eq("product_id", productId).eq("reseller_id", productForm.reseller_id).maybeSingle();
+      if (existing) {
+        await supabase.from("product_resellers").update({
+          reseller_price: resellerPrice, store_commission_pct: commissionPct,
+          custom_price: parseFloat(productForm.price) || null,
+        } as any).eq("id", existing.id);
+      } else {
+        await supabase.from("product_resellers").insert({
+          product_id: productId, reseller_id: productForm.reseller_id,
+          reseller_price: resellerPrice, store_commission_pct: commissionPct,
+          custom_price: parseFloat(productForm.price) || null, stock_quantity: 0,
+        } as any);
+      }
+    }
+
     setEditingProduct(null); setProductForm(emptyProductForm); onReload();
   };
 
@@ -107,10 +129,21 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     setSelectedProducts(new Set()); onReload();
   };
 
-  const editProduct = (p: Product) => {
+  const editProduct = async (p: Product) => {
     setEditingProduct(p);
     const linkedCatIds = productCategoryLinks.filter(l => l.product_id === p.id).map(l => l.category_id).filter(cid => cid !== p.category_id);
-    setProductForm(productToFormState(p, linkedCatIds));
+    const formState = productToFormState(p, linkedCatIds);
+    // Load reseller pricing if product has a reseller
+    if (p.reseller_id) {
+      const { data: pr } = await supabase.from("product_resellers")
+        .select("reseller_price, store_commission_pct")
+        .eq("product_id", p.id).eq("reseller_id", p.reseller_id).maybeSingle();
+      if (pr) {
+        formState.reseller_price = pr.reseller_price ? String(pr.reseller_price) : "";
+        formState.store_commission_pct = pr.store_commission_pct ? String(pr.store_commission_pct) : "";
+      }
+    }
+    setProductForm(formState);
   };
 
   const syncMercadoLivre = async () => {
