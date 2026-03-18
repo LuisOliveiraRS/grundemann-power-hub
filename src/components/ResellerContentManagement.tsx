@@ -100,8 +100,8 @@ const ResellerContentManagement = () => {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-2xl font-bold">Conteúdos para Revendedores</h2>
-          <p className="text-muted-foreground text-sm">PDFs, tabelas de preço e materiais exclusivos para revendedores</p>
+          <h2 className="font-heading text-2xl font-bold">Conteúdos para Fornecedores</h2>
+          <p className="text-muted-foreground text-sm">PDFs, tabelas de preço e materiais exclusivos para fornecedores</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
           <Plus className="h-4 w-4 mr-2" /> Adicionar Conteúdo
