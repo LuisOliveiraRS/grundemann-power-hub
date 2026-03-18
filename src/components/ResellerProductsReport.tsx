@@ -222,6 +222,9 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
             <tbody className="divide-y divide-border">
               {filtered.map(p => {
                 const sales = getSales(p.id);
+                const salePrice = p.custom_price ?? p.price;
+                const resellerPrice = p.reseller_price ?? 0;
+                const commissionPct = p.store_commission_pct ?? (salePrice > 0 && resellerPrice > 0 ? ((salePrice - resellerPrice) / salePrice * 100) : 0);
                 return (
                   <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                     <td className="p-3">
@@ -235,7 +238,20 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                     </td>
                     <td className="p-3"><p className="text-sm font-medium line-clamp-1">{p.name}</p></td>
                     <td className="p-3"><span className="text-xs font-mono text-muted-foreground">{p.sku || "—"}</span></td>
-                    <td className="p-3 text-right"><span className="text-sm">R$ {(p.custom_price ?? p.price).toFixed(2).replace(".", ",")}</span></td>
+                    <td className="p-3 text-right">
+                      <span className="text-xs text-muted-foreground line-through">
+                        {p.original_price ? `R$ ${p.original_price.toFixed(2).replace(".",",")}` : `R$ ${p.price.toFixed(2).replace(".",",")}`}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right"><span className="text-sm font-semibold">R$ {salePrice.toFixed(2).replace(".", ",")}</span></td>
+                    <td className="p-3 text-right">
+                      <span className="text-sm">{resellerPrice > 0 ? `R$ ${resellerPrice.toFixed(2).replace(".",",")}` : "—"}</span>
+                    </td>
+                    <td className="p-3 text-right">
+                      <span className={`text-sm font-bold ${commissionPct > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                        {commissionPct > 0 ? `${commissionPct.toFixed(1)}%` : "—"}
+                      </span>
+                    </td>
                     <td className="p-3 text-right">
                       <div className="flex flex-col items-end">
                         <span className={`text-sm font-bold ${(p.reseller_stock ?? p.stock_quantity) <= 0 ? "text-destructive" : (p.reseller_stock ?? p.stock_quantity) <= 5 ? "text-yellow-600" : ""}`}>
@@ -261,7 +277,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">Nenhum produto encontrado</td></tr>
+                <tr><td colSpan={11} className="p-10 text-center text-muted-foreground">Nenhum produto encontrado</td></tr>
               )}
             </tbody>
           </table>
