@@ -196,7 +196,7 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Preço do Revendedor (R$)</Label>
+                  <Label>Preço do Fornecedor (R$)</Label>
                   <Input type="number" step="0.01" value={form.reseller_price} onChange={(e) => {
                     const resellerPrice = e.target.value;
                     const rp = parseFloat(resellerPrice) || 0;
