@@ -225,13 +225,20 @@ const ProductResellerManager = () => {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Nenhum vínculo encontrado</td></tr>
-              ) : filtered.map(link => (
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Nenhum vínculo encontrado</td></tr>
+              ) : filtered.map(link => {
+                const salePrice = link.custom_price ?? link.product_price ?? 0;
+                const resellerPrice = link.reseller_price ?? 0;
+                const commissionPct = link.store_commission_pct ?? (salePrice > 0 && resellerPrice > 0 ? ((salePrice - resellerPrice) / salePrice * 100) : 0);
+                return (
                 <tr key={link.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <Package className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="font-medium truncate max-w-[200px]">{link.product_name}</span>
+                      <div>
+                        <span className="font-medium truncate max-w-[200px] block">{link.product_name}</span>
+                        {link.product_price != null && <span className="text-[10px] text-muted-foreground">Original: R$ {link.product_price.toFixed(2).replace(".",",")}</span>}
+                      </div>
                     </div>
                   </td>
                   <td className="p-3">
@@ -254,6 +261,19 @@ const ProductResellerManager = () => {
                     />
                   </td>
                   <td className="p-3 text-center">
+                    <Input
+                      type="number" step="0.01" placeholder="—"
+                      value={link.reseller_price ?? ""}
+                      onChange={e => updateLink(link.id, "reseller_price", e.target.value ? parseFloat(e.target.value) : null)}
+                      className="w-24 mx-auto text-center h-8 text-sm"
+                    />
+                  </td>
+                  <td className="p-3 text-center">
+                    <span className={`text-sm font-bold ${commissionPct > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                      {commissionPct > 0 ? `${commissionPct.toFixed(1)}%` : "—"}
+                    </span>
+                  </td>
+                  <td className="p-3 text-center">
                     <button
                       onClick={() => updateLink(link.id, "is_active", !link.is_active)}
                       className={`px-2 py-1 rounded-full text-xs font-bold ${link.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}
@@ -267,7 +287,8 @@ const ProductResellerManager = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
