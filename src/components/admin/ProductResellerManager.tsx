@@ -60,7 +60,7 @@ const ProductResellerManager = () => {
     setLoading(true);
     const [linksRes, resellersRes, productsRes] = await Promise.all([
       supabase.from("product_resellers").select("*").order("created_at", { ascending: false }),
-      supabase.from("mechanics").select("id, company_name, user_id, partner_type, is_approved").in("partner_type", ["revendedor", "oficina"]),
+      supabase.from("mechanics").select("id, company_name, user_id, partner_type, is_approved").in("partner_type", ["fornecedor", "oficina"]),
       supabase.from("products").select("id, name, sku, price, stock_quantity").eq("is_active", true).order("name"),
     ]);
 
