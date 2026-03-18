@@ -43,6 +43,7 @@ import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import IntelligentAnalytics from "@/components/admin/IntelligentAnalytics";
 import SupplierFinancialReport from "@/components/admin/SupplierFinancialReport";
+import BannerManagement from "@/components/BannerManagement";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
 
