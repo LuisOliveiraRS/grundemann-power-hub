@@ -86,16 +86,17 @@ export const statusColor: Record<string, string> = {
 };
 
 export const roleTypeLabel: Record<string, string> = {
-  admin: "Admin", seller: "Vendedor", revendedor: "Revendedor",
-  oficina: "Oficina", mecanico: "Mecânico", cliente: "Cliente",
+  admin: "Admin", seller: "Vendedor", fornecedor: "Fornecedor",
+  oficina: "Oficina", mecanico: "Mecânico", locadora: "Locadora", cliente: "Cliente",
 };
 
 export const roleTypeColor: Record<string, string> = {
   admin: "bg-destructive/20 text-destructive",
   seller: "bg-primary/20 text-primary",
-  revendedor: "bg-accent/20 text-accent-foreground",
+  fornecedor: "bg-accent/20 text-accent-foreground",
   oficina: "bg-secondary/20 text-secondary-foreground",
   mecanico: "bg-primary/15 text-primary",
+  locadora: "bg-primary/20 text-primary",
   cliente: "bg-muted text-muted-foreground",
 };
 

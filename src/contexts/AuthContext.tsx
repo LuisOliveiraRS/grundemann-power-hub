@@ -93,7 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let initialized = false;
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!initialized) {
         initialized = true;
@@ -101,14 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    // Listen for auth changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (initialized) {
-          // After initial load, handle state changes
           handleSession(session);
         } else {
-          // First event - mark as initialized and handle
           initialized = true;
           handleSession(session);
         }
@@ -122,9 +118,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   }, []);
 
+  // Helper to get the dashboard path for a partner type
+  const getPartnerDashboardPath = (type: string | null): string => {
+    switch (type) {
+      case "fornecedor": return "/fornecedor";
+      case "oficina": return "/oficina";
+      case "locadora": return "/locadora";
+      case "mecanico": return "/mecanico";
+      default: return "/minha-conta";
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isLoading, userName, partnerType, isApprovedPartner, signOut }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Export helper for partner dashboard routing
+export const getPartnerDashboardPath = (type: string | null): string => {
+  switch (type) {
+    case "fornecedor": return "/fornecedor";
+    case "oficina": return "/oficina";
+    case "locadora": return "/locadora";
+    case "mecanico": return "/mecanico";
+    default: return "/minha-conta";
+  }
+};
+
+export const getPartnerLabel = (type: string | null): string => {
+  switch (type) {
+    case "fornecedor": return "Área Fornecedor";
+    case "oficina": return "Área Oficina";
+    case "locadora": return "Área Locadora";
+    case "mecanico": return "Área Mecânico";
+    default: return "Minha Conta";
+  }
 };
