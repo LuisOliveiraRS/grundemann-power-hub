@@ -69,11 +69,15 @@ const ProductResellerManager = () => {
     const allProducts = (productsRes.data || []) as ProductOption[];
 
     // Enrich links with names
-    const enriched = allLinks.map(l => ({
-      ...l,
-      product_name: allProducts.find(p => p.id === l.product_id)?.name || "Produto removido",
-      reseller_name: allResellers.find(r => r.id === l.reseller_id)?.company_name || "Revendedor removido",
-    }));
+    const enriched = allLinks.map(l => {
+      const product = allProducts.find(p => p.id === l.product_id);
+      return {
+        ...l,
+        product_name: product?.name || "Produto removido",
+        product_price: product?.price || 0,
+        reseller_name: allResellers.find(r => r.id === l.reseller_id)?.company_name || "Revendedor removido",
+      };
+    });
 
     setLinks(enriched);
     setResellers(allResellers);
