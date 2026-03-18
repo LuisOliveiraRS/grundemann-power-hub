@@ -84,9 +84,31 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       productId = newProd.id;
       toast({ title: "Produto criado!" });
     }
+    // Save extra category links
     await supabase.from("product_categories").delete().eq("product_id", productId);
     const extraLinks = productForm.extra_category_ids.filter(Boolean).map(catId => ({ product_id: productId!, category_id: catId }));
     if (extraLinks.length > 0) await supabase.from("product_categories").insert(extraLinks);
+
+    // Save reseller pricing to product_resellers if reseller is set
+    if (productForm.reseller_id && productId) {
+      const resellerPrice = productForm.reseller_price ? parseFloat(productForm.reseller_price) : null;
+      const commissionPct = productForm.store_commission_pct ? parseFloat(productForm.store_commission_pct) : null;
+      const { data: existing } = await supabase.from("product_resellers")
+        .select("id").eq("product_id", productId).eq("reseller_id", productForm.reseller_id).maybeSingle();
+      if (existing) {
+        await supabase.from("product_resellers").update({
+          reseller_price: resellerPrice, store_commission_pct: commissionPct,
+          custom_price: parseFloat(productForm.price) || null,
+        } as any).eq("id", existing.id);
+      } else {
+        await supabase.from("product_resellers").insert({
+          product_id: productId, reseller_id: productForm.reseller_id,
+          reseller_price: resellerPrice, store_commission_pct: commissionPct,
+          custom_price: parseFloat(productForm.price) || null, stock_quantity: 0,
+        } as any);
+      }
+    }
+
     setEditingProduct(null); setProductForm(emptyProductForm); onReload();
   };
 
