@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, getPartnerDashboardPath, getPartnerLabel } from "@/contexts/AuthContext";
 import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
 import {
-  ChevronDown, ChevronRight, User, Package, Phone, MessageCircle,
+  ChevronDown, ChevronRight, User, Package, MessageCircle,
   Fuel, Zap, Cog, Wrench, Settings, ShieldCheck, BookOpen, LogOut, Home,
-  FileText, LayoutDashboard
+  FileText, LayoutDashboard, Building
 } from "lucide-react";
 
 const iconMap: Record<string, any> = {
@@ -145,16 +145,16 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
             )}
             {!isAdmin && !isSeller && partnerType && (
               <button
-                onClick={() => go(partnerType === "revendedor" ? "/revendedor" : partnerType === "oficina" ? "/oficina" : "/mecanico")}
+                onClick={() => go(getPartnerDashboardPath(partnerType))}
                 className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-primary"
               >
                 <LayoutDashboard className="h-4 w-4" />
-                {partnerType === "revendedor" ? "Área Revendedor" : partnerType === "oficina" ? "Área Oficina" : "Área Mecânico"}
+                {getPartnerLabel(partnerType)}
               </button>
             )}
           </div>
 
-          {/* Categories - recursive accordion */}
+          {/* Categories */}
           <div className="p-2">
             <p className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Categorias</p>
             {renderCategoryTree(tree)}
@@ -171,11 +171,14 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
             <button onClick={() => go("/catalogo-interativo")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground">
               <Wrench className="h-4 w-4 text-muted-foreground" /> Catálogo Interativo
             </button>
-            <button onClick={() => go("/parceiros/revendedor")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground font-semibold text-accent">
-              <ShieldCheck className="h-4 w-4 text-accent" /> Revendedores
+            <button onClick={() => go("/parceiros/fornecedor")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground font-semibold text-accent">
+              <ShieldCheck className="h-4 w-4 text-accent" /> Fornecedores
             </button>
             <button onClick={() => go("/parceiros/oficina-mecanico")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground font-semibold text-accent">
               <Wrench className="h-4 w-4 text-accent" /> Oficinas e Mecânicos
+            </button>
+            <button onClick={() => go("/parceiros/locadora")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground font-semibold text-accent">
+              <Building className="h-4 w-4 text-accent" /> Locadoras
             </button>
             <button onClick={() => go("/orcamento")} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-sm text-foreground">
               <FileText className="h-4 w-4 text-muted-foreground" /> Solicitar Orçamento
@@ -188,11 +191,8 @@ const MobileMenu = ({ open, onOpenChange }: MobileMenuProps) => {
           {/* Contact */}
           <div className="p-4 border-t border-border bg-muted/30">
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Contato</p>
-            <a href="tel:+5551981825748" className="flex items-center gap-2 text-sm text-foreground mb-2">
-              <Phone className="h-4 w-4 text-primary" /> (51) 98182-5748
-            </a>
             <a href="https://wa.me/5551981825748" className="flex items-center gap-2 text-sm text-foreground">
-              <MessageCircle className="h-4 w-4 text-primary" /> WhatsApp
+              <MessageCircle className="h-4 w-4 text-primary" /> WhatsApp: (51) 98182-5748
             </a>
           </div>
         </div>
