@@ -440,10 +440,6 @@ const RevendedorDashboard = () => {
               </div>
             )}
 
-            {/* Meus Arquivos */}
-            {activeSection === "meus-arquivos" && (
-              <ResellerFileUpload />
-            )}
 
             {/* Quotes */}
             {activeSection === "orcamentos" && (
