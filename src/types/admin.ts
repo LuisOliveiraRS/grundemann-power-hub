@@ -11,11 +11,14 @@ export interface Product {
   length_cm?: number | null; tags?: string[] | null;
 }
 
-export interface ResellerOption {
+export interface FornecedorOption {
   id: string;
   company_name: string;
   user_id: string;
 }
+
+/** @deprecated Use FornecedorOption instead */
+export type ResellerOption = FornecedorOption;
 
 export interface PaymentInfo {
   id: string; order_id: string; status: string; payment_method: string | null;

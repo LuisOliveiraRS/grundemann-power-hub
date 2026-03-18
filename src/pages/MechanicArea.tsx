@@ -276,7 +276,7 @@ const MechanicArea = () => {
     );
   }
 
-  // ---- Approved dashboard (same layout as Revendedor) ----
+  // ---- Approved dashboard (same layout as Fornecedor) ----
 
   const totalSpent = orders.reduce((s, o) => s + Number(o.total_amount), 0);
   const deliveredOrders = orders.filter(o => o.status === "delivered").length;

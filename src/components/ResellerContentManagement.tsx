@@ -172,7 +172,7 @@ const ResellerContentManagement = () => {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">Nenhum conteúdo encontrado para revendedores.</div>
+          <div className="text-center py-12 text-muted-foreground">Nenhum conteúdo encontrado para fornecedores.</div>
         )}
       </div>
     </div>

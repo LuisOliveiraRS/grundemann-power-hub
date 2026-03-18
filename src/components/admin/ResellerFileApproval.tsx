@@ -143,7 +143,7 @@ const ResellerFileApproval = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="font-heading text-2xl font-bold">Arquivos de Revendedores</h2>
+          <h2 className="font-heading text-2xl font-bold">Arquivos de Fornecedores</h2>
           <p className="text-muted-foreground text-sm">
             {pendingCount > 0 ? `${pendingCount} arquivo(s) aguardando aprovação` : "Nenhum arquivo pendente"}
           </p>
