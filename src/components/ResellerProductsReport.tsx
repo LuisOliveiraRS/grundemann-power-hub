@@ -209,7 +209,10 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                 <th className="p-3 w-12"></th>
                 <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Produto</th>
                 <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">SKU</th>
-                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Original</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Venda</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Revendedor</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">% Loja</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Estoque</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Vendidos</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Valor Vendido</th>
