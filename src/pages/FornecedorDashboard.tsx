@@ -436,7 +436,7 @@ const FornecedorDashboard = () => {
             {activeSection === "meus-produtos" && (
               <div>
                 <h2 className="font-heading text-xl font-bold mb-4">Meus Produtos & Relatório de Vendas</h2>
-                <ResellerProductsReport resellerId={partner.id} />
+                <ResellerProductsReport resellerId={partner.id} supplierName={partner.company_name || fullName} />
               </div>
             )}
 

@@ -42,6 +42,7 @@ import CompatibilityManager from "@/components/admin/CompatibilityManager";
 import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import IntelligentAnalytics from "@/components/admin/IntelligentAnalytics";
+import SupplierFinancialReport from "@/components/admin/SupplierFinancialReport";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
 
@@ -401,6 +402,16 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Vincule produtos a fornecedores com estoque individual e preço personalizado</p>
             </div>
             <ProductResellerManager />
+          </div>
+        )}
+
+        {tab === "supplier-financial" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><DollarSign className="h-8 w-8 text-primary" /> Financeiro de Fornecedores</h1>
+              <p className="text-muted-foreground mt-1">Valor em produtos, custo do fornecedor e comissão da Loja Grundemann por fornecedor</p>
+            </div>
+            <SupplierFinancialReport />
           </div>
         )}
 
