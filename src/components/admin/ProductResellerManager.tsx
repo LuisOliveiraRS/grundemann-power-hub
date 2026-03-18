@@ -108,7 +108,7 @@ const ProductResellerManager = () => {
     if (error) {
       toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Produto vinculado ao revendedor! ✅" });
+      toast({ title: "Produto vinculado ao fornecedor! ✅" });
       setSelectedProduct("");
       setSelectedReseller("");
       setNewStock("0");
