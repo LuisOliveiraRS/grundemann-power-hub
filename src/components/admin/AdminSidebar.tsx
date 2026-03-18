@@ -24,7 +24,7 @@ const sideItems = [
   { key: "testimonials" as const, label: "Depoimentos", icon: MessageSquare },
   { key: "sellers" as const, label: "Vendedores", icon: Users },
   { key: "roles" as const, label: "Permissões", icon: Users },
-  { key: "mechanics" as const, label: "Área do Revendedor e Mecânico", icon: Wrench },
+  { key: "mechanics" as const, label: "Área do Fornecedor e Mecânico", icon: Wrench },
   { key: "marketing" as const, label: "Marketing", icon: Megaphone },
   { key: "seo" as const, label: "SEO", icon: Globe },
   { key: "shipping" as const, label: "Frete", icon: Truck },
