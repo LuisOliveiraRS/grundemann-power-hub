@@ -178,7 +178,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
           <select className="h-10 border border-input rounded-md px-3 text-sm bg-background min-w-[160px]" value={clientRoleFilter} onChange={(e) => setClientRoleFilter(e.target.value)}>
             <option value="">Todos os tipos</option>
             <option value="admin">Administradores</option><option value="seller">Vendedores</option>
-            <option value="revendedor">Revendedores</option><option value="oficina">Oficinas</option>
+            <option value="fornecedor">Fornecedores</option><option value="oficina">Oficinas</option>
             <option value="mecanico">Mecânicos</option><option value="cliente">Clientes</option>
           </select>
           {(clientSearch || clientRoleFilter) && <Button variant="ghost" size="sm" onClick={() => { setClientSearch(""); setClientRoleFilter(""); }}><X className="h-4 w-4 mr-1" /> Limpar</Button>}
