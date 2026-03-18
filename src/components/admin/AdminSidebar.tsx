@@ -42,7 +42,7 @@ const sideItems = [
   { key: "appearance" as const, label: "Aparência", icon: Paintbrush },
 ];
 
-const mechanicSubTabs: AdminTab[] = ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes", "exploded-views"];
+const mechanicSubTabs: AdminTab[] = ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes", "exploded-views", "reseller-files"];
 
 const AdminSidebar = ({ tab, setTab, pendingOrders }: AdminSidebarProps) => {
   const { signOut } = useAuth();
