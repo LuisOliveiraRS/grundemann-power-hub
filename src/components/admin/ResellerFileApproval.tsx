@@ -82,7 +82,7 @@ const ResellerFileApproval = () => {
       file_url: file.file_url,
       file_name: file.file_name,
       file_size: file.file_size,
-      category: `Revendedor - ${file.category}`,
+      category: `Fornecedor - ${file.category}`,
       is_active: true,
     } as any).select("id").single();
 
