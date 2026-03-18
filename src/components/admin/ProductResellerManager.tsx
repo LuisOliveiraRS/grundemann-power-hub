@@ -87,7 +87,7 @@ const ProductResellerManager = () => {
 
   const addLink = async () => {
     if (!selectedProduct || !selectedReseller) {
-      toast({ title: "Selecione produto e revendedor", variant: "destructive" });
+      toast({ title: "Selecione produto e fornecedor", variant: "destructive" });
       return;
     }
 
