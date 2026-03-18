@@ -188,7 +188,7 @@ const MechanicManagement = () => {
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const partnerTypeLabel = (type: string) => {
-    const map: Record<string, string> = { mecanico: "Mecânico", oficina: "Oficina", revendedor: "Revendedor" };
+    const map: Record<string, string> = { mecanico: "Mecânico", oficina: "Oficina", fornecedor: "Fornecedor", locadora: "Locadora" };
     return map[type] || type;
   };
 
