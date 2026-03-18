@@ -152,12 +152,7 @@ const RevendedorDashboard = () => {
         </div>
       </Layout>
     );
-            )}
-
-            {/* Meus Arquivos */}
-            {activeSection === "meus-arquivos" && (
-              <ResellerFileUpload />
-            )}
+  }
 
   const totalSpent = orders.reduce((s, o) => s + Number(o.total_amount), 0);
   const deliveredOrders = orders.filter(o => o.status === "delivered").length;
