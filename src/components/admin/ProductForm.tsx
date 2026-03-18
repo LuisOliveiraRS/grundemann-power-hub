@@ -199,10 +199,10 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                   <Label>Preço do Revendedor (R$)</Label>
                   <Input type="number" step="0.01" value={form.reseller_price} onChange={(e) => {
                     const resellerPrice = e.target.value;
-                    const salePrice = parseFloat(form.price) || 0;
                     const rp = parseFloat(resellerPrice) || 0;
-                    const pct = salePrice > 0 && rp > 0 ? (((salePrice - rp) / salePrice) * 100).toFixed(1) : "";
-                    setForm(prev => ({ ...prev, reseller_price: resellerPrice, store_commission_pct: pct }));
+                    const pct = parseFloat(form.store_commission_pct) || 0;
+                    const newSalePrice = rp > 0 && pct > 0 ? (rp * (1 + pct / 100)).toFixed(2) : form.price;
+                    setForm(prev => ({ ...prev, reseller_price: resellerPrice, price: newSalePrice }));
                   }} placeholder="Custo do revendedor" className="mt-1" />
                   <p className="text-[10px] text-muted-foreground mt-1">Valor que o revendedor paga pelo produto</p>
                 </div>
@@ -210,19 +210,19 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                   <Label>% Loja Grundemann</Label>
                   <Input type="number" step="0.1" value={form.store_commission_pct} onChange={(e) => {
                     const pct = e.target.value;
-                    const salePrice = parseFloat(form.price) || 0;
+                    const rp = parseFloat(form.reseller_price) || 0;
                     const p = parseFloat(pct) || 0;
-                    const rp = salePrice > 0 && p > 0 ? (salePrice * (1 - p / 100)).toFixed(2) : "";
-                    setForm(prev => ({ ...prev, store_commission_pct: pct, reseller_price: rp }));
+                    const newSalePrice = rp > 0 && p > 0 ? (rp * (1 + p / 100)).toFixed(2) : form.price;
+                    setForm(prev => ({ ...prev, store_commission_pct: pct, price: newSalePrice }));
                   }} placeholder="Comissão %" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Margem da loja sobre o preço de venda</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Margem adicionada ao preço do revendedor</p>
                 </div>
                 <div className="flex items-end pb-1">
-                  {form.reseller_price && form.price && (
+                  {form.reseller_price && form.store_commission_pct && (
                     <div className="text-sm space-y-1">
-                      <p className="text-muted-foreground">Preço Venda: <strong className="text-foreground">R$ {parseFloat(form.price).toFixed(2)}</strong></p>
                       <p className="text-muted-foreground">Preço Revendedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
                       <p className="text-muted-foreground">Margem Loja: <strong className="text-primary">{form.store_commission_pct}%</strong></p>
+                      <p className="text-muted-foreground">Preço de Venda: <strong className="text-primary">R$ {parseFloat(form.price).toFixed(2)}</strong></p>
                     </div>
                   )}
                 </div>
