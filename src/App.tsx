@@ -38,8 +38,9 @@ const GeneratorDiagnostic = lazy(() => import("./pages/GeneratorDiagnostic"));
 const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const PaymentPending = lazy(() => import("./pages/PaymentPending"));
 const PaymentError = lazy(() => import("./pages/PaymentError"));
-const RevendedorDashboard = lazy(() => import("./pages/RevendedorDashboard"));
+const FornecedorDashboard = lazy(() => import("./pages/FornecedorDashboard"));
 const OficinaDashboard = lazy(() => import("./pages/OficinaDashboard"));
+const LocadoraDashboard = lazy(() => import("./pages/LocadoraDashboard"));
 const PartnerLogin = lazy(() => import("./pages/PartnerLogin"));
 const DiagnosticSEO = lazy(() => import("./pages/DiagnosticSEO"));
 const ModelSEO = lazy(() => import("./pages/ModelSEO"));
@@ -47,7 +48,7 @@ const ModelSEO = lazy(() => import("./pages/ModelSEO"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 min cache
+      staleTime: 5 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
@@ -70,7 +71,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              {/* Skip to content link for accessibility */}
               <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md">
                 Pular para o conteúdo principal
               </a>
@@ -93,8 +93,9 @@ const App = () => (
                     <Route path="/admin/importar" element={<ProtectedRoute adminOnly><ProductImport /></ProtectedRoute>} />
                     <Route path="/admin/exportar-ml" element={<ProtectedRoute adminOnly><MLExport /></ProtectedRoute>} />
                     <Route path="/vendedor" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
-                    <Route path="/revendedor" element={<ProtectedRoute><RevendedorDashboard /></ProtectedRoute>} />
+                    <Route path="/fornecedor" element={<ProtectedRoute><FornecedorDashboard /></ProtectedRoute>} />
                     <Route path="/oficina" element={<ProtectedRoute><OficinaDashboard /></ProtectedRoute>} />
+                    <Route path="/locadora" element={<ProtectedRoute><LocadoraDashboard /></ProtectedRoute>} />
                     <Route path="/orcamento" element={<QuoteRequest />} />
                     <Route path="/mecanico" element={<MechanicArea />} />
                     <Route path="/parceiros" element={<PartnerLogin />} />
