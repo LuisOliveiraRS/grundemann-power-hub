@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   ChevronUp, Video, BookOpen, FileText, Package, FileUp, Download, Users, Wrench,
   Megaphone, Globe, Truck, Boxes, Mail, Gift, TrendingUp, DollarSign, Tag, Paintbrush, BarChart3, Store, Cpu,
+  Image as ImageIcon,
 } from "lucide-react";
 import { syncPaymentStatus } from "@/lib/paymentSync";
 
@@ -43,6 +44,7 @@ import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
 import SiteFeatureReport from "@/components/SiteFeatureReport";
 import IntelligentAnalytics from "@/components/admin/IntelligentAnalytics";
 import SupplierFinancialReport from "@/components/admin/SupplierFinancialReport";
+import BannerManagement from "@/components/BannerManagement";
 import CategoryTreeAdmin from "@/components/CategoryTreeAdmin";
 import SubcategoryTreeManagement from "@/components/SubcategoryTreeManagement";
 
@@ -547,6 +549,16 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground mt-1">Configure cores, banners e pop-ups do site</p>
             </div>
             <AppearanceSettings />
+          </div>
+        )}
+
+        {tab === "banners" && (
+          <div>
+            <div className="mb-8">
+              <h1 className="font-heading text-3xl font-bold text-foreground flex items-center gap-3"><ImageIcon className="h-8 w-8 text-primary" /> Banners da Capa</h1>
+              <p className="text-muted-foreground mt-1">Gerencie os banners do carrossel da página inicial (modo "Estilo Loja Virtual")</p>
+            </div>
+            <BannerManagement />
           </div>
         )}
 

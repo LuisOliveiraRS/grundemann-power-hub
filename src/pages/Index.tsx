@@ -23,10 +23,12 @@ import GuaranteeSection from "@/components/GuaranteeSection";
 
 const HeroBanner = lazy(() => import("@/components/HeroBanner"));
 const HeroKraft = lazy(() => import("@/components/HeroKraft"));
+const HeroRPW = lazy(() => import("@/components/HeroRPW"));
 const KraftProductShowcase = lazy(() => import("@/components/KraftProductShowcase"));
 const MaintenancePage = lazy(() => import("@/components/MaintenancePage"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const HomeFAQ = lazy(() => import("@/components/HomeFAQ"));
+const FeaturedProducts = lazy(() => import("@/components/FeaturedProducts"));
 
 const SectionLoader = () => <div className="py-8 flex justify-center"><div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" /></div>;
 
@@ -108,7 +110,23 @@ const Index = () => {
           <TopBar />
           <Header />
           <CategoryNav />
-          {heroMode === "kraft_style" ? (
+          {heroMode === "rpw_style" ? (
+            <>
+              <Suspense fallback={<SectionLoader />}>
+                <HeroRPW />
+              </Suspense>
+              <BenefitsBar />
+              <Suspense fallback={<SectionLoader />}>
+                <FeaturedProducts />
+              </Suspense>
+              <PartsFinder />
+              <ModelSearch />
+              <TabbedProducts />
+              <SocialProof />
+              <GuaranteeSection />
+              <TechnicalCenterTeaser />
+            </>
+          ) : heroMode === "kraft_style" ? (
             <>
               <Suspense fallback={<SectionLoader />}>
                 <HeroKraft />

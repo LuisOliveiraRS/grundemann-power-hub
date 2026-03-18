@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut, Tag, MessageSquare,
   TrendingUp, DollarSign, Globe, Megaphone, Wrench, Mail, Gift,
-  BookOpen, Paintbrush, FileText, Truck, Boxes, BarChart3, Store, Cpu, Stethoscope, Brain
+  BookOpen, Paintbrush, FileText, Truck, Boxes, BarChart3, Store, Cpu, Stethoscope, Brain, Image
 } from "lucide-react";
 import logo from "@/assets/logo-grundemann.png";
 import type { AdminTab } from "@/types/admin";
@@ -41,6 +41,7 @@ const sideItems = [
   { key: "reports" as const, label: "Relatórios", icon: BarChart3 },
   { key: "site-report" as const, label: "Relatório do Site", icon: FileText },
   { key: "appearance" as const, label: "Aparência", icon: Paintbrush },
+  { key: "banners" as const, label: "Banners da Capa", icon: Image },
 ];
 
 const mechanicSubTabs: AdminTab[] = ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes", "exploded-views", "reseller-files"];
