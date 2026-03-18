@@ -5,18 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Gift, Eye, EyeOff, User, Wrench, Building2, Store } from "lucide-react";
+import { Gift, Eye, EyeOff, User, Wrench, Building2, Store, Building } from "lucide-react";
 import Layout from "@/components/Layout";
 import logo from "@/assets/logo-grundemann.png";
 import { getGuestCart, clearGuestCart } from "@/lib/guestCart";
+import { getPartnerDashboardPath } from "@/contexts/AuthContext";
 
-type UserType = "cliente" | "mecanico" | "oficina" | "revendedor";
+type UserType = "cliente" | "mecanico" | "oficina" | "fornecedor" | "locadora";
 
 const userTypeConfig: Record<UserType, { label: string; icon: any; description: string }> = {
   cliente: { label: "Cliente", icon: User, description: "Pessoa física ou jurídica" },
   mecanico: { label: "Mecânico", icon: Wrench, description: "Profissional autônomo" },
   oficina: { label: "Oficina", icon: Building2, description: "Empresa de manutenção" },
-  revendedor: { label: "Revendedor", icon: Store, description: "Revenda de peças" },
+  fornecedor: { label: "Fornecedor", icon: Store, description: "Fornecimento de peças" },
+  locadora: { label: "Locadora", icon: Building, description: "Locação de geradores" },
 };
 
 const Auth = () => {
@@ -33,7 +35,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // New fields
   const [userType, setUserType] = useState<UserType>("cliente");
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
@@ -41,7 +42,7 @@ const Auth = () => {
   const [cpf, setCpf] = useState("");
   const [specialty, setSpecialty] = useState("");
 
-  const needsCnpj = userType === "oficina" || userType === "revendedor";
+  const needsCnpj = userType === "oficina" || userType === "fornecedor" || userType === "locadora";
   const needsCpf = userType === "cliente" || userType === "mecanico";
   const isPartner = userType !== "cliente";
 
@@ -49,7 +50,6 @@ const Auth = () => {
     if (refCode) setIsLogin(false);
   }, [refCode]);
 
-  // Auto-redirect already authenticated users to their dashboard
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -63,10 +63,7 @@ const Auth = () => {
       }
 
       const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
-      if (mechanic?.partner_type === "revendedor") navigate("/revendedor", { replace: true });
-      else if (mechanic?.partner_type === "oficina") navigate("/oficina", { replace: true });
-      else if (mechanic?.partner_type === "mecanico") navigate("/mecanico", { replace: true });
-      else navigate("/minha-conta", { replace: true });
+      navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null), { replace: true });
     };
     if (!redirect) checkAuth();
   }, []);
@@ -98,35 +95,17 @@ const Auth = () => {
         if (redirect) {
           navigate(redirect);
         } else {
-          // Check if user is admin
-          const { data: roles } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", loginData.user.id);
+          const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", loginData.user.id);
           const isAdminUser = (roles || []).some((r: any) => r.role === "admin");
           if (isAdminUser) {
             navigate("/admin");
           } else {
-            // Check partner type
-            const { data: mechanic } = await supabase
-              .from("mechanics")
-              .select("partner_type")
-              .eq("user_id", loginData.user.id)
-              .maybeSingle();
-            if (mechanic?.partner_type === "revendedor") {
-              navigate("/revendedor");
-            } else if (mechanic?.partner_type === "oficina") {
-              navigate("/oficina");
-            } else if (mechanic?.partner_type === "mecanico") {
-              navigate("/mecanico");
-            } else {
-              navigate("/minha-conta");
-            }
+            const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", loginData.user.id).maybeSingle();
+            navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null));
           }
         }
       }
     } else {
-      // Validation
       if (needsCnpj && !cnpj.trim()) {
         toast({ title: "CNPJ obrigatório", description: "Informe o CNPJ da empresa.", variant: "destructive" });
         setLoading(false);
@@ -149,7 +128,6 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
       } else if (data.user) {
-        // Update profile with phone and cpf/cnpj
         const profileUpdate: Record<string, string> = {};
         if (phone) profileUpdate.phone = phone;
         if (needsCpf && cpf) profileUpdate.cpf_cnpj = cpf;
@@ -160,7 +138,6 @@ const Auth = () => {
           await supabase.from("profiles").update(profileUpdate).eq("user_id", data.user.id);
         }
 
-        // If partner type, create mechanics record
         if (isPartner) {
           await supabase.from("mechanics").insert({
             user_id: data.user.id,
@@ -173,7 +150,6 @@ const Auth = () => {
           });
         }
 
-        // Process referral if code exists
         if (refCode) {
           await supabase.rpc("process_referral", {
             p_referred_id: data.user.id,
@@ -184,17 +160,10 @@ const Auth = () => {
         await syncGuestCart(data.user.id);
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
         
-        // Redirect to the correct dashboard based on user type
         if (redirect) {
           navigate(redirect);
         } else {
-          const dashboardMap: Record<UserType, string> = {
-            cliente: "/minha-conta",
-            mecanico: "/mecanico",
-            oficina: "/oficina",
-            revendedor: "/revendedor",
-          };
-          navigate(dashboardMap[userType]);
+          navigate(getPartnerDashboardPath(isPartner ? userType : null));
         }
       }
     }
@@ -218,7 +187,6 @@ const Auth = () => {
             {isLogin ? "Entrar" : "Criar Conta"}
           </h2>
 
-          {/* User Type Selector - only on signup */}
           {!isLogin && (
             <div className="mb-6">
               <Label className="text-sm font-semibold mb-3 block">Tipo de cadastro</Label>
@@ -262,7 +230,6 @@ const Auth = () => {
                   <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(00) 00000-0000" />
                 </div>
 
-                {/* CPF for Cliente/Mecânico */}
                 {needsCpf && (
                   <div>
                     <Label htmlFor="cpf">CPF</Label>
@@ -270,7 +237,6 @@ const Auth = () => {
                   </div>
                 )}
 
-                {/* Company fields for Oficina/Revendedor */}
                 {needsCnpj && (
                   <>
                     <div>
@@ -288,7 +254,6 @@ const Auth = () => {
                   </>
                 )}
 
-                {/* Company name for Mecânico (optional) */}
                 {userType === "mecanico" && (
                   <>
                     <div>

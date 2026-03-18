@@ -1,27 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, getPartnerDashboardPath } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Wrench, Building2, Store, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Wrench, Building2, Store, Building, ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout";
 import logo from "@/assets/logo-grundemann.png";
 
-type PartnerType = "mecanico" | "oficina" | "revendedor";
+type PartnerType = "mecanico" | "oficina" | "fornecedor" | "locadora";
 
 const partnerConfig: Record<PartnerType, { label: string; icon: any; description: string }> = {
-  revendedor: { label: "Revendedor", icon: Store, description: "Revenda de peças e equipamentos" },
+  fornecedor: { label: "Fornecedor", icon: Store, description: "Fornecimento de peças e equipamentos" },
   oficina: { label: "Oficina", icon: Building2, description: "Empresa de manutenção e reparo" },
   mecanico: { label: "Mecânico", icon: Wrench, description: "Profissional autônomo" },
+  locadora: { label: "Locadora", icon: Building, description: "Locação de geradores e equipamentos" },
 };
 
-// Map route slugs to allowed partner types
 const routeTypeMap: Record<string, PartnerType[]> = {
-  "revendedor": ["revendedor"],
+  "fornecedor": ["fornecedor"],
   "oficina-mecanico": ["oficina", "mecanico"],
+  "locadora": ["locadora"],
 };
 
 const PartnerLogin = () => {
@@ -46,15 +47,16 @@ const PartnerLogin = () => {
   const [cpf, setCpf] = useState("");
   const [specialty, setSpecialty] = useState("");
 
-  const needsCnpj = partnerType === "oficina" || partnerType === "revendedor";
+  const needsCnpj = partnerType === "oficina" || partnerType === "fornecedor" || partnerType === "locadora";
 
-  const pageTitle = routeType === "revendedor"
-    ? "Área do Revendedor"
+  const pageTitle = routeType === "fornecedor"
+    ? "Área do Fornecedor"
     : routeType === "oficina-mecanico"
       ? "Área da Oficina - Mecânico"
-      : "Área de Parceiros";
+      : routeType === "locadora"
+        ? "Área da Locadora"
+        : "Área de Parceiros";
 
-  // Auto-redirect logged-in users to their dashboard
   useEffect(() => {
     if (!user) { setCheckingAuth(false); return; }
     const checkPartner = async () => {
@@ -65,16 +67,12 @@ const PartnerLogin = () => {
         .maybeSingle();
 
       if (mechanic) {
-        // Only auto-redirect if the user's partner type matches this route
         const matchesRoute = routeType
           ? (routeTypeMap[routeType] || []).includes(mechanic.partner_type as PartnerType)
           : true;
 
         if (matchesRoute) {
-          const dest = mechanic.partner_type === "revendedor" ? "/revendedor"
-            : mechanic.partner_type === "oficina" ? "/oficina"
-            : "/mecanico";
-          navigate(dest, { replace: true });
+          navigate(getPartnerDashboardPath(mechanic.partner_type as string), { replace: true });
         } else {
           setCheckingAuth(false);
         }
@@ -101,12 +99,8 @@ const PartnerLogin = () => {
           .maybeSingle();
 
         if (mechanic) {
-          const dest = mechanic.partner_type === "revendedor" ? "/revendedor"
-            : mechanic.partner_type === "oficina" ? "/oficina"
-            : "/mecanico";
-          navigate(dest);
+          navigate(getPartnerDashboardPath(mechanic.partner_type as string));
         } else {
-          // No partner record — if on specific route, show signup
           toast({ title: "Conta encontrada", description: "Você ainda não tem cadastro de parceiro. Faça seu cadastro." });
           setIsLogin(false);
         }
@@ -175,11 +169,10 @@ const PartnerLogin = () => {
             </p>
           </div>
 
-          {/* Partner Type Selector - only on signup and if multiple types allowed */}
           {!isLogin && allowedTypes.length > 1 && (
             <div className="mb-6">
               <Label className="text-sm font-semibold mb-3 block">Tipo de parceiro</Label>
-              <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${allowedTypes.length}, 1fr)` }}>
+              <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${Math.min(allowedTypes.length, 4)}, 1fr)` }}>
                 {allowedTypes.map((type) => {
                   const config = partnerConfig[type];
                   const Icon = config.icon;
@@ -205,7 +198,6 @@ const PartnerLogin = () => {
             </div>
           )}
 
-          {/* Show single type label when only one allowed */}
           {!isLogin && allowedTypes.length === 1 && (
             <div className="mb-6 text-center">
               <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-4 py-2">
