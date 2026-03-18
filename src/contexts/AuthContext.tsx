@@ -7,6 +7,10 @@ interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
   isSeller: boolean;
+  isFornecedor: boolean;
+  isMecanico: boolean;
+  isOficina: boolean;
+  isLocadora: boolean;
   isLoading: boolean;
   userName: string;
   partnerType: string | null;
