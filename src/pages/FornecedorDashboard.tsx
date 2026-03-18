@@ -128,14 +128,14 @@ const FornecedorDashboard = () => {
     return <Layout><div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
 
-  if (!partner || partner.partner_type !== "revendedor") {
+  if (!partner || partner.partner_type !== "fornecedor") {
     return (
       <Layout>
         <div className="container py-16 text-center">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">Acesso Restrito</h1>
-          <p className="text-muted-foreground mb-4">Esta área é exclusiva para revendedores cadastrados.</p>
-          <Button onClick={() => navigate("/parceiros")}>Cadastrar como Revendedor</Button>
+          <p className="text-muted-foreground mb-4">Esta área é exclusiva para fornecedores cadastrados.</p>
+          <Button onClick={() => navigate("/parceiros/fornecedor")}>Cadastrar como Fornecedor</Button>
         </div>
       </Layout>
     );
