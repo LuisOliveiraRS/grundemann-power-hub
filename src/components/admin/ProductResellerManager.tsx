@@ -12,8 +12,11 @@ interface ProductReseller {
   reseller_id: string;
   stock_quantity: number;
   custom_price: number | null;
+  reseller_price: number | null;
+  store_commission_pct: number | null;
   is_active: boolean;
   product_name?: string;
+  product_price?: number;
   reseller_name?: string;
 }
 
