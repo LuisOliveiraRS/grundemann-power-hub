@@ -338,7 +338,7 @@ const FornecedorDashboard = () => {
             {activeSection === "perfil" && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Perfil do Revendedor</CardTitle>
+                  <CardTitle>Perfil do Fornecedor</CardTitle>
                   <CardDescription>Atualize seus dados pessoais e de contato</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
