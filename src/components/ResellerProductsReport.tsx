@@ -47,8 +47,8 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
 
     // Get products from legacy reseller_id AND new product_resellers table
     const [legacyRes, newLinksRes] = await Promise.all([
-      supabase.from("products").select("id, name, sku, price, stock_quantity, image_url, is_active").eq("reseller_id", resellerId).order("name"),
-      supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, is_active").eq("reseller_id", resellerId).eq("is_active", true),
+      supabase.from("products").select("id, name, sku, price, original_price, stock_quantity, image_url, is_active").eq("reseller_id", resellerId).order("name"),
+      supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, reseller_price, store_commission_pct, is_active").eq("reseller_id", resellerId).eq("is_active", true),
     ]);
 
     const legacyProducts = (legacyRes.data || []) as ResellerProduct[];
