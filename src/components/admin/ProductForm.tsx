@@ -220,7 +220,7 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                 <div className="flex items-end pb-1">
                   {form.reseller_price && form.store_commission_pct && (
                     <div className="text-sm space-y-1">
-                      <p className="text-muted-foreground">Preço Revendedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
+                      <p className="text-muted-foreground">Preço Fornecedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
                       <p className="text-muted-foreground">Margem Loja: <strong className="text-primary">{form.store_commission_pct}%</strong></p>
                       <p className="text-muted-foreground">Preço de Venda: <strong className="text-primary">R$ {parseFloat(form.price).toFixed(2)}</strong></p>
                     </div>
