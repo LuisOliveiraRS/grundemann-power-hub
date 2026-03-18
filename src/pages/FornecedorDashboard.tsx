@@ -408,7 +408,7 @@ const FornecedorDashboard = () => {
                 {catalogs.length > 0 && (
                   <div className="space-y-4">
                     <h2 className="font-heading text-xl font-bold">Catálogos da Grundemann</h2>
-                    <p className="text-muted-foreground text-sm">Materiais publicados pela loja para revendedores</p>
+                    <p className="text-muted-foreground text-sm">Materiais publicados pela loja para fornecedores</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {catalogs.map(catalog => (
                         <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
