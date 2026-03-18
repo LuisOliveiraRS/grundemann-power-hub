@@ -203,8 +203,8 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                     const pct = parseFloat(form.store_commission_pct) || 0;
                     const newSalePrice = rp > 0 && pct > 0 ? (rp * (1 + pct / 100)).toFixed(2) : form.price;
                     setForm(prev => ({ ...prev, reseller_price: resellerPrice, price: newSalePrice }));
-                  }} placeholder="Custo do revendedor" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Valor que o revendedor paga pelo produto</p>
+                  }} placeholder="Custo do fornecedor" className="mt-1" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Valor que o fornecedor paga pelo produto</p>
                 </div>
                 <div>
                   <Label>% Loja Grundemann</Label>
