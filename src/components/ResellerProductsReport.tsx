@@ -11,11 +11,14 @@ interface ResellerProduct {
   name: string;
   sku: string | null;
   price: number;
+  original_price: number | null;
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
   reseller_stock?: number | null;
   custom_price?: number | null;
+  reseller_price?: number | null;
+  store_commission_pct?: number | null;
 }
 
 interface SalesData {
@@ -44,8 +47,8 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
 
     // Get products from legacy reseller_id AND new product_resellers table
     const [legacyRes, newLinksRes] = await Promise.all([
-      supabase.from("products").select("id, name, sku, price, stock_quantity, image_url, is_active").eq("reseller_id", resellerId).order("name"),
-      supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, is_active").eq("reseller_id", resellerId).eq("is_active", true),
+      supabase.from("products").select("id, name, sku, price, original_price, stock_quantity, image_url, is_active").eq("reseller_id", resellerId).order("name"),
+      supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, reseller_price, store_commission_pct, is_active").eq("reseller_id", resellerId).eq("is_active", true),
     ]);
 
     const legacyProducts = (legacyRes.data || []) as ResellerProduct[];
@@ -57,7 +60,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
 
     let extraProducts: ResellerProduct[] = [];
     if (newProductIds.length > 0) {
-      const { data } = await supabase.from("products").select("id, name, sku, price, stock_quantity, image_url, is_active").in("id", newProductIds);
+      const { data } = await supabase.from("products").select("id, name, sku, price, original_price, stock_quantity, image_url, is_active").in("id", newProductIds);
       extraProducts = (data || []) as ResellerProduct[];
     }
 
@@ -68,6 +71,8 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
         ...p,
         reseller_stock: link?.stock_quantity ?? null,
         custom_price: link?.custom_price ?? null,
+        reseller_price: link?.reseller_price ?? null,
+        store_commission_pct: link?.store_commission_pct ?? null,
       };
     });
 
@@ -204,7 +209,10 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                 <th className="p-3 w-12"></th>
                 <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Produto</th>
                 <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">SKU</th>
-                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Original</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Venda</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Revendedor</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">% Loja</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Estoque</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Vendidos</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Valor Vendido</th>
@@ -214,6 +222,9 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
             <tbody className="divide-y divide-border">
               {filtered.map(p => {
                 const sales = getSales(p.id);
+                const salePrice = p.custom_price ?? p.price;
+                const resellerPrice = p.reseller_price ?? 0;
+                const commissionPct = p.store_commission_pct ?? (salePrice > 0 && resellerPrice > 0 ? ((salePrice - resellerPrice) / salePrice * 100) : 0);
                 return (
                   <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                     <td className="p-3">
@@ -227,7 +238,20 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                     </td>
                     <td className="p-3"><p className="text-sm font-medium line-clamp-1">{p.name}</p></td>
                     <td className="p-3"><span className="text-xs font-mono text-muted-foreground">{p.sku || "—"}</span></td>
-                    <td className="p-3 text-right"><span className="text-sm">R$ {(p.custom_price ?? p.price).toFixed(2).replace(".", ",")}</span></td>
+                    <td className="p-3 text-right">
+                      <span className="text-xs text-muted-foreground line-through">
+                        {p.original_price ? `R$ ${p.original_price.toFixed(2).replace(".",",")}` : `R$ ${p.price.toFixed(2).replace(".",",")}`}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right"><span className="text-sm font-semibold">R$ {salePrice.toFixed(2).replace(".", ",")}</span></td>
+                    <td className="p-3 text-right">
+                      <span className="text-sm">{resellerPrice > 0 ? `R$ ${resellerPrice.toFixed(2).replace(".",",")}` : "—"}</span>
+                    </td>
+                    <td className="p-3 text-right">
+                      <span className={`text-sm font-bold ${commissionPct > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                        {commissionPct > 0 ? `${commissionPct.toFixed(1)}%` : "—"}
+                      </span>
+                    </td>
                     <td className="p-3 text-right">
                       <div className="flex flex-col items-end">
                         <span className={`text-sm font-bold ${(p.reseller_stock ?? p.stock_quantity) <= 0 ? "text-destructive" : (p.reseller_stock ?? p.stock_quantity) <= 5 ? "text-yellow-600" : ""}`}>
@@ -253,7 +277,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">Nenhum produto encontrado</td></tr>
+                <tr><td colSpan={11} className="p-10 text-center text-muted-foreground">Nenhum produto encontrado</td></tr>
               )}
             </tbody>
           </table>

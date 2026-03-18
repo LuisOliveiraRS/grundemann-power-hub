@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, Store, TrendingUp, BarChart3, DollarSign, Printer, LogOut, Calculator } from "lucide-react";
+import { User, Phone, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, Store, TrendingUp, BarChart3, DollarSign, Printer, LogOut, Calculator, Upload } from "lucide-react";
 import Layout from "@/components/Layout";
+import ResellerFileUpload from "@/components/ResellerFileUpload";
 import UserQuotesList from "@/components/UserQuotesList";
 import ResellerProductsReport from "@/components/ResellerProductsReport";
 
@@ -50,7 +51,7 @@ const RevendedorDashboard = () => {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "meus-produtos">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "meus-produtos" | "meus-arquivos">("overview");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -159,6 +160,7 @@ const RevendedorDashboard = () => {
   const sidebarItems = [
     { id: "overview" as const, label: "Painel", icon: BarChart3 },
     { id: "meus-produtos" as const, label: "Meus Produtos", icon: Package },
+    { id: "meus-arquivos" as const, label: "Meus Arquivos", icon: Upload },
     { id: "perfil" as const, label: "Meu Perfil", icon: User },
     { id: "compras" as const, label: "Compras", icon: ShoppingCart },
     { id: "catalogos" as const, label: "Catálogos PDF", icon: Download },
@@ -432,6 +434,11 @@ const RevendedorDashboard = () => {
                 <h2 className="font-heading text-xl font-bold mb-4">Meus Produtos & Relatório de Vendas</h2>
                 <ResellerProductsReport resellerId={partner.id} />
               </div>
+            )}
+
+            {/* Meus Arquivos */}
+            {activeSection === "meus-arquivos" && (
+              <ResellerFileUpload />
             )}
 
             {/* Quotes */}

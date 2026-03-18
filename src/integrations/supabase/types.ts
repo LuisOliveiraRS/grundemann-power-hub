@@ -1262,7 +1262,9 @@ export type Database = {
           is_active: boolean
           product_id: string
           reseller_id: string
+          reseller_price: number | null
           stock_quantity: number
+          store_commission_pct: number | null
           updated_at: string
         }
         Insert: {
@@ -1272,7 +1274,9 @@ export type Database = {
           is_active?: boolean
           product_id: string
           reseller_id: string
+          reseller_price?: number | null
           stock_quantity?: number
+          store_commission_pct?: number | null
           updated_at?: string
         }
         Update: {
@@ -1282,7 +1286,9 @@ export type Database = {
           is_active?: boolean
           product_id?: string
           reseller_id?: string
+          reseller_price?: number | null
           stock_quantity?: number
+          store_commission_pct?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1674,6 +1680,62 @@ export type Database = {
           referrer_points_credited?: boolean
         }
         Relationships: []
+      }
+      reseller_files: {
+        Row: {
+          admin_notes: string | null
+          catalog_id: string | null
+          category: string
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          catalog_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          catalog_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_files_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "technical_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reward_redemptions: {
         Row: {

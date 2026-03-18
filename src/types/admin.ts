@@ -68,7 +68,7 @@ export type AdminTab =
   | "marketing" | "mechanics" | "mechanic-videos" | "articles"
   | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards"
   | "seo" | "shipping" | "analytics" | "price-research" | "appearance"
-  | "site-report" | "reseller-content" | "product-resellers" | "compatibility"
+  | "site-report" | "reseller-content" | "reseller-files" | "product-resellers" | "compatibility"
   | "diagnostics" | "intelligence";
 
 export const statusLabel: Record<string, string> = {

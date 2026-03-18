@@ -36,6 +36,7 @@ import MechanicVideoManagement from "@/components/MechanicVideoManagement";
 import ExplodedViewManagement from "@/components/ExplodedViewManagement";
 import AdminReports from "@/components/AdminReports";
 import ResellerContentManagement from "@/components/ResellerContentManagement";
+import ResellerFileApproval from "@/components/admin/ResellerFileApproval";
 import ProductResellerManager from "@/components/admin/ProductResellerManager";
 import CompatibilityManager from "@/components/admin/CompatibilityManager";
 import DiagnosticManagement from "@/components/admin/DiagnosticManagement";
@@ -340,6 +341,7 @@ const AdminDashboard = () => {
                 { key: "exploded-views" as const, label: "Vistas Explodidas", desc: "Gerencie diagramas de vistas explodidas dos motores", icon: Package, gradient: "from-accent/20 to-accent/10", iconBg: "bg-accent/30", iconColor: "text-accent-foreground", border: "border-accent/30" },
                 { key: "quotes" as const, label: "Orçamentos", desc: "Solicitações de orçamento dos clientes", icon: FileUp, gradient: "from-secondary/15 to-secondary/5", iconBg: "bg-secondary/20", iconColor: "text-secondary", border: "border-secondary/25" },
                 { key: "reseller-content" as const, label: "Conteúdo Revendedor", desc: "PDFs, tabelas de preço e materiais para revendedores", icon: Download, gradient: "from-primary/15 to-secondary/5", iconBg: "bg-primary/20", iconColor: "text-primary", border: "border-primary/25" },
+                { key: "reseller-files" as const, label: "Arquivos de Revendedores", desc: "Aprovar, rejeitar e publicar arquivos enviados pelos revendedores", icon: FileUp, gradient: "from-accent/15 to-primary/5", iconBg: "bg-accent/20", iconColor: "text-accent-foreground", border: "border-accent/25" },
               ].map((card) => (
                 <button key={card.key} onClick={() => setTab(card.key === "mechanic-list" ? "mechanics" : card.key as AdminTab)} className={`group relative text-left rounded-2xl border-2 ${card.border} bg-gradient-to-br ${card.gradient} p-6 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden`}>
                   <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-gradient-to-br from-background/5 to-transparent -translate-y-8 translate-x-8" />
@@ -511,6 +513,19 @@ const AdminDashboard = () => {
               </div>
             </div>
             <ResellerContentManagement />
+          </div>
+        )}
+
+        {(tab as string) === "reseller-files" && (
+          <div>
+            <div className="mb-6 flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setTab("mechanics")} className="gap-1.5"><ChevronUp className="h-4 w-4 -rotate-90" /> Voltar</Button>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground flex items-center gap-3"><FileUp className="h-7 w-7 text-primary" /> Arquivos de Revendedores</h1>
+                <p className="text-muted-foreground text-sm mt-0.5">Aprove, rejeite e publique arquivos enviados pelos revendedores no menu Catálogos</p>
+              </div>
+            </div>
+            <ResellerFileApproval />
           </div>
         )}
 
