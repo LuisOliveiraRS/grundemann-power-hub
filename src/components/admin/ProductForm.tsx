@@ -186,6 +186,49 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
             <p className="text-xs text-muted-foreground mt-1">Associa o produto a um revendedor para relatórios e controle de estoque</p>
           </div>
 
+          {/* Reseller pricing - shown when reseller is selected */}
+          {form.reseller_id && (
+            <div className="md:col-span-2 rounded-lg border border-accent/30 bg-accent/5 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Store className="h-4 w-4 text-accent-foreground" />
+                <span className="text-sm font-semibold text-foreground">Precificação do Revendedor</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Preço do Revendedor (R$)</Label>
+                  <Input type="number" step="0.01" value={form.reseller_price} onChange={(e) => {
+                    const resellerPrice = e.target.value;
+                    const salePrice = parseFloat(form.price) || 0;
+                    const rp = parseFloat(resellerPrice) || 0;
+                    const pct = salePrice > 0 && rp > 0 ? (((salePrice - rp) / salePrice) * 100).toFixed(1) : "";
+                    setForm(prev => ({ ...prev, reseller_price: resellerPrice, store_commission_pct: pct }));
+                  }} placeholder="Custo do revendedor" className="mt-1" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Valor que o revendedor paga pelo produto</p>
+                </div>
+                <div>
+                  <Label>% Loja Grundemann</Label>
+                  <Input type="number" step="0.1" value={form.store_commission_pct} onChange={(e) => {
+                    const pct = e.target.value;
+                    const salePrice = parseFloat(form.price) || 0;
+                    const p = parseFloat(pct) || 0;
+                    const rp = salePrice > 0 && p > 0 ? (salePrice * (1 - p / 100)).toFixed(2) : "";
+                    setForm(prev => ({ ...prev, store_commission_pct: pct, reseller_price: rp }));
+                  }} placeholder="Comissão %" className="mt-1" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Margem da loja sobre o preço de venda</p>
+                </div>
+                <div className="flex items-end pb-1">
+                  {form.reseller_price && form.price && (
+                    <div className="text-sm space-y-1">
+                      <p className="text-muted-foreground">Preço Venda: <strong className="text-foreground">R$ {parseFloat(form.price).toFixed(2)}</strong></p>
+                      <p className="text-muted-foreground">Preço Revendedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
+                      <p className="text-muted-foreground">Margem Loja: <strong className="text-primary">{form.store_commission_pct}%</strong></p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Price / Stock */}
           <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm(prev => ({ ...prev, price: e.target.value }))} /></div>
           <div><Label>Preço Original (opcional)</Label><Input type="number" step="0.01" value={form.original_price} onChange={(e) => setForm(prev => ({ ...prev, original_price: e.target.value }))} placeholder="Preço anterior" /></div>
