@@ -51,7 +51,7 @@ const RevendedorDashboard = () => {
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "meus-produtos">("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "meus-produtos" | "meus-arquivos">("overview");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
