@@ -142,7 +142,7 @@ const ProductResellerManager = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Store className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-heading font-bold">Produto × Revendedor</h2>
+        <h2 className="text-lg font-heading font-bold">Produto × Fornecedor</h2>
         <Badge variant="secondary">{links.length} vínculos</Badge>
       </div>
 
