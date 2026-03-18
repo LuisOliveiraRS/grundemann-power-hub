@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Monitor, Image, Layout, Loader2, Construction } from "lucide-react";
 
-type HeroMode = "product_showcase" | "rotating_banner" | "kraft_style" | "maintenance";
+type HeroMode = "product_showcase" | "rotating_banner" | "kraft_style" | "rpw_style" | "maintenance";
 
 const OPTIONS: { value: HeroMode; label: string; description: string; icon: typeof Monitor }[] = [
   {
@@ -23,6 +23,12 @@ const OPTIONS: { value: HeroMode; label: string; description: string; icon: type
     label: "Fullscreen Imersivo",
     description: "Hero fullscreen com imagem industrial, texto em destaque e produtos em layout alternado. Visual premium e moderno.",
     icon: Layout,
+  },
+  {
+    value: "rpw_style",
+    label: "Estilo Loja Virtual",
+    description: "Banners full-width gerenciáveis + barra de benefícios + grade de produtos. Layout limpo inspirado em lojas virtuais profissionais.",
+    icon: Monitor,
   },
   {
     value: "maintenance",
