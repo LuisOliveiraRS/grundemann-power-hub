@@ -55,7 +55,7 @@ const AdminClientsTab = ({ clients, orders, clientRoles, clientMechanics, onRelo
     // Return the "highest" role for badge display
     if (roles.includes("admin")) return "admin";
     if (roles.includes("seller")) return "seller";
-    if (roles.includes("revendedor")) return "revendedor";
+    if (roles.includes("fornecedor")) return "fornecedor";
     if (roles.includes("oficina")) return "oficina";
     if (roles.includes("mecanico")) return "mecanico";
     return "cliente";
