@@ -148,7 +148,7 @@ const ProductResellerManager = () => {
 
       {/* Add new link */}
       <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-        <h3 className="text-sm font-bold">Vincular Produto a Revendedor</h3>
+        <h3 className="text-sm font-bold">Vincular Produto a Fornecedor</h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <select
             value={selectedProduct}
