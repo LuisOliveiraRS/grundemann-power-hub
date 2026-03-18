@@ -99,6 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setIsAdmin(false);
       setIsSeller(false);
+      setIsFornecedor(false);
+      setIsMecanico(false);
+      setIsOficina(false);
+      setIsLocadora(false);
       setUserName("");
       setPartnerType(null);
       setIsApprovedPartner(false);
