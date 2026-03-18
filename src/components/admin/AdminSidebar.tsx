@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut, Tag, MessageSquare,
   TrendingUp, DollarSign, Globe, Megaphone, Wrench, Mail, Gift,
-  BookOpen, Paintbrush, FileText, Truck, Boxes, BarChart3, Store, Cpu, Stethoscope, Brain
+  BookOpen, Paintbrush, FileText, Truck, Boxes, BarChart3, Store, Cpu, Stethoscope, Brain, Image
 } from "lucide-react";
 import logo from "@/assets/logo-grundemann.png";
 import type { AdminTab } from "@/types/admin";

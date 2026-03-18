@@ -110,7 +110,23 @@ const Index = () => {
           <TopBar />
           <Header />
           <CategoryNav />
-          {heroMode === "kraft_style" ? (
+          {heroMode === "rpw_style" ? (
+            <>
+              <Suspense fallback={<SectionLoader />}>
+                <HeroRPW />
+              </Suspense>
+              <BenefitsBar />
+              <Suspense fallback={<SectionLoader />}>
+                <FeaturedProducts />
+              </Suspense>
+              <PartsFinder />
+              <ModelSearch />
+              <TabbedProducts />
+              <SocialProof />
+              <GuaranteeSection />
+              <TechnicalCenterTeaser />
+            </>
+          ) : heroMode === "kraft_style" ? (
             <>
               <Suspense fallback={<SectionLoader />}>
                 <HeroKraft />
