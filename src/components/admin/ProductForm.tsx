@@ -215,7 +215,7 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                     const newSalePrice = rp > 0 && p > 0 ? (rp * (1 + p / 100)).toFixed(2) : form.price;
                     setForm(prev => ({ ...prev, store_commission_pct: pct, price: newSalePrice }));
                   }} placeholder="Comissão %" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Margem adicionada ao preço do revendedor</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Margem adicionada ao preço do fornecedor</p>
                 </div>
                 <div className="flex items-end pb-1">
                   {form.reseller_price && form.store_commission_pct && (
