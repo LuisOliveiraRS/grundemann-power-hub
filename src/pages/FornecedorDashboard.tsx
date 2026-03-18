@@ -147,7 +147,7 @@ const FornecedorDashboard = () => {
         <div className="container py-16 text-center max-w-md mx-auto">
           <Clock className="h-12 w-12 text-accent mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">Cadastro em Análise</h1>
-          <p className="text-muted-foreground mb-4">Seu cadastro de revendedor está sendo analisado. Você receberá uma notificação quando for aprovado.</p>
+          <p className="text-muted-foreground mb-4">Seu cadastro de fornecedor está sendo analisado. Você receberá uma notificação quando for aprovado.</p>
           <Badge variant="outline" className="text-accent border-accent">Aguardando Aprovação</Badge>
         </div>
       </Layout>
