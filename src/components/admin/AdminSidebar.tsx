@@ -29,7 +29,7 @@ const sideItems = [
   { key: "seo" as const, label: "SEO", icon: Globe },
   { key: "shipping" as const, label: "Frete", icon: Truck },
   { key: "stock" as const, label: "Estoque & ML", icon: Boxes },
-  { key: "product-resellers" as const, label: "Produto × Revendedor", icon: Store },
+  { key: "product-resellers" as const, label: "Produto × Fornecedor", icon: Store },
   { key: "compatibility" as const, label: "Compatibilidade", icon: Cpu },
   { key: "diagnostics" as const, label: "Diagnóstico & Kits", icon: Stethoscope },
   { key: "intelligence" as const, label: "Inteligência", icon: Brain },
