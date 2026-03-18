@@ -33,7 +33,7 @@ const ResellerContentManagement = () => {
 
   const loadCatalogs = async () => {
     // We'll use technical_catalogs table but filter by a "reseller" category prefix
-    const { data } = await supabase.from("technical_catalogs").select("*").ilike("category", "Revendedor%").order("title");
+    const { data } = await supabase.from("technical_catalogs").select("*").ilike("category", "Fornecedor%").order("title");
     setCatalogs((data || []) as ResellerCatalog[]);
     setLoading(false);
   };
