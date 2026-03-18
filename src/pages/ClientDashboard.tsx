@@ -93,7 +93,7 @@ const mpStatusDetailLabel: Record<string, string> = {
   pending_waiting_transfer: "Aguardando transferência",
 };
 const ClientDashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, partnerType } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [tab, setTab] = useState<"profile" | "orders" | "payments" | "quotes" | "favorites" | "loyalty" | "referral">("profile");
   const [hasQuoteDraft, setHasQuoteDraft] = useState(false);
