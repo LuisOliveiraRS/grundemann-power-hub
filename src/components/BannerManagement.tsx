@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, GripVertical, Loader2, Image, ExternalLink } from "lucide-react";
+import { Plus, Trash2, GripVertical, Loader2, Image, ExternalLink, Upload, ArrowUp, ArrowDown } from "lucide-react";
 
 interface Banner {
   id: string;
@@ -22,7 +22,11 @@ const BannerManagement = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [newBanner, setNewBanner] = useState({ title: "", image_url: "", link_url: "" });
+  const [uploading, setUploading] = useState(false);
+  const [newBanner, setNewBanner] = useState({ title: "", link_url: "" });
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBanners = async () => {
     const { data } = await supabase
@@ -35,23 +39,70 @@ const BannerManagement = () => {
 
   useEffect(() => { fetchBanners(); }, []);
 
-  const addBanner = async () => {
-    if (!newBanner.image_url.trim()) {
-      toast({ title: "URL da imagem é obrigatória", variant: "destructive" });
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Selecione uma imagem válida", variant: "destructive" });
       return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem deve ter no máximo 5MB", variant: "destructive" });
+      return;
+    }
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const fileName = `banner-${Date.now()}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("hero-banners")
+      .upload(fileName, file, { contentType: file.type, upsert: false });
+
+    if (error) {
+      toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage.from("hero-banners").getPublicUrl(fileName);
+    return urlData.publicUrl;
+  };
+
+  const addBanner = async () => {
+    if (!selectedFile) {
+      toast({ title: "Selecione uma imagem para o banner", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
+    setUploading(true);
+
+    const imageUrl = await uploadImage(selectedFile);
+    if (!imageUrl) { setSaving(false); setUploading(false); return; }
+
+    setUploading(false);
+
     const { error } = await supabase.from("hero_banners").insert({
       title: newBanner.title || null,
-      image_url: newBanner.image_url,
+      image_url: imageUrl,
       link_url: newBanner.link_url || null,
       display_order: banners.length,
     });
+
     if (error) {
       toast({ title: "Erro ao criar banner", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Banner criado!" });
-      setNewBanner({ title: "", image_url: "", link_url: "" });
+      toast({ title: "Banner criado com sucesso!" });
+      setNewBanner({ title: "", link_url: "" });
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       fetchBanners();
     }
     setSaving(false);
@@ -69,14 +120,20 @@ const BannerManagement = () => {
     fetchBanners();
   };
 
-  const moveUp = async (index: number) => {
-    if (index === 0) return;
+  const reorder = async (index: number, direction: "up" | "down") => {
+    const swapIdx = direction === "up" ? index - 1 : index + 1;
+    if (swapIdx < 0 || swapIdx >= banners.length) return;
+
     const updated = [...banners];
-    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
-    for (let i = 0; i < updated.length; i++) {
-      await supabase.from("hero_banners").update({ display_order: i }).eq("id", updated[i].id);
-    }
-    fetchBanners();
+    [updated[index], updated[swapIdx]] = [updated[swapIdx], updated[index]];
+
+    setBanners(updated);
+
+    await Promise.all(
+      updated.map((b, i) =>
+        supabase.from("hero_banners").update({ display_order: i }).eq("id", b.id)
+      )
+    );
   };
 
   if (loading) {
@@ -87,27 +144,19 @@ const BannerManagement = () => {
     <div className="space-y-6">
       <div>
         <h3 className="font-heading text-lg font-bold text-foreground mb-1">Gerenciar Banners da Capa</h3>
-        <p className="text-sm text-muted-foreground">Adicione, reordene ou remova banners do carrossel estilo RPW.</p>
+        <p className="text-sm text-muted-foreground">Faça upload de imagens, configure links e reordene os banners do carrossel.</p>
       </div>
 
       {/* Add new banner */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="pt-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Título (opcional)</Label>
               <Input
                 value={newBanner.title}
                 onChange={(e) => setNewBanner((p) => ({ ...p, title: e.target.value }))}
                 placeholder="Ex: Promoção de Verão"
-              />
-            </div>
-            <div>
-              <Label>URL da Imagem *</Label>
-              <Input
-                value={newBanner.image_url}
-                onChange={(e) => setNewBanner((p) => ({ ...p, image_url: e.target.value }))}
-                placeholder="https://..."
               />
             </div>
             <div>
@@ -119,8 +168,42 @@ const BannerManagement = () => {
               />
             </div>
           </div>
-          <Button onClick={addBanner} disabled={saving} className="mt-4" size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Adicionar Banner
+
+          {/* File upload area */}
+          <div>
+            <Label>Imagem do Banner *</Label>
+            <div
+              className="mt-2 border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {previewUrl ? (
+                <div className="space-y-3">
+                  <img src={previewUrl} alt="Preview" className="w-full max-h-48 object-cover rounded-md" />
+                  <p className="text-sm text-muted-foreground">{selectedFile?.name} — Clique para trocar</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Clique para selecionar uma imagem</p>
+                  <p className="text-xs text-muted-foreground">JPG, PNG ou WebP — máx. 5MB — Recomendado: 1920×600px</p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+          </div>
+
+          <Button onClick={addBanner} disabled={saving || !selectedFile} size="sm">
+            {uploading ? (
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Enviando...</>
+            ) : (
+              <><Plus className="h-4 w-4 mr-1" /> Adicionar Banner</>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -133,11 +216,24 @@ const BannerManagement = () => {
         {banners.map((b, i) => (
           <Card key={b.id} className={`${!b.is_active ? "opacity-50" : ""}`}>
             <CardContent className="py-4 flex items-center gap-4">
-              <button onClick={() => moveUp(i)} className="text-muted-foreground hover:text-foreground">
-                <GripVertical className="h-5 w-5" />
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => reorder(i, "up")}
+                  disabled={i === 0}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => reorder(i, "down")}
+                  disabled={i === banners.length - 1}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </button>
+              </div>
 
-              <div className="w-32 h-16 rounded overflow-hidden bg-muted flex-shrink-0 border">
+              <div className="w-40 h-20 rounded overflow-hidden bg-muted flex-shrink-0 border">
                 {b.image_url ? (
                   <img src={b.image_url} alt={b.title || "Banner"} className="w-full h-full object-cover" />
                 ) : (
@@ -147,12 +243,12 @@ const BannerManagement = () => {
 
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">{b.title || "(Sem título)"}</p>
-                <p className="text-xs text-muted-foreground truncate">{b.image_url}</p>
                 {b.link_url && (
                   <p className="text-xs text-primary flex items-center gap-1 mt-0.5">
                     <ExternalLink className="h-3 w-3" /> {b.link_url}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground mt-0.5">Posição: {i + 1}</p>
               </div>
 
               <div className="flex items-center gap-3">
