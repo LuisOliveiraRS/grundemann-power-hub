@@ -177,8 +177,8 @@ const FornecedorDashboard = () => {
                 <Store className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading text-lg font-bold text-background">Portal do Revendedor</h1>
-                <p className="text-background/60 text-xs">{partner.company_name || fullName} · CNPJ: {partner.cnpj}</p>
+                <h1 className="font-heading text-lg font-bold text-background">Portal do Fornecedor</h1>
+                <p className="text-background/60 text-xs">{partner.company_name || fullName}{partner.cnpj ? ` · CNPJ: ${partner.cnpj}` : ""}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
