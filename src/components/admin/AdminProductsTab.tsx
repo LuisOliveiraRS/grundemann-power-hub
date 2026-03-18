@@ -129,10 +129,21 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     setSelectedProducts(new Set()); onReload();
   };
 
-  const editProduct = (p: Product) => {
+  const editProduct = async (p: Product) => {
     setEditingProduct(p);
     const linkedCatIds = productCategoryLinks.filter(l => l.product_id === p.id).map(l => l.category_id).filter(cid => cid !== p.category_id);
-    setProductForm(productToFormState(p, linkedCatIds));
+    const formState = productToFormState(p, linkedCatIds);
+    // Load reseller pricing if product has a reseller
+    if (p.reseller_id) {
+      const { data: pr } = await supabase.from("product_resellers")
+        .select("reseller_price, store_commission_pct")
+        .eq("product_id", p.id).eq("reseller_id", p.reseller_id).maybeSingle();
+      if (pr) {
+        formState.reseller_price = pr.reseller_price ? String(pr.reseller_price) : "";
+        formState.store_commission_pct = pr.store_commission_pct ? String(pr.store_commission_pct) : "";
+      }
+    }
+    setProductForm(formState);
   };
 
   const syncMercadoLivre = async () => {
