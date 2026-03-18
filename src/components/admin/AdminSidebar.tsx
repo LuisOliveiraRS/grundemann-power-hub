@@ -30,7 +30,7 @@ const sideItems = [
   { key: "shipping" as const, label: "Frete", icon: Truck },
   { key: "stock" as const, label: "Estoque & ML", icon: Boxes },
   { key: "product-resellers" as const, label: "Produto × Fornecedor", icon: Store },
-
+  { key: "supplier-financial" as const, label: "Financeiro Fornecedores", icon: DollarSign },
   { key: "compatibility" as const, label: "Compatibilidade", icon: Cpu },
   { key: "diagnostics" as const, label: "Diagnóstico & Kits", icon: Stethoscope },
   { key: "intelligence" as const, label: "Inteligência", icon: Brain },

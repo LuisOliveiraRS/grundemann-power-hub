@@ -72,7 +72,7 @@ export type AdminTab =
   | "catalogs" | "exploded-views" | "stock" | "subscribers" | "rewards"
   | "seo" | "shipping" | "analytics" | "price-research" | "appearance"
   | "site-report" | "reseller-content" | "reseller-files" | "product-resellers" | "compatibility"
-  | "diagnostics" | "intelligence";
+  | "diagnostics" | "intelligence" | "supplier-financial";
 
 export const statusLabel: Record<string, string> = {
   pending: "Pendente", confirmed: "Confirmado", processing: "Processando",
