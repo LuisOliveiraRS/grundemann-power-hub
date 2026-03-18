@@ -353,7 +353,7 @@ const AdminDashboard = () => {
               ))}
             </div>
             <div className="bg-card rounded-2xl border border-border p-6">
-              <h2 className="font-heading font-bold text-lg text-foreground mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Gestão de Mecânicos</h2>
+              <h2 className="font-heading font-bold text-lg text-foreground mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Gestão de Parceiros</h2>
               <MechanicManagement />
             </div>
           </div>
