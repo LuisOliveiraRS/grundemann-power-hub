@@ -1,7 +1,7 @@
 import { User, ShoppingCart, Menu, LogIn, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, getPartnerDashboardPath, getPartnerLabel } from "@/contexts/AuthContext";
 import CartDrawer from "@/components/CartDrawer";
 import SmartSearch from "@/components/SmartSearch";
 import NotificationBell from "@/components/NotificationBell";
@@ -58,7 +58,6 @@ const Header = () => {
     <>
       <header className="border-b border-border bg-background relative z-50">
         <div className="container flex items-center justify-between py-3 gap-3 md:gap-8">
-          {/* Hamburger - mobile only */}
           <button
             onClick={() => setMenuOpen(true)}
             className="md:hidden flex-shrink-0 p-1.5 -ml-1.5 text-foreground hover:text-primary transition-colors"
@@ -87,10 +86,10 @@ const Header = () => {
             )}
             {!isAdmin && !isSeller && partnerType && (
               <button
-                onClick={() => navigate(partnerType === "revendedor" ? "/revendedor" : partnerType === "oficina" ? "/oficina" : "/mecanico")}
+                onClick={() => navigate(getPartnerDashboardPath(partnerType))}
                 className="hidden md:block text-xs font-bold text-primary hover:underline"
               >
-                {partnerType === "revendedor" ? "Área Revendedor" : partnerType === "oficina" ? "Área Oficina" : "Área Mecânico"}
+                {getPartnerLabel(partnerType)}
               </button>
             )}
             {user ? (

@@ -176,15 +176,15 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
 
           {/* Reseller */}
           <div className="md:col-span-2">
-            <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Revendedor?</Label>
+            <Label className="flex items-center gap-2"><Store className="h-4 w-4" /> Produto pertence a Fornecedor?</Label>
             <select className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.reseller_id} onChange={e => setForm(prev => ({ ...prev, reseller_id: e.target.value }))}>
               <option value="">Não — Produto próprio</option>
               {resellers.map(r => {
                 const profile = clients.find(c => c.user_id === r.user_id);
-                return <option key={r.id} value={r.id}>Sim — {r.company_name || profile?.full_name || "Revendedor"}</option>;
+                return <option key={r.id} value={r.id}>Sim — {r.company_name || profile?.full_name || "Fornecedor"}</option>;
               })}
             </select>
-            <p className="text-xs text-muted-foreground mt-1">Associa o produto a um revendedor para relatórios e controle de estoque</p>
+            <p className="text-xs text-muted-foreground mt-1">Associa o produto a um fornecedor para relatórios e controle de estoque</p>
           </div>
 
           {/* Reseller pricing - shown when reseller is selected */}
@@ -192,19 +192,19 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
             <div className="md:col-span-2 rounded-lg border border-accent/30 bg-accent/5 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Store className="h-4 w-4 text-accent-foreground" />
-                <span className="text-sm font-semibold text-foreground">Precificação do Revendedor</span>
+                <span className="text-sm font-semibold text-foreground">Precificação do Fornecedor</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Preço do Revendedor (R$)</Label>
+                  <Label>Preço do Fornecedor (R$)</Label>
                   <Input type="number" step="0.01" value={form.reseller_price} onChange={(e) => {
                     const resellerPrice = e.target.value;
                     const rp = parseFloat(resellerPrice) || 0;
                     const pct = parseFloat(form.store_commission_pct) || 0;
                     const newSalePrice = rp > 0 && pct > 0 ? (rp * (1 + pct / 100)).toFixed(2) : form.price;
                     setForm(prev => ({ ...prev, reseller_price: resellerPrice, price: newSalePrice }));
-                  }} placeholder="Custo do revendedor" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Valor que o revendedor paga pelo produto</p>
+                  }} placeholder="Custo do fornecedor" className="mt-1" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Valor que o fornecedor paga pelo produto</p>
                 </div>
                 <div>
                   <Label>% Loja Grundemann</Label>
@@ -215,12 +215,12 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                     const newSalePrice = rp > 0 && p > 0 ? (rp * (1 + p / 100)).toFixed(2) : form.price;
                     setForm(prev => ({ ...prev, store_commission_pct: pct, price: newSalePrice }));
                   }} placeholder="Comissão %" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Margem adicionada ao preço do revendedor</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Margem adicionada ao preço do fornecedor</p>
                 </div>
                 <div className="flex items-end pb-1">
                   {form.reseller_price && form.store_commission_pct && (
                     <div className="text-sm space-y-1">
-                      <p className="text-muted-foreground">Preço Revendedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
+                      <p className="text-muted-foreground">Preço Fornecedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
                       <p className="text-muted-foreground">Margem Loja: <strong className="text-primary">{form.store_commission_pct}%</strong></p>
                       <p className="text-muted-foreground">Preço de Venda: <strong className="text-primary">R$ {parseFloat(form.price).toFixed(2)}</strong></p>
                     </div>

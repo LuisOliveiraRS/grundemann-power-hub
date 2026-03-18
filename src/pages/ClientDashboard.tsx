@@ -379,9 +379,14 @@ const ClientDashboard = () => {
                 <FileText className="h-5 w-5" /> Adicionar ao Orçamento
                 {hasQuoteDraft && <span className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-destructive animate-pulse" />}
               </button>
-              {partnerType === "revendedor" && (
-                <button onClick={() => navigate("/revendedor")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-sidebar-accent/30 transition-colors">
-                  <Building2 className="h-5 w-5" /> Área do Revendedor
+              {partnerType === "fornecedor" && (
+                <button onClick={() => navigate("/fornecedor")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-sidebar-accent/30 transition-colors">
+                  <Building2 className="h-5 w-5" /> Área do Fornecedor
+                </button>
+              )}
+              {partnerType === "locadora" && (
+                <button onClick={() => navigate("/locadora")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-sidebar-accent/30 transition-colors">
+                  <Building2 className="h-5 w-5" /> Área da Locadora
                 </button>
               )}
               {(partnerType === "mecanico" || partnerType === "oficina") && (

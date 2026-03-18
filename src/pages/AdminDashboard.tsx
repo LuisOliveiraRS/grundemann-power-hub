@@ -128,7 +128,7 @@ const AdminDashboard = () => {
       setClientMechanics((data || []) as { user_id: string; partner_type: string }[]);
     },
     resellers: async () => {
-      const { data } = await supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "revendedor").eq("is_approved", true).limit(500);
+      const { data } = await supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "fornecedor").eq("is_approved", true).limit(500);
       setResellers((data || []) as ResellerOption[]);
     },
   };

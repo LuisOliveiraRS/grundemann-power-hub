@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Building2, Download, FileText, ShoppingCart, Package, Clock, CheckCircle2, AlertCircle, Loader2, Store, TrendingUp, BarChart3, DollarSign, Printer, LogOut, Calculator, Upload } from "lucide-react";
+import {
+  User, Download, FileText, ShoppingCart, Clock, CheckCircle2, AlertCircle, Loader2,
+  Building, BookOpen, Search, Video, Package, BarChart3, DollarSign, LogOut, Calculator,
+} from "lucide-react";
 import Layout from "@/components/Layout";
-import ResellerFileUpload from "@/components/ResellerFileUpload";
+import ExplodedCatalogContent from "@/components/ExplodedCatalogContent";
+import TechnicalArticlesContent from "@/components/TechnicalArticlesContent";
 import UserQuotesList from "@/components/UserQuotesList";
-import ResellerProductsReport from "@/components/ResellerProductsReport";
 
 interface PartnerProfile {
   id: string;
@@ -39,7 +42,9 @@ interface UserProfile {
   cpf_cnpj: string | null;
 }
 
-const RevendedorDashboard = () => {
+type SectionId = "overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "vistas" | "artigos" | "videos";
+
+const LocadoraDashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,8 +55,9 @@ const RevendedorDashboard = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [catalogs, setCatalogs] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [mechVideos, setMechVideos] = useState<any[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"overview" | "perfil" | "compras" | "catalogos" | "orcamentos" | "meus-produtos">("overview");
+  const [activeSection, setActiveSection] = useState<SectionId>("overview");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -70,12 +76,13 @@ const RevendedorDashboard = () => {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-    const [partnerRes, profileRes, ordersRes, catalogsRes, quotesRes] = await Promise.all([
+    const [partnerRes, profileRes, ordersRes, catalogsRes, quotesRes, videosRes] = await Promise.all([
       supabase.from("mechanics").select("*").eq("user_id", user.id).single(),
       supabase.from("profiles").select("*").eq("user_id", user.id).single(),
       supabase.from("orders").select("*, order_items(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("technical_catalogs").select("*").eq("is_active", true).ilike("category", "Revendedor%").order("title"),
+      supabase.from("technical_catalogs").select("*").eq("is_active", true).order("title"),
       supabase.from("quotes").select("*, quote_items(product_name, product_sku, quantity, unit_price)").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("mechanic_videos").select("*").eq("is_active", true).order("category"),
     ]);
 
     if (partnerRes.data) setPartner(partnerRes.data as any);
@@ -94,6 +101,7 @@ const RevendedorDashboard = () => {
     if (ordersRes.data) setOrders(ordersRes.data);
     if (catalogsRes.data) setCatalogs(catalogsRes.data);
     if (quotesRes.data) setQuotes(quotesRes.data.map((q: any) => ({ ...q, items: q.quote_items || [] })));
+    if (videosRes.data) setMechVideos(videosRes.data);
     setLoading(false);
   };
 
@@ -128,14 +136,14 @@ const RevendedorDashboard = () => {
     return <Layout><div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></Layout>;
   }
 
-  if (!partner || partner.partner_type !== "revendedor") {
+  if (!partner || partner.partner_type !== "locadora") {
     return (
       <Layout>
         <div className="container py-16 text-center">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">Acesso Restrito</h1>
-          <p className="text-muted-foreground mb-4">Esta área é exclusiva para revendedores cadastrados.</p>
-          <Button onClick={() => navigate("/parceiros")}>Cadastrar como Revendedor</Button>
+          <p className="text-muted-foreground mb-4">Esta área é exclusiva para locadoras cadastradas.</p>
+          <Button onClick={() => navigate("/parceiros/locadora")}>Cadastrar como Locadora</Button>
         </div>
       </Layout>
     );
@@ -147,7 +155,7 @@ const RevendedorDashboard = () => {
         <div className="container py-16 text-center max-w-md mx-auto">
           <Clock className="h-12 w-12 text-accent mx-auto mb-4" />
           <h1 className="font-heading text-2xl font-bold mb-2">Cadastro em Análise</h1>
-          <p className="text-muted-foreground mb-4">Seu cadastro de revendedor está sendo analisado. Você receberá uma notificação quando for aprovado.</p>
+          <p className="text-muted-foreground mb-4">Seu cadastro de locadora está sendo analisado. Você receberá uma notificação quando for aprovado.</p>
           <Badge variant="outline" className="text-accent border-accent">Aguardando Aprovação</Badge>
         </div>
       </Layout>
@@ -157,14 +165,16 @@ const RevendedorDashboard = () => {
   const totalSpent = orders.reduce((s, o) => s + Number(o.total_amount), 0);
   const deliveredOrders = orders.filter(o => o.status === "delivered").length;
 
-  const sidebarItems = [
-    { id: "overview" as const, label: "Painel", icon: BarChart3 },
-    { id: "meus-produtos" as const, label: "Meus Produtos", icon: Package },
-    { id: "perfil" as const, label: "Meu Perfil", icon: User },
-    { id: "compras" as const, label: "Compras", icon: ShoppingCart },
-    { id: "catalogos" as const, label: "Catálogos", icon: FileText },
-    { id: "orcamentos" as const, label: "Orçamentos", icon: Download },
-  ] as const;
+  const sidebarItems: { id: SectionId; label: string; icon: any }[] = [
+    { id: "overview", label: "Painel", icon: BarChart3 },
+    { id: "perfil", label: "Meu Perfil", icon: User },
+    { id: "compras", label: "Compras", icon: ShoppingCart },
+    { id: "orcamentos", label: "Orçamentos", icon: FileText },
+    { id: "catalogos", label: "Catálogos PDF", icon: Download },
+    { id: "vistas", label: "Vistas Explodidas", icon: Search },
+    { id: "artigos", label: "Artigos Técnicos", icon: BookOpen },
+    { id: "videos", label: "Vídeos", icon: Video },
+  ];
 
   return (
     <Layout>
@@ -174,11 +184,11 @@ const RevendedorDashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-                <Store className="h-5 w-5 text-primary-foreground" />
+                <Building className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading text-lg font-bold text-background">Portal do Revendedor</h1>
-                <p className="text-background/60 text-xs">{partner.company_name || fullName} · CNPJ: {partner.cnpj}</p>
+                <h1 className="font-heading text-lg font-bold text-background">Portal da Locadora</h1>
+                <p className="text-background/60 text-xs">{partner.company_name || fullName}{partner.cnpj ? ` · CNPJ: ${partner.cnpj}` : ""}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -224,7 +234,6 @@ const RevendedorDashboard = () => {
             {/* Overview */}
             {activeSection === "overview" && (
               <div className="space-y-6">
-                {/* KPI Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   {[
                     { label: "Total em Compras", value: `R$ ${totalSpent.toFixed(2).replace(".", ",")}`, icon: DollarSign, bg: "bg-primary/10", color: "text-primary" },
@@ -248,41 +257,27 @@ const RevendedorDashboard = () => {
                   ))}
                 </div>
 
-                {/* Quick actions */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection("orcamentos")}>
-                    <CardContent className="p-6 flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                        <FileText className="h-7 w-7 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">Orçamentos</h3>
-                        <p className="text-sm text-muted-foreground">{quotes.length} solicitações · Solicite novos orçamentos</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection("catalogos")}>
-                    <CardContent className="p-6 flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center">
-                        <Download className="h-7 w-7 text-secondary-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">Catálogos PDF</h3>
-                        <p className="text-sm text-muted-foreground">{catalogs.length} catálogos disponíveis para download</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection("compras")}>
-                    <CardContent className="p-6 flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
-                        <ShoppingCart className="h-7 w-7 text-accent-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">Compras</h3>
-                        <p className="text-sm text-muted-foreground">{orders.length} pedidos realizados</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {[
+                    { section: "orcamentos" as SectionId, label: "Orçamentos", desc: `${quotes.length} solicitações`, icon: FileText },
+                    { section: "catalogos" as SectionId, label: "Catálogos PDF", desc: `${catalogs.length} catálogos disponíveis`, icon: Download },
+                    { section: "vistas" as SectionId, label: "Vistas Explodidas", desc: "Diagramas interativos dos motores", icon: Search },
+                    { section: "artigos" as SectionId, label: "Artigos Técnicos", desc: "Guias de manutenção e diagnóstico", icon: BookOpen },
+                    { section: "videos" as SectionId, label: "Vídeos Técnicos", desc: `${mechVideos.length} vídeos disponíveis`, icon: Video },
+                    { section: "compras" as SectionId, label: "Compras", desc: `${orders.length} pedidos realizados`, icon: ShoppingCart },
+                  ].map(item => (
+                    <Card key={item.section} className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => setActiveSection(item.section)}>
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                          <item.icon className="h-7 w-7 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading font-bold text-lg">{item.label}</h3>
+                          <p className="text-sm text-muted-foreground">{item.desc}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                   <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => navigate("/calculadora-de-carga")}>
                     <CardContent className="p-6 flex items-center gap-4">
                       <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
@@ -294,25 +289,11 @@ const RevendedorDashboard = () => {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="cursor-pointer hover:border-primary/30 transition-all hover:shadow-md" onClick={() => navigate("/")}>
-                    <CardContent className="p-6 flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                        <TrendingUp className="h-7 w-7 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">Ir à Loja</h3>
-                        <p className="text-sm text-muted-foreground">Explore produtos com {partner.discount_rate}% de desconto</p>
-                      </div>
-                    </CardContent>
-                  </Card>
                 </div>
 
-                {/* Recent orders */}
                 {orders.length > 0 && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Últimas Compras</CardTitle>
-                    </CardHeader>
+                    <CardHeader><CardTitle className="text-lg">Últimas Compras</CardTitle></CardHeader>
                     <CardContent>
                       <div className="space-y-2">
                         {orders.slice(0, 5).map(order => (
@@ -338,7 +319,7 @@ const RevendedorDashboard = () => {
             {activeSection === "perfil" && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Perfil do Revendedor</CardTitle>
+                  <CardTitle>Perfil da Locadora</CardTitle>
                   <CardDescription>Atualize seus dados pessoais e de contato</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -356,8 +337,8 @@ const RevendedorDashboard = () => {
                     <p className="text-sm font-semibold mb-2">Dados da Empresa</p>
                     <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                       <p>Razão Social: <strong className="text-foreground">{partner.company_name}</strong></p>
-                      <p>CNPJ: <strong className="text-foreground">{partner.cnpj}</strong></p>
-                      <p>IE: <strong className="text-foreground">{partner.inscricao_estadual}</strong></p>
+                      {partner.cnpj && <p>CNPJ: <strong className="text-foreground">{partner.cnpj}</strong></p>}
+                      {partner.inscricao_estadual && <p>IE: <strong className="text-foreground">{partner.inscricao_estadual}</strong></p>}
                       <p>Desconto: <strong className="text-foreground">{partner.discount_rate}%</strong></p>
                     </div>
                   </div>
@@ -387,9 +368,7 @@ const RevendedorDashboard = () => {
                       </div>
                       {order.order_items && (
                         <div className="text-xs text-muted-foreground">
-                          {order.order_items.map((item: any) => (
-                            <p key={item.id}>{item.quantity}x {item.product_name}</p>
-                          ))}
+                          {order.order_items.map((item: any) => <p key={item.id}>{item.quantity}x {item.product_name}</p>)}
                         </div>
                       )}
                     </CardContent>
@@ -398,48 +377,65 @@ const RevendedorDashboard = () => {
               </div>
             )}
 
-            {/* Catalogs - combined: reseller's own files + admin-published catalogs */}
+            {/* Catalogs */}
             {activeSection === "catalogos" && (
-              <div className="space-y-6">
-                {/* Reseller's own files */}
-                <ResellerFileUpload />
-
-                {/* Admin-published catalogs for resellers */}
-                {catalogs.length > 0 && (
-                  <div className="space-y-4">
-                    <h2 className="font-heading text-xl font-bold">Catálogos da Grundemann</h2>
-                    <p className="text-muted-foreground text-sm">Materiais publicados pela loja para revendedores</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {catalogs.map(catalog => (
-                        <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
-                          <CardContent className="py-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-5 w-5 text-primary" /></div>
-                              <div>
-                                <p className="font-semibold text-sm">{catalog.title}</p>
-                                <p className="text-xs text-muted-foreground">{catalog.description || catalog.category}</p>
-                              </div>
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Catálogos Técnicos</h2>
+                {catalogs.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><Download className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum catálogo disponível.</p></CardContent></Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {catalogs.map(catalog => (
+                      <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
+                        <CardContent className="py-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-5 w-5 text-primary" /></div>
+                            <div>
+                              <p className="font-semibold text-sm">{catalog.title}</p>
+                              <p className="text-xs text-muted-foreground">{catalog.description || catalog.category}</p>
                             </div>
-                            <Button size="sm" variant="outline" onClick={() => handleDownload(catalog)} disabled={downloadingId === catalog.id}>
-                              {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => handleDownload(catalog)} disabled={downloadingId === catalog.id}>
+                            {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Reseller Products Report */}
-            {activeSection === "meus-produtos" && (
-              <div>
-                <h2 className="font-heading text-xl font-bold mb-4">Meus Produtos & Relatório de Vendas</h2>
-                <ResellerProductsReport resellerId={partner.id} />
+            {activeSection === "vistas" && <ExplodedCatalogContent />}
+            {activeSection === "artigos" && <TechnicalArticlesContent />}
+
+            {/* Videos */}
+            {activeSection === "videos" && (
+              <div className="space-y-4">
+                <h2 className="font-heading text-xl font-bold">Vídeos Técnicos</h2>
+                {mechVideos.length === 0 ? (
+                  <Card><CardContent className="py-8 text-center text-muted-foreground"><Video className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum vídeo disponível.</p></CardContent></Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {mechVideos.map((video: any) => (
+                      <Card key={video.id}>
+                        <div className="aspect-video">
+                          {video.video_url.includes("youtube.com") || video.video_url.includes("youtu.be") ? (
+                            <iframe src={video.video_url.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")} className="w-full h-full rounded-t-lg" allowFullScreen title={video.title} />
+                          ) : (
+                            <video src={video.video_url} controls className="w-full h-full object-cover rounded-t-lg" />
+                          )}
+                        </div>
+                        <CardContent className="p-3">
+                          <p className="font-heading font-bold text-sm">{video.title}</p>
+                          {video.description && <p className="text-xs text-muted-foreground mt-1">{video.description}</p>}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-
 
             {/* Quotes */}
             {activeSection === "orcamentos" && (
@@ -461,4 +457,4 @@ const RevendedorDashboard = () => {
   );
 };
 
-export default RevendedorDashboard;
+export default LocadoraDashboard;
