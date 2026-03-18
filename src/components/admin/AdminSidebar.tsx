@@ -41,6 +41,7 @@ const sideItems = [
   { key: "reports" as const, label: "Relatórios", icon: BarChart3 },
   { key: "site-report" as const, label: "Relatório do Site", icon: FileText },
   { key: "appearance" as const, label: "Aparência", icon: Paintbrush },
+  { key: "banners" as const, label: "Banners da Capa", icon: Image },
 ];
 
 const mechanicSubTabs: AdminTab[] = ["mechanics", "mechanic-videos", "articles", "catalogs", "quotes", "exploded-views", "reseller-files"];
