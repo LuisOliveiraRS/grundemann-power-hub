@@ -75,7 +75,7 @@ const ProductResellerManager = () => {
         ...l,
         product_name: product?.name || "Produto removido",
         product_price: product?.price || 0,
-        reseller_name: allResellers.find(r => r.id === l.reseller_id)?.company_name || "Revendedor removido",
+        reseller_name: allResellers.find(r => r.id === l.reseller_id)?.company_name || "Fornecedor removido",
       };
     });
 
