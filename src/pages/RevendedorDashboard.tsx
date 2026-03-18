@@ -399,30 +399,35 @@ const RevendedorDashboard = () => {
               </div>
             )}
 
-            {/* Catalogs */}
+            {/* Catalogs - combined: reseller's own files + admin-published catalogs */}
             {activeSection === "catalogos" && (
-              <div className="space-y-4">
-                <h2 className="font-heading text-xl font-bold">Catálogos e Materiais para Revendedores</h2>
-                {catalogs.length === 0 ? (
-                  <Card><CardContent className="py-8 text-center text-muted-foreground"><Download className="h-8 w-8 mx-auto mb-2 opacity-50" /><p>Nenhum catálogo disponível no momento.</p></CardContent></Card>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {catalogs.map(catalog => (
-                      <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
-                        <CardContent className="py-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-5 w-5 text-primary" /></div>
-                            <div>
-                              <p className="font-semibold text-sm">{catalog.title}</p>
-                              <p className="text-xs text-muted-foreground">{catalog.description || catalog.category}</p>
+              <div className="space-y-6">
+                {/* Reseller's own files */}
+                <ResellerFileUpload />
+
+                {/* Admin-published catalogs for resellers */}
+                {catalogs.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="font-heading text-xl font-bold">Catálogos da Grundemann</h2>
+                    <p className="text-muted-foreground text-sm">Materiais publicados pela loja para revendedores</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {catalogs.map(catalog => (
+                        <Card key={catalog.id} className="hover:border-primary/20 transition-colors">
+                          <CardContent className="py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-lg bg-primary/10 p-2"><FileText className="h-5 w-5 text-primary" /></div>
+                              <div>
+                                <p className="font-semibold text-sm">{catalog.title}</p>
+                                <p className="text-xs text-muted-foreground">{catalog.description || catalog.category}</p>
+                              </div>
                             </div>
-                          </div>
-                          <Button size="sm" variant="outline" onClick={() => handleDownload(catalog)} disabled={downloadingId === catalog.id}>
-                            {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            <Button size="sm" variant="outline" onClick={() => handleDownload(catalog)} disabled={downloadingId === catalog.id}>
+                              {downloadingId === catalog.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
