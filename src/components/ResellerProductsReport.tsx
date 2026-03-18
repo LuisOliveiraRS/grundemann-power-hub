@@ -60,7 +60,7 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
 
     let extraProducts: ResellerProduct[] = [];
     if (newProductIds.length > 0) {
-      const { data } = await supabase.from("products").select("id, name, sku, price, stock_quantity, image_url, is_active").in("id", newProductIds);
+      const { data } = await supabase.from("products").select("id, name, sku, price, original_price, stock_quantity, image_url, is_active").in("id", newProductIds);
       extraProducts = (data || []) as ResellerProduct[];
     }
 
