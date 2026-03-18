@@ -413,6 +413,7 @@ const AdminDashboard = () => {
             </div>
             <SupplierFinancialReport />
           </div>
+        )}
 
         {tab === "subscribers" && (
           <div>
