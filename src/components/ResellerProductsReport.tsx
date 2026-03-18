@@ -11,11 +11,14 @@ interface ResellerProduct {
   name: string;
   sku: string | null;
   price: number;
+  original_price: number | null;
   stock_quantity: number;
   image_url: string | null;
   is_active: boolean;
   reseller_stock?: number | null;
   custom_price?: number | null;
+  reseller_price?: number | null;
+  store_commission_pct?: number | null;
 }
 
 interface SalesData {
