@@ -152,8 +152,8 @@ const ResellerProductsReport = ({ resellerId }: ResellerProductsReportProps) => 
       <Card>
         <CardContent className="py-12 text-center">
           <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground">Nenhum produto vinculado a este revendedor.</p>
-          <p className="text-xs text-muted-foreground mt-1">O administrador pode vincular produtos ao seu perfil de revendedor.</p>
+          <p className="text-muted-foreground">Nenhum produto vinculado a este fornecedor.</p>
+          <p className="text-xs text-muted-foreground mt-1">O administrador pode vincular produtos ao seu perfil de fornecedor.</p>
         </CardContent>
       </Card>
     );
