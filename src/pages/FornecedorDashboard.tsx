@@ -461,4 +461,4 @@ const FornecedorDashboard = () => {
   );
 };
 
-export default RevendedorDashboard;
+export default FornecedorDashboard;
