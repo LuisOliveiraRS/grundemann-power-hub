@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Store, DollarSign, Package, Printer, ChevronRight } from "lucide-react";
+import { Loader2, Store, DollarSign, Package, Printer, ChevronRight, ShoppingCart, TrendingUp } from "lucide-react";
 import ResellerProductsReport from "@/components/ResellerProductsReport";
 
 interface SupplierSummary {
@@ -11,9 +11,12 @@ interface SupplierSummary {
   company_name: string;
   user_id: string;
   totalProducts: number;
-  totalSaleValue: number;
-  totalSupplierCost: number;
-  totalStoreCommission: number;
+  totalStock: number;
+  totalInventoryValue: number;
+  totalSalesRevenue: number;
+  totalSupplierCostFromSales: number;
+  totalStoreCommissionFromSales: number;
+  totalUnitsSold: number;
 }
 
 const SupplierFinancialReport = () => {
@@ -25,14 +28,13 @@ const SupplierFinancialReport = () => {
 
   const loadSuppliers = async () => {
     setLoading(true);
-    // Get all fornecedor partners
     const { data: mechanics } = await supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "fornecedor");
     if (!mechanics || mechanics.length === 0) { setSuppliers([]); setLoading(false); return; }
 
     const summaries: SupplierSummary[] = [];
 
     for (const mech of mechanics) {
-      // Get products linked to this supplier (legacy + product_resellers)
+      // Get products linked to this supplier
       const [legacyRes, linksRes] = await Promise.all([
         supabase.from("products").select("id, price, stock_quantity").eq("reseller_id", mech.id),
         supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, reseller_price, store_commission_pct").eq("reseller_id", mech.id).eq("is_active", true),
@@ -53,39 +55,79 @@ const SupplierFinancialReport = () => {
       const seen = new Set<string>();
       const uniqueProducts = allProducts.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
 
-      let totalSaleValue = 0;
-      let totalSupplierCost = 0;
-
+      // Calculate inventory value (just for reference)
+      let totalInventoryValue = 0;
+      let totalStock = 0;
       uniqueProducts.forEach(p => {
         const link = links.find(l => l.product_id === p.id);
         const salePrice = link?.custom_price ?? p.price;
-        const resellerPrice = link?.reseller_price ?? 0;
         const stock = link?.stock_quantity ?? p.stock_quantity;
-        totalSaleValue += salePrice * stock;
-        totalSupplierCost += resellerPrice * stock;
+        totalInventoryValue += salePrice * stock;
+        totalStock += stock;
       });
+
+      // Calculate SALES-based commission from order_items
+      let totalSalesRevenue = 0;
+      let totalSupplierCostFromSales = 0;
+      let totalUnitsSold = 0;
+
+      if (uniqueProducts.length > 0) {
+        const productIds = uniqueProducts.map(p => p.id);
+        const { data: orderItems } = await supabase
+          .from("order_items")
+          .select("product_id, quantity, price_at_purchase, order_id")
+          .in("product_id", productIds);
+
+        if (orderItems && orderItems.length > 0) {
+          const orderIds = [...new Set(orderItems.map(i => i.order_id))];
+          const { data: validOrders } = await supabase
+            .from("orders")
+            .select("id")
+            .in("id", orderIds)
+            .in("status", ["confirmed", "processing", "shipped", "delivered"]);
+
+          const validOrderIds = new Set((validOrders || []).map(o => o.id));
+
+          orderItems.forEach(item => {
+            if (!validOrderIds.has(item.order_id)) return;
+            const link = links.find(l => l.product_id === item.product_id);
+            const resellerPrice = link?.reseller_price ?? 0;
+            const soldValue = item.quantity * item.price_at_purchase;
+            const supplierCost = item.quantity * resellerPrice;
+
+            totalSalesRevenue += soldValue;
+            totalSupplierCostFromSales += supplierCost;
+            totalUnitsSold += item.quantity;
+          });
+        }
+      }
 
       summaries.push({
         id: mech.id,
         company_name: mech.company_name || "Sem nome",
         user_id: mech.user_id,
         totalProducts: uniqueProducts.length,
-        totalSaleValue,
-        totalSupplierCost,
-        totalStoreCommission: totalSaleValue - totalSupplierCost,
+        totalStock,
+        totalInventoryValue,
+        totalSalesRevenue,
+        totalSupplierCostFromSales,
+        totalStoreCommissionFromSales: totalSalesRevenue - totalSupplierCostFromSales,
+        totalUnitsSold,
       });
     }
 
-    setSuppliers(summaries.sort((a, b) => b.totalSaleValue - a.totalSaleValue));
+    setSuppliers(summaries.sort((a, b) => b.totalSalesRevenue - a.totalSalesRevenue));
     setLoading(false);
   };
 
   const formatBRL = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
-  const grandTotalSale = suppliers.reduce((s, sup) => s + sup.totalSaleValue, 0);
-  const grandTotalCost = suppliers.reduce((s, sup) => s + sup.totalSupplierCost, 0);
-  const grandTotalCommission = suppliers.reduce((s, sup) => s + sup.totalStoreCommission, 0);
+  const grandTotalRevenue = suppliers.reduce((s, sup) => s + sup.totalSalesRevenue, 0);
+  const grandTotalSupplierCost = suppliers.reduce((s, sup) => s + sup.totalSupplierCostFromSales, 0);
+  const grandTotalCommission = suppliers.reduce((s, sup) => s + sup.totalStoreCommissionFromSales, 0);
   const grandTotalProducts = suppliers.reduce((s, sup) => s + sup.totalProducts, 0);
+  const grandTotalSold = suppliers.reduce((s, sup) => s + sup.totalUnitsSold, 0);
+  const grandTotalInventory = suppliers.reduce((s, sup) => s + sup.totalInventoryValue, 0);
 
   const handlePrintSummary = () => {
     const win = window.open("", "_blank");
@@ -110,26 +152,26 @@ const SupplierFinancialReport = () => {
       @media print { body { padding: 10px; } }
     </style></head><body>`);
 
-    win.document.write(`<div class="header"><h1>Relatório Financeiro de Fornecedores</h1><p>Grundemann Power Hub · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
+    win.document.write(`<div class="header"><h1>Relatório Financeiro de Fornecedores — Vendas</h1><p>Grundemann Power Hub · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
 
     win.document.write(`<div class="summary">`);
     [
       { label: "Total Fornecedores", value: suppliers.length },
-      { label: "Total Produtos", value: grandTotalProducts },
-      { label: "Valor em Produtos (Venda)", value: formatBRL(grandTotalSale) },
-      { label: "Comissão Grundemann", value: formatBRL(grandTotalCommission) },
+      { label: "Unidades Vendidas", value: grandTotalSold },
+      { label: "Receita de Vendas", value: formatBRL(grandTotalRevenue) },
+      { label: "Comissão Grundemann (Vendas)", value: formatBRL(grandTotalCommission) },
     ].forEach(k => win.document.write(`<div class="summary-box"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`));
     win.document.write(`</div>`);
 
-    win.document.write(`<table><thead><tr><th>Fornecedor</th><th class="text-right">Produtos</th><th class="text-right">Valor Total (Venda)</th><th class="text-right">Custo Fornecedor</th><th class="text-right">Comissão Loja (R$)</th><th class="text-right">Comissão (%)</th></tr></thead><tbody>`);
+    win.document.write(`<table><thead><tr><th>Fornecedor</th><th class="text-right">Produtos</th><th class="text-right">Vendidos</th><th class="text-right">Receita Vendas</th><th class="text-right">Custo Fornecedor</th><th class="text-right">Comissão Loja (R$)</th><th class="text-right">Comissão (%)</th></tr></thead><tbody>`);
 
     suppliers.forEach(s => {
-      const pct = s.totalSaleValue > 0 ? ((s.totalStoreCommission / s.totalSaleValue) * 100).toFixed(1) : "0";
-      win.document.write(`<tr><td>${s.company_name}</td><td class="text-right">${s.totalProducts}</td><td class="text-right">${formatBRL(s.totalSaleValue)}</td><td class="text-right">${formatBRL(s.totalSupplierCost)}</td><td class="text-right">${formatBRL(s.totalStoreCommission)}</td><td class="text-right">${pct}%</td></tr>`);
+      const pct = s.totalSalesRevenue > 0 ? ((s.totalStoreCommissionFromSales / s.totalSalesRevenue) * 100).toFixed(1) : "0";
+      win.document.write(`<tr><td>${s.company_name}</td><td class="text-right">${s.totalProducts}</td><td class="text-right">${s.totalUnitsSold}</td><td class="text-right">${formatBRL(s.totalSalesRevenue)}</td><td class="text-right">${formatBRL(s.totalSupplierCostFromSales)}</td><td class="text-right">${formatBRL(s.totalStoreCommissionFromSales)}</td><td class="text-right">${pct}%</td></tr>`);
     });
 
-    const grandPct = grandTotalSale > 0 ? ((grandTotalCommission / grandTotalSale) * 100).toFixed(1) : "0";
-    win.document.write(`<tr class="total-row"><td>TOTAL GERAL</td><td class="text-right">${grandTotalProducts}</td><td class="text-right">${formatBRL(grandTotalSale)}</td><td class="text-right">${formatBRL(grandTotalCost)}</td><td class="text-right">${formatBRL(grandTotalCommission)}</td><td class="text-right">${grandPct}%</td></tr>`);
+    const grandPct = grandTotalRevenue > 0 ? ((grandTotalCommission / grandTotalRevenue) * 100).toFixed(1) : "0";
+    win.document.write(`<tr class="total-row"><td>TOTAL GERAL</td><td class="text-right">${grandTotalProducts}</td><td class="text-right">${grandTotalSold}</td><td class="text-right">${formatBRL(grandTotalRevenue)}</td><td class="text-right">${formatBRL(grandTotalSupplierCost)}</td><td class="text-right">${formatBRL(grandTotalCommission)}</td><td class="text-right">${grandPct}%</td></tr>`);
 
     win.document.write(`</tbody></table><div class="footer">Grundemann Power Hub · Relatório gerado automaticamente</div></body></html>`);
     win.document.close();
@@ -154,27 +196,35 @@ const SupplierFinancialReport = () => {
 
   return (
     <div className="space-y-6">
-      {/* Grand totals */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* Grand totals - sales based */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { label: "Fornecedores Ativos", value: suppliers.length, icon: Store },
           { label: "Total Produtos", value: grandTotalProducts, icon: Package },
-          { label: "Valor em Produtos", value: formatBRL(grandTotalSale), icon: DollarSign },
-          { label: "Comissão Grundemann", value: formatBRL(grandTotalCommission), icon: DollarSign },
+          { label: "Unidades Vendidas", value: grandTotalSold, icon: ShoppingCart },
+          { label: "Receita de Vendas", value: formatBRL(grandTotalRevenue), icon: TrendingUp },
+          { label: "Valor em Estoque", value: formatBRL(grandTotalInventory), icon: DollarSign },
+          { label: "Comissão Grundemann", value: formatBRL(grandTotalCommission), icon: DollarSign, highlight: true },
         ].map(kpi => (
-          <Card key={kpi.label}>
+          <Card key={kpi.label} className={(kpi as any).highlight ? "border-2 border-primary/30 bg-primary/5" : ""}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg p-2 bg-primary/10"><kpi.icon className="h-5 w-5 text-primary" /></div>
+                <div className={`rounded-lg p-2 ${(kpi as any).highlight ? "bg-primary/20" : "bg-primary/10"}`}>
+                  <kpi.icon className="h-5 w-5 text-primary" />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{kpi.label}</p>
-                  <p className="font-heading font-bold text-lg">{kpi.value}</p>
+                  <p className={`font-heading font-bold text-lg ${(kpi as any).highlight ? "text-primary" : ""}`}>{kpi.value}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        💡 A comissão é calculada somente sobre vendas efetivadas (pedidos confirmados, em processamento, enviados ou entregues).
+      </p>
 
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={handlePrintSummary} className="gap-1.5">
@@ -185,7 +235,7 @@ const SupplierFinancialReport = () => {
       {/* Suppliers list */}
       <div className="space-y-3">
         {suppliers.map(s => {
-          const pct = s.totalSaleValue > 0 ? ((s.totalStoreCommission / s.totalSaleValue) * 100).toFixed(1) : "0";
+          const pct = s.totalSalesRevenue > 0 ? ((s.totalStoreCommissionFromSales / s.totalSalesRevenue) * 100).toFixed(1) : "0";
           return (
             <Card key={s.id} className="hover:border-primary/30 transition-all cursor-pointer" onClick={() => setSelectedSupplier(s)}>
               <CardContent className="p-4">
@@ -196,17 +246,19 @@ const SupplierFinancialReport = () => {
                     </div>
                     <div>
                       <p className="font-heading font-bold">{s.company_name}</p>
-                      <p className="text-xs text-muted-foreground">{s.totalProducts} produtos · {pct}% comissão média</p>
+                      <p className="text-xs text-muted-foreground">
+                        {s.totalProducts} produtos · {s.totalUnitsSold} vendidos · {pct}% comissão
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Valor em Produtos</p>
-                      <p className="font-bold text-sm">{formatBRL(s.totalSaleValue)}</p>
+                      <p className="text-xs text-muted-foreground">Receita Vendas</p>
+                      <p className="font-bold text-sm">{formatBRL(s.totalSalesRevenue)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground">Comissão Loja</p>
-                      <p className="font-bold text-sm text-primary">{formatBRL(s.totalStoreCommission)}</p>
+                      <p className="font-bold text-sm text-primary">{formatBRL(s.totalStoreCommissionFromSales)}</p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
