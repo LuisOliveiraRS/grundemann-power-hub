@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Store, DollarSign, Package, Printer, ChevronRight, ShoppingCart, TrendingUp } from "lucide-react";
 import ResellerProductsReport from "@/components/ResellerProductsReport";
+import { loadSupplierReport } from "@/lib/supplierReporting";
 
 interface SupplierSummary {
   id: string;
@@ -12,10 +12,11 @@ interface SupplierSummary {
   user_id: string;
   totalProducts: number;
   totalStock: number;
-  totalInventoryValue: number;
+  totalInventorySaleValue: number;
+  totalInventorySupplierCost: number;
   totalSalesRevenue: number;
-  totalSupplierCostFromSales: number;
-  totalStoreCommissionFromSales: number;
+  totalSupplierRevenueFromSales: number;
+  totalStoreRevenueFromSales: number;
   totalUnitsSold: number;
 }
 
@@ -24,114 +25,60 @@ const SupplierFinancialReport = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierSummary | null>(null);
 
-  useEffect(() => { loadSuppliers(); }, []);
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
 
   const loadSuppliers = async () => {
     setLoading(true);
-    const { data: mechanics } = await supabase.from("mechanics").select("id, company_name, user_id").eq("partner_type", "fornecedor");
-    if (!mechanics || mechanics.length === 0) { setSuppliers([]); setLoading(false); return; }
 
-    const summaries: SupplierSummary[] = [];
+    const { data: mechanics } = await supabase
+      .from("mechanics")
+      .select("id, company_name, user_id")
+      .eq("partner_type", "fornecedor");
 
-    for (const mech of mechanics) {
-      // Get products linked to this supplier
-      const [legacyRes, linksRes] = await Promise.all([
-        supabase.from("products").select("id, price, stock_quantity").eq("reseller_id", mech.id),
-        supabase.from("product_resellers").select("product_id, stock_quantity, custom_price, reseller_price, store_commission_pct").eq("reseller_id", mech.id).eq("is_active", true),
-      ]);
-
-      const legacyProducts = legacyRes.data || [];
-      const links = linksRes.data || [];
-      const legacyIds = new Set(legacyProducts.map(p => p.id));
-      const newIds = links.map(l => l.product_id).filter(id => !legacyIds.has(id));
-
-      let extraProducts: any[] = [];
-      if (newIds.length > 0) {
-        const { data } = await supabase.from("products").select("id, price, stock_quantity").in("id", newIds);
-        extraProducts = data || [];
-      }
-
-      const allProducts = [...legacyProducts, ...extraProducts];
-      const seen = new Set<string>();
-      const uniqueProducts = allProducts.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
-
-      // Calculate inventory value (just for reference)
-      let totalInventoryValue = 0;
-      let totalStock = 0;
-      uniqueProducts.forEach(p => {
-        const link = links.find(l => l.product_id === p.id);
-        const salePrice = link?.custom_price ?? p.price;
-        const stock = link?.stock_quantity ?? p.stock_quantity;
-        totalInventoryValue += salePrice * stock;
-        totalStock += stock;
-      });
-
-      // Calculate SALES-based commission from order_items
-      let totalSalesRevenue = 0;
-      let totalSupplierCostFromSales = 0;
-      let totalUnitsSold = 0;
-
-      if (uniqueProducts.length > 0) {
-        const productIds = uniqueProducts.map(p => p.id);
-        const { data: orderItems } = await supabase
-          .from("order_items")
-          .select("product_id, quantity, price_at_purchase, order_id")
-          .in("product_id", productIds);
-
-        if (orderItems && orderItems.length > 0) {
-          const orderIds = [...new Set(orderItems.map(i => i.order_id))];
-          const { data: validOrders } = await supabase
-            .from("orders")
-            .select("id")
-            .in("id", orderIds)
-            .in("status", ["confirmed", "processing", "shipped", "delivered"]);
-
-          const validOrderIds = new Set((validOrders || []).map(o => o.id));
-
-          orderItems.forEach(item => {
-            if (!validOrderIds.has(item.order_id)) return;
-            const link = links.find(l => l.product_id === item.product_id);
-            const resellerPrice = link?.reseller_price ?? 0;
-            const soldValue = item.quantity * item.price_at_purchase;
-            const supplierCost = item.quantity * resellerPrice;
-
-            totalSalesRevenue += soldValue;
-            totalSupplierCostFromSales += supplierCost;
-            totalUnitsSold += item.quantity;
-          });
-        }
-      }
-
-      summaries.push({
-        id: mech.id,
-        company_name: mech.company_name || "Sem nome",
-        user_id: mech.user_id,
-        totalProducts: uniqueProducts.length,
-        totalStock,
-        totalInventoryValue,
-        totalSalesRevenue,
-        totalSupplierCostFromSales,
-        totalStoreCommissionFromSales: totalSalesRevenue - totalSupplierCostFromSales,
-        totalUnitsSold,
-      });
+    if (!mechanics || mechanics.length === 0) {
+      setSuppliers([]);
+      setLoading(false);
+      return;
     }
+
+    const summaries = await Promise.all(
+      mechanics.map(async (mechanic) => {
+        const report = await loadSupplierReport(mechanic.id);
+        return {
+          id: mechanic.id,
+          company_name: mechanic.company_name || "Sem nome",
+          user_id: mechanic.user_id,
+          totalProducts: report.summary.totalProducts,
+          totalStock: report.summary.totalStock,
+          totalInventorySaleValue: report.summary.totalInventorySaleValue,
+          totalInventorySupplierCost: report.summary.totalInventorySupplierCost,
+          totalSalesRevenue: report.summary.totalSalesRevenue,
+          totalSupplierRevenueFromSales: report.summary.totalSupplierRevenueFromSales,
+          totalStoreRevenueFromSales: report.summary.totalStoreRevenueFromSales,
+          totalUnitsSold: report.summary.totalSold,
+        } satisfies SupplierSummary;
+      }),
+    );
 
     setSuppliers(summaries.sort((a, b) => b.totalSalesRevenue - a.totalSalesRevenue));
     setLoading(false);
   };
 
-  const formatBRL = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+  const formatBRL = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
-  const grandTotalRevenue = suppliers.reduce((s, sup) => s + sup.totalSalesRevenue, 0);
-  const grandTotalSupplierCost = suppliers.reduce((s, sup) => s + sup.totalSupplierCostFromSales, 0);
-  const grandTotalCommission = suppliers.reduce((s, sup) => s + sup.totalStoreCommissionFromSales, 0);
-  const grandTotalProducts = suppliers.reduce((s, sup) => s + sup.totalProducts, 0);
-  const grandTotalSold = suppliers.reduce((s, sup) => s + sup.totalUnitsSold, 0);
-  const grandTotalInventory = suppliers.reduce((s, sup) => s + sup.totalInventoryValue, 0);
+  const grandTotalRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalSalesRevenue, 0);
+  const grandTotalSupplierRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalSupplierRevenueFromSales, 0);
+  const grandTotalGrundemannRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalStoreRevenueFromSales, 0);
+  const grandTotalProducts = suppliers.reduce((sum, supplier) => sum + supplier.totalProducts, 0);
+  const grandTotalSold = suppliers.reduce((sum, supplier) => sum + supplier.totalUnitsSold, 0);
+  const grandTotalStock = suppliers.reduce((sum, supplier) => sum + supplier.totalStock, 0);
 
   const handlePrintSummary = () => {
     const win = window.open("", "_blank");
     if (!win) return;
+
     win.document.write(`<!DOCTYPE html><html><head><title>Relatório Financeiro de Fornecedores</title><style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: Arial, sans-serif; padding: 20px; color: #1a1a1a; font-size: 11px; }
@@ -153,27 +100,23 @@ const SupplierFinancialReport = () => {
     </style></head><body>`);
 
     win.document.write(`<div class="header"><h1>Relatório Financeiro de Fornecedores — Vendas</h1><p>Grundemann Power Hub · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
-
     win.document.write(`<div class="summary">`);
     [
       { label: "Total Fornecedores", value: suppliers.length },
-      { label: "Unidades Vendidas", value: grandTotalSold },
-      { label: "Receita de Vendas", value: formatBRL(grandTotalRevenue) },
-      { label: "Comissão Grundemann (Vendas)", value: formatBRL(grandTotalCommission) },
-    ].forEach(k => win.document.write(`<div class="summary-box"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`));
+      { label: "Estoque Total", value: grandTotalStock },
+      { label: "Receita Fornecedor", value: formatBRL(grandTotalSupplierRevenue) },
+      { label: "Receita Grundemann", value: formatBRL(grandTotalGrundemannRevenue) },
+    ].forEach((item) => win.document.write(`<div class="summary-box"><div class="label">${item.label}</div><div class="value">${item.value}</div></div>`));
     win.document.write(`</div>`);
 
-    win.document.write(`<table><thead><tr><th>Fornecedor</th><th class="text-right">Produtos</th><th class="text-right">Vendidos</th><th class="text-right">Receita Vendas</th><th class="text-right">Custo Fornecedor</th><th class="text-right">Comissão Loja (R$)</th><th class="text-right">Comissão (%)</th></tr></thead><tbody>`);
+    win.document.write(`<table><thead><tr><th>Fornecedor</th><th class="text-right">Produtos</th><th class="text-right">Estoque</th><th class="text-right">Vendidos</th><th class="text-right">Receita Vendas</th><th class="text-right">Receita Fornecedor</th><th class="text-right">Receita Grundemann</th></tr></thead><tbody>`);
 
-    suppliers.forEach(s => {
-      const pct = s.totalSalesRevenue > 0 ? ((s.totalStoreCommissionFromSales / s.totalSalesRevenue) * 100).toFixed(1) : "0";
-      win.document.write(`<tr><td>${s.company_name}</td><td class="text-right">${s.totalProducts}</td><td class="text-right">${s.totalUnitsSold}</td><td class="text-right">${formatBRL(s.totalSalesRevenue)}</td><td class="text-right">${formatBRL(s.totalSupplierCostFromSales)}</td><td class="text-right">${formatBRL(s.totalStoreCommissionFromSales)}</td><td class="text-right">${pct}%</td></tr>`);
+    suppliers.forEach((supplier) => {
+      win.document.write(`<tr><td>${supplier.company_name}</td><td class="text-right">${supplier.totalProducts}</td><td class="text-right">${supplier.totalStock}</td><td class="text-right">${supplier.totalUnitsSold}</td><td class="text-right">${formatBRL(supplier.totalSalesRevenue)}</td><td class="text-right">${formatBRL(supplier.totalSupplierRevenueFromSales)}</td><td class="text-right">${formatBRL(supplier.totalStoreRevenueFromSales)}</td></tr>`);
     });
 
-    const grandPct = grandTotalRevenue > 0 ? ((grandTotalCommission / grandTotalRevenue) * 100).toFixed(1) : "0";
-    win.document.write(`<tr class="total-row"><td>TOTAL GERAL</td><td class="text-right">${grandTotalProducts}</td><td class="text-right">${grandTotalSold}</td><td class="text-right">${formatBRL(grandTotalRevenue)}</td><td class="text-right">${formatBRL(grandTotalSupplierCost)}</td><td class="text-right">${formatBRL(grandTotalCommission)}</td><td class="text-right">${grandPct}%</td></tr>`);
-
-    win.document.write(`</tbody></table><div class="footer">Grundemann Power Hub · Relatório gerado automaticamente</div></body></html>`);
+    win.document.write(`<tr class="total-row"><td>TOTAL GERAL</td><td class="text-right">${grandTotalProducts}</td><td class="text-right">${grandTotalStock}</td><td class="text-right">${grandTotalSold}</td><td class="text-right">${formatBRL(grandTotalRevenue)}</td><td class="text-right">${formatBRL(grandTotalSupplierRevenue)}</td><td class="text-right">${formatBRL(grandTotalGrundemannRevenue)}</td></tr>`);
+    win.document.write(`</tbody></table><div class="footer">Grundemann Power Hub · Receita da Grundemann só entra após venda concluída</div></body></html>`);
     win.document.close();
     setTimeout(() => win.print(), 300);
   };
@@ -196,25 +139,24 @@ const SupplierFinancialReport = () => {
 
   return (
     <div className="space-y-6">
-      {/* Grand totals - sales based */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { label: "Fornecedores Ativos", value: suppliers.length, icon: Store },
           { label: "Total Produtos", value: grandTotalProducts, icon: Package },
-          { label: "Unidades Vendidas", value: grandTotalSold, icon: ShoppingCart },
+          { label: "Estoque Total", value: grandTotalStock, icon: ShoppingCart },
           { label: "Receita de Vendas", value: formatBRL(grandTotalRevenue), icon: TrendingUp },
-          { label: "Valor em Estoque", value: formatBRL(grandTotalInventory), icon: DollarSign },
-          { label: "Comissão Grundemann", value: formatBRL(grandTotalCommission), icon: DollarSign, highlight: true },
-        ].map(kpi => (
-          <Card key={kpi.label} className={(kpi as any).highlight ? "border-2 border-primary/30 bg-primary/5" : ""}>
+          { label: "Receita Fornecedor", value: formatBRL(grandTotalSupplierRevenue), icon: DollarSign },
+          { label: "Receita Grundemann", value: formatBRL(grandTotalGrundemannRevenue), icon: DollarSign, highlight: true },
+        ].map((kpi) => (
+          <Card key={kpi.label} className={"highlight" in kpi && kpi.highlight ? "border-2 border-primary/30 bg-primary/5" : ""}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`rounded-lg p-2 ${(kpi as any).highlight ? "bg-primary/20" : "bg-primary/10"}`}>
+                <div className={`rounded-lg p-2 ${"highlight" in kpi && kpi.highlight ? "bg-primary/20" : "bg-primary/10"}`}>
                   <kpi.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{kpi.label}</p>
-                  <p className={`font-heading font-bold text-lg ${(kpi as any).highlight ? "text-primary" : ""}`}>{kpi.value}</p>
+                  <p className={`font-heading font-bold text-lg ${"highlight" in kpi && kpi.highlight ? "text-primary" : ""}`}>{kpi.value}</p>
                 </div>
               </div>
             </CardContent>
@@ -223,7 +165,7 @@ const SupplierFinancialReport = () => {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        💡 A comissão é calculada somente sobre vendas efetivadas (pedidos confirmados, em processamento, enviados ou entregues).
+        💡 A receita da Grundemann só aparece quando há venda concluída; estoque e custo ficam separados da receita realizada.
       </p>
 
       <div className="flex justify-end">
@@ -232,41 +174,37 @@ const SupplierFinancialReport = () => {
         </Button>
       </div>
 
-      {/* Suppliers list */}
       <div className="space-y-3">
-        {suppliers.map(s => {
-          const pct = s.totalSalesRevenue > 0 ? ((s.totalStoreCommissionFromSales / s.totalSalesRevenue) * 100).toFixed(1) : "0";
-          return (
-            <Card key={s.id} className="hover:border-primary/30 transition-all cursor-pointer" onClick={() => setSelectedSupplier(s)}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Store className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-heading font-bold">{s.company_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {s.totalProducts} produtos · {s.totalUnitsSold} vendidos · {pct}% comissão
-                      </p>
-                    </div>
+        {suppliers.map((supplier) => (
+          <Card key={supplier.id} className="hover:border-primary/30 transition-all cursor-pointer" onClick={() => setSelectedSupplier(supplier)}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Store className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Receita Vendas</p>
-                      <p className="font-bold text-sm">{formatBRL(s.totalSalesRevenue)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Comissão Loja</p>
-                      <p className="font-bold text-sm text-primary">{formatBRL(s.totalStoreCommissionFromSales)}</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-heading font-bold">{supplier.company_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {supplier.totalProducts} produtos · {supplier.totalStock} em estoque · {supplier.totalUnitsSold} vendidos
+                    </p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                <div className="flex items-center gap-4 lg:gap-6">
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Receita Fornecedor</p>
+                    <p className="font-bold text-sm">{formatBRL(supplier.totalSupplierRevenueFromSales)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Receita Grundemann</p>
+                    <p className="font-bold text-sm text-primary">{formatBRL(supplier.totalStoreRevenueFromSales)}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
 
         {suppliers.length === 0 && (
           <Card>

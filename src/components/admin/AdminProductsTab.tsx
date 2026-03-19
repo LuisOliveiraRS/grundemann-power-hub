@@ -93,18 +93,27 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     if (productForm.reseller_id && productId) {
       const resellerPrice = productForm.reseller_price ? parseFloat(productForm.reseller_price) : null;
       const commissionPct = productForm.store_commission_pct ? parseFloat(productForm.store_commission_pct) : null;
+      const stockQuantity = parseInt(productForm.stock_quantity) || 0;
+      const salePrice = parseFloat(productForm.price) || null;
       const { data: existing } = await supabase.from("product_resellers")
         .select("id").eq("product_id", productId).eq("reseller_id", productForm.reseller_id).maybeSingle();
       if (existing) {
         await supabase.from("product_resellers").update({
-          reseller_price: resellerPrice, store_commission_pct: commissionPct,
-          custom_price: parseFloat(productForm.price) || null,
+          reseller_price: resellerPrice,
+          store_commission_pct: commissionPct,
+          custom_price: salePrice,
+          stock_quantity: stockQuantity,
+          is_active: productForm.is_active,
         } as any).eq("id", existing.id);
       } else {
         await supabase.from("product_resellers").insert({
-          product_id: productId, reseller_id: productForm.reseller_id,
-          reseller_price: resellerPrice, store_commission_pct: commissionPct,
-          custom_price: parseFloat(productForm.price) || null, stock_quantity: 0,
+          product_id: productId,
+          reseller_id: productForm.reseller_id,
+          reseller_price: resellerPrice,
+          store_commission_pct: commissionPct,
+          custom_price: salePrice,
+          stock_quantity: stockQuantity,
+          is_active: productForm.is_active,
         } as any);
       }
     }
