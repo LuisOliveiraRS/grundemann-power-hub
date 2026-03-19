@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Package, Search, DollarSign, ShoppingCart, Loader2, AlertTriangle, Printer, Store } from "lucide-react";
+import { Package, Search, DollarSign, ShoppingCart, Loader2, AlertTriangle, Printer, Store, TrendingUp } from "lucide-react";
 
 interface ResellerProduct {
   id: string;
@@ -25,6 +25,7 @@ interface SalesData {
   product_id: string;
   total_qty: number;
   total_value: number;
+  total_supplier_cost: number;
 }
 
 interface ResellerProductsReportProps {
@@ -94,9 +95,12 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
         const salesMap = new Map<string, SalesData>();
         (items as any[]).forEach(item => {
           if (!validOrderIds.has(item.order_id)) return;
-          const existing = salesMap.get(item.product_id) || { product_id: item.product_id, total_qty: 0, total_value: 0 };
+          const link = newLinks.find(l => l.product_id === item.product_id);
+          const resellerPrice = link?.reseller_price ?? 0;
+          const existing = salesMap.get(item.product_id) || { product_id: item.product_id, total_qty: 0, total_value: 0, total_supplier_cost: 0 };
           existing.total_qty += item.quantity;
           existing.total_value += item.quantity * item.price_at_purchase;
+          existing.total_supplier_cost += item.quantity * resellerPrice;
           salesMap.set(item.product_id, existing);
         });
         setSalesData(Array.from(salesMap.values()));
@@ -113,35 +117,35 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
     !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // Financial calculations
+  // Per-product info (for display)
   const getProductFinancials = (p: ResellerProduct) => {
     const salePrice = p.custom_price ?? p.price;
     const resellerPrice = p.reseller_price ?? 0;
     const commissionPct = p.store_commission_pct ?? (salePrice > 0 && resellerPrice > 0 ? ((salePrice - resellerPrice) / salePrice * 100) : 0);
     const storeCommissionValue = salePrice - resellerPrice;
     const stock = p.reseller_stock ?? p.stock_quantity;
-    const totalProductValue = salePrice * stock;
-    const totalSupplierValue = resellerPrice * stock;
-    const totalStoreCommission = storeCommissionValue * stock;
-    return { salePrice, resellerPrice, commissionPct, storeCommissionValue, stock, totalProductValue, totalSupplierValue, totalStoreCommission };
+    return { salePrice, resellerPrice, commissionPct, storeCommissionValue, stock };
   };
 
   const totalProducts = products.length;
   const totalStock = products.reduce((s, p) => s + (p.reseller_stock ?? p.stock_quantity), 0);
+  
+  // Sales-based totals
   const totalSold = salesData.reduce((s, d) => s + d.total_qty, 0);
-  const totalRevenue = salesData.reduce((s, d) => s + d.total_value, 0);
+  const totalSalesRevenue = salesData.reduce((s, d) => s + d.total_value, 0);
+  const totalSupplierCostFromSales = salesData.reduce((s, d) => s + d.total_supplier_cost, 0);
+  const totalStoreCommissionFromSales = totalSalesRevenue - totalSupplierCostFromSales;
 
-  // Grand totals
-  const grandTotalProductValue = products.reduce((s, p) => s + getProductFinancials(p).totalProductValue, 0);
-  const grandTotalSupplierValue = products.reduce((s, p) => s + getProductFinancials(p).totalSupplierValue, 0);
-  const grandTotalStoreCommission = products.reduce((s, p) => s + getProductFinancials(p).totalStoreCommission, 0);
+  // Inventory value (for reference only)
+  const totalInventoryValue = products.reduce((s, p) => {
+    const f = getProductFinancials(p);
+    return s + f.salePrice * f.stock;
+  }, 0);
 
   const formatBRL = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
   const periodLabel = filterPeriod === "all" ? "Todo o período" : filterPeriod === "30d" ? "Últimos 30 dias" : filterPeriod === "90d" ? "Últimos 90 dias" : "Este ano";
 
   const handlePrint = () => {
-    const content = printRef.current;
-    if (!content) return;
     const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head><title>Relatório de Produtos do Fornecedor</title><style>
@@ -170,39 +174,38 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
     win.document.write(`<div class="header"><h1>Relatório de Produtos do Fornecedor</h1>`);
     win.document.write(`<p>${supplierName || "Fornecedor"} · ${periodLabel} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
 
-    // KPIs
     win.document.write(`<div class="kpi-grid">`);
     [
       { label: "Produtos", value: totalProducts },
       { label: "Estoque Total", value: totalStock },
       { label: "Unidades Vendidas", value: totalSold },
-      { label: "Receita de Vendas", value: formatBRL(totalRevenue) },
+      { label: "Receita de Vendas", value: formatBRL(totalSalesRevenue) },
     ].forEach(k => win.document.write(`<div class="kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`));
     win.document.write(`</div>`);
 
-    // Financial summary
     win.document.write(`<div class="financial-summary">`);
-    win.document.write(`<div class="fin-box"><div class="label">Valor Total em Produtos (Venda)</div><div class="value">${formatBRL(grandTotalProductValue)}</div></div>`);
-    win.document.write(`<div class="fin-box"><div class="label">Valor Fornecedor (Custo)</div><div class="value">${formatBRL(grandTotalSupplierValue)}</div></div>`);
-    win.document.write(`<div class="fin-box"><div class="label">Comissão Loja Grundemann</div><div class="value" style="color:#16a34a">${formatBRL(grandTotalStoreCommission)}</div></div>`);
+    win.document.write(`<div class="fin-box"><div class="label">Receita de Vendas</div><div class="value">${formatBRL(totalSalesRevenue)}</div></div>`);
+    win.document.write(`<div class="fin-box"><div class="label">Custo Fornecedor (Vendas)</div><div class="value">${formatBRL(totalSupplierCostFromSales)}</div></div>`);
+    win.document.write(`<div class="fin-box"><div class="label">Comissão Loja Grundemann (Vendas)</div><div class="value" style="color:#16a34a">${formatBRL(totalStoreCommissionFromSales)}</div></div>`);
     win.document.write(`</div>`);
 
-    // Table
-    win.document.write(`<table><thead><tr><th>Produto</th><th>SKU</th><th class="text-right">Preço Venda</th><th class="text-right">Preço Fornecedor</th><th class="text-right">Comissão Loja (R$)</th><th class="text-right">% Loja</th><th class="text-right">Estoque</th><th class="text-right">Vendidos</th><th class="text-right">Valor Vendido</th><th>Status</th></tr></thead><tbody>`);
+    win.document.write(`<table><thead><tr><th>Produto</th><th>SKU</th><th class="text-right">Preço Venda</th><th class="text-right">Preço Fornecedor</th><th class="text-right">% Loja</th><th class="text-right">Estoque</th><th class="text-right">Vendidos</th><th class="text-right">Receita Vendas</th><th class="text-right">Custo Forn. Vendas</th><th class="text-right">Comissão Vendas</th><th>Status</th></tr></thead><tbody>`);
 
     filtered.forEach(p => {
       const f = getProductFinancials(p);
       const sales = getSales(p.id);
+      const soldCommission = (sales?.total_value ?? 0) - (sales?.total_supplier_cost ?? 0);
       const status = f.stock <= 0 ? "Sem estoque" : p.is_active ? "Ativo" : "Inativo";
       win.document.write(`<tr>
         <td>${p.name}</td><td>${p.sku || "—"}</td>
         <td class="text-right">${formatBRL(f.salePrice)}</td>
         <td class="text-right">${f.resellerPrice > 0 ? formatBRL(f.resellerPrice) : "—"}</td>
-        <td class="text-right">${f.storeCommissionValue > 0 ? formatBRL(f.storeCommissionValue) : "—"}</td>
         <td class="text-right">${f.commissionPct > 0 ? f.commissionPct.toFixed(1) + "%" : "—"}</td>
         <td class="text-right">${f.stock}</td>
         <td class="text-right">${sales?.total_qty || 0}</td>
         <td class="text-right">${formatBRL(sales?.total_value || 0)}</td>
+        <td class="text-right">${formatBRL(sales?.total_supplier_cost || 0)}</td>
+        <td class="text-right">${formatBRL(soldCommission)}</td>
         <td>${status}</td>
       </tr>`);
     });
@@ -238,7 +241,7 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
           { label: "Meus Produtos", value: totalProducts, icon: Package, color: "text-primary" },
           { label: "Estoque Total", value: totalStock, icon: AlertTriangle, color: totalStock <= 5 ? "text-destructive" : "text-primary" },
           { label: "Unidades Vendidas", value: totalSold, icon: ShoppingCart, color: "text-primary" },
-          { label: "Valor Vendido", value: formatBRL(totalRevenue), icon: DollarSign, color: "text-primary" },
+          { label: "Receita de Vendas", value: formatBRL(totalSalesRevenue), icon: TrendingUp, color: "text-primary" },
         ].map(kpi => (
           <Card key={kpi.label}>
             <CardContent className="p-4">
@@ -254,35 +257,46 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
         ))}
       </div>
 
-      {/* Financial Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Financial Summary - SALES BASED */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-2 border-muted">
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Valor em Estoque</p>
+            <p className="font-heading font-bold text-xl mt-1">{formatBRL(totalInventoryValue)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{totalStock} unidades</p>
+          </CardContent>
+        </Card>
         <Card className="border-2 border-primary/20">
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Valor Total em Produtos (Venda)</p>
-            <p className="font-heading font-bold text-2xl mt-1">{formatBRL(grandTotalProductValue)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{totalStock} unidades em estoque</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Receita de Vendas</p>
+            <p className="font-heading font-bold text-xl mt-1">{formatBRL(totalSalesRevenue)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{totalSold} unidades vendidas</p>
           </CardContent>
         </Card>
         <Card className="border-2 border-secondary/20">
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Valor Fornecedor (Custo)</p>
-            <p className="font-heading font-bold text-2xl mt-1">{formatBRL(grandTotalSupplierValue)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Custo total dos produtos</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Custo Fornecedor (Vendas)</p>
+            <p className="font-heading font-bold text-xl mt-1">{formatBRL(totalSupplierCostFromSales)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Valor pago ao fornecedor</p>
           </CardContent>
         </Card>
         <Card className="border-2 border-primary/30 bg-primary/5">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-1">
               <Store className="h-4 w-4 text-primary" />
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Comissão Loja Grundemann</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Comissão Grundemann</p>
             </div>
-            <p className="font-heading font-bold text-2xl text-primary">{formatBRL(grandTotalStoreCommission)}</p>
+            <p className="font-heading font-bold text-xl text-primary">{formatBRL(totalStoreCommissionFromSales)}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {grandTotalProductValue > 0 ? `${((grandTotalStoreCommission / grandTotalProductValue) * 100).toFixed(1)}% média` : "—"}
+              {totalSalesRevenue > 0 ? `${((totalStoreCommissionFromSales / totalSalesRevenue) * 100).toFixed(1)}% das vendas` : "Sem vendas"}
             </p>
           </CardContent>
         </Card>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        💡 Comissões calculadas somente sobre vendas efetivadas (pedidos confirmados, em processamento, enviados ou entregues).
+      </p>
 
       {/* Filters + Print */}
       <div className="flex flex-wrap items-center gap-3">
@@ -313,11 +327,11 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
                 <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">SKU</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Venda</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Preço Fornecedor</th>
-                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Comissão Loja (R$)</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">% Loja</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Estoque</th>
                 <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Vendidos</th>
-                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Valor Vendido</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Receita Vendas</th>
+                <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase">Comissão Vendas</th>
                 <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
               </tr>
             </thead>
@@ -325,6 +339,7 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
               {filtered.map(p => {
                 const f = getProductFinancials(p);
                 const sales = getSales(p.id);
+                const soldCommission = (sales?.total_value ?? 0) - (sales?.total_supplier_cost ?? 0);
                 return (
                   <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                     <td className="p-3">
@@ -338,11 +353,6 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
                     <td className="p-3"><span className="text-xs font-mono text-muted-foreground">{p.sku || "—"}</span></td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">{formatBRL(f.salePrice)}</span></td>
                     <td className="p-3 text-right"><span className="text-sm">{f.resellerPrice > 0 ? formatBRL(f.resellerPrice) : "—"}</span></td>
-                    <td className="p-3 text-right">
-                      <span className={`text-sm font-semibold ${f.storeCommissionValue > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                        {f.storeCommissionValue > 0 ? formatBRL(f.storeCommissionValue) : "—"}
-                      </span>
-                    </td>
                     <td className="p-3 text-right">
                       <span className={`text-sm font-bold ${f.commissionPct > 0 ? "text-primary" : "text-muted-foreground"}`}>
                         {f.commissionPct > 0 ? `${f.commissionPct.toFixed(1)}%` : "—"}
@@ -358,6 +368,11 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
                     </td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">{sales?.total_qty || 0}</span></td>
                     <td className="p-3 text-right"><span className="text-sm font-semibold">{formatBRL(sales?.total_value || 0)}</span></td>
+                    <td className="p-3 text-right">
+                      <span className={`text-sm font-semibold ${soldCommission > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                        {soldCommission > 0 ? formatBRL(soldCommission) : "—"}
+                      </span>
+                    </td>
                     <td className="p-3">
                       {f.stock <= 0 ? (
                         <Badge variant="destructive" className="text-xs">Sem estoque</Badge>
@@ -377,15 +392,13 @@ const ResellerProductsReport = ({ resellerId, supplierName, isAdminView }: Resel
               {filtered.length > 0 && (
                 <tr className="bg-muted/50 font-bold border-t-2 border-border">
                   <td className="p-3" colSpan={3}><span className="text-sm">TOTAIS</span></td>
-                  <td className="p-3 text-right text-sm">{formatBRL(grandTotalProductValue)}</td>
-                  <td className="p-3 text-right text-sm">{formatBRL(grandTotalSupplierValue)}</td>
-                  <td className="p-3 text-right text-sm text-primary">{formatBRL(grandTotalStoreCommission)}</td>
-                  <td className="p-3 text-right text-sm">
-                    {grandTotalProductValue > 0 ? `${((grandTotalStoreCommission / grandTotalProductValue) * 100).toFixed(1)}%` : "—"}
-                  </td>
+                  <td className="p-3 text-right text-sm"></td>
+                  <td className="p-3 text-right text-sm"></td>
+                  <td className="p-3 text-right text-sm"></td>
                   <td className="p-3 text-right text-sm">{totalStock}</td>
                   <td className="p-3 text-right text-sm">{totalSold}</td>
-                  <td className="p-3 text-right text-sm">{formatBRL(totalRevenue)}</td>
+                  <td className="p-3 text-right text-sm">{formatBRL(totalSalesRevenue)}</td>
+                  <td className="p-3 text-right text-sm text-primary">{formatBRL(totalStoreCommissionFromSales)}</td>
                   <td className="p-3"></td>
                 </tr>
               )}
