@@ -201,10 +201,10 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                     const resellerPrice = e.target.value;
                     const rp = parseFloat(resellerPrice) || 0;
                     const pct = parseFloat(form.store_commission_pct) || 0;
-                    const newSalePrice = rp > 0 && pct > 0 ? (rp * (1 + pct / 100)).toFixed(2) : form.price;
+                    const newSalePrice = rp > 0 ? (rp * (1 + pct / 100)).toFixed(2) : form.price;
                     setForm(prev => ({ ...prev, reseller_price: resellerPrice, price: newSalePrice }));
                   }} placeholder="Custo do fornecedor" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Valor que o fornecedor paga pelo produto</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Custo base do fornecedor para cálculo da venda</p>
                 </div>
                 <div>
                   <Label>% Loja Grundemann</Label>
@@ -212,17 +212,18 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
                     const pct = e.target.value;
                     const rp = parseFloat(form.reseller_price) || 0;
                     const p = parseFloat(pct) || 0;
-                    const newSalePrice = rp > 0 && p > 0 ? (rp * (1 + p / 100)).toFixed(2) : form.price;
+                    const newSalePrice = rp > 0 ? (rp * (1 + p / 100)).toFixed(2) : form.price;
                     setForm(prev => ({ ...prev, store_commission_pct: pct, price: newSalePrice }));
                   }} placeholder="Comissão %" className="mt-1" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Margem adicionada ao preço do fornecedor</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Percentual aplicado sobre o custo do fornecedor</p>
                 </div>
                 <div className="flex items-end pb-1">
-                  {form.reseller_price && form.store_commission_pct && (
+                  {form.reseller_price && (
                     <div className="text-sm space-y-1">
                       <p className="text-muted-foreground">Preço Fornecedor: <strong className="text-foreground">R$ {parseFloat(form.reseller_price).toFixed(2)}</strong></p>
-                      <p className="text-muted-foreground">Margem Loja: <strong className="text-primary">{form.store_commission_pct}%</strong></p>
-                      <p className="text-muted-foreground">Preço de Venda: <strong className="text-primary">R$ {parseFloat(form.price).toFixed(2)}</strong></p>
+                      <p className="text-muted-foreground">% Loja: <strong className="text-primary">{(parseFloat(form.store_commission_pct) || 0).toFixed(1)}%</strong></p>
+                      <p className="text-muted-foreground">Receita Grundemann: <strong className="text-primary">R$ {(Math.max(0, (parseFloat(form.price) || 0) - (parseFloat(form.reseller_price) || 0))).toFixed(2)}</strong></p>
+                      <p className="text-muted-foreground">Preço de Venda: <strong className="text-primary">R$ {(parseFloat(form.price) || 0).toFixed(2)}</strong></p>
                     </div>
                   )}
                 </div>
