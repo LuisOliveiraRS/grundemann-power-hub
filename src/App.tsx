@@ -44,6 +44,7 @@ const LocadoraDashboard = lazy(() => import("./pages/LocadoraDashboard"));
 const PartnerLogin = lazy(() => import("./pages/PartnerLogin"));
 const DiagnosticSEO = lazy(() => import("./pages/DiagnosticSEO"));
 const ModelSEO = lazy(() => import("./pages/ModelSEO"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +80,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/produtos" element={<AllProducts />} />
                     <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                     <Route path="/produto/:idOrSlug" element={<ProductDetail />} />
