@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Gift, Eye, EyeOff, User, Wrench, Building2, Store, Building } from "lucide-react";
+import { Gift, Eye, EyeOff, User, Wrench, Building2, Store, Building, Mail } from "lucide-react";
 import Layout from "@/components/Layout";
 import logo from "@/assets/logo-grundemann.png";
 import { getGuestCart, clearGuestCart } from "@/lib/guestCart";
@@ -23,6 +24,7 @@ const userTypeConfig: Record<UserType, { label: string; icon: any; description: 
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -82,6 +84,52 @@ const Auth = () => {
     clearGuestCart();
   };
 
+  const redirectAfterAuth = async (userId: string) => {
+    await syncGuestCart(userId);
+    if (redirect) {
+      navigate(redirect);
+      return;
+    }
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isAdminUser = (roles || []).some((r: any) => r.role === "admin");
+    if (isAdminUser) {
+      navigate("/admin");
+    } else {
+      const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
+      navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null));
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast({ title: "Informe o email", description: "Digite o email cadastrado para recuperar a senha.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir a senha." });
+      setIsForgotPassword(false);
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (error) {
+      toast({ title: "Erro ao entrar com Google", description: String(error), variant: "destructive" });
+    }
+    setLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -91,21 +139,14 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (loginData.user) {
-        await syncGuestCart(loginData.user.id);
-        if (redirect) {
-          navigate(redirect);
-        } else {
-          const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", loginData.user.id);
-          const isAdminUser = (roles || []).some((r: any) => r.role === "admin");
-          if (isAdminUser) {
-            navigate("/admin");
-          } else {
-            const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", loginData.user.id).maybeSingle();
-            navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null));
-          }
-        }
+        await redirectAfterAuth(loginData.user.id);
       }
     } else {
+      if (password.length < 6) {
+        toast({ title: "Senha fraca", description: "A senha deve ter pelo menos 6 caracteres.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
       if (needsCnpj && !cnpj.trim()) {
         toast({ title: "CNPJ obrigatório", description: "Informe o CNPJ da empresa.", variant: "destructive" });
         setLoading(false);
@@ -157,18 +198,48 @@ const Auth = () => {
           });
         }
 
-        await syncGuestCart(data.user.id);
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
-        
-        if (redirect) {
-          navigate(redirect);
-        } else {
-          navigate(getPartnerDashboardPath(isPartner ? userType : null));
-        }
+        await redirectAfterAuth(data.user.id);
       }
     }
     setLoading(false);
   };
+
+  // Forgot password form
+  if (isForgotPassword) {
+    return (
+      <Layout showFooter={false} showWhatsApp={false} showAI={false}>
+        <div className="flex-1 flex items-center justify-center bg-muted py-8">
+          <div className="w-full max-w-md bg-background rounded-xl shadow-lg p-8">
+            <div className="flex justify-center mb-6">
+              <img src={logo} alt="Gründemann" className="h-24" />
+            </div>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Mail className="h-5 w-5 text-primary" />
+              <h2 className="font-heading text-2xl font-bold text-center">Recuperar Senha</h2>
+            </div>
+            <p className="text-sm text-muted-foreground text-center mb-6">
+              Digite seu email e enviaremos um link para redefinir sua senha.
+            </p>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" />
+              </div>
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar Link de Recuperação"}
+              </Button>
+            </form>
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              <button onClick={() => setIsForgotPassword(false)} className="text-primary font-semibold hover:underline">
+                ← Voltar ao login
+              </button>
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showFooter={false} showWhatsApp={false} showAI={false}>
@@ -186,6 +257,20 @@ const Auth = () => {
           <h2 className="font-heading text-2xl font-bold text-center mb-6">
             {isLogin ? "Entrar" : "Criar Conta"}
           </h2>
+
+          {/* Google login button */}
+          {isLogin && (
+            <div className="mb-6">
+              <Button variant="outline" className="w-full gap-2" size="lg" onClick={handleGoogleLogin} disabled={loading}>
+                <svg className="h-5 w-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Entrar com Google
+              </Button>
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">ou continue com email</span></div>
+              </div>
+            </div>
+          )}
 
           {!isLogin && (
             <div className="mb-6">
@@ -295,6 +380,15 @@ const Auth = () => {
                 </button>
               </div>
             </div>
+
+            {isLogin && (
+              <div className="text-right">
+                <button type="button" onClick={() => setIsForgotPassword(true)} className="text-sm text-primary hover:underline">
+                  Esqueceu a senha?
+                </button>
+              </div>
+            )}
+
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar Conta"}
             </Button>
