@@ -123,14 +123,14 @@ const PartsFinder = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-card rounded-xl border border-border p-8 shadow-sm"
+                className="bg-card rounded-xl border border-border p-4 md:p-8 shadow-sm"
               >
-                <h3 className="font-heading font-bold text-lg text-card-foreground mb-1 flex items-center gap-2">
+                <h3 className="font-heading font-bold text-base md:text-lg text-card-foreground mb-1 flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
                   Qual a potência do motor?
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6">Selecione a potência em HP do seu motor estacionário</p>
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+                <p className="text-xs md:text-sm text-muted-foreground mb-4 md:mb-6">Selecione a potência em HP do seu motor estacionário</p>
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 md:gap-3">
                   {hpOptions.map(hp => (
                     <button
                       key={hp}
