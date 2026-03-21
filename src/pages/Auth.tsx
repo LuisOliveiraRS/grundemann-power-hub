@@ -53,22 +53,33 @@ const Auth = () => {
   }, [refCode]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      const userId = session.user.id;
-
+    const redirectUser = async (userId: string) => {
+      await syncGuestCart(userId);
+      if (redirect) {
+        navigate(redirect, { replace: true });
+        return;
+      }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
       if ((roles || []).some((r: any) => r.role === "admin")) {
         navigate("/admin", { replace: true });
         return;
       }
-
       const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
       navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null), { replace: true });
     };
-    if (!redirect) checkAuth();
-  }, []);
+
+    // Check on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) redirectUser(session.user.id);
+    });
+
+    // Listen for auth state changes (Google OAuth, email confirm, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) redirectUser(session.user.id);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, redirect]);
 
   const syncGuestCart = async (userId: string) => {
     const guestItems = getGuestCart();
@@ -84,21 +95,7 @@ const Auth = () => {
     clearGuestCart();
   };
 
-  const redirectAfterAuth = async (userId: string) => {
-    await syncGuestCart(userId);
-    if (redirect) {
-      navigate(redirect);
-      return;
-    }
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const isAdminUser = (roles || []).some((r: any) => r.role === "admin");
-    if (isAdminUser) {
-      navigate("/admin");
-    } else {
-      const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
-      navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null));
-    }
-  };
+  // redirectAfterAuth is handled by the onAuthStateChange listener above
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +119,7 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth`,
     });
     if (error) {
       toast({ title: "Erro ao entrar com Google", description: String(error), variant: "destructive" });
@@ -139,7 +136,7 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (loginData.user) {
-        await redirectAfterAuth(loginData.user.id);
+        // Redirect handled by onAuthStateChange listener
       }
     } else {
       if (password.length < 6) {
@@ -199,7 +196,7 @@ const Auth = () => {
         }
 
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
-        await redirectAfterAuth(data.user.id);
+        // Redirect handled by onAuthStateChange listener
       }
     }
     setLoading(false);
