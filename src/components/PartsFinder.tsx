@@ -135,7 +135,7 @@ const PartsFinder = () => {
                     <button
                       key={hp}
                       onClick={() => { setSelectedHp(hp); setStep(2); }}
-                      className={`rounded-lg border-2 p-4 text-center font-heading font-extrabold text-lg transition-all hover:border-primary hover:bg-primary/5 ${
+                      className={`rounded-lg border-2 p-3 md:p-4 text-center font-heading font-extrabold text-base md:text-lg transition-all hover:border-primary hover:bg-primary/5 ${
                         selectedHp === hp ? "border-primary bg-primary/10 text-primary" : "border-border text-card-foreground"
                       }`}
                     >

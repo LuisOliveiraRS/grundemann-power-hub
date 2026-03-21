@@ -33,32 +33,32 @@ const FeaturedProducts = lazy(() => import("@/components/FeaturedProducts"));
 const SectionLoader = () => <div className="py-8 flex justify-center"><div className="animate-spin h-6 w-6 border-3 border-primary border-t-transparent rounded-full" /></div>;
 
 const TechnicalCenterTeaser = () => (
-  <section className="py-14 bg-muted/30">
-    <div className="container">
-      <div className="text-center mb-8">
-        <h2 className="font-heading text-2xl md:text-3xl font-black text-foreground">CENTRAL TÉCNICA DE MOTORES ESTACIONÁRIOS</h2>
-        <p className="text-muted-foreground mt-2">Artigos, guias e ferramentas para mecânicos e proprietários de motores</p>
+  <section className="py-8 md:py-14 bg-muted/30">
+    <div className="container px-4">
+      <div className="text-center mb-6 md:mb-8">
+        <h2 className="font-heading text-xl md:text-2xl lg:text-3xl font-black text-foreground">CENTRAL TÉCNICA DE MOTORES ESTACIONÁRIOS</h2>
+        <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Artigos, guias e ferramentas para mecânicos e proprietários de motores</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-        <Link to="/diagnostico" className="group bg-card rounded-xl border-2 border-destructive/20 p-6 hover:border-primary/30 hover:shadow-lg transition-all">
-          <Stethoscope className="h-10 w-10 text-destructive mb-3" />
-          <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Diagnóstico do Gerador</h3>
-          <p className="text-sm text-muted-foreground mt-1">Selecione o problema e encontre as peças para o reparo automaticamente.</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 max-w-6xl mx-auto">
+        <Link to="/diagnostico" className="group bg-card rounded-xl border-2 border-destructive/20 p-4 md:p-6 hover:border-primary/30 hover:shadow-lg transition-all">
+          <Stethoscope className="h-8 w-8 md:h-10 md:w-10 text-destructive mb-2 md:mb-3" />
+          <h3 className="font-heading font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">Diagnóstico do Gerador</h3>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1 hidden sm:block">Selecione o problema e encontre as peças para o reparo automaticamente.</p>
         </Link>
-        <Link to="/central-tecnica" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
-          <BookOpen className="h-10 w-10 text-primary mb-3" />
-          <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Artigos Técnicos</h3>
-          <p className="text-sm text-muted-foreground mt-1">Guias de manutenção, diagnóstico e reparo de motores estacionários.</p>
+        <Link to="/central-tecnica" className="group bg-card rounded-xl border border-border p-4 md:p-6 hover:border-primary/30 hover:shadow-lg transition-all">
+          <BookOpen className="h-8 w-8 md:h-10 md:w-10 text-primary mb-2 md:mb-3" />
+          <h3 className="font-heading font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">Artigos Técnicos</h3>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1 hidden sm:block">Guias de manutenção, diagnóstico e reparo de motores estacionários.</p>
         </Link>
-        <Link to="/catalogo-interativo" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
-          <Wrench className="h-10 w-10 text-primary mb-3" />
-          <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Catálogo Interativo</h3>
-          <p className="text-sm text-muted-foreground mt-1">Vista explodida do motor — clique nas peças e compre diretamente.</p>
+        <Link to="/catalogo-interativo" className="group bg-card rounded-xl border border-border p-4 md:p-6 hover:border-primary/30 hover:shadow-lg transition-all">
+          <Wrench className="h-8 w-8 md:h-10 md:w-10 text-primary mb-2 md:mb-3" />
+          <h3 className="font-heading font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">Catálogo Interativo</h3>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1 hidden sm:block">Vista explodida do motor — clique nas peças e compre diretamente.</p>
         </Link>
-        <Link to="/calculadora-de-carga" className="group bg-card rounded-xl border border-border p-6 hover:border-primary/30 hover:shadow-lg transition-all">
-          <Calculator className="h-10 w-10 text-primary mb-3" />
-          <h3 className="font-heading font-bold text-foreground group-hover:text-primary transition-colors">Calculadora de Carga</h3>
-          <p className="text-sm text-muted-foreground mt-1">Dimensione a carga ideal e encontre o gerador certo para sua necessidade.</p>
+        <Link to="/calculadora-de-carga" className="group bg-card rounded-xl border border-border p-4 md:p-6 hover:border-primary/30 hover:shadow-lg transition-all">
+          <Calculator className="h-8 w-8 md:h-10 md:w-10 text-primary mb-2 md:mb-3" />
+          <h3 className="font-heading font-bold text-sm md:text-base text-foreground group-hover:text-primary transition-colors">Calculadora de Carga</h3>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1 hidden sm:block">Dimensione a carga ideal e encontre o gerador certo para sua necessidade.</p>
         </Link>
       </div>
     </div>
