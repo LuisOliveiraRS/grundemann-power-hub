@@ -115,10 +115,10 @@ const HeroSection = () => {
             </p>
 
             {/* CTAs */}
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
               <button
                 onClick={() => navigate("/produtos")}
-                className="group flex items-center gap-2 rounded-lg bg-primary px-8 py-4 font-heading font-extrabold text-primary-foreground text-sm uppercase tracking-wide hover:opacity-90 transition-all shadow-lg shadow-primary/30"
+                className="group flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 md:px-8 md:py-4 font-heading font-extrabold text-primary-foreground text-sm uppercase tracking-wide hover:opacity-90 transition-all shadow-lg shadow-primary/30"
               >
                 Ver Produtos
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -127,7 +127,7 @@ const HeroSection = () => {
                 href="https://wa.me/5551981825748?text=Olá, gostaria de falar com um especialista Grundemann."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border-2 border-background/30 bg-background/5 px-8 py-4 font-heading font-extrabold text-background text-sm uppercase tracking-wide hover:bg-background/10 transition-all backdrop-blur-sm"
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-background/30 bg-background/5 px-6 py-3 md:px-8 md:py-4 font-heading font-extrabold text-background text-sm uppercase tracking-wide hover:bg-background/10 transition-all backdrop-blur-sm"
               >
                 <MessageCircle className="h-4 w-4" />
                 Falar com Especialista
