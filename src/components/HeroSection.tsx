@@ -58,7 +58,7 @@ const HeroSection = () => {
   const current = products[currentIndex];
 
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[400px] md:min-h-[520px] flex items-center">
+    <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[360px] md:min-h-[520px] flex items-center">
       {/* Decorative grid pattern */}
       <div className="absolute inset-0 opacity-[0.04]" style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -88,12 +88,12 @@ const HeroSection = () => {
               </span>
             </motion.div>
 
-            <h1 className="font-heading text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
+            <h1 className="font-heading text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
               <span className="text-background">PEÇAS E MOTORES</span>
               <br />
               <span className="text-background">ESTACIONÁRIOS COM</span>
               <br />
-              <span className="relative inline-block h-[1.2em] min-w-[280px] md:min-w-[400px] align-bottom">
+              <span className="relative inline-block h-[1.2em] min-w-[200px] sm:min-w-[280px] md:min-w-[400px] align-bottom">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={phraseIndex}
@@ -101,7 +101,7 @@ const HeroSection = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.5 }}
-                    className="text-primary absolute left-0 top-0 whitespace-nowrap"
+                    className="text-primary absolute left-0 top-0 whitespace-nowrap text-lg sm:text-2xl md:text-4xl lg:text-5xl"
                   >
                     {IMPACT_PHRASES[phraseIndex]}
                   </motion.span>
@@ -115,10 +115,10 @@ const HeroSection = () => {
             </p>
 
             {/* CTAs */}
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
               <button
                 onClick={() => navigate("/produtos")}
-                className="group flex items-center gap-2 rounded-lg bg-primary px-8 py-4 font-heading font-extrabold text-primary-foreground text-sm uppercase tracking-wide hover:opacity-90 transition-all shadow-lg shadow-primary/30"
+                className="group flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 md:px-8 md:py-4 font-heading font-extrabold text-primary-foreground text-sm uppercase tracking-wide hover:opacity-90 transition-all shadow-lg shadow-primary/30"
               >
                 Ver Produtos
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -127,7 +127,7 @@ const HeroSection = () => {
                 href="https://wa.me/5551981825748?text=Olá, gostaria de falar com um especialista Grundemann."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border-2 border-background/30 bg-background/5 px-8 py-4 font-heading font-extrabold text-background text-sm uppercase tracking-wide hover:bg-background/10 transition-all backdrop-blur-sm"
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-background/30 bg-background/5 px-6 py-3 md:px-8 md:py-4 font-heading font-extrabold text-background text-sm uppercase tracking-wide hover:bg-background/10 transition-all backdrop-blur-sm"
               >
                 <MessageCircle className="h-4 w-4" />
                 Falar com Especialista

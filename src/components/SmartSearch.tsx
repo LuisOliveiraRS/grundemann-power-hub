@@ -148,24 +148,24 @@ const SmartSearch = () => {
         <div className="relative">
           <input
             type="search"
-            placeholder="Buscar por nome, SKU, marca, motor, tags..."
+            placeholder="Buscar peças, motores..."
             value={query}
             onChange={e => handleChange(e.target.value)}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
             onKeyDown={handleKeyDown}
-            className="w-full rounded-lg border border-input bg-background px-4 py-2.5 pr-12 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 md:px-4 md:py-2.5 pr-10 md:pr-12 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             aria-label="Buscar produtos"
             aria-autocomplete="list"
             autoComplete="off"
           />
-          <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md bg-primary p-2 text-primary-foreground hover:opacity-90 transition-opacity" aria-label="Buscar">
+          <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md bg-primary p-1.5 md:p-2 text-primary-foreground hover:opacity-90 transition-opacity" aria-label="Buscar">
             <Search className="h-4 w-4" />
           </button>
         </div>
       </form>
 
-      {/* HP Filter Chips */}
-      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+      {/* HP Filter Chips - hidden on mobile */}
+      <div className="hidden md:flex items-center gap-1.5 mt-2 flex-wrap">
         <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
         {HP_FILTERS.map(hp => (
           <button

@@ -85,17 +85,17 @@ const PartsFinder = () => {
   };
 
   return (
-    <section className="py-14 bg-muted/30">
-      <div className="container">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 text-primary font-heading font-bold text-sm uppercase tracking-wider mb-2">
+    <section className="py-8 md:py-14 bg-muted/30">
+      <div className="container px-4">
+        <div className="text-center mb-6 md:mb-8">
+          <div className="inline-flex items-center gap-2 text-primary font-heading font-bold text-xs md:text-sm uppercase tracking-wider mb-2">
             <Search className="h-4 w-4" />
             Busca Inteligente de Peças
           </div>
-          <h2 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground">
+          <h2 className="font-heading text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground">
             Encontre a peça certa para seu motor
           </h2>
-          <p className="text-muted-foreground mt-2">Selecione a potência e o tipo de peça em 3 passos simples</p>
+          <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Selecione a potência e o tipo de peça em 3 passos simples</p>
         </div>
 
         {/* Steps indicator */}
@@ -123,19 +123,19 @@ const PartsFinder = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-card rounded-xl border border-border p-8 shadow-sm"
+                className="bg-card rounded-xl border border-border p-4 md:p-8 shadow-sm"
               >
-                <h3 className="font-heading font-bold text-lg text-card-foreground mb-1 flex items-center gap-2">
+                <h3 className="font-heading font-bold text-base md:text-lg text-card-foreground mb-1 flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
                   Qual a potência do motor?
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6">Selecione a potência em HP do seu motor estacionário</p>
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+                <p className="text-xs md:text-sm text-muted-foreground mb-4 md:mb-6">Selecione a potência em HP do seu motor estacionário</p>
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 md:gap-3">
                   {hpOptions.map(hp => (
                     <button
                       key={hp}
                       onClick={() => { setSelectedHp(hp); setStep(2); }}
-                      className={`rounded-lg border-2 p-4 text-center font-heading font-extrabold text-lg transition-all hover:border-primary hover:bg-primary/5 ${
+                      className={`rounded-lg border-2 p-3 md:p-4 text-center font-heading font-extrabold text-base md:text-lg transition-all hover:border-primary hover:bg-primary/5 ${
                         selectedHp === hp ? "border-primary bg-primary/10 text-primary" : "border-border text-card-foreground"
                       }`}
                     >
