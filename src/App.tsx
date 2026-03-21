@@ -119,6 +119,7 @@ const App = () => (
                 </Suspense>
               </div>
               <BackToTop />
+              <CookieConsent />
             </AuthProvider>
           </BrowserRouter>
         </ErrorBoundary>
