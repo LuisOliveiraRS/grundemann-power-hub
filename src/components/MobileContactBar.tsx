@@ -2,7 +2,7 @@ import { Phone, MessageCircle } from "lucide-react";
 
 const MobileContactBar = () => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-foreground/95 backdrop-blur-sm border-t border-border safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-[9998] md:hidden bg-foreground/95 backdrop-blur-sm border-t border-border safe-area-bottom">
       <div className="flex items-stretch divide-x divide-background/10">
         <a
           href="tel:+5551981825748"

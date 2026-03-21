@@ -167,21 +167,21 @@ const Index = () => {
           )}
 
           {/* Mechanic Partner CTA */}
-          <section className="py-12 bg-gradient-to-r from-secondary to-secondary/80">
-            <div className="container text-center">
+          <section className="py-8 md:py-12 bg-gradient-to-r from-secondary to-secondary/80">
+            <div className="container text-center px-4">
               <div className="max-w-2xl mx-auto">
-                <div className="inline-flex items-center gap-2 bg-background/10 rounded-full px-4 py-1.5 mb-4">
-                  <BadgeCheck className="h-5 w-5 text-accent" />
-                  <span className="text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
+                <div className="inline-flex items-center gap-2 bg-background/10 rounded-full px-3 py-1 md:px-4 md:py-1.5 mb-3 md:mb-4">
+                  <BadgeCheck className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+                  <span className="text-xs md:text-sm font-bold text-secondary-foreground uppercase tracking-wider">Programa de Parceria</span>
                 </div>
-                <h2 className="font-heading text-3xl md:text-4xl font-black text-secondary-foreground mb-3">Fornecedores, Oficinas, Mecânicos e Locadoras<br className="hidden md:block" />Cadastre-se aqui.</h2>
-                <p className="text-secondary-foreground/80 mb-6 text-lg">Acesse preços exclusivos, catálogos técnicos, vistas explodidas e suporte especializado para parceiros profissionais.</p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link to="/parceiros/fornecedor" className="inline-flex items-center gap-2 bg-accent text-accent-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
+                <h2 className="font-heading text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-secondary-foreground mb-2 md:mb-3">Fornecedores, Oficinas, Mecânicos e Locadoras<br className="hidden md:block" /> Cadastre-se aqui.</h2>
+                <p className="text-secondary-foreground/80 mb-4 md:mb-6 text-sm md:text-lg">Acesse preços exclusivos, catálogos técnicos e suporte especializado para parceiros.</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link to="/parceiros/fornecedor" className="inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground font-bold px-6 py-3 md:px-8 md:py-4 rounded-xl text-base md:text-lg hover:bg-accent/90 transition-colors shadow-lg">
                     <BadgeCheck className="h-5 w-5" />
                     Sou Fornecedor
                   </Link>
-                  <Link to="/parceiros/oficina-mecanico" className="inline-flex items-center gap-2 bg-background text-foreground font-bold px-8 py-4 rounded-xl text-lg hover:bg-background/90 transition-colors shadow-lg hover:shadow-xl border border-border">
+                  <Link to="/parceiros/oficina-mecanico" className="inline-flex items-center justify-center gap-2 bg-background text-foreground font-bold px-6 py-3 md:px-8 md:py-4 rounded-xl text-base md:text-lg hover:bg-background/90 transition-colors shadow-lg border border-border">
                     <Wrench className="h-5 w-5" />
                     Sou Oficina / Mecânico
                   </Link>

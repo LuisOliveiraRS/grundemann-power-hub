@@ -11,14 +11,14 @@ const benefits = [
 const BenefitsBar = () => {
   return (
     <section className="border-b border-border bg-muted/50">
-      <div className="container py-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="container py-3 md:py-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
           {benefits.map((b) => (
-            <div key={b.title} className="flex items-center gap-3">
-              <b.icon className="h-8 w-8 text-primary flex-shrink-0" />
+            <div key={b.title} className="flex items-center gap-2 md:gap-3">
+              <b.icon className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
               <div>
-                <p className="font-heading text-sm font-bold text-foreground">{b.title}</p>
-                <p className="text-xs text-muted-foreground">{b.desc}</p>
+                <p className="font-heading text-xs md:text-sm font-bold text-foreground">{b.title}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">{b.desc}</p>
               </div>
             </div>
           ))}

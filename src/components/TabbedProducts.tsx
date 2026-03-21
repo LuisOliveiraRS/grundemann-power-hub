@@ -45,12 +45,12 @@ const TabbedProducts = () => {
   return (
     <section className="py-12">
       <div className="container">
-        <div className="flex items-center justify-center gap-1 mb-8 border-b border-border">
+        <div className="flex items-center justify-center gap-0 md:gap-1 mb-6 md:mb-8 border-b border-border overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-6 py-3 font-heading text-sm font-bold uppercase tracking-wider transition-all border-b-2 -mb-px ${
+              className={`px-3 md:px-6 py-2.5 md:py-3 font-heading text-xs md:text-sm font-bold uppercase tracking-wider transition-all border-b-2 -mb-px whitespace-nowrap ${
                 activeTab === tab.key
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
