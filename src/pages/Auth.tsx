@@ -136,7 +136,7 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (loginData.user) {
-        await redirectAfterAuth(loginData.user.id);
+        // Redirect handled by onAuthStateChange listener
       }
     } else {
       if (password.length < 6) {
