@@ -85,17 +85,17 @@ const PartsFinder = () => {
   };
 
   return (
-    <section className="py-14 bg-muted/30">
-      <div className="container">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 text-primary font-heading font-bold text-sm uppercase tracking-wider mb-2">
+    <section className="py-8 md:py-14 bg-muted/30">
+      <div className="container px-4">
+        <div className="text-center mb-6 md:mb-8">
+          <div className="inline-flex items-center gap-2 text-primary font-heading font-bold text-xs md:text-sm uppercase tracking-wider mb-2">
             <Search className="h-4 w-4" />
             Busca Inteligente de Peças
           </div>
-          <h2 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground">
+          <h2 className="font-heading text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground">
             Encontre a peça certa para seu motor
           </h2>
-          <p className="text-muted-foreground mt-2">Selecione a potência e o tipo de peça em 3 passos simples</p>
+          <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Selecione a potência e o tipo de peça em 3 passos simples</p>
         </div>
 
         {/* Steps indicator */}
