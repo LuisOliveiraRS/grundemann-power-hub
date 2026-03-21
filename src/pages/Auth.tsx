@@ -196,7 +196,7 @@ const Auth = () => {
         }
 
         toast({ title: "Cadastro realizado!", description: isPartner ? "Seu cadastro será analisado pelo administrador." : "Bem-vindo à Gründemann!" });
-        await redirectAfterAuth(data.user.id);
+        // Redirect handled by onAuthStateChange listener
       }
     }
     setLoading(false);
