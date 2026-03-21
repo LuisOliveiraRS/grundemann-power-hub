@@ -88,12 +88,12 @@ const HeroSection = () => {
               </span>
             </motion.div>
 
-            <h1 className="font-heading text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
+            <h1 className="font-heading text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
               <span className="text-background">PEÇAS E MOTORES</span>
               <br />
               <span className="text-background">ESTACIONÁRIOS COM</span>
               <br />
-              <span className="relative inline-block h-[1.2em] min-w-[280px] md:min-w-[400px] align-bottom">
+              <span className="relative inline-block h-[1.2em] min-w-[200px] sm:min-w-[280px] md:min-w-[400px] align-bottom">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={phraseIndex}
@@ -101,7 +101,7 @@ const HeroSection = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.5 }}
-                    className="text-primary absolute left-0 top-0 whitespace-nowrap"
+                    className="text-primary absolute left-0 top-0 whitespace-nowrap text-lg sm:text-2xl md:text-4xl lg:text-5xl"
                   >
                     {IMPACT_PHRASES[phraseIndex]}
                   </motion.span>
