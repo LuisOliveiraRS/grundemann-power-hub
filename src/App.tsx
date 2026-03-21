@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BackToTop from "@/components/BackToTop";
+import CookieConsent from "@/components/CookieConsent";
 import Index from "./pages/Index";
 
 // Lazy-loaded pages for performance
@@ -118,6 +119,7 @@ const App = () => (
                 </Suspense>
               </div>
               <BackToTop />
+              <CookieConsent />
             </AuthProvider>
           </BrowserRouter>
         </ErrorBoundary>
