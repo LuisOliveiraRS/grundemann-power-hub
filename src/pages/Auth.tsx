@@ -95,21 +95,7 @@ const Auth = () => {
     clearGuestCart();
   };
 
-  const redirectAfterAuth = async (userId: string) => {
-    await syncGuestCart(userId);
-    if (redirect) {
-      navigate(redirect);
-      return;
-    }
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const isAdminUser = (roles || []).some((r: any) => r.role === "admin");
-    if (isAdminUser) {
-      navigate("/admin");
-    } else {
-      const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
-      navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null));
-    }
-  };
+  // redirectAfterAuth is handled by the onAuthStateChange listener above
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
