@@ -53,22 +53,33 @@ const Auth = () => {
   }, [refCode]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      const userId = session.user.id;
-
+    const redirectUser = async (userId: string) => {
+      await syncGuestCart(userId);
+      if (redirect) {
+        navigate(redirect, { replace: true });
+        return;
+      }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
       if ((roles || []).some((r: any) => r.role === "admin")) {
         navigate("/admin", { replace: true });
         return;
       }
-
       const { data: mechanic } = await supabase.from("mechanics").select("partner_type").eq("user_id", userId).maybeSingle();
       navigate(getPartnerDashboardPath(mechanic?.partner_type as string || null), { replace: true });
     };
-    if (!redirect) checkAuth();
-  }, []);
+
+    // Check on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) redirectUser(session.user.id);
+    });
+
+    // Listen for auth state changes (Google OAuth, email confirm, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) redirectUser(session.user.id);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, redirect]);
 
   const syncGuestCart = async (userId: string) => {
     const guestItems = getGuestCart();
