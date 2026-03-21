@@ -31,7 +31,7 @@ const WhatsAppButton = ({ message = "Olá! Gostaria de mais informações.", flo
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 flex items-center justify-center h-14 w-14 rounded-full bg-[hsl(142,70%,45%)] text-white shadow-2xl hover:bg-[hsl(142,70%,40%)] hover:scale-110 transition-all duration-300 animate-bounce-slow"
+      className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 flex items-center justify-center h-12 w-12 md:h-14 md:w-14 rounded-full bg-[hsl(142,70%,45%)] text-white shadow-2xl hover:bg-[hsl(142,70%,40%)] hover:scale-110 transition-all duration-300 animate-bounce-slow"
       aria-label="WhatsApp"
       style={{ animationDuration: "3s" }}
     >
