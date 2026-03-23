@@ -67,6 +67,7 @@ const SupplierFinancialReport = () => {
   };
 
   const formatBRL = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
+  const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   const grandTotalRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalSalesRevenue, 0);
   const grandTotalSupplierRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalSupplierRevenueFromSales, 0);
@@ -112,7 +113,7 @@ const SupplierFinancialReport = () => {
     win.document.write(`<table><thead><tr><th>Fornecedor</th><th class="text-right">Produtos</th><th class="text-right">Estoque</th><th class="text-right">Vendidos</th><th class="text-right">Receita Vendas</th><th class="text-right">Receita Fornecedor</th><th class="text-right">Receita Grundemann</th></tr></thead><tbody>`);
 
     suppliers.forEach((supplier) => {
-      win.document.write(`<tr><td>${supplier.company_name}</td><td class="text-right">${supplier.totalProducts}</td><td class="text-right">${supplier.totalStock}</td><td class="text-right">${supplier.totalUnitsSold}</td><td class="text-right">${formatBRL(supplier.totalSalesRevenue)}</td><td class="text-right">${formatBRL(supplier.totalSupplierRevenueFromSales)}</td><td class="text-right">${formatBRL(supplier.totalStoreRevenueFromSales)}</td></tr>`);
+      win.document.write(`<tr><td>${escapeHtml(supplier.company_name)}</td><td class="text-right">${supplier.totalProducts}</td><td class="text-right">${supplier.totalStock}</td><td class="text-right">${supplier.totalUnitsSold}</td><td class="text-right">${formatBRL(supplier.totalSalesRevenue)}</td><td class="text-right">${formatBRL(supplier.totalSupplierRevenueFromSales)}</td><td class="text-right">${formatBRL(supplier.totalStoreRevenueFromSales)}</td></tr>`);
     });
 
     win.document.write(`<tr class="total-row"><td>TOTAL GERAL</td><td class="text-right">${grandTotalProducts}</td><td class="text-right">${grandTotalStock}</td><td class="text-right">${grandTotalSold}</td><td class="text-right">${formatBRL(grandTotalRevenue)}</td><td class="text-right">${formatBRL(grandTotalSupplierRevenue)}</td><td class="text-right">${formatBRL(grandTotalGrundemannRevenue)}</td></tr>`);

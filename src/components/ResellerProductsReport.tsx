@@ -120,7 +120,8 @@ const ResellerProductsReport = ({ resellerId, supplierName }: ResellerProductsRe
     </style></head><body>`);
 
     win.document.write(`<div class="header"><h1>Relatório de Produtos do Fornecedor</h1>`);
-    win.document.write(`<p>${supplierName || "Fornecedor"} · ${periodLabel} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
+    const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    win.document.write(`<p>${escapeHtml(supplierName || "Fornecedor")} · ${periodLabel} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
 
     win.document.write(`<div class="kpi-grid">`);
     [
@@ -144,7 +145,7 @@ const ResellerProductsReport = ({ resellerId, supplierName }: ResellerProductsRe
       const sales = salesByProductId.get(product.id);
       const status = product.stock <= 0 ? "Sem estoque" : product.is_active ? "Ativo" : "Inativo";
       win.document.write(`<tr>
-        <td>${product.name}</td><td>${product.sku || "—"}</td>
+        <td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.sku || "—")}</td>
         <td class="text-right">${formatBRL(product.salePrice)}</td>
         <td class="text-right">${product.supplierUnitCost > 0 ? formatBRL(product.supplierUnitCost) : "—"}</td>
         <td class="text-right">${product.storeMarkupPct > 0 ? `${product.storeMarkupPct.toFixed(1)}%` : "—"}</td>
