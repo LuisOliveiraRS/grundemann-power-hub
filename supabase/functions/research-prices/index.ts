@@ -245,10 +245,8 @@ Regras:
       console.error("Error parsing AI response:", e);
     }
 
-    // Step 3: Save results to database
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Step 3: Save results to database (reuse supabaseAdmin from auth check)
+    const supabase = supabaseAdmin;
 
     if (productId && analysis.competitors?.length > 0) {
       const inserts = analysis.competitors.map((c: any) => ({
