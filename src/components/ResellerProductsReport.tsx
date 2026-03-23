@@ -145,7 +145,7 @@ const ResellerProductsReport = ({ resellerId, supplierName }: ResellerProductsRe
       const sales = salesByProductId.get(product.id);
       const status = product.stock <= 0 ? "Sem estoque" : product.is_active ? "Ativo" : "Inativo";
       win.document.write(`<tr>
-        <td>${product.name}</td><td>${product.sku || "—"}</td>
+        <td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.sku || "—")}</td>
         <td class="text-right">${formatBRL(product.salePrice)}</td>
         <td class="text-right">${product.supplierUnitCost > 0 ? formatBRL(product.supplierUnitCost) : "—"}</td>
         <td class="text-right">${product.storeMarkupPct > 0 ? `${product.storeMarkupPct.toFixed(1)}%` : "—"}</td>
