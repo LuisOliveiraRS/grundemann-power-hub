@@ -120,7 +120,8 @@ const ResellerProductsReport = ({ resellerId, supplierName }: ResellerProductsRe
     </style></head><body>`);
 
     win.document.write(`<div class="header"><h1>Relatório de Produtos do Fornecedor</h1>`);
-    win.document.write(`<p>${supplierName || "Fornecedor"} · ${periodLabel} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
+    const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    win.document.write(`<p>${escapeHtml(supplierName || "Fornecedor")} · ${periodLabel} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</p></div>`);
 
     win.document.write(`<div class="kpi-grid">`);
     [
