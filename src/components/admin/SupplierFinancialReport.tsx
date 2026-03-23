@@ -67,6 +67,7 @@ const SupplierFinancialReport = () => {
   };
 
   const formatBRL = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
+  const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   const grandTotalRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalSalesRevenue, 0);
   const grandTotalSupplierRevenue = suppliers.reduce((sum, supplier) => sum + supplier.totalSupplierRevenueFromSales, 0);
