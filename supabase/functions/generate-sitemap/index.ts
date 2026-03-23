@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
   </url>
 `;
     }
+  }
 
   if (products) {
     for (const p of products) {
