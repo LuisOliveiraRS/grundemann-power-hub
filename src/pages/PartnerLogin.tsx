@@ -41,6 +41,10 @@ const PartnerLogin = () => {
 
   const allowedTypes = routeType ? routeTypeMap[routeType] || (Object.keys(partnerConfig) as PartnerType[]) : (Object.keys(partnerConfig) as PartnerType[]);
   const [partnerType, setPartnerType] = useState<PartnerType>(allowedTypes[0]);
+
+  useEffect(() => {
+    setPartnerType(allowedTypes[0]);
+  }, [routeType]);
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [inscricaoEstadual, setInscricaoEstadual] = useState("");
