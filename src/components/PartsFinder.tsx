@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, ChevronRight, Zap, Filter, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const hpOptions = ["5", "7", "8", "9", "10", "13", "15"];
+const hpOptions = ["5", "7", "8", "9", "10", "13", "15", "16", "18", "20"];
 
 const partTypes = [
   { label: "Filtro de Ar", search: "filtro ar" },
