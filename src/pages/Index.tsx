@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { BookOpen, Wrench, BadgeCheck, Calculator, Stethoscope } from "lucide-react";
+import { BookOpen, Wrench, BadgeCheck, Calculator, Stethoscope, Building } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
@@ -176,7 +176,7 @@ const Index = () => {
                 </div>
                 <h2 className="font-heading text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-secondary-foreground mb-2 md:mb-3">Fornecedores, Oficinas, Mecânicos e Locadoras<br className="hidden md:block" /> Cadastre-se aqui.</h2>
                 <p className="text-secondary-foreground/80 mb-4 md:mb-6 text-sm md:text-lg">Acesse preços exclusivos, catálogos técnicos e suporte especializado para parceiros.</p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
                   <Link to="/parceiros/fornecedor" className="inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground font-bold px-6 py-3 md:px-8 md:py-4 rounded-xl text-base md:text-lg hover:bg-accent/90 transition-colors shadow-lg">
                     <BadgeCheck className="h-5 w-5" />
                     Sou Fornecedor
@@ -184,6 +184,10 @@ const Index = () => {
                   <Link to="/parceiros/oficina-mecanico" className="inline-flex items-center justify-center gap-2 bg-background text-foreground font-bold px-6 py-3 md:px-8 md:py-4 rounded-xl text-base md:text-lg hover:bg-background/90 transition-colors shadow-lg border border-border">
                     <Wrench className="h-5 w-5" />
                     Sou Oficina / Mecânico
+                  </Link>
+                  <Link to="/parceiros/locadora" className="inline-flex items-center justify-center gap-2 bg-background text-foreground font-bold px-6 py-3 md:px-8 md:py-4 rounded-xl text-base md:text-lg hover:bg-background/90 transition-colors shadow-lg border border-border">
+                    <Building className="h-5 w-5" />
+                    Sou Locadora
                   </Link>
                 </div>
               </div>
