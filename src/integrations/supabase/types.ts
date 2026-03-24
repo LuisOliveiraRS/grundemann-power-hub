@@ -431,36 +431,53 @@ export type Database = {
       }
       hero_banners: {
         Row: {
+          background_image_url: string | null
           created_at: string
+          cta_text: string | null
           display_order: number
           id: string
           image_url: string
           is_active: boolean
           link_url: string | null
+          product_id: string | null
           title: string | null
           updated_at: string
         }
         Insert: {
+          background_image_url?: string | null
           created_at?: string
+          cta_text?: string | null
           display_order?: number
           id?: string
           image_url: string
           is_active?: boolean
           link_url?: string | null
+          product_id?: string | null
           title?: string | null
           updated_at?: string
         }
         Update: {
+          background_image_url?: string | null
           created_at?: string
+          cta_text?: string | null
           display_order?: number
           id?: string
           image_url?: string
           is_active?: boolean
           link_url?: string | null
+          product_id?: string | null
           title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hero_banners_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       import_logs: {
         Row: {
