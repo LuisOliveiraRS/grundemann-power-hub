@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
@@ -11,7 +11,7 @@ import CategoryNav from "@/components/CategoryNav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEOBreadcrumb from "@/components/SEOBreadcrumb";
-import { ArrowLeft, Fuel, Zap, Cog, Wrench, Settings, ShieldCheck, Battery, Disc, Filter, Fan, Gauge, Plug, CircuitBoard, Hammer, PenTool, Cylinder, Box, Package, Layers, Cpu, RotateCcw, Thermometer, Droplets, Flame, Weight, Ruler, Bolt } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Product {
@@ -24,47 +24,22 @@ interface Product {
   sku: string | null;
 }
 
-const subcategoryIconMap: Record<string, any> = {
-  "cabecote": Cpu, "pistao": Cylinder, "bloco": Box, "motor": Cog,
-  "volante": RotateCcw, "virabrequim": RotateCcw,
-  "carburador": Droplets, "injecao": Droplets,
-  "filtro": Filter, "escape": Fan, "retratil": Plug,
-  "tampa": Disc, "acelerador": Gauge, "tanque": Droplets,
-  "combustivel": Flame, "carenagem": Layers, "partida": Zap,
-  "oleo": Droplets, "vela": Flame, "correia": RotateCcw,
-  "rolamento": RotateCcw, "junta": Layers, "reparo": Wrench,
-  "kit": Package, "bateria": Battery, "regulador": CircuitBoard,
-  "bobina": CircuitBoard, "estator": CircuitBoard,
-  "parafuso": Bolt, "mangueira": Thermometer,
-  "gerador": Fuel, "diesel": Fuel, "gasolina": Zap,
-  "semi": RotateCcw, "bivolt": Zap, "monofasico": Zap, "trifasico": Zap,
-  "ferramenta": Hammer, "peca": Cog, "componente": Cog,
-  "acessorio": Settings, "servico": ShieldCheck,
-};
-
-const getSubcategoryIcon = (name: string, slug: string): any => {
-  const lower = (name + " " + slug).toLowerCase();
-  for (const [key, icon] of Object.entries(subcategoryIconMap)) {
-    if (lower.includes(key)) return icon;
-  }
-  return Cog;
-};
-
 const CategoryPage = () => {
   const { "*": slugPath } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { tree, loading: treeLoading, findBySlugPath, getAncestors, getAllDescendantIds } = useMenuCategories();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentNode, setCurrentNode] = useState<MenuCategoryNode | null>(null);
   const [childCategories, setChildCategories] = useState<MenuCategoryNode[]>([]);
+  const [activeChild, setActiveChild] = useState<string | null>(null);
 
   useEffect(() => {
     if (treeLoading || !slugPath) return;
     const node = findBySlugPath(slugPath);
     setCurrentNode(node);
     setChildCategories(node?.children || []);
+    setActiveChild(null);
     if (node) loadProducts(node);
     else { setProducts([]); setLoading(false); }
   }, [slugPath, treeLoading, tree]);
@@ -73,28 +48,62 @@ const CategoryPage = () => {
     setLoading(true);
     const allIds = getAllDescendantIds(node.id);
 
-    // Fetch products from menu_category_id and from product_categories junction table
-    const [directRes, linksRes] = await Promise.all([
+    // Fetch from direct menu_category_id AND from junction table
+    const [directRes, junctionRes] = await Promise.all([
       supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku")
         .in("menu_category_id", allIds).eq("is_active", true),
-      supabase.from("product_categories").select("product_id")
-        .or(allIds.map(id => `category_id.eq.${id},subcategory_id.eq.${id}`).join(",")),
+      supabase.from("product_menu_categories").select("product_id")
+        .in("menu_category_id", allIds),
     ]);
 
     const directProducts = (directRes.data || []) as Product[];
-    const linkedIds = [...new Set((linksRes.data || []).map((l: any) => l.product_id))];
+    const junctionIds = [...new Set((junctionRes.data || []).map((l: any) => l.product_id))];
 
-    let linkedProducts: Product[] = [];
-    if (linkedIds.length > 0) {
+    let junctionProducts: Product[] = [];
+    if (junctionIds.length > 0) {
       const { data } = await supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku")
-        .in("id", linkedIds).eq("is_active", true);
-      linkedProducts = (data || []) as Product[];
+        .in("id", junctionIds).eq("is_active", true);
+      junctionProducts = (data || []) as Product[];
     }
 
-    // Merge unique
     const map = new Map<string, Product>();
-    [...directProducts, ...linkedProducts].forEach(p => map.set(p.id, p));
+    [...directProducts, ...junctionProducts].forEach(p => map.set(p.id, p));
     setProducts([...map.values()].sort((a, b) => a.name.localeCompare(b.name)));
+    setLoading(false);
+  };
+
+  const loadProductsForChild = async (childId: string) => {
+    if (activeChild === childId) {
+      setActiveChild(null);
+      if (currentNode) loadProducts(currentNode);
+      return;
+    }
+    setActiveChild(childId);
+    setLoading(true);
+    const childNode = childCategories.find(c => c.id === childId);
+    if (childNode) {
+      const allIds = getAllDescendantIds(childNode.id);
+      const [directRes, junctionRes] = await Promise.all([
+        supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku")
+          .in("menu_category_id", allIds).eq("is_active", true),
+        supabase.from("product_menu_categories").select("product_id")
+          .in("menu_category_id", allIds),
+      ]);
+
+      const directProducts = (directRes.data || []) as Product[];
+      const junctionIds = [...new Set((junctionRes.data || []).map((l: any) => l.product_id))];
+
+      let junctionProducts: Product[] = [];
+      if (junctionIds.length > 0) {
+        const { data } = await supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku")
+          .in("id", junctionIds).eq("is_active", true);
+        junctionProducts = (data || []) as Product[];
+      }
+
+      const map = new Map<string, Product>();
+      [...directProducts, ...junctionProducts].forEach(p => map.set(p.id, p));
+      setProducts([...map.values()].sort((a, b) => a.name.localeCompare(b.name)));
+    }
     setLoading(false);
   };
 
@@ -102,19 +111,11 @@ const CategoryPage = () => {
   const title = currentNode?.name || "Categoria";
   const description = currentNode?.description;
 
-  // Build breadcrumb path
   const breadcrumbItems: { label: string; href?: string }[] = ancestors.map(a => {
     const ancestorNode = findNodeInTree(tree, a.id);
     return { label: a.name, href: `/categoria/${ancestorNode?.fullPath || a.slug}` };
   });
   breadcrumbItems.push({ label: title });
-
-  function getSlugPathForAncestor(id: string): string {
-    const chain: string[] = [];
-    let current = tree.length > 0 ? findNodeInTree(tree, id) : null;
-    if (!current) return "";
-    return current.fullPath;
-  }
 
   function findNodeInTree(nodes: MenuCategoryNode[], id: string): MenuCategoryNode | null {
     for (const node of nodes) {
@@ -125,7 +126,6 @@ const CategoryPage = () => {
     return null;
   }
 
-  // Back navigation
   const parentSlugPath = slugPath?.includes("/")
     ? slugPath.split("/").slice(0, -1).join("/")
     : null;
@@ -155,7 +155,7 @@ const CategoryPage = () => {
 
           {currentNode && <SEOBreadcrumb items={breadcrumbItems} />}
 
-          {treeLoading || loading ? (
+          {treeLoading || (loading && !products.length) ? (
             <ProductGridSkeleton count={8} />
           ) : !currentNode ? (
             <p className="text-center text-muted-foreground py-12">Categoria não encontrada.</p>
@@ -167,56 +167,70 @@ const CategoryPage = () => {
                   {ancestors.map(a => a.name).join(" > ")} &gt; {title}
                 </p>
               )}
-              {description && <p className="text-muted-foreground mb-6">{description}</p>}
+              {description && <p className="text-muted-foreground mb-4">{description}</p>}
 
-              {/* Show child categories as cards */}
+              {/* Subcategory chips */}
               {childCategories.length > 0 && (
-                <div className="mb-8">
-                  <h2 className="font-heading text-lg font-bold mb-4">Subcategorias</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {childCategories.map(child => {
-                      const SubIcon = getSubcategoryIcon(child.name, child.slug);
-                      return (
-                        <Link
-                          key={child.id}
-                          to={`/categoria/${child.fullPath}`}
-                          className="group flex flex-col items-center gap-2 rounded-lg border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all text-center"
-                        >
-                          {child.image_url ? (
-                            <img src={child.image_url} alt={child.name} className="h-16 w-16 object-contain rounded-lg" />
-                          ) : (
-                            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <SubIcon className="h-7 w-7 text-primary" />
-                            </div>
-                          )}
-                          <span className="font-heading text-sm font-semibold">{child.name}</span>
-                          {child.children.length > 0 && (
-                            <span className="text-xs text-muted-foreground">{child.children.length} subcategorias</span>
-                          )}
-                        </Link>
-                      );
-                    })}
+                <div className="mb-6">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => { setActiveChild(null); if (currentNode) loadProducts(currentNode); }}
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        !activeChild
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "border border-border bg-card text-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      Todos
+                    </button>
+                    {childCategories.map(child => (
+                      <button
+                        key={child.id}
+                        onClick={() => loadProductsForChild(child.id)}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
+                          activeChild === child.id
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "border border-border bg-card text-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        {child.name}
+                        {child.children.length > 0 && (
+                          <Link
+                            to={`/categoria/${child.fullPath}`}
+                            onClick={e => e.stopPropagation()}
+                            className="ml-0.5 opacity-60 hover:opacity-100"
+                          >
+                            <ChevronRight className="h-3 w-3" />
+                          </Link>
+                        )}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {products.length === 0 ? (
+              {loading ? (
+                <ProductGridSkeleton count={8} />
+              ) : products.length === 0 ? (
                 <p className="text-center text-muted-foreground py-12">Nenhum produto nesta categoria ainda.</p>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {products.map(p => (
-                    <ProductCard
-                      key={p.id}
-                      id={p.id}
-                      name={p.name}
-                      image={p.image_url || "/placeholder.svg"}
-                      price={p.price}
-                      oldPrice={p.original_price || undefined}
-                      sku={p.sku || undefined}
-                      stockQuantity={p.stock_quantity}
-                    />
-                  ))}
-                </div>
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">{products.length} produto{products.length !== 1 ? 's' : ''} encontrado{products.length !== 1 ? 's' : ''}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {products.map(p => (
+                      <ProductCard
+                        key={p.id}
+                        id={p.id}
+                        name={p.name}
+                        image={p.image_url || "/placeholder.svg"}
+                        price={p.price}
+                        oldPrice={p.original_price || undefined}
+                        sku={p.sku || undefined}
+                        stockQuantity={p.stock_quantity}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </>
           )}

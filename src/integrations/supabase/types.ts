@@ -1265,6 +1265,42 @@ export type Database = {
           },
         ]
       }
+      product_menu_categories: {
+        Row: {
+          created_at: string
+          id: string
+          menu_category_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_category_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_category_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_menu_categories_menu_category_id_fkey"
+            columns: ["menu_category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_menu_categories_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_models: {
         Row: {
           created_at: string
