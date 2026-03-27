@@ -2,34 +2,64 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MessageCircle } from "lucide-react";
-import heroKraftBg from "@/assets/hero-kraft-bg.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import heroKraftBg1 from "@/assets/hero-kraft-bg-1.jpg";
+import heroKraftBg2 from "@/assets/hero-kraft-bg-2.jpg";
+import heroKraftBg3 from "@/assets/hero-kraft-bg-3.jpg";
 
-const HEADLINES = [
+const DEFAULT_HEADLINES = [
   { title: "Potência e\nconfiabilidade", subtitle: "Peças e motores estacionários com qualidade profissional" },
   { title: "Soluções que\ngeram resultados", subtitle: "Confiança e parceria para o crescimento do seu negócio" },
   { title: "Força e\ndurabilidade", subtitle: "Filtros, carburadores e assistência técnica especializada" },
 ];
 
+const BACKGROUNDS = [heroKraftBg1, heroKraftBg2, heroKraftBg3];
+
 const HeroKraft = () => {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
+  const [headlines, setHeadlines] = useState(DEFAULT_HEADLINES);
+
+  useEffect(() => {
+    supabase
+      .from("hero_headlines")
+      .select("title, subtitle")
+      .eq("is_active", true)
+      .order("display_order")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setHeadlines(data.map((h) => ({ title: h.title, subtitle: h.subtitle })));
+        }
+      });
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % HEADLINES.length);
+      setIndex((prev) => (prev + 1) % headlines.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [headlines.length]);
+
+  const bgImage = BACKGROUNDS[index % BACKGROUNDS.length];
 
   return (
     <section className="relative w-full h-[85vh] min-h-[500px] max-h-[800px] overflow-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroKraftBg})` }}
-      />
-      {/* Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent" />
+      {/* Background images with crossfade */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.2 }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${bgImage})` }}
+        />
+      </AnimatePresence>
+
+      {/* Dark gradient overlay for harmonious shadow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--secondary))]/95 via-[hsl(var(--secondary))]/70 to-[hsl(var(--secondary))]/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-[hsl(var(--secondary))]/40" />
       {/* Bottom gradient for smooth transition */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
 
@@ -45,10 +75,10 @@ const HeroKraft = () => {
               transition={{ duration: 0.6 }}
             >
               <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-black leading-[1.05] tracking-tight text-white whitespace-pre-line">
-                {HEADLINES[index].title}
+                {headlines[index]?.title}
               </h1>
               <p className="mt-4 text-lg md:text-xl text-white/70 max-w-lg">
-                {HEADLINES[index].subtitle}
+                {headlines[index]?.subtitle}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -84,7 +114,7 @@ const HeroKraft = () => {
 
       {/* Slide indicators */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {HEADLINES.map((_, i) => (
+        {headlines.map((_, i) => (
           <button
             key={i}
             onClick={() => setIndex(i)}
