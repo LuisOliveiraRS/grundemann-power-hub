@@ -89,6 +89,11 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     const extraLinks = productForm.extra_category_ids.filter(Boolean).map(catId => ({ product_id: productId!, category_id: catId }));
     if (extraLinks.length > 0) await supabase.from("product_categories").insert(extraLinks);
 
+    // Save additional menu category links
+    await supabase.from("product_menu_categories" as any).delete().eq("product_id", productId);
+    const menuCatLinks = (productForm.menu_category_ids || []).filter(id => id && id !== productForm.menu_category_id).map(id => ({ product_id: productId!, menu_category_id: id }));
+    if (menuCatLinks.length > 0) await supabase.from("product_menu_categories" as any).insert(menuCatLinks);
+
     // Save reseller pricing to product_resellers if reseller is set
     if (productForm.reseller_id && productId) {
       const resellerPrice = productForm.reseller_price ? parseFloat(productForm.reseller_price) : null;
@@ -142,6 +147,11 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
     setEditingProduct(p);
     const linkedCatIds = productCategoryLinks.filter(l => l.product_id === p.id).map(l => l.category_id).filter(cid => cid !== p.category_id);
     const formState = productToFormState(p, linkedCatIds);
+
+    // Load additional menu category links
+    const { data: menuCatLinks } = await supabase.from("product_menu_categories" as any).select("menu_category_id").eq("product_id", p.id);
+    formState.menu_category_ids = (menuCatLinks || []).map((l: any) => l.menu_category_id);
+
     // Load reseller pricing if product has a reseller
     if (p.reseller_id) {
       const { data: pr } = await supabase.from("product_resellers")
