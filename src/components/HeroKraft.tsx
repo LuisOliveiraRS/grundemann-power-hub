@@ -4,7 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const SUPABASE_URL = "https://hodtsmyjqtkjlkburoea.supabase.co/storage/v1/object/public/hero-banners";
+import heroBg1 from "@/assets/hero-bg-engine-1.jpg";
+import heroBg2 from "@/assets/hero-bg-engine-2.jpg";
+import heroBg3 from "@/assets/hero-bg-engine-3.jpg";
+
+const FALLBACK_BACKGROUNDS = [heroBg1, heroBg2, heroBg3];
 
 const DEFAULT_HEADLINES = [
   { title: "Potência e\nconfiabilidade", subtitle: "Peças e motores estacionários com qualidade profissional" },
@@ -12,28 +16,24 @@ const DEFAULT_HEADLINES = [
   { title: "Força e\ndurabilidade", subtitle: "Filtros, carburadores e assistência técnica especializada" },
 ];
 
-const BACKGROUNDS = [
-  `${SUPABASE_URL}/hero-kraft-bg-1.jpg`,
-  `${SUPABASE_URL}/hero-kraft-bg-2.jpg`,
-  `${SUPABASE_URL}/hero-kraft-bg-3.jpg`,
-];
-
 const HeroKraft = () => {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [headlines, setHeadlines] = useState(DEFAULT_HEADLINES);
+  const [backgrounds, setBackgrounds] = useState<string[]>(FALLBACK_BACKGROUNDS);
 
   useEffect(() => {
-    supabase
-      .from("hero_headlines")
-      .select("title, subtitle")
-      .eq("is_active", true)
-      .order("display_order")
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setHeadlines(data.map((h) => ({ title: h.title, subtitle: h.subtitle })));
-        }
-      });
+    Promise.all([
+      supabase.from("hero_headlines").select("title, subtitle").eq("is_active", true).order("display_order"),
+      supabase.from("hero_backgrounds").select("image_url").eq("is_active", true).order("display_order"),
+    ]).then(([headRes, bgRes]) => {
+      if (headRes.data && headRes.data.length > 0) {
+        setHeadlines(headRes.data.map((h) => ({ title: h.title, subtitle: h.subtitle })));
+      }
+      if (bgRes.data && bgRes.data.length > 0) {
+        setBackgrounds(bgRes.data.map((b) => b.image_url));
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const HeroKraft = () => {
     return () => clearInterval(interval);
   }, [headlines.length]);
 
-  const bgImage = BACKGROUNDS[index % BACKGROUNDS.length];
+  const bgImage = backgrounds[index % backgrounds.length];
 
   return (
     <section className="relative w-full h-[85vh] min-h-[500px] max-h-[800px] overflow-hidden">
@@ -60,11 +60,10 @@ const HeroKraft = () => {
         />
       </AnimatePresence>
 
-      {/* Dark gradient overlay for harmonious shadow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--secondary))]/95 via-[hsl(var(--secondary))]/70 to-[hsl(var(--secondary))]/30" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-[hsl(var(--secondary))]/40" />
-      {/* Bottom gradient for smooth transition */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+      {/* Reduced overlay for more visible backgrounds */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--secondary))]/80 via-[hsl(var(--secondary))]/50 to-[hsl(var(--secondary))]/15" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-[hsl(var(--secondary))]/20" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
       {/* Content */}
       <div className="relative z-10 h-full container flex items-center">
