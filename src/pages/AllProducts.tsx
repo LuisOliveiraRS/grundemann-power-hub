@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useMenuCategories } from "@/hooks/useMenuCategories";
 import ProductCard from "@/components/ProductCard";
 import ProductGridSkeleton from "@/components/ProductSkeletons";
 import TopBar from "@/components/TopBar";
@@ -14,28 +15,26 @@ import SEOBreadcrumb from "@/components/SEOBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface Product {
   id: string; name: string; price: number; original_price: number | null;
   image_url: string | null; stock_quantity: number; sku: string | null;
-  category_id: string | null; brand: string | null; hp: string | null;
+  menu_category_id: string | null; brand: string | null; hp: string | null;
   engine_model: string | null; fuel_type: string | null; slug: string | null;
 }
 
-interface Category { id: string; name: string; slug: string; }
-interface ProductCategoryLink { product_id: string; category_id: string; }
+interface ProductMenuLink { product_id: string; menu_category_id: string; }
 
 const ITEMS_PER_PAGE = 24;
 
 const AllProducts = () => {
   const [searchParams] = useSearchParams();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { tree, categories: menuCategories, getAllDescendantIds } = useMenuCategories();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [links, setLinks] = useState<ProductCategoryLink[]>([]);
+  const [menuLinks, setMenuLinks] = useState<ProductMenuLink[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
 
   const [search, setSearch] = useState(searchParams.get("busca") || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("categoria") || "");
@@ -50,38 +49,49 @@ const AllProducts = () => {
 
   useEffect(() => { loadData(); }, []);
 
-  const linkMap = useMemo(() => {
+  // Build a map: product_id -> Set of all menu_category_ids (primary + junction)
+  const productCatMap = useMemo(() => {
     const map = new Map<string, Set<string>>();
-    links.forEach((l) => {
+    products.forEach(p => {
+      if (!map.has(p.id)) map.set(p.id, new Set());
+      if (p.menu_category_id) map.get(p.id)!.add(p.menu_category_id);
+    });
+    menuLinks.forEach(l => {
       if (!map.has(l.product_id)) map.set(l.product_id, new Set());
-      map.get(l.product_id)!.add(l.category_id);
+      map.get(l.product_id)!.add(l.menu_category_id);
     });
     return map;
-  }, [links]);
+  }, [products, menuLinks]);
 
   const loadData = async () => {
-    const [p, c, l] = await Promise.all([
-      supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku, category_id, brand, hp, engine_model, fuel_type, slug").eq("is_active", true).order("name"),
-      supabase.from("categories").select("*").order("name"),
-      supabase.from("product_categories").select("product_id, category_id"),
+    const [p, ml] = await Promise.all([
+      supabase.from("products").select("id, name, price, original_price, image_url, stock_quantity, sku, menu_category_id, brand, hp, engine_model, fuel_type, slug").eq("is_active", true).order("name"),
+      supabase.from("product_menu_categories").select("product_id, menu_category_id"),
     ]);
     setProducts((p.data || []) as Product[]);
-    setCategories((c.data || []) as Category[]);
-    setLinks((l.data || []) as ProductCategoryLink[]);
+    setMenuLinks((ml.data || []) as ProductMenuLink[]);
     setLoading(false);
   };
 
   const brands = [...new Set(products.map(p => p.brand).filter(Boolean))] as string[];
   const hps = [...new Set(products.map(p => p.hp).filter(Boolean))].sort() as string[];
 
+  // Top-level menu categories for the filter dropdown
+  const topCategories = tree;
+
   const filtered = products.filter(p => {
     if (selectedCategory) {
-      const inPrimary = p.category_id === selectedCategory;
-      const inLinked = linkMap.get(p.id)?.has(selectedCategory) ?? false;
-      if (!inPrimary && !inLinked) return false;
+      const allCatIds = getAllDescendantIds(selectedCategory);
+      const productCats = productCatMap.get(p.id) || new Set();
+      const inCategory = allCatIds.some(catId => productCats.has(catId));
+      if (!inCategory) return false;
     }
     if (selectedBrand && p.brand !== selectedBrand) return false;
-    if (selectedHp && p.hp !== selectedHp) return false;
+    if (selectedHp) {
+      const pHpNum = (p.hp || "").replace(/[^0-9.]/g, "");
+      const filterHpNum = selectedHp.replace(/[^0-9.]/g, "");
+      if (pHpNum !== filterHpNum) return false;
+    }
     if (selectedFuel && p.fuel_type !== selectedFuel) return false;
     if (priceMin && p.price < parseFloat(priceMin)) return false;
     if (priceMax && p.price > parseFloat(priceMax)) return false;
@@ -139,13 +149,13 @@ const AllProducts = () => {
             </div>
           </div>
 
-          {/* Always-visible filter bar */}
+          {/* Filter bar */}
           <div className="bg-card rounded-xl border border-border p-4 mb-6">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <Input placeholder="🔍 Buscar produto..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-9 text-sm" />
               <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}>
                 <option value="">📂 Todas categorias</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {topCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <select className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background h-9" value={selectedBrand} onChange={e => { setSelectedBrand(e.target.value); setPage(1); }}>
                 <option value="">🏷️ Todas marcas</option>
@@ -177,7 +187,7 @@ const AllProducts = () => {
             {activeFilters > 0 && (
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
                 <span className="text-xs text-muted-foreground">Filtros ativos:</span>
-                {selectedCategory && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedCategory(""); setPage(1); }}>{categories.find(c => c.id === selectedCategory)?.name} ✕</Badge>}
+                {selectedCategory && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedCategory(""); setPage(1); }}>{topCategories.find(c => c.id === selectedCategory)?.name || "Categoria"} ✕</Badge>}
                 {selectedBrand && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedBrand(""); setPage(1); }}>{selectedBrand} ✕</Badge>}
                 {selectedHp && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedHp(""); setPage(1); }}>{selectedHp} HP ✕</Badge>}
                 {selectedFuel && <Badge variant="secondary" className="text-xs cursor-pointer" onClick={() => { setSelectedFuel(""); setPage(1); }}>{selectedFuel} ✕</Badge>}

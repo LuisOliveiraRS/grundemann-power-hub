@@ -9,21 +9,23 @@ import { Plus, Trash2, RefreshCw, Wand2, Loader2, FileUp, Download, ImageIcon, X
 import ProductForm, { emptyProductForm, productToFormState, type ProductFormState } from "@/components/admin/ProductForm";
 import ProductFilters from "@/components/admin/ProductFilters";
 import ProductTable from "@/components/admin/ProductTable";
-import type { Product, Category, Subcategory, ResellerOption, ProductCategoryLink, ProfileFull } from "@/types/admin";
+import { useMenuCategories } from "@/hooks/useMenuCategories";
+import type { Product, ResellerOption, ProfileFull } from "@/types/admin";
 
 interface AdminProductsTabProps {
   products: Product[];
-  categories: Category[];
-  subcategories: Subcategory[];
+  categories: any[]; // kept for backward compat but not used
+  subcategories: any[];
   resellers: ResellerOption[];
   clients: ProfileFull[];
-  productCategoryLinks: ProductCategoryLink[];
+  productCategoryLinks: any[];
   onReload: () => void;
 }
 
 const AdminProductsTab = ({ products, categories, subcategories, resellers, clients, productCategoryLinks, onReload }: AdminProductsTabProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tree, categories: menuCategories } = useMenuCategories(true);
 
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [productForm, setProductForm] = useState<ProductFormState>(emptyProductForm);
@@ -37,9 +39,20 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
   const [aiImageProgress, setAiImageProgress] = useState(0);
   const [aiImageTotal, setAiImageTotal] = useState(0);
 
+  // Get all descendant IDs for a menu category (for filtering)
+  const getDescendantIds = (id: string): string[] => {
+    const ids: string[] = [id];
+    const children = menuCategories.filter(c => c.parent_id === id);
+    children.forEach(child => ids.push(...getDescendantIds(child.id)));
+    return ids;
+  };
+
   const filteredProducts = products.filter(p => {
     if (productSearch && !p.name.toLowerCase().includes(productSearch.toLowerCase()) && !(p.sku || "").toLowerCase().includes(productSearch.toLowerCase())) return false;
-    if (productCatFilter && p.category_id !== productCatFilter) return false;
+    if (productCatFilter) {
+      const allIds = getDescendantIds(productCatFilter);
+      if (!allIds.includes(p.menu_category_id || "")) return false;
+    }
     if (productStatusFilter === "active" && !p.is_active) return false;
     if (productStatusFilter === "inactive" && p.is_active) return false;
     if (productStatusFilter === "featured" && !p.is_featured) return false;
@@ -56,7 +69,7 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       sku: productForm.sku || null, price: parseFloat(productForm.price) || 0,
       original_price: productForm.original_price ? parseFloat(productForm.original_price) : null,
       stock_quantity: parseInt(productForm.stock_quantity) || 0,
-      category_id: productForm.category_id || null, subcategory_id: productForm.subcategory_id || null,
+      category_id: null, subcategory_id: null, // clear old fields
       is_featured: productForm.is_featured, is_active: productForm.is_active, free_shipping: productForm.free_shipping,
       image_url: productForm.image_url || null, additional_images: productForm.additional_images.filter(Boolean),
       video_url: productForm.video_url || null, brand: productForm.brand || null, hp: productForm.hp || null,
@@ -84,17 +97,18 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
       productId = newProd.id;
       toast({ title: "Produto criado!" });
     }
-    // Save extra category links
-    await supabase.from("product_categories").delete().eq("product_id", productId);
-    const extraLinks = productForm.extra_category_ids.filter(Boolean).map(catId => ({ product_id: productId!, category_id: catId }));
-    if (extraLinks.length > 0) await supabase.from("product_categories").insert(extraLinks);
 
-    // Save additional menu category links
+    // Save ALL menu category links (junction table)
     await supabase.from("product_menu_categories" as any).delete().eq("product_id", productId);
-    const menuCatLinks = (productForm.menu_category_ids || []).filter(id => id && id !== productForm.menu_category_id).map(id => ({ product_id: productId!, menu_category_id: id }));
+    const allMenuCatIds = [productForm.menu_category_id, ...(productForm.menu_category_ids || [])]
+      .filter(Boolean)
+      .filter(id => id !== productForm.menu_category_id || productForm.menu_category_ids.length > 0);
+    // Include ALL selected categories in junction (including primary for search consistency)
+    const uniqueIds = [...new Set([productForm.menu_category_id, ...(productForm.menu_category_ids || [])].filter(Boolean))];
+    const menuCatLinks = uniqueIds.map(id => ({ product_id: productId!, menu_category_id: id }));
     if (menuCatLinks.length > 0) await supabase.from("product_menu_categories" as any).insert(menuCatLinks);
 
-    // Save reseller pricing to product_resellers if reseller is set
+    // Save reseller pricing
     if (productForm.reseller_id && productId) {
       const resellerPrice = productForm.reseller_price ? parseFloat(productForm.reseller_price) : null;
       const commissionPct = productForm.store_commission_pct ? parseFloat(productForm.store_commission_pct) : null;
@@ -104,21 +118,14 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
         .select("id").eq("product_id", productId).eq("reseller_id", productForm.reseller_id).maybeSingle();
       if (existing) {
         await supabase.from("product_resellers").update({
-          reseller_price: resellerPrice,
-          store_commission_pct: commissionPct,
-          custom_price: salePrice,
-          stock_quantity: stockQuantity,
-          is_active: productForm.is_active,
+          reseller_price: resellerPrice, store_commission_pct: commissionPct,
+          custom_price: salePrice, stock_quantity: stockQuantity, is_active: productForm.is_active,
         } as any).eq("id", existing.id);
       } else {
         await supabase.from("product_resellers").insert({
-          product_id: productId,
-          reseller_id: productForm.reseller_id,
-          reseller_price: resellerPrice,
-          store_commission_pct: commissionPct,
-          custom_price: salePrice,
-          stock_quantity: stockQuantity,
-          is_active: productForm.is_active,
+          product_id: productId, reseller_id: productForm.reseller_id,
+          reseller_price: resellerPrice, store_commission_pct: commissionPct,
+          custom_price: salePrice, stock_quantity: stockQuantity, is_active: productForm.is_active,
         } as any);
       }
     }
@@ -145,14 +152,15 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
 
   const editProduct = async (p: Product) => {
     setEditingProduct(p);
-    const linkedCatIds = productCategoryLinks.filter(l => l.product_id === p.id).map(l => l.category_id).filter(cid => cid !== p.category_id);
-    const formState = productToFormState(p, linkedCatIds);
+    const formState = productToFormState(p);
 
-    // Load additional menu category links
+    // Load ALL menu category links
     const { data: menuCatLinks } = await supabase.from("product_menu_categories" as any).select("menu_category_id").eq("product_id", p.id);
-    formState.menu_category_ids = (menuCatLinks || []).map((l: any) => l.menu_category_id);
+    const linkedIds = (menuCatLinks || []).map((l: any) => l.menu_category_id) as string[];
+    // Primary is menu_category_id, additional are the rest
+    formState.menu_category_ids = linkedIds.filter(id => id !== p.menu_category_id);
 
-    // Load reseller pricing if product has a reseller
+    // Load reseller pricing
     if (p.reseller_id) {
       const { data: pr } = await supabase.from("product_resellers")
         .select("reseller_price, store_commission_pct")
@@ -208,9 +216,13 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
 
   const noImageCount = products.filter(p => !p.image_url && p.is_active).length;
 
+  // Build menu category options for filter
+  const menuCatOptions = menuCategories
+    .filter(c => !c.parent_id && c.is_active)
+    .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name));
+
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-heading text-3xl font-bold">Produtos</h1>
@@ -232,14 +244,11 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
         </div>
       </div>
 
-      {/* Product Form */}
       {editingProduct !== null && (
         <ProductForm
           editingProduct={editingProduct}
           form={productForm}
           setForm={setProductForm}
-          categories={categories}
-          subcategories={subcategories}
           resellers={resellers}
           clients={clients}
           onSave={saveProduct}
@@ -247,17 +256,15 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
         />
       )}
 
-      {/* Filters */}
       <ProductFilters
         search={productSearch} onSearchChange={setProductSearch}
         catFilter={productCatFilter} onCatFilterChange={setProductCatFilter}
         statusFilter={productStatusFilter} onStatusFilterChange={setProductStatusFilter}
         stockFilter={productStockFilter} onStockFilterChange={setProductStockFilter}
-        categories={categories}
+        menuCategories={menuCatOptions}
         onClear={() => { setProductSearch(""); setProductCatFilter(""); setProductStatusFilter(""); setProductStockFilter(""); }}
       />
 
-      {/* Bulk actions */}
       {(selectedProducts.size > 0 || generatingAIImages) && (
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -285,7 +292,6 @@ const AdminProductsTab = ({ products, categories, subcategories, resellers, clie
         </div>
       )}
 
-      {/* Product Table */}
       <ProductTable
         products={filteredProducts}
         categories={categories}
