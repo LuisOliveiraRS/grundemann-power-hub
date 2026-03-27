@@ -197,7 +197,7 @@ const AppearanceSettings = () => {
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
