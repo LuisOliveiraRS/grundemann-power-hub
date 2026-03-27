@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, ImageIcon, Plus, Video, Download, Package, Store, Tag } from "lucide-react";
+import { X, Upload, ImageIcon, Plus, Video, Download, Package, Store, Tag, ChevronDown, ChevronRight } from "lucide-react";
 import MenuCategoryPicker from "@/components/MenuCategoryPicker";
+import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
 import type { Product, Category, Subcategory, ResellerOption, ProfileFull, ProductCategoryLink } from "@/types/admin";
 import { generateSlug } from "@/types/admin";
 
@@ -69,6 +70,52 @@ interface ProductFormProps {
   onSave: () => void;
   onCancel: () => void;
 }
+
+// Multi-select for additional menu categories
+const MultiMenuCategorySelect = ({ selected, primaryId, onChange }: { selected: string[]; primaryId: string; onChange: (ids: string[]) => void }) => {
+  const { tree, categories, loading } = useMenuCategories(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const toggleSelect = (id: string) => {
+    if (id === primaryId) return;
+    onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
+  };
+
+  const renderNode = (node: MenuCategoryNode): React.ReactNode => {
+    const isPrimary = node.id === primaryId;
+    const isSelected = selected.includes(node.id);
+    const hasChildren = node.children.length > 0;
+    const isExpanded = expanded.has(node.id);
+    return (
+      <div key={node.id}>
+        <div className="flex items-center gap-1.5 py-1 px-1.5 rounded text-xs hover:bg-muted/50" style={{ paddingLeft: `${node.depth * 14 + 4}px` }}>
+          {hasChildren ? (
+            <button type="button" onClick={() => toggleExpand(node.id)} className="p-0.5 shrink-0">
+              {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+            </button>
+          ) : <span className="w-4 shrink-0" />}
+          <label className={`flex items-center gap-1.5 cursor-pointer flex-1 min-w-0 ${isPrimary ? 'opacity-50' : ''}`}>
+            <input type="checkbox" checked={isSelected || isPrimary} disabled={isPrimary} onChange={() => toggleSelect(node.id)} className="rounded border-input h-3.5 w-3.5" />
+            <span className="truncate">{node.name}</span>
+            {isPrimary && <span className="text-[10px] text-primary font-medium shrink-0">(principal)</span>}
+          </label>
+        </div>
+        {hasChildren && isExpanded && node.children.map(c => renderNode(c))}
+      </div>
+    );
+  };
+
+  if (loading) return <p className="text-xs text-muted-foreground">Carregando...</p>;
+  return (
+    <div className="max-h-48 overflow-y-auto border border-input rounded-md bg-background p-1.5">
+      {tree.map(n => renderNode(n))}
+    </div>
+  );
+};
 
 const ProductForm = ({ editingProduct, form, setForm, categories, subcategories, resellers, clients, onSave, onCancel }: ProductFormProps) => {
   const { toast } = useToast();
