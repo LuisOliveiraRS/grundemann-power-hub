@@ -48,7 +48,7 @@ const SmartSearch = () => {
         result_limit: 20,
       }),
       searchTerm.length >= 2
-        ? supabase.from("menu_categories").select("id, name, slug").ilike("name", `%${searchTerm}%`).eq("is_active", true).limit(4)
+        ? supabase.from("menu_categories").select("id, name, slug, parent_id").ilike("name", `%${searchTerm}%`).eq("is_active", true).limit(8)
         : Promise.resolve({ data: [] }),
       searchTerm.length >= 2
         ? supabase.from("diagnostic_problems").select("id, name, slug, description").eq("is_active", true).or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`).limit(3)
