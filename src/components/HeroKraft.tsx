@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import heroKraftBg1 from "@/assets/hero-kraft-bg-1.jpg";
-import heroKraftBg2 from "@/assets/hero-kraft-bg-2.jpg";
-import heroKraftBg3 from "@/assets/hero-kraft-bg-3.jpg";
+
+const SUPABASE_URL = "https://hodtsmyjqtkjlkburoea.supabase.co/storage/v1/object/public/hero-banners";
 
 const DEFAULT_HEADLINES = [
   { title: "Potência e\nconfiabilidade", subtitle: "Peças e motores estacionários com qualidade profissional" },
@@ -13,7 +12,11 @@ const DEFAULT_HEADLINES = [
   { title: "Força e\ndurabilidade", subtitle: "Filtros, carburadores e assistência técnica especializada" },
 ];
 
-const BACKGROUNDS = [heroKraftBg1, heroKraftBg2, heroKraftBg3];
+const BACKGROUNDS = [
+  `${SUPABASE_URL}/hero-kraft-bg-1.jpg`,
+  `${SUPABASE_URL}/hero-kraft-bg-2.jpg`,
+  `${SUPABASE_URL}/hero-kraft-bg-3.jpg`,
+];
 
 const HeroKraft = () => {
   const navigate = useNavigate();
