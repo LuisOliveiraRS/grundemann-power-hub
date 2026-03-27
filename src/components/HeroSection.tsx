@@ -1,10 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, ArrowRight, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const IMPACT_PHRASES = [
+const SUPABASE_URL = "https://hodtsmyjqtkjlkburoea.supabase.co/storage/v1/object/public/hero-banners";
+
+const DEFAULT_BACKGROUNDS = [
+  `${SUPABASE_URL}/hero-kraft-bg-1.jpg`,
+  `${SUPABASE_URL}/hero-kraft-bg-2.jpg`,
+  `${SUPABASE_URL}/hero-kraft-bg-3.jpg`,
+];
+
+const DEFAULT_PHRASES = [
   "QUALIDADE PROFISSIONAL",
   "GARANTIA E PROCEDÊNCIA",
   "FORÇA E DURABILIDADE",
@@ -25,14 +33,40 @@ const HeroSection = () => {
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phraseIndex, setPhraseIndex] = useState(0);
+  const [bgIndex, setBgIndex] = useState(0);
+  const [phrases, setPhrases] = useState<string[]>(DEFAULT_PHRASES);
 
+  // Load editable phrases from hero_headlines
+  useEffect(() => {
+    supabase
+      .from("hero_headlines")
+      .select("title")
+      .eq("is_active", true)
+      .order("display_order")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setPhrases(data.map((h) => h.title.replace(/\n/g, " ")));
+        }
+      });
+  }, []);
+
+  // Rotate phrases
   useEffect(() => {
     const interval = setInterval(() => {
-      setPhraseIndex((prev) => (prev + 1) % IMPACT_PHRASES.length);
+      setPhraseIndex((prev) => (prev + 1) % phrases.length);
     }, 3500);
+    return () => clearInterval(interval);
+  }, [phrases.length]);
+
+  // Rotate backgrounds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % DEFAULT_BACKGROUNDS.length);
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 
+  // Load featured products
   useEffect(() => {
     supabase
       .from("products")
@@ -47,6 +81,7 @@ const HeroSection = () => {
       });
   }, []);
 
+  // Rotate products
   useEffect(() => {
     if (products.length <= 1) return;
     const interval = setInterval(() => {
@@ -58,14 +93,32 @@ const HeroSection = () => {
   const current = products[currentIndex];
 
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-foreground via-secondary to-foreground min-h-[360px] md:min-h-[520px] flex items-center">
-      {/* Decorative grid pattern */}
-      <div className="absolute inset-0 opacity-[0.04]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-      }} />
+    <section className="relative w-full overflow-hidden min-h-[360px] md:min-h-[520px] flex items-center">
+      {/* Rotating background images */}
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          key={bgIndex}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${DEFAULT_BACKGROUNDS[bgIndex]})` }}
+        />
+      </AnimatePresence>
+
+      {/* Shadow overlays for readability and harmony */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(210,80%,15%)]/95 via-[hsl(210,80%,15%)]/75 to-[hsl(210,80%,15%)]/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-[hsl(210,80%,15%)]/30" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
 
       {/* Green accent bar on top */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-primary z-20" />
+
+      {/* Decorative grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      }} />
 
       <div className="container relative z-10 py-10 md:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -89,9 +142,9 @@ const HeroSection = () => {
             </motion.div>
 
             <h1 className="font-heading text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black leading-[1.1] tracking-tight">
-              <span className="text-background">PEÇAS E MOTORES</span>
+              <span className="text-white">PEÇAS E MOTORES</span>
               <br />
-              <span className="text-background">ESTACIONÁRIOS COM</span>
+              <span className="text-white">ESTACIONÁRIOS COM</span>
               <br />
               <span className="relative inline-block h-[1.2em] min-w-[200px] sm:min-w-[280px] md:min-w-[400px] align-bottom">
                 <AnimatePresence mode="wait">
@@ -103,13 +156,13 @@ const HeroSection = () => {
                     transition={{ duration: 0.5 }}
                     className="text-primary absolute left-0 top-0 whitespace-nowrap text-lg sm:text-2xl md:text-4xl lg:text-5xl"
                   >
-                    {IMPACT_PHRASES[phraseIndex]}
+                    {phrases[phraseIndex]}
                   </motion.span>
                 </AnimatePresence>
               </span>
             </h1>
 
-            <p className="mt-5 text-base md:text-lg text-background/70 max-w-lg leading-relaxed">
+            <p className="mt-5 text-base md:text-lg text-white/70 max-w-lg leading-relaxed">
               Filtros, carburadores, peças e assistência técnica especializada para motores{" "}
               <span className="text-accent font-bold">5HP, 7HP, 10HP, 13HP e 15HP</span>.
             </p>
@@ -127,7 +180,7 @@ const HeroSection = () => {
                 href="https://wa.me/5551981825748?text=Olá, gostaria de falar com um especialista Grundemann."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-lg border-2 border-background/30 bg-background/5 px-6 py-3 md:px-8 md:py-4 font-heading font-extrabold text-background text-sm uppercase tracking-wide hover:bg-background/10 transition-all backdrop-blur-sm"
+                className="flex items-center justify-center gap-2 rounded-lg border-2 border-white/30 bg-white/5 px-6 py-3 md:px-8 md:py-4 font-heading font-extrabold text-white text-sm uppercase tracking-wide hover:bg-white/10 transition-all backdrop-blur-sm"
               >
                 <MessageCircle className="h-4 w-4" />
                 Falar com Especialista
@@ -135,7 +188,7 @@ const HeroSection = () => {
             </div>
 
             {/* Quick trust signals */}
-            <div className="mt-6 md:mt-8 flex flex-wrap gap-3 md:gap-6 text-background/50 text-xs font-medium">
+            <div className="mt-6 md:mt-8 flex flex-wrap gap-3 md:gap-6 text-white/50 text-xs font-medium">
               <span>✓ Envio para todo Brasil</span>
               <span>✓ Garantia de qualidade</span>
               <span>✓ Suporte técnico</span>
@@ -158,7 +211,7 @@ const HeroSection = () => {
                 onClick={() => navigate(`/produto/${current.id}`)}
               >
                 {/* Product card */}
-                <div className="relative bg-background/5 backdrop-blur-md rounded-2xl border border-background/10 p-4 lg:p-6 overflow-hidden transition-all duration-500 group-hover:border-primary/40 group-hover:bg-background/10 group-hover:shadow-[0_0_30px_rgba(34,197,94,0.15),0_0_60px_rgba(34,197,94,0.05)] group-hover:scale-[1.02]">
+                <div className="relative bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 lg:p-6 overflow-hidden transition-all duration-500 group-hover:border-primary/40 group-hover:bg-white/10 group-hover:shadow-[0_0_30px_rgba(34,197,94,0.15),0_0_60px_rgba(34,197,94,0.05)] group-hover:scale-[1.02]">
                   {/* Shine sweep effect */}
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-30" />
                   {/* Discount badge */}
@@ -198,12 +251,12 @@ const HeroSection = () => {
                       transition={{ duration: 0.4, delay: 0.1 }}
                       className="text-center"
                     >
-                      <h3 className="text-background font-heading font-bold text-sm leading-tight line-clamp-2 mb-3">
+                      <h3 className="text-white font-heading font-bold text-sm leading-tight line-clamp-2 mb-3">
                         {current.name}
                       </h3>
                       <div className="flex items-center justify-center gap-3">
                         {current.original_price && current.original_price > current.price && (
-                          <span className="text-background/60 line-through text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+                          <span className="text-white/60 line-through text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
                             R$ {current.original_price.toFixed(2).replace(".", ",")}
                           </span>
                         )}
@@ -225,7 +278,7 @@ const HeroSection = () => {
                       <button
                         key={i}
                         onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "w-6 bg-primary" : "w-1.5 bg-background/30"}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "w-6 bg-primary" : "w-1.5 bg-white/30"}`}
                       />
                     ))}
                   </div>
@@ -239,7 +292,7 @@ const HeroSection = () => {
       </div>
 
       {/* Bottom green stripe */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary z-20" />
     </section>
   );
 };

@@ -141,64 +141,62 @@ const AppearanceSettings = () => {
       )}
 
       {/* Hero Headlines Management */}
-      {heroMode === "kraft_style" && (
-        <div className="border border-border rounded-xl p-6 bg-card space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-heading text-lg font-bold text-foreground">Frases do Hero Imersivo</h3>
-              <p className="text-sm text-muted-foreground">Edite as frases que alternam na seção hero do site. Use \n para quebra de linha no título.</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={addHeadline}>
-                <Plus className="h-4 w-4 mr-1" /> Adicionar
-              </Button>
-              <Button size="sm" onClick={saveHeadlines} disabled={savingHeadlines}>
-                {savingHeadlines ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-                Salvar
-              </Button>
-            </div>
+      <div className="border border-border rounded-xl p-6 bg-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-foreground">Frases Rotativas do Hero</h3>
+            <p className="text-sm text-muted-foreground">Edite as frases que alternam na seção principal do site. Estas frases aparecem em todos os modos de hero.</p>
           </div>
-
-          {loadingHeadlines ? (
-            <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          ) : (
-            <div className="space-y-3">
-              {headlines.map((h, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-4 border border-border rounded-lg bg-background">
-                  <GripVertical className="h-5 w-5 text-muted-foreground mt-2 flex-shrink-0" />
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Título</label>
-                      <Textarea
-                        value={h.title}
-                        onChange={(e) => updateHeadline(idx, "title", e.target.value)}
-                        rows={2}
-                        className="text-sm"
-                        placeholder="Potência e\nconfiabilidade"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Subtítulo</label>
-                      <Input
-                        value={h.subtitle}
-                        onChange={(e) => updateHeadline(idx, "subtitle", e.target.value)}
-                        className="text-sm"
-                        placeholder="Descrição curta..."
-                      />
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => removeHeadline(idx)} className="text-destructive hover:text-destructive mt-1">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {headlines.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">Nenhuma frase cadastrada. Clique em "Adicionar" para criar.</p>
-              )}
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={addHeadline}>
+              <Plus className="h-4 w-4 mr-1" /> Adicionar
+            </Button>
+            <Button size="sm" onClick={saveHeadlines} disabled={savingHeadlines}>
+              {savingHeadlines ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+              Salvar
+            </Button>
+          </div>
         </div>
-      )}
+
+        {loadingHeadlines ? (
+          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <div className="space-y-3">
+            {headlines.map((h, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-4 border border-border rounded-lg bg-background">
+                <GripVertical className="h-5 w-5 text-muted-foreground mt-2 flex-shrink-0" />
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Título</label>
+                    <Textarea
+                      value={h.title}
+                      onChange={(e) => updateHeadline(idx, "title", e.target.value)}
+                      rows={2}
+                      className="text-sm"
+                      placeholder="Potência e confiabilidade"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Subtítulo</label>
+                    <Input
+                      value={h.subtitle}
+                      onChange={(e) => updateHeadline(idx, "subtitle", e.target.value)}
+                      className="text-sm"
+                      placeholder="Descrição curta..."
+                    />
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => removeHeadline(idx)} className="text-destructive hover:text-destructive mt-1">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            {headlines.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">Nenhuma frase cadastrada. Clique em "Adicionar" para criar.</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
