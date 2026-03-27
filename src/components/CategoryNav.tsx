@@ -87,20 +87,6 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
     return source.filter(p => p.menu_category_id && ids.has(p.menu_category_id)).sort((a, b) => a.price - b.price).slice(0, 3);
   };
 
-  const flattenNode = (node: MenuCategoryNode): { node: MenuCategoryNode; depth: number }[] => {
-    return node.children.flatMap(child => [
-      { node: child, depth: child.depth - node.depth - 1 },
-      ...flattenChildren(child, node.depth + 1),
-    ]);
-  };
-
-  const flattenChildren = (node: MenuCategoryNode, baseDepth: number): { node: MenuCategoryNode; depth: number }[] => {
-    return node.children.flatMap(child => [
-      { node: child, depth: child.depth - baseDepth },
-      ...flattenChildren(child, baseDepth),
-    ]);
-  };
-
   const getIcon = (node: MenuCategoryNode) => {
     return iconMap[node.icon] || iconMap[node.slug] || Cog;
   };
@@ -112,11 +98,14 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
       <div className="container">
         <ul className="flex flex-wrap items-center justify-center md:justify-between">
           {tree.map(cat => {
-            const subs = flattenNode(cat);
-            const catProducts = getProductsForNode(cat, products);
-            const hasDropdown = subs.length > 0 || catProducts.length > 0;
+            const hasDropdown = cat.children.length > 0;
             const isOpen = openCat === cat.id;
             const Icon = getIcon(cat);
+            const catProducts = getProductsForNode(cat, products);
+
+            // Find hovered sub node
+            const hoveredSubNode = hoveredSub ? cat.children.find(c => c.id === hoveredSub) : null;
+            const showSubChildren = hoveredSubNode && hoveredSubNode.children.length > 0;
 
             return (
               <li
@@ -170,56 +159,122 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
 
                 {hasDropdown && isOpen && (
                   <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 w-[720px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+                    className="absolute top-full left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl shadow-2xl z-[60] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+                    style={{ width: showSubChildren ? '780px' : '560px', maxWidth: 'calc(100vw - 2rem)' }}
                     onMouseEnter={clearCloseTimeout}
                     onMouseLeave={scheduleCloseMenu}
                   >
-                    <div className="grid grid-cols-[minmax(0,1fr)_320px] items-stretch">
-                      <div className="min-w-0 border-r border-border py-2 max-h-[400px] overflow-y-auto">
+                    <div
+                      className="grid items-stretch transition-all duration-200"
+                      style={{ gridTemplateColumns: showSubChildren ? '220px 220px 1fr' : '240px 1fr' }}
+                    >
+                      {/* Column 1: Direct subcategories */}
+                      <div className="border-r border-border py-2 max-h-[420px] overflow-y-auto">
                         <Link
                           to={`/categoria/${cat.fullPath}`}
                           onClick={closeMenu}
-                          className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors font-bold border-b border-border"
+                          className="block px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors font-bold border-b border-border"
                         >
                           Ver todos em {cat.name}
                         </Link>
-                        {subs.map(({ node: sub, depth }) => {
+                        {cat.children.map(sub => {
                           const isExternal = !!sub.external_url;
-                          const linkProps = isExternal
-                            ? { as: "a" as const, href: sub.external_url!, target: "_blank", rel: "noopener noreferrer" }
-                            : {};
-                          const Comp = isExternal ? "a" : Link;
-                          const compProps = isExternal
-                            ? { href: sub.external_url!, target: "_blank", rel: "noopener noreferrer" }
-                            : { to: `/categoria/${sub.fullPath}` };
+                          const hasSubChildren = sub.children.length > 0;
+                          const isHovered = hoveredSub === sub.id;
+
+                          const content = (
+                            <>
+                              <span className={hasSubChildren ? "text-primary font-semibold" : ""}>
+                                {sub.name}
+                              </span>
+                              <span className="flex items-center gap-1 flex-shrink-0">
+                                {isExternal && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                                {hasSubChildren && <ChevronRight className="h-3.5 w-3.5 text-primary" />}
+                              </span>
+                            </>
+                          );
+
+                          const className = `flex items-center justify-between px-4 py-2.5 text-sm transition-colors w-full ${
+                            isHovered
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-foreground hover:bg-muted/50"
+                          }`;
+
+                          if (isExternal) {
+                            return (
+                              <a
+                                key={sub.id}
+                                href={sub.external_url!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onMouseEnter={() => { clearCloseTimeout(); setHoveredSub(sub.id); }}
+                                className={className}
+                              >
+                                {content}
+                              </a>
+                            );
+                          }
 
                           return (
-                            <Comp
+                            <Link
                               key={sub.id}
-                              {...(compProps as any)}
+                              to={`/categoria/${sub.fullPath}`}
                               onClick={closeMenu}
-                              onMouseEnter={() => {
-                                clearCloseTimeout();
-                                setHoveredSub(sub.id);
-                              }}
-                              className={`flex items-center py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors ${hoveredSub === sub.id ? "bg-primary/10" : ""}`}
-                              style={{ paddingLeft: `${16 + depth * 14}px`, paddingRight: "12px" }}
+                              onMouseEnter={() => { clearCloseTimeout(); setHoveredSub(sub.id); }}
+                              className={className}
                             >
-                              {depth > 0 && <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />}
-                              <span className={depth === 0 ? "font-semibold" : ""}>{sub.name}</span>
-                              {isExternal && <ExternalLink className="h-3 w-3 ml-1 text-muted-foreground flex-shrink-0" />}
-                              {!isExternal && sub.children.length > 0 && (
-                                <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground flex-shrink-0" />
-                              )}
-                            </Comp>
+                              {content}
+                            </Link>
                           );
                         })}
                       </div>
 
-                      <div className="min-w-0 min-h-[260px] p-3 space-y-2">
+                      {/* Column 2: Sub-subcategories (only when hovered sub has children) */}
+                      {showSubChildren && hoveredSubNode && (
+                        <div className="border-r border-border py-2 max-h-[420px] overflow-y-auto bg-muted/20">
+                          <Link
+                            to={`/categoria/${hoveredSubNode.fullPath}`}
+                            onClick={closeMenu}
+                            className="block px-4 py-2.5 text-sm font-bold border-b border-border text-primary hover:bg-primary/10 transition-colors"
+                          >
+                            Ver todos em {hoveredSubNode.name}
+                          </Link>
+                          {hoveredSubNode.children.map(subsub => {
+                            const isExternal = !!subsub.external_url;
+                            if (isExternal) {
+                              return (
+                                <a
+                                  key={subsub.id}
+                                  href={subsub.external_url!}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                                >
+                                  <span>{subsub.name}</span>
+                                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                </a>
+                              );
+                            }
+                            return (
+                              <Link
+                                key={subsub.id}
+                                to={`/categoria/${subsub.fullPath}`}
+                                onClick={closeMenu}
+                                className="block px-4 py-2.5 text-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                              >
+                                {subsub.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Products column */}
+                      <div className="min-h-[260px] p-3 space-y-2">
                         {(() => {
-                          const hoveredNode = hoveredSub ? findNodeById(cat, hoveredSub) : null;
-                          const displayProducts = hoveredNode ? getProductsForNode(hoveredNode, allProducts) : catProducts;
+                          const displayProducts = hoveredSubNode
+                            ? getProductsForNode(hoveredSubNode, allProducts)
+                            : catProducts;
                           if (displayProducts.length === 0) {
                             return (
                               <p className="text-xs text-muted-foreground text-center py-4">
@@ -231,7 +286,7 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
                             <Link
                               key={p.id}
                               to={`/produto/${p.id}`}
-                              onClick={() => setOpenCat(null)}
+                              onClick={closeMenu}
                               className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
                             >
                               <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-border">
@@ -284,15 +339,6 @@ const CategoryNav = forwardRef<HTMLElement, Record<string, never>>((_props, _ref
 });
 
 CategoryNav.displayName = "CategoryNav";
-
-function findNodeById(root: MenuCategoryNode, id: string): MenuCategoryNode | null {
-  if (root.id === id) return root;
-  for (const child of root.children) {
-    const found = findNodeById(child, id);
-    if (found) return found;
-  }
-  return null;
-}
 
 interface CatalogItem { id: string; title: string; file_url: string; }
 

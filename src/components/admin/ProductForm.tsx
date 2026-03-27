@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { X, Upload, ImageIcon, Plus, Video, Download, Package, Store, Tag } from "lucide-react";
+import { X, Upload, ImageIcon, Plus, Video, Download, Package, Store, Tag, ChevronDown, ChevronRight } from "lucide-react";
 import MenuCategoryPicker from "@/components/MenuCategoryPicker";
+import { useMenuCategories, MenuCategoryNode } from "@/hooks/useMenuCategories";
 import type { Product, Category, Subcategory, ResellerOption, ProfileFull, ProductCategoryLink } from "@/types/admin";
 import { generateSlug } from "@/types/admin";
 
@@ -17,7 +18,7 @@ export interface ProductFormState {
   is_active: boolean; free_shipping: boolean; image_url: string; additional_images: string[];
   video_url: string; brand: string; hp: string; engine_model: string; specifications: string;
   documents: string[]; weight_kg: string; width_cm: string; height_cm: string; length_cm: string;
-  extra_category_ids: string[]; menu_category_id: string; reseller_id: string; fuel_type: string;
+  extra_category_ids: string[]; menu_category_id: string; menu_category_ids: string[]; reseller_id: string; fuel_type: string;
   slug: string; tags: string;
   reseller_price: string; store_commission_pct: string;
 }
@@ -27,7 +28,7 @@ export const emptyProductForm: ProductFormState = {
   category_id: "", subcategory_id: "", is_featured: false, is_active: true, free_shipping: false,
   image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "",
   specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
-  extra_category_ids: [], menu_category_id: "", reseller_id: "", fuel_type: "", slug: "", tags: "",
+  extra_category_ids: [], menu_category_id: "", menu_category_ids: [], reseller_id: "", fuel_type: "", slug: "", tags: "",
   reseller_price: "", store_commission_pct: "",
 };
 
@@ -49,6 +50,7 @@ export function productToFormState(p: Product, linkedCatIds: string[]): ProductF
     length_cm: p.length_cm ? String(p.length_cm) : "",
     extra_category_ids: linkedCatIds,
     menu_category_id: p.menu_category_id || "",
+    menu_category_ids: [],
     reseller_id: p.reseller_id || "",
     fuel_type: p.fuel_type || "",
     slug: p.slug || "",
@@ -68,6 +70,52 @@ interface ProductFormProps {
   onSave: () => void;
   onCancel: () => void;
 }
+
+// Multi-select for additional menu categories
+const MultiMenuCategorySelect = ({ selected, primaryId, onChange }: { selected: string[]; primaryId: string; onChange: (ids: string[]) => void }) => {
+  const { tree, categories, loading } = useMenuCategories(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const toggleSelect = (id: string) => {
+    if (id === primaryId) return;
+    onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
+  };
+
+  const renderNode = (node: MenuCategoryNode): React.ReactNode => {
+    const isPrimary = node.id === primaryId;
+    const isSelected = selected.includes(node.id);
+    const hasChildren = node.children.length > 0;
+    const isExpanded = expanded.has(node.id);
+    return (
+      <div key={node.id}>
+        <div className="flex items-center gap-1.5 py-1 px-1.5 rounded text-xs hover:bg-muted/50" style={{ paddingLeft: `${node.depth * 14 + 4}px` }}>
+          {hasChildren ? (
+            <button type="button" onClick={() => toggleExpand(node.id)} className="p-0.5 shrink-0">
+              {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+            </button>
+          ) : <span className="w-4 shrink-0" />}
+          <label className={`flex items-center gap-1.5 cursor-pointer flex-1 min-w-0 ${isPrimary ? 'opacity-50' : ''}`}>
+            <input type="checkbox" checked={isSelected || isPrimary} disabled={isPrimary} onChange={() => toggleSelect(node.id)} className="rounded border-input h-3.5 w-3.5" />
+            <span className="truncate">{node.name}</span>
+            {isPrimary && <span className="text-[10px] text-primary font-medium shrink-0">(principal)</span>}
+          </label>
+        </div>
+        {hasChildren && isExpanded && node.children.map(c => renderNode(c))}
+      </div>
+    );
+  };
+
+  if (loading) return <p className="text-xs text-muted-foreground">Carregando...</p>;
+  return (
+    <div className="max-h-48 overflow-y-auto border border-input rounded-md bg-background p-1.5">
+      {tree.map(n => renderNode(n))}
+    </div>
+  );
+};
 
 const ProductForm = ({ editingProduct, form, setForm, categories, subcategories, resellers, clients, onSave, onCancel }: ProductFormProps) => {
   const { toast } = useToast();
@@ -170,8 +218,21 @@ const ProductForm = ({ editingProduct, form, setForm, categories, subcategories,
               <span className="text-sm font-semibold text-foreground">Posição no Menu do Site</span>
               <span className="text-xs text-muted-foreground ml-1">— Onde o produto aparece no menu de navegação</span>
             </div>
-            <MenuCategoryPicker value={form.menu_category_id} onChange={(id) => setForm(prev => ({ ...prev, menu_category_id: id }))} label="Categoria do Menu" />
-            <p className="text-[11px] text-muted-foreground mt-1.5">Selecione a posição na árvore de navegação do site. Independe da classificação acima.</p>
+            <MenuCategoryPicker value={form.menu_category_id} onChange={(id) => setForm(prev => ({ ...prev, menu_category_id: id }))} label="Categoria Principal do Menu" />
+            <p className="text-[11px] text-muted-foreground mt-1.5">Categoria principal onde o produto aparece na navegação do site.</p>
+            
+            {/* Additional menu categories */}
+            <div className="mt-4 pt-3 border-t border-primary/10">
+              <Label className="text-xs font-semibold flex items-center gap-1.5 mb-2">
+                <Plus className="h-3 w-3" /> Categorias Adicionais do Menu (opcional)
+              </Label>
+              <p className="text-[11px] text-muted-foreground mb-2">Vincule este produto a mais categorias. Ele aparecerá em todas as selecionadas.</p>
+              <MultiMenuCategorySelect
+                selected={form.menu_category_ids}
+                primaryId={form.menu_category_id}
+                onChange={(ids) => setForm(prev => ({ ...prev, menu_category_ids: ids }))}
+              />
+            </div>
           </div>
 
           {/* Reseller */}
