@@ -141,12 +141,11 @@ const AppearanceSettings = () => {
       )}
 
       {/* Hero Headlines Management */}
-      {heroMode === "kraft_style" && (
-        <div className="border border-border rounded-xl p-6 bg-card space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-heading text-lg font-bold text-foreground">Frases do Hero Imersivo</h3>
-              <p className="text-sm text-muted-foreground">Edite as frases que alternam na seção hero do site. Use \n para quebra de linha no título.</p>
+      <div className="border border-border rounded-xl p-6 bg-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-foreground">Frases Rotativas do Hero</h3>
+            <p className="text-sm text-muted-foreground">Edite as frases que alternam na seção principal do site. Estas frases aparecem em todos os modos de hero.</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={addHeadline}>
