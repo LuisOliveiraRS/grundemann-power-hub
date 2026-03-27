@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Monitor, Image, Layout, Loader2, Construction, Plus, Trash2, GripVertical, Save } from "lucide-react";
+import { Monitor, Image, Layout, Loader2, Construction, Plus, Trash2, GripVertical, Save, Upload, ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,13 @@ interface Headline {
   id?: string;
   title: string;
   subtitle: string;
+  display_order: number;
+  is_active: boolean;
+}
+
+interface HeroBackground {
+  id?: string;
+  image_url: string;
   display_order: number;
   is_active: boolean;
 }
@@ -32,16 +39,23 @@ const AppearanceSettings = () => {
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [loadingHeadlines, setLoadingHeadlines] = useState(true);
   const [savingHeadlines, setSavingHeadlines] = useState(false);
+  const [backgrounds, setBackgrounds] = useState<HeroBackground[]>([]);
+  const [loadingBgs, setLoadingBgs] = useState(true);
+  const [uploadingBg, setUploadingBg] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     Promise.all([
       supabase.from("site_settings").select("value").eq("key", "hero_mode").single(),
       supabase.from("hero_headlines").select("*").order("display_order"),
-    ]).then(([modeRes, headRes]) => {
+      supabase.from("hero_backgrounds").select("*").order("display_order"),
+    ]).then(([modeRes, headRes, bgRes]) => {
       if (modeRes.data) setHeroMode(modeRes.data.value as HeroMode);
       if (headRes.data) setHeadlines(headRes.data);
+      if (bgRes.data) setBackgrounds(bgRes.data);
       setLoading(false);
       setLoadingHeadlines(false);
+      setLoadingBgs(false);
     });
   }, []);
 
@@ -58,6 +72,7 @@ const AppearanceSettings = () => {
     setSaving(false);
   };
 
+  // Headlines
   const addHeadline = () => {
     setHeadlines(prev => [...prev, { title: "", subtitle: "", display_order: prev.length, is_active: true }]);
   };
@@ -72,7 +87,6 @@ const AppearanceSettings = () => {
 
   const saveHeadlines = async () => {
     setSavingHeadlines(true);
-    // Delete all then re-insert
     await supabase.from("hero_headlines").delete().neq("id", "00000000-0000-0000-0000-000000000000");
     const toInsert = headlines.map((h, i) => ({
       title: h.title,
@@ -86,12 +100,64 @@ const AppearanceSettings = () => {
         toast({ title: "Erro ao salvar frases", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Frases do hero salvas com sucesso!" });
-        // Reload to get IDs
         const { data } = await supabase.from("hero_headlines").select("*").order("display_order");
         if (data) setHeadlines(data);
       }
     }
     setSavingHeadlines(false);
+  };
+
+  // Backgrounds
+  const handleUploadBackground = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBg(true);
+
+    const ext = file.name.split(".").pop();
+    const fileName = `hero-bg-custom-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("hero-banners")
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: "Erro no upload", description: uploadError.message, variant: "destructive" });
+      setUploadingBg(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("hero-banners").getPublicUrl(fileName);
+    const publicUrl = urlData.publicUrl;
+
+    const { error: insertError } = await supabase.from("hero_backgrounds").insert({
+      image_url: publicUrl,
+      display_order: backgrounds.length,
+      is_active: true,
+    });
+
+    if (insertError) {
+      toast({ title: "Erro ao salvar", description: insertError.message, variant: "destructive" });
+    } else {
+      toast({ title: "Background adicionado com sucesso!" });
+      const { data } = await supabase.from("hero_backgrounds").select("*").order("display_order");
+      if (data) setBackgrounds(data);
+    }
+    setUploadingBg(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeBackground = async (bg: HeroBackground) => {
+    if (!bg.id) return;
+    await supabase.from("hero_backgrounds").delete().eq("id", bg.id);
+    setBackgrounds(prev => prev.filter(b => b.id !== bg.id));
+    toast({ title: "Background removido!" });
+  };
+
+  const toggleBackground = async (bg: HeroBackground) => {
+    if (!bg.id) return;
+    const newState = !bg.is_active;
+    await supabase.from("hero_backgrounds").update({ is_active: newState }).eq("id", bg.id);
+    setBackgrounds(prev => prev.map(b => b.id === bg.id ? { ...b, is_active: newState } : b));
   };
 
   if (loading) {
@@ -139,6 +205,76 @@ const AppearanceSettings = () => {
           <Loader2 className="h-4 w-4 animate-spin" /> Salvando...
         </div>
       )}
+
+      {/* Hero Backgrounds Management */}
+      <div className="border border-border rounded-xl p-6 bg-card space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-foreground">Backgrounds do Hero</h3>
+            <p className="text-sm text-muted-foreground">
+              Gerencie as imagens de fundo da seção principal. Tamanho recomendado: <strong>1920×1080px</strong> (16:9, formato JPG).
+            </p>
+          </div>
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleUploadBackground}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingBg}
+            >
+              {uploadingBg ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+              Enviar Imagem
+            </Button>
+          </div>
+        </div>
+
+        {loadingBgs ? (
+          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {backgrounds.map((bg, idx) => (
+              <div key={bg.id || idx} className={`relative rounded-lg overflow-hidden border-2 transition-all ${bg.is_active ? "border-primary" : "border-border opacity-60"}`}>
+                <img
+                  src={bg.image_url}
+                  alt={`Background ${idx + 1}`}
+                  className="w-full h-32 object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/20 flex items-end p-2 gap-2">
+                  <Button
+                    variant={bg.is_active ? "default" : "secondary"}
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => toggleBackground(bg)}
+                  >
+                    {bg.is_active ? "Ativo" : "Inativo"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => removeBackground(bg)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {backgrounds.length === 0 && (
+              <p className="col-span-full text-center text-sm text-muted-foreground py-4">
+                Nenhum background cadastrado. Clique em "Enviar Imagem" para adicionar.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Hero Headlines Management */}
       <div className="border border-border rounded-xl p-6 bg-card space-y-4">

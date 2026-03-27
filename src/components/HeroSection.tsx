@@ -4,13 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, ArrowRight, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const SUPABASE_URL = "https://hodtsmyjqtkjlkburoea.supabase.co/storage/v1/object/public/hero-banners";
+import heroBg1 from "@/assets/hero-bg-engine-1.jpg";
+import heroBg2 from "@/assets/hero-bg-engine-2.jpg";
+import heroBg3 from "@/assets/hero-bg-engine-3.jpg";
 
-const DEFAULT_BACKGROUNDS = [
-  `${SUPABASE_URL}/hero-kraft-bg-1.jpg`,
-  `${SUPABASE_URL}/hero-kraft-bg-2.jpg`,
-  `${SUPABASE_URL}/hero-kraft-bg-3.jpg`,
-];
+const FALLBACK_BACKGROUNDS = [heroBg1, heroBg2, heroBg3];
 
 const DEFAULT_PHRASES = [
   "QUALIDADE PROFISSIONAL",
@@ -35,6 +33,21 @@ const HeroSection = () => {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [bgIndex, setBgIndex] = useState(0);
   const [phrases, setPhrases] = useState<string[]>(DEFAULT_PHRASES);
+  const [backgrounds, setBackgrounds] = useState<string[]>(FALLBACK_BACKGROUNDS);
+
+  // Load backgrounds from DB
+  useEffect(() => {
+    supabase
+      .from("hero_backgrounds")
+      .select("image_url")
+      .eq("is_active", true)
+      .order("display_order")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setBackgrounds(data.map((b) => b.image_url));
+        }
+      });
+  }, []);
 
   // Load editable phrases from hero_headlines
   useEffect(() => {
@@ -61,10 +74,10 @@ const HeroSection = () => {
   // Rotate backgrounds
   useEffect(() => {
     const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % DEFAULT_BACKGROUNDS.length);
+      setBgIndex((prev) => (prev + 1) % backgrounds.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [backgrounds.length]);
 
   // Load featured products
   useEffect(() => {
@@ -103,14 +116,14 @@ const HeroSection = () => {
           exit={{ opacity: 0 }}
           transition={{ duration: 1.5 }}
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${DEFAULT_BACKGROUNDS[bgIndex]})` }}
+          style={{ backgroundImage: `url(${backgrounds[bgIndex % backgrounds.length]})` }}
         />
       </AnimatePresence>
 
-      {/* Shadow overlays for readability and harmony */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(210,80%,15%)]/95 via-[hsl(210,80%,15%)]/75 to-[hsl(210,80%,15%)]/40" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-[hsl(210,80%,15%)]/30" />
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
+      {/* Reduced shadow overlays - more visible background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(210,80%,15%)]/80 via-[hsl(210,80%,15%)]/50 to-[hsl(210,80%,15%)]/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
 
       {/* Green accent bar on top */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-primary z-20" />
