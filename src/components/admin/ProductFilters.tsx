@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import type { Category } from "@/types/admin";
+
+interface MenuCat {
+  id: string;
+  name: string;
+}
 
 interface ProductFiltersProps {
   search: string;
@@ -12,11 +16,12 @@ interface ProductFiltersProps {
   onStatusFilterChange: (v: string) => void;
   stockFilter: string;
   onStockFilterChange: (v: string) => void;
-  categories: Category[];
+  menuCategories: MenuCat[];
+  categories?: any[]; // backward compat
   onClear: () => void;
 }
 
-const ProductFilters = ({ search, onSearchChange, catFilter, onCatFilterChange, statusFilter, onStatusFilterChange, stockFilter, onStockFilterChange, categories, onClear }: ProductFiltersProps) => {
+const ProductFilters = ({ search, onSearchChange, catFilter, onCatFilterChange, statusFilter, onStatusFilterChange, stockFilter, onStockFilterChange, menuCategories, onClear }: ProductFiltersProps) => {
   const hasFilters = search || catFilter || statusFilter || stockFilter;
 
   return (
@@ -29,7 +34,7 @@ const ProductFilters = ({ search, onSearchChange, catFilter, onCatFilterChange, 
         </div>
         <select className="h-10 border border-input rounded-md px-3 text-sm bg-background min-w-[160px]" value={catFilter} onChange={(e) => onCatFilterChange(e.target.value)}>
           <option value="">Todas as categorias</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {menuCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <select className="h-10 border border-input rounded-md px-3 text-sm bg-background" value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)}>
           <option value="">Todos os status</option>
