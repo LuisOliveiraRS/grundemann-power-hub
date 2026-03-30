@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, getPartnerDashboardPath } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { getPartnerDashboardPath } from "@/contexts/partnerHelpers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

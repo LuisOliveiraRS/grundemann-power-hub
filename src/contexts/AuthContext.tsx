@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components, @typescript-eslint/no-explicit-any */
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,23 +19,18 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  isAdmin: false,
-  isSeller: false,
-  isFornecedor: false,
-  isMecanico: false,
-  isOficina: false,
-  isLocadora: false,
-  isLoading: true,
-  userName: "",
-  partnerType: null,
-  isApprovedPartner: false,
-  signOut: async () => {},
-});
+type RoleData = { role: string };
+type ProfileData = { full_name?: string; partner_type?: string; is_approved?: boolean };
 
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -51,79 +47,137 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
 
   const checkRoles = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_my_roles')
-    console.log('Roles via RPC:', data, error)
-    const roles = (data || []).map((r: any) => r.role)
-    setIsAdmin(roles.includes('admin'))
-    setIsSeller(roles.includes('seller'))
-    setIsFornecedor(roles.includes('fornecedor'))
-    setIsMecanico(roles.includes('mecanico'))
-    setIsOficina(roles.includes('oficina'))
-    setIsLocadora(roles.includes('locadora'))
-  }, [])
+    let adminFlag = false;
+    let rolesData: RoleData[] = [];
+
+    try {
+      const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin' as any);
+      if (!isAdminError && Boolean(isAdminData)) {
+        adminFlag = true;
+      }
+    } catch (error) {
+      console.warn('is_admin rpc falhou; consultando roles diretamente', error);
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (!error && Array.isArray(data)) {
+        rolesData = data as unknown as RoleData[];
+      }
+
+      if (!adminFlag) {
+        adminFlag = rolesData.some((item) => item.role === 'admin');
+      }
+    } catch (error) {
+      console.warn('Não foi possível ler user_roles', error);
+    }
+
+    setIsAdmin(adminFlag);
+    setIsSeller(rolesData.some((item) => item.role === 'seller'));
+    setIsFornecedor(rolesData.some((item) => item.role === 'fornecedor'));
+    setIsMecanico(rolesData.some((item) => item.role === 'mecanico'));
+    setIsOficina(rolesData.some((item) => item.role === 'oficina'));
+    setIsLocadora(rolesData.some((item) => item.role === 'locadora'));
+  }, []);
 
   const loadProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_my_profile')
-    console.log('Profile via RPC:', data, error)
-    if (data && data.length > 0) {
-      const profile = data[0]
-      if (profile.full_name) {
-        setUserName(profile.full_name.split(' ')[0])
-      }
-      if (profile.partner_type) {
-        setPartnerType(profile.partner_type)
-        setIsApprovedPartner(profile.is_approved)
-      } else {
-        setPartnerType(null)
-        setIsApprovedPartner(false)
-      }
+    const { data, error } = await supabase.rpc('get_my_profile' as any, { user_id: userId })
+    if (error) {
+      console.error('Falha ao buscar profile:', error)
+      setUserName('')
+      setPartnerType(null)
+      setIsApprovedPartner(false)
+      return
+    }
+
+    const profileData = Array.isArray(data) ? data : []
+
+    if (profileData.length > 0) {
+      const profile = profileData[0]
+      setUserName(profile.full_name ? profile.full_name.split(' ')[0] : '')
+      setPartnerType(profile.partner_type || null)
+      setIsApprovedPartner(Boolean(profile.is_approved))
+    } else {
+      setUserName('')
+      setPartnerType(null)
+      setIsApprovedPartner(false)
     }
   }, [])
 
+  const resetRoles = () => {
+    setIsAdmin(false);
+    setIsSeller(false);
+    setIsFornecedor(false);
+    setIsMecanico(false);
+    setIsOficina(false);
+    setIsLocadora(false);
+  };
+
   const handleSession = useCallback(async (newSession: Session | null) => {
+    setIsLoading(true);
     setSession(newSession);
     setUser(newSession?.user ?? null);
-    if (newSession?.user) {
-      await Promise.all([
-        checkRoles(newSession.user.id),
-        loadProfile(newSession.user.id),
-      ]);
+
+    if (newSession?.user?.id) {
+      try {
+        await Promise.all([
+          checkRoles(newSession.user.id),
+          loadProfile(newSession.user.id),
+        ]);
+      } catch (error) {
+        console.error("Falha ao carregar sessão de usuário:", error);
+        resetRoles();
+        setUserName("");
+        setPartnerType(null);
+        setIsApprovedPartner(false);
+      }
     } else {
-      setIsAdmin(false);
-      setIsSeller(false);
-      setIsFornecedor(false);
-      setIsMecanico(false);
-      setIsOficina(false);
-      setIsLocadora(false);
+      resetRoles();
       setUserName("");
       setPartnerType(null);
       setIsApprovedPartner(false);
     }
+
     setIsLoading(false);
   }, [checkRoles, loadProfile]);
 
   useEffect(() => {
     let initialized = false;
+    let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!initialized) {
+    async function init() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (mounted && !initialized) {
         initialized = true;
-        handleSession(session);
+        await handleSession(session);
       }
-    });
+    }
+
+    init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!mounted) return;
         if (initialized) {
-          handleSession(session);
+          await handleSession(session);
         } else {
           initialized = true;
-          handleSession(session);
+          await handleSession(session);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [handleSession]);
 
   const signOut = useCallback(async () => {
@@ -153,23 +207,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Export helper for partner dashboard routing
-export const getPartnerDashboardPath = (type: string | null): string => {
-  switch (type) {
-    case "fornecedor": return "/fornecedor";
-    case "oficina": return "/oficina";
-    case "locadora": return "/locadora";
-    case "mecanico": return "/mecanico";
-    default: return "/minha-conta";
-  }
-};
-
-export const getPartnerLabel = (type: string | null): string => {
-  switch (type) {
-    case "fornecedor": return "Área Fornecedor";
-    case "oficina": return "Área Oficina";
-    case "locadora": return "Área Locadora";
-    case "mecanico": return "Área Mecânico";
-    default: return "Minha Conta";
-  }
-};
+// observe: partner helpers are in src/contexts/partnerHelpers.ts for fast refresh safety

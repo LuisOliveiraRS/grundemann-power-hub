@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { importLovableCatalog } from "@/lib/lovableCatalogImporter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,9 @@ const ProductImport = () => {
   const [updateDuplicates, setUpdateDuplicates] = useState(false);
   const [autoGenerateImages, setAutoGenerateImages] = useState(true);
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [lovableUrl, setLovableUrl] = useState("https://grundemann-power-hub.lovable.app");
+  const [importingLovable, setImportingLovable] = useState(false);
+  const [lovableSummary, setLovableSummary] = useState<{ created: number; failed: number; categories: number; errors: string[] } | null>(null);
   const [pdfBase64Data, setPdfBase64Data] = useState<string | null>(null);
   const [compareProduct, setCompareProduct] = useState<ImportProduct | null>(null);
   const genId = () => crypto.randomUUID();
@@ -79,6 +83,71 @@ const ProductImport = () => {
   const loadCategories = async () => {
     const { data } = await supabase.from("categories").select("id, name, slug");
     setCategories(data || []);
+  };
+
+  const handleImportFromLovable = async () => {
+    setImportingLovable(true);
+    setProgressMessage("Iniciando importação Lovable...");
+    setLovableSummary(null);
+
+    try {
+      // 1) Tenta importação server-side via função Supabase (sem CORS do Lovable)
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("import-lovable", {
+        body: JSON.stringify({ source: lovableUrl }),
+      });
+
+      if (fnError) {
+        const errMsg = `Supabase function error: ${fnError.message || JSON.stringify(fnError)}`;
+        throw new Error(errMsg);
+      }
+
+      if (!fnData) {
+        throw new Error("Função import-lovable retornou resposta vazia");
+      }
+
+      let parsed;
+      try {
+        parsed = typeof fnData === "string" ? JSON.parse(fnData) : fnData;
+      } catch (parseError: any) {
+        throw new Error(`Falha ao decodificar resposta da função import-lovable: ${parseError?.message || String(parseError)}`);
+      }
+
+      if (parsed?.error) {
+        throw new Error(`Erro do import-lovable: ${parsed.error}`);
+      }
+
+      setLovableSummary({
+        created: parsed.importedProducts ?? 0,
+        failed: parsed.failedProducts ?? 0,
+        categories: parsed.importedCategories ?? 0,
+        errors: parsed.logs ?? [],
+      });
+      toast({ title: "Importação concluída", description: `Categorias: ${parsed.importedCategories}, produtos: ${parsed.importedProducts}, falhas: ${parsed.failedProducts}` });
+      await loadCategories();
+      setStep("done");
+    } catch (error: any) {
+      const message = error?.message ?? String(error);
+      toast({ title: "Erro na importação Lovable", description: message, variant: "destructive" });
+      setProgressMessage(message);
+
+      if (String(message).includes("Failed to fetch text from") || String(message).includes("Failed to fetch")) {
+        toast({
+          title: "Falha devido a CORS ou conectividade",
+          description:
+            "Não é possível acessar o Lovable diretamente do navegador. Verifique se a função Edge/Supabase 'import-lovable' está deployada e funcionando, ou use o script CLI ('pnpm run import:lovable').",
+          variant: "destructive",
+        });
+        setImportingLovable(false);
+        return;
+      }
+
+      // Caso a chamada ao Edge Function tenha falhado (travamento servidor), exibir instrução.
+      setProgressMessage(
+        "Verifique se a função 'import-lovable' foi deployada em Supabase e se as variáveis de env estão configuradas."
+      );
+    } finally {
+      setImportingLovable(false);
+    }
   };
 
   const readFileAsText = (file: File): Promise<string> =>
@@ -610,6 +679,27 @@ const ProductImport = () => {
         {/* STEP: Upload */}
         {step === "upload" && (
           <div className="space-y-6">
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
+              <h3 className="font-heading text-lg font-bold mb-2 flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" /> Importar direto de Lovable
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Traga categorias e produtos automaticamente da loja modelo.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                <Input value={lovableUrl} onChange={(e) => setLovableUrl(e.target.value)} placeholder="https://grundemann-power-hub.lovable.app" />
+                <Button disabled={importingLovable} onClick={handleImportFromLovable}>
+                  {importingLovable ? "Importando..." : "Importar Lovable"}
+                </Button>
+              </div>
+              {lovableSummary && (
+                <div className="mt-4 text-sm text-success">
+                  Importação completada: categorias {lovableSummary.categories}, produtos {lovableSummary.created}, falhas {lovableSummary.failed}
+                  {lovableSummary.errors.length > 0 && <p>Erros: {lovableSummary.errors.join("; ")}</p>}
+                </div>
+              )}
+            </div>
+
             {/* Main file upload */}
             <div className="bg-card rounded-2xl shadow-lg border border-border p-10">
               <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -6,15 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Gift, Eye, EyeOff, User, Wrench, Building2, Store, Building, Mail } from "lucide-react";
+import { Gift, Eye, EyeOff, User, Wrench, Building2, Store, Building, Mail, type LucideIcon } from "lucide-react";
 import Layout from "@/components/Layout";
 import logo from "@/assets/logo-grundemann.png";
 import { getGuestCart, clearGuestCart } from "@/lib/guestCart";
-import { getPartnerDashboardPath } from "@/contexts/AuthContext";
+import { getPartnerDashboardPath } from "@/contexts/partnerHelpers";
 
 type UserType = "cliente" | "mecanico" | "oficina" | "fornecedor" | "locadora";
 
-const userTypeConfig: Record<UserType, { label: string; icon: any; description: string }> = {
+type ProfileRPC = {
+  full_name?: string;
+  partner_type?: string;
+  is_approved?: boolean;
+  is_admin?: boolean;
+  admin?: boolean;
+  isAdministrator?: boolean;
+  type?: string;
+};
+
+const userTypeConfig: Record<UserType, { label: string; icon: LucideIcon; description: string }> = {
   cliente: { label: "Cliente", icon: User, description: "Pessoa física ou jurídica" },
   mecanico: { label: "Mecânico", icon: Wrench, description: "Profissional autônomo" },
   oficina: { label: "Oficina", icon: Building2, description: "Empresa de manutenção" },
@@ -48,11 +58,14 @@ const Auth = () => {
   const needsCpf = userType === "cliente" || userType === "mecanico";
   const isPartner = userType !== "cliente";
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseClient = supabase as any;
+
   useEffect(() => {
     if (refCode) setIsLogin(false);
   }, [refCode]);
 
-  const syncGuestCart = async (userId: string) => {
+  const syncGuestCart = useCallback(async (userId: string) => {
     const guestItems = getGuestCart();
     if (guestItems.length === 0) return;
     for (const item of guestItems) {
@@ -74,9 +87,9 @@ const Auth = () => {
       }
     }
     clearGuestCart();
-  };
+  }, []);
 
-  const redirectUser = async (userId: string) => {
+  const redirectUser = useCallback(async (userId: string) => {
     await syncGuestCart(userId);
 
     if (redirect) {
@@ -84,21 +97,67 @@ const Auth = () => {
       return;
     }
 
-    const { data: roles, error: rolesError } = await supabase.rpc('get_my_roles')
-    console.log('Roles no redirect:', roles, rolesError)
+    try {
+      const { data: isAdminData, error: isAdminError } = await supabaseClient.rpc('is_admin');
+      const isAdminRpc = !isAdminError && Boolean(isAdminData as boolean);
+      if (isAdminRpc) {
+        console.log('Indo para /admin (is_admin)');
+        navigate('/admin', { replace: true });
+        return;
+      }
 
-    if ((roles || []).some((r: any) => r.role === 'admin')) {
-      console.log('Indo para /admin')
-      navigate('/admin', { replace: true })
-      return
+      const { data: isAdminRoleData, error: isAdminRoleError } = await supabaseClient.rpc('has_role', { _role: 'admin', _user_id: userId });
+      const isAdminHasRole = !isAdminRoleError && Boolean(isAdminRoleData as boolean);
+      if (isAdminHasRole) {
+        console.log('Indo para /admin (has_role admin)');
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      const { data: profileData, error: profileError } = await supabaseClient.rpc('get_my_profile', { user_id: userId });
+      if (profileError) {
+        console.warn('Falha ao buscar profile no redirectUser', profileError);
+      }
+
+      const profile = Array.isArray(profileData) && profileData.length > 0 ? profileData[0] : profileData?.[0] || {};
+      const profileEntry: ProfileRPC = profile as ProfileRPC;
+
+      const isAdminByProfile = Boolean(
+        profileEntry.is_admin ||
+        profileEntry.admin ||
+        profileEntry.isAdministrator
+      );
+      const partnerType = String(profileEntry.partner_type || profileEntry.type || "").toLowerCase();
+      if (isAdminByProfile || partnerType === 'admin') {
+        console.log('Indo para /admin (profile)');
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      const { data: rolesRecord, error: rolesError } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      const hasRoleAdmin = !rolesError && Array.isArray(rolesRecord) && rolesRecord.some((record) => record.role === 'admin');
+      if (hasRoleAdmin) {
+        console.log('Indo para /admin (user_roles)');
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      if (partnerType === 'admin') {
+        console.log('Indo para /admin (partnerType)');
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      navigate(getPartnerDashboardPath(partnerType), { replace: true });
+    } catch (redirectError) {
+      console.error('Erro no redirectUser:', redirectError);
+      navigate('/minha-conta', { replace: true });
     }
-
-    const { data: profile, error: profileError } = await supabase.rpc('get_my_profile')
-    console.log('Profile no redirect:', profile, profileError)
-
-    const partnerType = profile?.[0]?.partner_type || null
-    navigate(getPartnerDashboardPath(partnerType), { replace: true })
-  };
+  }, [navigate, redirect, syncGuestCart, supabaseClient]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -110,7 +169,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, redirect]);
+  }, [navigate, redirect, redirectUser]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +210,7 @@ const Auth = () => {
       if (error) {
         toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
       } else if (loginData.user) {
-        // Redirect handled by onAuthStateChange listener
+        await redirectUser(loginData.user.id);
       }
     } else {
       if (password.length < 6) {

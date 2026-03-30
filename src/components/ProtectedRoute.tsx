@@ -19,7 +19,8 @@ const ProtectedRoute = ({ children, adminOnly = false, allowedRoles }: Props) =>
   }
 
   if (!user) return <Navigate to="/auth" replace />;
-  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  const adminAccess = isAdmin || partnerType?.toLowerCase() === "admin";
+  if (adminOnly && !adminAccess) return <Navigate to="/" replace />;
 
   if (allowedRoles && allowedRoles.length > 0) {
     const userRoles: string[] = [];

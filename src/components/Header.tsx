@@ -1,7 +1,8 @@
 import { User, ShoppingCart, Menu, LogIn, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, getPartnerDashboardPath, getPartnerLabel } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { getPartnerDashboardPath, getPartnerLabel } from "@/contexts/partnerHelpers";
 import CartDrawer from "@/components/CartDrawer";
 import SmartSearch from "@/components/SmartSearch";
 import NotificationBell from "@/components/NotificationBell";
