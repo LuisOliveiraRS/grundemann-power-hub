@@ -51,42 +51,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isApprovedPartner, setIsApprovedPartner] = useState(false);
 
   const checkRoles = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const roles = (data || []).map((r: any) => r.role);
-    setIsAdmin(roles.includes("admin"));
-    setIsSeller(roles.includes("seller"));
-    setIsFornecedor(roles.includes("fornecedor"));
-    setIsMecanico(roles.includes("mecanico"));
-    setIsOficina(roles.includes("oficina"));
-    setIsLocadora(roles.includes("locadora"));
-  }, []);
+    const { data, error } = await supabase.rpc('get_my_roles')
+    console.log('Roles via RPC:', data, error)
+    const roles = (data || []).map((r: any) => r.role)
+    setIsAdmin(roles.includes('admin'))
+    setIsSeller(roles.includes('seller'))
+    setIsFornecedor(roles.includes('fornecedor'))
+    setIsMecanico(roles.includes('mecanico'))
+    setIsOficina(roles.includes('oficina'))
+    setIsLocadora(roles.includes('locadora'))
+  }, [])
 
   const loadProfile = useCallback(async (userId: string) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("user_id", userId)
-      .single();
-    if (profile?.full_name) {
-      setUserName(profile.full_name.split(" ")[0]);
+    const { data, error } = await supabase.rpc('get_my_profile')
+    console.log('Profile via RPC:', data, error)
+    if (data && data.length > 0) {
+      const profile = data[0]
+      if (profile.full_name) {
+        setUserName(profile.full_name.split(' ')[0])
+      }
+      if (profile.partner_type) {
+        setPartnerType(profile.partner_type)
+        setIsApprovedPartner(profile.is_approved)
+      } else {
+        setPartnerType(null)
+        setIsApprovedPartner(false)
+      }
     }
-
-    const { data: mechanic } = await supabase
-      .from("mechanics")
-      .select("partner_type, is_approved")
-      .eq("user_id", userId)
-      .single();
-    if (mechanic) {
-      setPartnerType(mechanic.partner_type as string);
-      setIsApprovedPartner(mechanic.is_approved);
-    } else {
-      setPartnerType(null);
-      setIsApprovedPartner(false);
-    }
-  }, []);
+  }, [])
 
   const handleSession = useCallback(async (newSession: Session | null) => {
     setSession(newSession);
@@ -138,19 +130,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   }, []);
 
-  // Helper to get the dashboard path for a partner type
-  const getPartnerDashboardPath = (type: string | null): string => {
-    switch (type) {
-      case "fornecedor": return "/fornecedor";
-      case "oficina": return "/oficina";
-      case "locadora": return "/locadora";
-      case "mecanico": return "/mecanico";
-      default: return "/minha-conta";
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ session, user, isAdmin, isSeller, isFornecedor, isMecanico, isOficina, isLocadora, isLoading, userName, partnerType, isApprovedPartner, signOut }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        isAdmin,
+        isSeller,
+        isFornecedor,
+        isMecanico,
+        isOficina,
+        isLocadora,
+        isLoading,
+        userName,
+        partnerType,
+        isApprovedPartner,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
