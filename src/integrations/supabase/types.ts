@@ -1526,6 +1526,7 @@ export type Database = {
           slug: string | null
           specifications: Json | null
           stock_quantity: number
+          storage_location: string | null
           subcategory_id: string | null
           tags: string[] | null
           updated_at: string
@@ -1563,6 +1564,7 @@ export type Database = {
           slug?: string | null
           specifications?: Json | null
           stock_quantity?: number
+          storage_location?: string | null
           subcategory_id?: string | null
           tags?: string[] | null
           updated_at?: string
@@ -1600,6 +1602,7 @@ export type Database = {
           slug?: string | null
           specifications?: Json | null
           stock_quantity?: number
+          storage_location?: string | null
           subcategory_id?: string | null
           tags?: string[] | null
           updated_at?: string

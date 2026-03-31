@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ShoppingCart, Trash2, Search, ChevronDown, ChevronUp, X,
-  Filter, Printer, Truck, Users, CheckSquare, Square,
+  Filter, Printer, Truck, Users, CheckSquare, Square, FileText,
 } from "lucide-react";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
+import OrderFullPrintSheet from "@/components/OrderFullPrintSheet";
 import type { OrderWithItems, OrderItem, ProfileFull } from "@/types/admin";
 import { statusLabel, statusColor } from "@/types/admin";
 
@@ -20,7 +21,9 @@ interface AdminOrdersTabProps {
 const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
+  const fullPrintRef = useRef<HTMLDivElement>(null);
   const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
+  const [fullPrintOrder, setFullPrintOrder] = useState<OrderWithItems | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [localOrders, setLocalOrders] = useState<OrderWithItems[]>(orders);
 
@@ -54,26 +57,41 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
     setExpandedOrder(orderId);
   };
 
-  const printOrder = async (order: OrderWithItems) => {
-    let orderToPrint = { ...order };
-    if (!orderToPrint.items) {
-      const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
-      orderToPrint.items = (data || []) as OrderItem[];
-    }
-    if (!orderToPrint.profile) {
-      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
-      if (prof) orderToPrint.profile = prof as ProfileFull;
-    }
-    setPrintingOrder(orderToPrint);
+  const doPrint = (ref: React.RefObject<HTMLDivElement | null>, title: string) => {
     setTimeout(() => {
-      const printContent = printRef.current;
+      const printContent = ref.current;
       if (!printContent) return;
       const win = window.open("", "_blank");
       if (!win) { toast({ title: "Erro", description: "Permita pop-ups para imprimir.", variant: "destructive" }); return; }
-      win.document.write(`<!DOCTYPE html><html><head><title>Pedido #${order.id.slice(0, 8)}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
+      win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
       win.document.close(); win.focus();
       setTimeout(() => { win.print(); win.close(); }, 500);
     }, 200);
+  };
+
+  const prepareOrderData = async (order: OrderWithItems) => {
+    let o = { ...order };
+    if (!o.items) {
+      const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
+      o.items = (data || []) as OrderItem[];
+    }
+    if (!o.profile) {
+      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
+      if (prof) o.profile = prof as ProfileFull;
+    }
+    return o;
+  };
+
+  const printShippingLabel = async (order: OrderWithItems) => {
+    const o = await prepareOrderData(order);
+    setPrintingOrder(o);
+    doPrint(printRef, `Envio #${order.id.slice(0, 8)}`);
+  };
+
+  const printFullOrder = async (order: OrderWithItems) => {
+    const o = await prepareOrderData(order);
+    setFullPrintOrder(o);
+    doPrint(fullPrintRef, `Pedido #${order.id.slice(0, 8)}`);
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
@@ -134,10 +152,13 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
 
   return (
     <div>
-      {/* Hidden print area */}
+      {/* Hidden print areas */}
       <div className="hidden">
         <div ref={printRef}>
           {printingOrder && <OrderPrintSheet order={{ id: printingOrder.id, created_at: printingOrder.created_at, profile: printingOrder.profile || null }} />}
+        </div>
+        <div ref={fullPrintRef}>
+          {fullPrintOrder && <OrderFullPrintSheet order={{ id: fullPrintOrder.id, created_at: fullPrintOrder.created_at, status: fullPrintOrder.status, total_amount: Number(fullPrintOrder.total_amount), shipping_address: fullPrintOrder.shipping_address, tracking_code: fullPrintOrder.tracking_code, notes: fullPrintOrder.notes, profile: fullPrintOrder.profile || null, items: fullPrintOrder.items || [] }} />}
         </div>
       </div>
 
@@ -193,7 +214,8 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printOrder(o); }}><Printer className="h-3.5 w-3.5" /> Imprimir</Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printFullOrder(o); }}><FileText className="h-3.5 w-3.5" /> Imprimir Pedido</Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printShippingLabel(o); }}><Truck className="h-3.5 w-3.5" /> Imprimir Envio</Button>
                 {o.payment ? (
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${o.payment.status === "approved" ? "bg-primary/15 text-primary" : o.payment.status === "pending" ? "bg-accent/30 text-accent-foreground" : o.payment.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`}>
                     {o.payment.status === "approved" ? "💳 Pago" : o.payment.status === "pending" ? "⏳ Aguardando Pgto" : o.payment.status === "rejected" ? "❌ Recusado" : `💳 ${o.payment.status}`}

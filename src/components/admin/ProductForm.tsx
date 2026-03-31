@@ -20,6 +20,7 @@ export interface ProductFormState {
   menu_category_id: string; menu_category_ids: string[]; reseller_id: string; fuel_type: string;
   slug: string; tags: string;
   reseller_price: string; store_commission_pct: string;
+  storage_location: string;
 }
 
 export const emptyProductForm: ProductFormState = {
@@ -28,7 +29,7 @@ export const emptyProductForm: ProductFormState = {
   image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "",
   specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
   menu_category_id: "", menu_category_ids: [], reseller_id: "", fuel_type: "", slug: "", tags: "",
-  reseller_price: "", store_commission_pct: "",
+  reseller_price: "", store_commission_pct: "", storage_location: "",
 };
 
 export function productToFormState(p: Product): ProductFormState {
@@ -54,6 +55,7 @@ export function productToFormState(p: Product): ProductFormState {
     slug: p.slug || "",
     tags: (p.tags || []).join(", "),
     reseller_price: "", store_commission_pct: "",
+    storage_location: (p as any).storage_location || "",
   };
 }
 
@@ -248,11 +250,71 @@ const ProductForm = ({ editingProduct, form, setForm, resellers, clients, onSave
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }} />
           <div className="mt-2"><Input value={form.image_url} onChange={(e) => setForm(prev => ({ ...prev, image_url: e.target.value }))} placeholder="Ou cole a URL da imagem..." className="text-xs" /></div>
+
+          {/* Additional Images */}
+          <div className="mt-4">
+            <Label className="mb-2 block text-xs">Fotos Adicionais (até 4)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[0, 1, 2, 3].map((idx) => {
+                const img = form.additional_images[idx];
+                return (
+                  <div key={idx} className="border border-dashed border-border rounded-lg p-2 text-center min-h-[80px] flex items-center justify-center relative">
+                    {img ? (
+                      <>
+                        <img src={img} alt={`Foto ${idx + 1}`} className="w-full h-16 object-contain rounded" />
+                        <button onClick={() => setForm(prev => ({ ...prev, additional_images: prev.additional_images.filter((_, i) => i !== idx) }))} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 shadow-md hover:opacity-80"><X className="h-3 w-3" /></button>
+                      </>
+                    ) : (
+                      <label className="cursor-pointer text-xs text-muted-foreground">
+                        <Plus className="h-5 w-5 mx-auto mb-1" />Foto {idx + 1}
+                        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const ext = file.name.split('.').pop();
+                          const fileName = `${Date.now()}-add-${idx}.${ext}`;
+                          const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                          if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+                          const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                          setForm(prev => {
+                            const imgs = [...prev.additional_images];
+                            imgs[idx] = urlData.publicUrl;
+                            return { ...prev, additional_images: imgs.filter(Boolean) };
+                          });
+                        }} />
+                      </label>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Video Upload */}
+          <div className="mt-4">
+            <Label className="mb-2 block text-xs flex items-center gap-1"><Video className="h-3.5 w-3.5" /> Vídeo do Produto</Label>
+            <Input value={form.video_url} onChange={e => setForm(prev => ({ ...prev, video_url: e.target.value }))} placeholder="Cole URL do YouTube ou faça upload" className="text-xs" />
+            <label className="mt-2 flex items-center gap-2 cursor-pointer text-xs text-primary hover:underline">
+              <Upload className="h-3.5 w-3.5" /> Enviar vídeo
+              <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 50 * 1024 * 1024) { toast({ title: "Vídeo muito grande", description: "Máximo 50MB", variant: "destructive" }); return; }
+                const ext = file.name.split('.').pop();
+                const fileName = `video-${Date.now()}.${ext}`;
+                const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                setForm(prev => ({ ...prev, video_url: urlData.publicUrl }));
+                toast({ title: "Vídeo enviado!" });
+              }} />
+            </label>
+          </div>
         </div>
 
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2"><Label>Nome do Produto *</Label><Input value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder="Ex: Gerador Diesel 100kVA" /></div>
           <div><Label>Código / SKU</Label><Input value={form.sku} onChange={(e) => setForm(prev => ({ ...prev, sku: e.target.value }))} placeholder="Ex: GEN-DSL-100" /></div>
+          <div><Label>Código Local (Prateleira)</Label><Input value={form.storage_location} onChange={(e) => setForm(prev => ({ ...prev, storage_location: e.target.value }))} placeholder="Ex: P3-A2 (Prateleira 3, Seção A2)" /></div>
 
           {/* Unified Category Section */}
           <div className="md:col-span-2 rounded-lg border border-primary/20 bg-primary/5 p-4">
@@ -383,11 +445,6 @@ const ProductForm = ({ editingProduct, form, setForm, resellers, clients, onSave
           {/* Specifications */}
           <div className="md:col-span-2"><Label>Especificações (JSON)</Label><Textarea value={form.specifications} onChange={e => setForm(prev => ({ ...prev, specifications: e.target.value }))} rows={3} placeholder='{"Tensão": "127/220V", "Frequência": "60Hz"}' className="font-mono text-xs" /></div>
 
-          {/* Video URL */}
-          <div className="md:col-span-2">
-            <Label className="flex items-center gap-2"><Video className="h-4 w-4" /> URL do Vídeo</Label>
-            <Input value={form.video_url} onChange={e => setForm(prev => ({ ...prev, video_url: e.target.value }))} placeholder="https://youtube.com/watch?v=..." className="mt-1" />
-          </div>
 
           {/* Switches */}
           <div className="md:col-span-2 flex items-center gap-6 pt-2 flex-wrap">

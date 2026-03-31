@@ -286,6 +286,31 @@ const PartnerLogin = () => {
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? "Aguarde..." : isLogin ? "Entrar" : "Criar Conta de Parceiro"}
             </Button>
+
+            {isLogin && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!email.trim()) {
+                    toast({ title: "Informe o email", description: "Digite seu email para recuperar a senha.", variant: "destructive" });
+                    return;
+                  }
+                  setLoading(true);
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) {
+                    toast({ title: "Erro", description: error.message, variant: "destructive" });
+                  } else {
+                    toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir a senha." });
+                  }
+                  setLoading(false);
+                }}
+                className="w-full text-sm text-primary hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            )}
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-4">
