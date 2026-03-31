@@ -214,7 +214,8 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printOrder(o); }}><Printer className="h-3.5 w-3.5" /> Imprimir</Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printFullOrder(o); }}><FileText className="h-3.5 w-3.5" /> Imprimir Pedido</Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={(e) => { e.stopPropagation(); printShippingLabel(o); }}><Truck className="h-3.5 w-3.5" /> Imprimir Envio</Button>
                 {o.payment ? (
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${o.payment.status === "approved" ? "bg-primary/15 text-primary" : o.payment.status === "pending" ? "bg-accent/30 text-accent-foreground" : o.payment.status === "rejected" ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`}>
                     {o.payment.status === "approved" ? "💳 Pago" : o.payment.status === "pending" ? "⏳ Aguardando Pgto" : o.payment.status === "rejected" ? "❌ Recusado" : `💳 ${o.payment.status}`}
