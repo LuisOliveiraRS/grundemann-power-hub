@@ -445,11 +445,6 @@ const ProductForm = ({ editingProduct, form, setForm, resellers, clients, onSave
           {/* Specifications */}
           <div className="md:col-span-2"><Label>Especificações (JSON)</Label><Textarea value={form.specifications} onChange={e => setForm(prev => ({ ...prev, specifications: e.target.value }))} rows={3} placeholder='{"Tensão": "127/220V", "Frequência": "60Hz"}' className="font-mono text-xs" /></div>
 
-          {/* Video URL */}
-          <div className="md:col-span-2">
-            <Label className="flex items-center gap-2"><Video className="h-4 w-4" /> URL do Vídeo</Label>
-            <Input value={form.video_url} onChange={e => setForm(prev => ({ ...prev, video_url: e.target.value }))} placeholder="https://youtube.com/watch?v=..." className="mt-1" />
-          </div>
 
           {/* Switches */}
           <div className="md:col-span-2 flex items-center gap-6 pt-2 flex-wrap">
