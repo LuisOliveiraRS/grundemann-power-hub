@@ -152,10 +152,13 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
 
   return (
     <div>
-      {/* Hidden print area */}
+      {/* Hidden print areas */}
       <div className="hidden">
         <div ref={printRef}>
           {printingOrder && <OrderPrintSheet order={{ id: printingOrder.id, created_at: printingOrder.created_at, profile: printingOrder.profile || null }} />}
+        </div>
+        <div ref={fullPrintRef}>
+          {fullPrintOrder && <OrderFullPrintSheet order={{ id: fullPrintOrder.id, created_at: fullPrintOrder.created_at, status: fullPrintOrder.status, total_amount: Number(fullPrintOrder.total_amount), shipping_address: fullPrintOrder.shipping_address, tracking_code: fullPrintOrder.tracking_code, notes: fullPrintOrder.notes, profile: fullPrintOrder.profile || null, items: fullPrintOrder.items || [] }} />}
         </div>
       </div>
 
