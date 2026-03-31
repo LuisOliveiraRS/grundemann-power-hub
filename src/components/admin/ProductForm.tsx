@@ -55,6 +55,7 @@ export function productToFormState(p: Product): ProductFormState {
     slug: p.slug || "",
     tags: (p.tags || []).join(", "),
     reseller_price: "", store_commission_pct: "",
+    storage_location: (p as any).storage_location || "",
   };
 }
 
