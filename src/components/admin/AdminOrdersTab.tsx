@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   ShoppingCart, Trash2, Search, ChevronDown, ChevronUp, X,
-  Filter, Printer, Truck, Users, CheckSquare, Square,
+  Filter, Printer, Truck, Users, CheckSquare, Square, FileText,
 } from "lucide-react";
 import OrderPrintSheet from "@/components/OrderPrintSheet";
+import OrderFullPrintSheet from "@/components/OrderFullPrintSheet";
 import type { OrderWithItems, OrderItem, ProfileFull } from "@/types/admin";
 import { statusLabel, statusColor } from "@/types/admin";
 
