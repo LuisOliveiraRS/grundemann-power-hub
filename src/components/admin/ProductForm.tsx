@@ -250,6 +250,65 @@ const ProductForm = ({ editingProduct, form, setForm, resellers, clients, onSave
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }} />
           <div className="mt-2"><Input value={form.image_url} onChange={(e) => setForm(prev => ({ ...prev, image_url: e.target.value }))} placeholder="Ou cole a URL da imagem..." className="text-xs" /></div>
+
+          {/* Additional Images */}
+          <div className="mt-4">
+            <Label className="mb-2 block text-xs">Fotos Adicionais (até 4)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[0, 1, 2, 3].map((idx) => {
+                const img = form.additional_images[idx];
+                return (
+                  <div key={idx} className="border border-dashed border-border rounded-lg p-2 text-center min-h-[80px] flex items-center justify-center relative">
+                    {img ? (
+                      <>
+                        <img src={img} alt={`Foto ${idx + 1}`} className="w-full h-16 object-contain rounded" />
+                        <button onClick={() => setForm(prev => ({ ...prev, additional_images: prev.additional_images.filter((_, i) => i !== idx) }))} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 shadow-md hover:opacity-80"><X className="h-3 w-3" /></button>
+                      </>
+                    ) : (
+                      <label className="cursor-pointer text-xs text-muted-foreground">
+                        <Plus className="h-5 w-5 mx-auto mb-1" />Foto {idx + 1}
+                        <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const ext = file.name.split('.').pop();
+                          const fileName = `${Date.now()}-add-${idx}.${ext}`;
+                          const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                          if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+                          const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                          setForm(prev => {
+                            const imgs = [...prev.additional_images];
+                            imgs[idx] = urlData.publicUrl;
+                            return { ...prev, additional_images: imgs.filter(Boolean) };
+                          });
+                        }} />
+                      </label>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Video Upload */}
+          <div className="mt-4">
+            <Label className="mb-2 block text-xs flex items-center gap-1"><Video className="h-3.5 w-3.5" /> Vídeo do Produto</Label>
+            <Input value={form.video_url} onChange={e => setForm(prev => ({ ...prev, video_url: e.target.value }))} placeholder="Cole URL do YouTube ou faça upload" className="text-xs" />
+            <label className="mt-2 flex items-center gap-2 cursor-pointer text-xs text-primary hover:underline">
+              <Upload className="h-3.5 w-3.5" /> Enviar vídeo
+              <input type="file" accept="video/*" className="hidden" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 50 * 1024 * 1024) { toast({ title: "Vídeo muito grande", description: "Máximo 50MB", variant: "destructive" }); return; }
+                const ext = file.name.split('.').pop();
+                const fileName = `video-${Date.now()}.${ext}`;
+                const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+                if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+                const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+                setForm(prev => ({ ...prev, video_url: urlData.publicUrl }));
+                toast({ title: "Vídeo enviado!" });
+              }} />
+            </label>
+          </div>
         </div>
 
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
