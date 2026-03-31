@@ -242,9 +242,10 @@ Deno.serve(async (req) => {
     // ========== PAYMENT CANCELLED/REJECTED ==========
     if (isCancelledPaymentStatus(normalizedPaymentStatus) && order.status === "pending") {
       // FIX: Release stock reservations
-      await adminSupabase.rpc("release_stock_reservation", { p_order_id: order_id }).catch((err: any) => {
-        console.error("Stock release error:", err);
-      });
+      const releaseResult = await adminSupabase.rpc("release_stock_reservation", { p_order_id: order_id });
+      if (releaseResult.error) {
+        console.error("Stock release error:", releaseResult.error);
+      }
 
       await adminSupabase.from("orders").update({ status: "cancelled" }).eq("id", order_id);
       resolvedOrderStatus = "cancelled";
