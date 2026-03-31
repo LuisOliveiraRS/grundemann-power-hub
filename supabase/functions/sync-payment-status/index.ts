@@ -200,7 +200,12 @@ Deno.serve(async (req) => {
         await adminSupabase.rpc("decrease_reseller_stock", {
           p_order_id: order_id,
           p_reseller_id: order.seller_id,
-        }).catch((err: any) => console.error("Reseller stock decrease error:", err));
+        });
+        const resellerResult = await adminSupabase.rpc("decrease_reseller_stock", {
+          p_order_id: order_id,
+          p_reseller_id: order.seller_id,
+        });
+        if (resellerResult.error) console.error("Reseller stock decrease error:", resellerResult.error);
       }
 
       await adminSupabase.from("orders").update({ status: "confirmed" }).eq("id", order_id);
