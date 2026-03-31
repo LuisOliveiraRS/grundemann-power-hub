@@ -20,6 +20,7 @@ export interface ProductFormState {
   menu_category_id: string; menu_category_ids: string[]; reseller_id: string; fuel_type: string;
   slug: string; tags: string;
   reseller_price: string; store_commission_pct: string;
+  storage_location: string;
 }
 
 export const emptyProductForm: ProductFormState = {
