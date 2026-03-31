@@ -57,26 +57,41 @@ const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
     setExpandedOrder(orderId);
   };
 
-  const printOrder = async (order: OrderWithItems) => {
-    let orderToPrint = { ...order };
-    if (!orderToPrint.items) {
-      const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
-      orderToPrint.items = (data || []) as OrderItem[];
-    }
-    if (!orderToPrint.profile) {
-      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
-      if (prof) orderToPrint.profile = prof as ProfileFull;
-    }
-    setPrintingOrder(orderToPrint);
+  const doPrint = (ref: React.RefObject<HTMLDivElement | null>, title: string) => {
     setTimeout(() => {
-      const printContent = printRef.current;
+      const printContent = ref.current;
       if (!printContent) return;
       const win = window.open("", "_blank");
       if (!win) { toast({ title: "Erro", description: "Permita pop-ups para imprimir.", variant: "destructive" }); return; }
-      win.document.write(`<!DOCTYPE html><html><head><title>Pedido #${order.id.slice(0, 8)}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
+      win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>@media print { body { margin: 0; } } body { margin: 0; padding: 0; }</style></head><body>${printContent.innerHTML}</body></html>`);
       win.document.close(); win.focus();
       setTimeout(() => { win.print(); win.close(); }, 500);
     }, 200);
+  };
+
+  const prepareOrderData = async (order: OrderWithItems) => {
+    let o = { ...order };
+    if (!o.items) {
+      const { data } = await supabase.from("order_items").select("*").eq("order_id", order.id);
+      o.items = (data || []) as OrderItem[];
+    }
+    if (!o.profile) {
+      const { data: prof } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
+      if (prof) o.profile = prof as ProfileFull;
+    }
+    return o;
+  };
+
+  const printShippingLabel = async (order: OrderWithItems) => {
+    const o = await prepareOrderData(order);
+    setPrintingOrder(o);
+    doPrint(printRef, `Envio #${order.id.slice(0, 8)}`);
+  };
+
+  const printFullOrder = async (order: OrderWithItems) => {
+    const o = await prepareOrderData(order);
+    setFullPrintOrder(o);
+    doPrint(fullPrintRef, `Pedido #${order.id.slice(0, 8)}`);
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
