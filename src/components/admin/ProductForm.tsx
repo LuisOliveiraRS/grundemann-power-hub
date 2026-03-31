@@ -255,6 +255,7 @@ const ProductForm = ({ editingProduct, form, setForm, resellers, clients, onSave
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2"><Label>Nome do Produto *</Label><Input value={form.name} onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder="Ex: Gerador Diesel 100kVA" /></div>
           <div><Label>Código / SKU</Label><Input value={form.sku} onChange={(e) => setForm(prev => ({ ...prev, sku: e.target.value }))} placeholder="Ex: GEN-DSL-100" /></div>
+          <div><Label>Código Local (Prateleira)</Label><Input value={form.storage_location} onChange={(e) => setForm(prev => ({ ...prev, storage_location: e.target.value }))} placeholder="Ex: P3-A2 (Prateleira 3, Seção A2)" /></div>
 
           {/* Unified Category Section */}
           <div className="md:col-span-2 rounded-lg border border-primary/20 bg-primary/5 p-4">
