@@ -21,7 +21,9 @@ interface AdminOrdersTabProps {
 const AdminOrdersTab = ({ orders, onReload }: AdminOrdersTabProps) => {
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
+  const fullPrintRef = useRef<HTMLDivElement>(null);
   const [printingOrder, setPrintingOrder] = useState<OrderWithItems | null>(null);
+  const [fullPrintOrder, setFullPrintOrder] = useState<OrderWithItems | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [localOrders, setLocalOrders] = useState<OrderWithItems[]>(orders);
 
