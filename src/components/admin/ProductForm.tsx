@@ -29,7 +29,7 @@ export const emptyProductForm: ProductFormState = {
   image_url: "", additional_images: [], video_url: "", brand: "", hp: "", engine_model: "",
   specifications: "", documents: [], weight_kg: "", width_cm: "", height_cm: "", length_cm: "",
   menu_category_id: "", menu_category_ids: [], reseller_id: "", fuel_type: "", slug: "", tags: "",
-  reseller_price: "", store_commission_pct: "",
+  reseller_price: "", store_commission_pct: "", storage_location: "",
 };
 
 export function productToFormState(p: Product): ProductFormState {
