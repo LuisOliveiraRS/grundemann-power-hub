@@ -46,8 +46,8 @@ const OrderFullPrintSheet = forwardRef<HTMLDivElement, { order: OrderData }>(({ 
 
   return (
     <div ref={ref} style={{ fontFamily: "Arial, sans-serif", fontSize: "12px", color: "#000", background: "#fff", padding: "24px", maxWidth: "210mm", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "3px solid #1a1a1a", paddingBottom: "12px", marginBottom: "16px" }}>
+      {/* Header: Logo + Order info */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", marginBottom: "0" }}>
         <img src={logo} alt="Gründemann" style={{ height: "50px" }} />
         <div style={{ textAlign: "right" }}>
           <h1 style={{ margin: 0, fontSize: "18px", fontWeight: "bold" }}>PEDIDO #{order.id.slice(0, 8).toUpperCase()}</h1>
@@ -60,41 +60,41 @@ const OrderFullPrintSheet = forwardRef<HTMLDivElement, { order: OrderData }>(({ 
         </div>
       </div>
 
-      {/* Client + Sender side by side */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
-        <div style={{ flex: 1, border: "1px solid #ddd", borderRadius: "4px", padding: "12px" }}>
-          <h2 style={{ margin: "0 0 6px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "#888" }}>CLIENTE</h2>
-          {profile ? (
-            <div style={{ fontSize: "11px", lineHeight: "1.6" }}>
-              <p style={{ margin: 0, fontWeight: "bold", fontSize: "13px" }}>{profile.full_name}</p>
-              {profile.company_name && <p style={{ margin: 0 }}>{profile.company_name}</p>}
-              {profile.cpf_cnpj && <p style={{ margin: 0 }}>CPF/CNPJ: {profile.cpf_cnpj}</p>}
-              <p style={{ margin: 0 }}>Email: {profile.email}</p>
-              <p style={{ margin: 0 }}>Tel: {profile.phone || "—"}</p>
-              {profile.address && (
-                <p style={{ margin: "4px 0 0" }}>
-                  {[profile.address, profile.address_number, profile.address_complement].filter(Boolean).join(", ")}
-                  {profile.neighborhood && ` — ${profile.neighborhood}`}
-                </p>
-              )}
-              <p style={{ margin: 0 }}>
-                {[profile.city, profile.state].filter(Boolean).join(" — ")} {profile.zip_code ? `— CEP: ${profile.zip_code}` : ""}
-              </p>
-            </div>
-          ) : (
-            <p style={{ margin: 0, color: "#888" }}>Dados não disponíveis</p>
-          )}
-        </div>
-        <div style={{ flex: 1, border: "1px solid #ddd", borderRadius: "4px", padding: "12px" }}>
-          <h2 style={{ margin: "0 0 6px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "#888" }}>REMETENTE</h2>
-          <div style={{ fontSize: "11px", lineHeight: "1.6" }}>
-            <p style={{ margin: 0, fontWeight: "bold", fontSize: "13px" }}>GRÜNDEMANN GERADORES LTDA</p>
-            <p style={{ margin: 0 }}>CNPJ: 00.000.000/0001-00</p>
-            <p style={{ margin: 0 }}>Rua Luiz Bernardo da Silva, 190 — Pinheiro</p>
-            <p style={{ margin: 0 }}>São Leopoldo — RS — CEP 93042-110</p>
-            <p style={{ margin: 0 }}>Tel: (51) 98182-5748</p>
+      {/* Grundemann data - horizontal below logo */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", fontSize: "10px", color: "#555", paddingBottom: "10px", marginBottom: "0" }}>
+        <span style={{ fontWeight: "bold" }}>GRÜNDEMANN GERADORES LTDA</span>
+        <span>CNPJ: 00.000.000/0001-00</span>
+        <span>Rua Luiz Bernardo da Silva, 190 — Pinheiro</span>
+        <span>São Leopoldo — RS — CEP 93042-110</span>
+        <span>Tel: (51) 98182-5748</span>
+      </div>
+
+      {/* Black divider */}
+      <div style={{ borderBottom: "3px solid #1a1a1a", marginBottom: "12px" }} />
+
+      {/* Client data - horizontal below divider */}
+      <div style={{ marginBottom: "16px", fontSize: "11px" }}>
+        <h2 style={{ margin: "0 0 6px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "#888" }}>CLIENTE</h2>
+        {profile ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", lineHeight: "1.6" }}>
+            <span style={{ fontWeight: "bold", fontSize: "12px" }}>{profile.full_name}</span>
+            {profile.company_name && <span>{profile.company_name}</span>}
+            {profile.cpf_cnpj && <span>CPF/CNPJ: {profile.cpf_cnpj}</span>}
+            <span>Email: {profile.email}</span>
+            <span>Tel: {profile.phone || "—"}</span>
+            {profile.address && (
+              <span>
+                {[profile.address, profile.address_number, profile.address_complement].filter(Boolean).join(", ")}
+                {profile.neighborhood && ` — ${profile.neighborhood}`}
+              </span>
+            )}
+            <span>
+              {[profile.city, profile.state].filter(Boolean).join(" — ")} {profile.zip_code ? `— CEP: ${profile.zip_code}` : ""}
+            </span>
           </div>
-        </div>
+        ) : (
+          <p style={{ margin: 0, color: "#888" }}>Dados não disponíveis</p>
+        )}
       </div>
 
       {/* Shipping / Tracking */}
